@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+from __future__ import print_function
+
+import sys
+
+from argparse import ArgumentParser
+from backports.shutil_get_terminal_size import get_terminal_size
+from pkg_resources import DistributionNotFound, get_distribution
+from signal import SIGINT, signal
+
+
+# Require Python 2.7+
+if sys.version_info < (2, 7):
+    sys.exit("You have an old version of python. Install version 2.7 or higher.")
+
+# Get version
+try:
+    d = get_distribution("compare50")
+except DistributionNotFound:
+    __version__ = "UNKNOWN"
+else:
+    __version__ = d.version
+
+
+def main():
+
+    # Exit on ctrl-c
+    def handler(signum, frame):
+        cprint("")
+        cancel()
+
+    # Register handler
+    signal(SIGINT, handler)
+
+    # Parse command-line arguments
+    parser = ArgumentParser(description="A command-line tool that compares files for similarties.")
+    parser.add_argument("-V", "--version", action="version",
+                        version="%(prog)s {}".format(__version__))
+    args = parser.parse_args(sys.argv[1:])
+
+
+def cancel():
+    """Report cancellation."""
+    cprint("Rendering cancelled.", "red")
+    sys.exit(1)
+
+
+def cprint(text="", color=None, on_color=None, attrs=None, end="\n"):
+    """Colorize text (and wraps to terminal's width)."""
+
+    # Assume 80 in case not running in a terminal
+    columns, _ = get_terminal_size()
+    if columns == 0:
+        columns = 80
+
+    # Print text, flushing output
+    termcolor.cprint(fill(text, columns, drop_whitespace=False, replace_whitespace=False),
+                     color=color, on_color=on_color, attrs=attrs, end=end)
+    sys.stdout.flush()
+
+
+def excepthook(type, value, tb):
+    """Report an exception."""
+    excepthook.ignore = False
+    if type is RuntimeError and str(value):
+        cprint(str(value), "yellow")
+    else:
+        cprint("Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "yellow")
+        print_exception(type, value, tb)
+    cancel()
+
+
+sys.excepthook = excepthook
+
+
+if __name__ == "__main__":
+    main()
