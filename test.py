@@ -1,5 +1,5 @@
 import sys
-from util import ProcessedText, Span
+from preprocessors.nop import Nop
 from comparators.winnowing import Winnowing
 
 import antlr4
@@ -9,18 +9,20 @@ from parsers.python.Python3Lexer import Python3Lexer
 
 
 if __name__ == "__main__":
-    input = antlr4.FileStream(sys.argv[1])
+    with open(sys.argv[1], "r") as f:
+        text = f.read()
+    input = antlr4.InputStream(text)
     lexer = Python3Lexer(input)
     stream = antlr4.CommonTokenStream(lexer)
     stream.fill()
     tokens = stream.tokens
-    # for tok in tokens:
-    #     print(str(tok))
     for tok in tokens:
         print((tok.text, tok.start))
 
     for tok in tokens:
         print(tok.text, end="")
+    print()
 
-    with open(sys.argv[1], "r") as f:
-        print(Winnowing().create_index(ProcessedText([Span(0, f.read())])))
+    preprocessor = Nop()
+    comparator = Winnowing()
+    print(comparator.create_index(preprocessor.process(text)))
