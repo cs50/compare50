@@ -2,7 +2,7 @@ import hashlib
 import math
 
 
-class WinnowingIndex:
+class WinnowingIndex(object):
     def __init__(self, k, fingerprints):
         self.k = k
         self.fingerprints = fingerprints
@@ -15,7 +15,7 @@ class WinnowingIndex:
         # TODO: comparison with other winnowing index
 
 
-class Winnowing:
+class Winnowing(object):
     def __init__(self, k=5, t=10):
         self.k = k
         self.w = t - k + 1

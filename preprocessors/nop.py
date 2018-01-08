@@ -1,6 +1,7 @@
 from util import Span, ProcessedText
 
-class Nop:
 
-    def process(self, text: str) -> ProcessedText:
+class Nop(object):
+
+    def process(self, text):
         return ProcessedText([Span(0, text)])

@@ -4,7 +4,6 @@ from comparators.winnowing import Winnowing
 
 import antlr4
 
-from parsers.c.CLexer import CLexer
 from parsers.python.Python3Lexer import Python3Lexer
 
 

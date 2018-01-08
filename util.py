@@ -1,11 +1,11 @@
-class Span:
+class Span(object):
     """A contiguous chunk of text `s` from position `pos` in a file"""
     def __init__(self, pos, s):
         self.pos = pos
         self.s = s
 
 
-class ProcessedText:
+class ProcessedText(object):
     """A sequence of spans"""
     def __init__(self, spans):
         self.spans = spans
