@@ -1,9 +1,11 @@
 import hashlib
 import math
 
+from util import Span
+
 
 class WinnowingIndex(object):
-    def __init__(self, k, fingerprints):
+    def __init__(self, k, fingerprints, id):
         self.k = k
         self.fingerprints = fingerprints
 
@@ -23,11 +25,11 @@ class Winnowing(object):
         self.k = k
         self.w = t - k + 1
 
-    def create_index(self, text):
+    def create_index(self, id, text):
         """
         Given a ProcessedText, return a set of (hash, position) fingerprints
         """
-        doc_indices, chars = zip(*text.chars())
+        indices, chars = zip(*text.chars())
         hashes = [self._compute_hash(chars[i:i+self.k])
                   for i in range(len(chars) - self.k + 1)]
 
@@ -46,14 +48,18 @@ class Winnowing(object):
                     search_idx = (idx - j) % self.w
                     if buf[search_idx] < buf[min_idx]:
                         min_idx = search_idx
-                fingerprints.append((buf[min_idx], doc_indices[i]))
+                fingerprints.append(
+                    (buf[min_idx], Span(indices[i], indices[i+self.k-1]+1))
+                )
             else:
                 # compare new hash to old min (robust winnowing)
                 if buf[idx] < buf[min_idx]:
                     min_idx = idx
-                    fingerprints.append((buf[min_idx], doc_indices[i]))
+                    fingerprints.append(
+                        (buf[min_idx], Span(indices[i], indices[i+self.k-1]+1))
+                    )
 
-        return WinnowingIndex(self.k, fingerprints)
+        return WinnowingIndex(self.k, fingerprints, id)
 
     def _compute_hash(self, s):
         """Given a string or list of strings, generate a hash."""

@@ -1,5 +1,6 @@
 import sys
 import os
+from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 
@@ -23,5 +24,7 @@ if __name__ == "__main__":
         # ExtractIdentifiers(),
         TokenPrinter()
     )
-    comparator = Winnowing(10, 16)
-    print(comparator.create_index(preprocessor.process(text)))
+    comparator = Winnowing(12, 24)
+    result = comparator.create_index(sys.argv[1], preprocessor.process(text))
+    print(result)
+    print(len(repr(result)))

@@ -2,7 +2,7 @@ import antlr4
 from parsers.c.CLexer import CLexer
 from parsers.python.Python3Lexer import Python3Lexer
 
-from util import Span, ProcessedText
+from util import TextSpan, ProcessedText
 
 
 class BaseMapper(object):
@@ -105,14 +105,14 @@ class TokenPrinter(object):
 class TextEmitter(object):
     """Emits tokens to spans using their text contents"""
     def emit(self, tokens):
-        return ProcessedText([Span(tok.start, tok.stop, tok.text)
+        return ProcessedText([TextSpan(tok.start, tok.stop, tok.text)
                               for tok in tokens])
 
 
 class TypeEmitter(object):
     """Emits tokens to spans by token type, rather than by contents"""
     def emit(self, tokens):
-        return ProcessedText([Span(tok.start, tok.stop, f"{tok.type:X}")
+        return ProcessedText([TextSpan(tok.start, tok.stop, f"{tok.type:X}")
                               for tok in tokens])
 
 
