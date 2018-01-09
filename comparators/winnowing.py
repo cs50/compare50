@@ -7,6 +7,9 @@ class WinnowingIndex(object):
         self.k = k
         self.fingerprints = fingerprints
 
+    def __repr__(self):
+        return "\n".join(str(f) for f in self.fingerprints)
+
     def compare(self, other):
         if not isinstance(other, WinnowingIndex):
             raise Exception("comparison between different index types")
@@ -16,7 +19,7 @@ class WinnowingIndex(object):
 
 
 class Winnowing(object):
-    def __init__(self, k=5, t=10):
+    def __init__(self, k, t):
         self.k = k
         self.w = t - k + 1
 
