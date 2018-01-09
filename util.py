@@ -1,8 +1,21 @@
 class Span(object):
-    """A contiguous chunk of text `s` from position `pos` in a file"""
-    def __init__(self, pos, s):
-        self.pos = pos
-        self.s = s
+    """A contiguous string `text` from positions `start` to `stop` in a file"""
+    def __init__(self, start, stop, text):
+        self._start = start
+        self._stop = stop
+        self._text = text
+
+    @property
+    def start(self):
+        return self._start
+
+    @property
+    def stop(self):
+        return self._stop
+
+    @property
+    def text(self):
+        return self._text
 
 
 class ProcessedText(object):
@@ -11,9 +24,9 @@ class ProcessedText(object):
         self.spans = spans
 
     def __str__(self):
-        "".join([span.s for span in self.spans])
+        return "".join(span.text for span in self.spans)
 
     def chars(self):
         for span in self.spans:
-            for i, c in enumerate(span.s):
-                yield (span.pos + i, c)
+            for i, c in enumerate(span.text):
+                yield (span.start + i, c)
