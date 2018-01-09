@@ -7,7 +7,7 @@ import sys
 
 def serializedATN():
     with StringIO() as buf:
-        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3t")
+        buf.write("\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3x")
         buf.write("\u0506\4\2\t\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7")
         buf.write("\4\b\t\b\4\t\t\t\4\n\t\n\4\13\t\13\4\f\t\f\4\r\t\r\4\16")
         buf.write("\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22\4\23\t\23")
@@ -155,7 +155,7 @@ def serializedATN():
         buf.write("\u04bf\3\2\2\2\u00a2\u04c1\3\2\2\2\u00a4\u04dc\3\2\2\2")
         buf.write("\u00a6\u04df\3\2\2\2\u00a8\u04e3\3\2\2\2\u00aa\u04f0\3")
         buf.write("\2\2\2\u00ac\u04f3\3\2\2\2\u00ae\u04fb\3\2\2\2\u00b0\u00d2")
-        buf.write("\7k\2\2\u00b1\u00d2\7l\2\2\u00b2\u00b4\7n\2\2\u00b3\u00b2")
+        buf.write("\7k\2\2\u00b1\u00d2\7q\2\2\u00b2\u00b4\7r\2\2\u00b3\u00b2")
         buf.write("\3\2\2\2\u00b4\u00b5\3\2\2\2\u00b5\u00b3\3\2\2\2\u00b5")
         buf.write("\u00b6\3\2\2\2\u00b6\u00d2\3\2\2\2\u00b7\u00b8\7=\2\2")
         buf.write("\u00b8\u00b9\5.\30\2\u00b9\u00ba\7>\2\2\u00ba\u00d2\3")
@@ -227,7 +227,7 @@ def serializedATN():
         buf.write("\5z>\2\u0154\u0155\7>\2\2\u0155\u0156\5\22\n\2\u0156\u015f")
         buf.write("\3\2\2\2\u0157\u0158\7\3\2\2\u0158\u0159\7=\2\2\u0159")
         buf.write("\u015a\5z>\2\u015a\u015b\7>\2\2\u015b\u015c\5\22\n\2\u015c")
-        buf.write("\u015f\3\2\2\2\u015d\u015f\7m\2\2\u015e\u0151\3\2\2\2")
+        buf.write("\u015f\3\2\2\2\u015d\u015f\7o\2\2\u015e\u0151\3\2\2\2")
         buf.write("\u015e\u0152\3\2\2\2\u015e\u0157\3\2\2\2\u015e\u015d\3")
         buf.write("\2\2\2\u015f\23\3\2\2\2\u0160\u0161\b\13\1\2\u0161\u0162")
         buf.write("\5\22\n\2\u0162\u016e\3\2\2\2\u0163\u0164\f\5\2\2\u0164")
@@ -290,7 +290,7 @@ def serializedATN():
         buf.write("\u01ed\3\2\2\2\u01ec\u01e7\3\2\2\2\u01ec\u01ed\3\2\2\2")
         buf.write("\u01ed)\3\2\2\2\u01ee\u01f5\5(\25\2\u01ef\u01f0\5\16\b")
         buf.write("\2\u01f0\u01f1\5,\27\2\u01f1\u01f2\5*\26\2\u01f2\u01f5")
-        buf.write("\3\2\2\2\u01f3\u01f5\7m\2\2\u01f4\u01ee\3\2\2\2\u01f4")
+        buf.write("\3\2\2\2\u01f3\u01f5\7o\2\2\u01f4\u01ee\3\2\2\2\u01f4")
         buf.write("\u01ef\3\2\2\2\u01f4\u01f3\3\2\2\2\u01f5+\3\2\2\2\u01f6")
         buf.write("\u01f7\t\3\2\2\u01f7-\3\2\2\2\u01f8\u01f9\b\30\1\2\u01f9")
         buf.write("\u01fa\5*\26\2\u01fa\u0200\3\2\2\2\u01fb\u01fc\f\3\2\2")
@@ -386,7 +386,7 @@ def serializedATN():
         buf.write("\2\u02d1\u02d2\b\62\1\2\u02d2\u02db\7k\2\2\u02d3\u02d4")
         buf.write("\7=\2\2\u02d4\u02d5\5`\61\2\u02d5\u02d6\7>\2\2\u02d6\u02db")
         buf.write("\3\2\2\2\u02d7\u02d8\7k\2\2\u02d8\u02d9\7X\2\2\u02d9\u02db")
-        buf.write("\7m\2\2\u02da\u02d1\3\2\2\2\u02da\u02d3\3\2\2\2\u02da")
+        buf.write("\7o\2\2\u02da\u02d1\3\2\2\2\u02da\u02d3\3\2\2\2\u02da")
         buf.write("\u02d7\3\2\2\2\u02db\u0309\3\2\2\2\u02dc\u02dd\f\t\2\2")
         buf.write("\u02dd\u02df\7?\2\2\u02de\u02e0\5p9\2\u02df\u02de\3\2")
         buf.write("\2\2\u02df\u02e0\3\2\2\2\u02e0\u02e2\3\2\2\2\u02e1\u02e3")
@@ -409,7 +409,7 @@ def serializedATN():
         buf.write("\u02f5\3\2\2\2\u0307\u02fc\3\2\2\2\u0307\u0301\3\2\2\2")
         buf.write("\u0308\u030b\3\2\2\2\u0309\u0307\3\2\2\2\u0309\u030a\3")
         buf.write("\2\2\2\u030ac\3\2\2\2\u030b\u0309\3\2\2\2\u030c\u030d")
-        buf.write("\7\r\2\2\u030d\u030f\7=\2\2\u030e\u0310\7n\2\2\u030f\u030e")
+        buf.write("\7\r\2\2\u030d\u030f\7=\2\2\u030e\u0310\7r\2\2\u030f\u030e")
         buf.write("\3\2\2\2\u0310\u0311\3\2\2\2\u0311\u030f\3\2\2\2\u0311")
         buf.write("\u0312\3\2\2\2\u0312\u0313\3\2\2\2\u0313\u0316\7>\2\2")
         buf.write("\u0314\u0316\5f\64\2\u0315\u030c\3\2\2\2\u0315\u0314\3")
@@ -529,7 +529,7 @@ def serializedATN():
         buf.write("\u0420\u0424\3\2\2\2\u0421\u0422\7i\2\2\u0422\u0424\7")
         buf.write("k\2\2\u0423\u041d\3\2\2\2\u0423\u0421\3\2\2\2\u0424\u008b")
         buf.write("\3\2\2\2\u0425\u0426\7;\2\2\u0426\u0427\7=\2\2\u0427\u0428")
-        buf.write("\5\60\31\2\u0428\u042a\7Z\2\2\u0429\u042b\7n\2\2\u042a")
+        buf.write("\5\60\31\2\u0428\u042a\7Z\2\2\u0429\u042b\7r\2\2\u042a")
         buf.write("\u0429\3\2\2\2\u042b\u042c\3\2\2\2\u042c\u042a\3\2\2\2")
         buf.write("\u042c\u042d\3\2\2\2\u042d\u042e\3\2\2\2\u042e\u042f\7")
         buf.write(">\2\2\u042f\u0430\7Y\2\2\u0430\u008d\3\2\2\2\u0431\u0457")
@@ -697,10 +697,11 @@ class CParser ( Parser ):
                       "StarAssign", "DivAssign", "ModAssign", "PlusAssign", 
                       "MinusAssign", "LeftShiftAssign", "RightShiftAssign", 
                       "AndAssign", "XorAssign", "OrAssign", "Equal", "NotEqual", 
-                      "Arrow", "Dot", "Ellipsis", "Identifier", "Constant", 
-                      "DigitSequence", "StringLiteral", "PreprocessorDirective", 
-                      "AsmBlock", "Whitespace", "Newline", "BlockComment", 
-                      "LineComment" ]
+                      "Arrow", "Dot", "Ellipsis", "Identifier", "IntegerConstant", 
+                      "FloatingConstant", "FractionalConstant", "DigitSequence", 
+                      "HexadecimalFractionalConstant", "Constant", "StringLiteral", 
+                      "PreprocessorDirective", "AsmBlock", "Whitespace", 
+                      "Newline", "BlockComment", "LineComment" ]
 
     RULE_primaryExpression = 0
     RULE_genericSelection = 1
@@ -926,15 +927,19 @@ class CParser ( Parser ):
     Dot=103
     Ellipsis=104
     Identifier=105
-    Constant=106
-    DigitSequence=107
-    StringLiteral=108
-    PreprocessorDirective=109
-    AsmBlock=110
-    Whitespace=111
-    Newline=112
-    BlockComment=113
-    LineComment=114
+    IntegerConstant=106
+    FloatingConstant=107
+    FractionalConstant=108
+    DigitSequence=109
+    HexadecimalFractionalConstant=110
+    Constant=111
+    StringLiteral=112
+    PreprocessorDirective=113
+    AsmBlock=114
+    Whitespace=115
+    Newline=116
+    BlockComment=117
+    LineComment=118
 
     def __init__(self, input:TokenStream, output:TextIO = sys.stdout):
         super().__init__(input, output)
@@ -1470,7 +1475,7 @@ class CParser ( Parser ):
                         self.state = 280
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
-                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                             self.state = 279
                             self.argumentExpressionList(0)
 
@@ -4710,7 +4715,7 @@ class CParser ( Parser ):
                         self.state = 736
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
-                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                             self.state = 735
                             self.assignmentExpression()
 
@@ -5062,7 +5067,7 @@ class CParser ( Parser ):
             self.state = 816
             self._errHandler.sync(self)
             token = self._input.LA(1)
-            if token in [CParser.T__0, CParser.T__1, CParser.T__2, CParser.T__3, CParser.T__4, CParser.T__5, CParser.T__6, CParser.T__7, CParser.T__8, CParser.T__9, CParser.T__10, CParser.T__11, CParser.T__12, CParser.T__13, CParser.Auto, CParser.Break, CParser.Case, CParser.Char, CParser.Const, CParser.Continue, CParser.Default, CParser.Do, CParser.Double, CParser.Else, CParser.Enum, CParser.Extern, CParser.Float, CParser.For, CParser.Goto, CParser.If, CParser.Inline, CParser.Int, CParser.Long, CParser.Register, CParser.Restrict, CParser.Return, CParser.Short, CParser.Signed, CParser.Sizeof, CParser.Static, CParser.Struct, CParser.Switch, CParser.Typedef, CParser.Union, CParser.Unsigned, CParser.Void, CParser.Volatile, CParser.While, CParser.Alignas, CParser.Alignof, CParser.Atomic, CParser.Bool, CParser.Complex, CParser.Generic, CParser.Imaginary, CParser.Noreturn, CParser.StaticAssert, CParser.ThreadLocal, CParser.LeftBracket, CParser.RightBracket, CParser.LeftBrace, CParser.RightBrace, CParser.Less, CParser.LessEqual, CParser.Greater, CParser.GreaterEqual, CParser.LeftShift, CParser.RightShift, CParser.Plus, CParser.PlusPlus, CParser.Minus, CParser.MinusMinus, CParser.Star, CParser.Div, CParser.Mod, CParser.And, CParser.Or, CParser.AndAnd, CParser.OrOr, CParser.Caret, CParser.Not, CParser.Tilde, CParser.Question, CParser.Colon, CParser.Semi, CParser.Assign, CParser.StarAssign, CParser.DivAssign, CParser.ModAssign, CParser.PlusAssign, CParser.MinusAssign, CParser.LeftShiftAssign, CParser.RightShiftAssign, CParser.AndAssign, CParser.XorAssign, CParser.OrAssign, CParser.Equal, CParser.NotEqual, CParser.Arrow, CParser.Dot, CParser.Ellipsis, CParser.Identifier, CParser.Constant, CParser.DigitSequence, CParser.StringLiteral, CParser.PreprocessorDirective, CParser.AsmBlock, CParser.Whitespace, CParser.Newline, CParser.BlockComment, CParser.LineComment]:
+            if token in [CParser.T__0, CParser.T__1, CParser.T__2, CParser.T__3, CParser.T__4, CParser.T__5, CParser.T__6, CParser.T__7, CParser.T__8, CParser.T__9, CParser.T__10, CParser.T__11, CParser.T__12, CParser.T__13, CParser.Auto, CParser.Break, CParser.Case, CParser.Char, CParser.Const, CParser.Continue, CParser.Default, CParser.Do, CParser.Double, CParser.Else, CParser.Enum, CParser.Extern, CParser.Float, CParser.For, CParser.Goto, CParser.If, CParser.Inline, CParser.Int, CParser.Long, CParser.Register, CParser.Restrict, CParser.Return, CParser.Short, CParser.Signed, CParser.Sizeof, CParser.Static, CParser.Struct, CParser.Switch, CParser.Typedef, CParser.Union, CParser.Unsigned, CParser.Void, CParser.Volatile, CParser.While, CParser.Alignas, CParser.Alignof, CParser.Atomic, CParser.Bool, CParser.Complex, CParser.Generic, CParser.Imaginary, CParser.Noreturn, CParser.StaticAssert, CParser.ThreadLocal, CParser.LeftBracket, CParser.RightBracket, CParser.LeftBrace, CParser.RightBrace, CParser.Less, CParser.LessEqual, CParser.Greater, CParser.GreaterEqual, CParser.LeftShift, CParser.RightShift, CParser.Plus, CParser.PlusPlus, CParser.Minus, CParser.MinusMinus, CParser.Star, CParser.Div, CParser.Mod, CParser.And, CParser.Or, CParser.AndAnd, CParser.OrOr, CParser.Caret, CParser.Not, CParser.Tilde, CParser.Question, CParser.Colon, CParser.Semi, CParser.Assign, CParser.StarAssign, CParser.DivAssign, CParser.ModAssign, CParser.PlusAssign, CParser.MinusAssign, CParser.LeftShiftAssign, CParser.RightShiftAssign, CParser.AndAssign, CParser.XorAssign, CParser.OrAssign, CParser.Equal, CParser.NotEqual, CParser.Arrow, CParser.Dot, CParser.Ellipsis, CParser.Identifier, CParser.IntegerConstant, CParser.FloatingConstant, CParser.FractionalConstant, CParser.DigitSequence, CParser.HexadecimalFractionalConstant, CParser.Constant, CParser.StringLiteral, CParser.PreprocessorDirective, CParser.AsmBlock, CParser.Whitespace, CParser.Newline, CParser.BlockComment, CParser.LineComment]:
                 self.enterOuterAlt(localctx, 1)
                 self.state = 807
                 _la = self._input.LA(1)
@@ -5080,7 +5085,7 @@ class CParser ( Parser ):
                     self.state = 810
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
-                    if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                    if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                         self.state = 809
                         self.argumentExpressionList(0)
 
@@ -5142,11 +5147,11 @@ class CParser ( Parser ):
             self.state = 825
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.T__3) | (1 << CParser.T__4) | (1 << CParser.T__5) | (1 << CParser.T__6) | (1 << CParser.T__7) | (1 << CParser.T__8) | (1 << CParser.T__9) | (1 << CParser.T__10) | (1 << CParser.T__11) | (1 << CParser.T__12) | (1 << CParser.T__13) | (1 << CParser.Auto) | (1 << CParser.Break) | (1 << CParser.Case) | (1 << CParser.Char) | (1 << CParser.Const) | (1 << CParser.Continue) | (1 << CParser.Default) | (1 << CParser.Do) | (1 << CParser.Double) | (1 << CParser.Else) | (1 << CParser.Enum) | (1 << CParser.Extern) | (1 << CParser.Float) | (1 << CParser.For) | (1 << CParser.Goto) | (1 << CParser.If) | (1 << CParser.Inline) | (1 << CParser.Int) | (1 << CParser.Long) | (1 << CParser.Register) | (1 << CParser.Restrict) | (1 << CParser.Return) | (1 << CParser.Short) | (1 << CParser.Signed) | (1 << CParser.Sizeof) | (1 << CParser.Static) | (1 << CParser.Struct) | (1 << CParser.Switch) | (1 << CParser.Typedef) | (1 << CParser.Union) | (1 << CParser.Unsigned) | (1 << CParser.Void) | (1 << CParser.Volatile) | (1 << CParser.While) | (1 << CParser.Alignas) | (1 << CParser.Alignof) | (1 << CParser.Atomic) | (1 << CParser.Bool) | (1 << CParser.Complex) | (1 << CParser.Generic) | (1 << CParser.Imaginary) | (1 << CParser.Noreturn) | (1 << CParser.StaticAssert) | (1 << CParser.ThreadLocal) | (1 << CParser.LeftParen) | (1 << CParser.LeftBracket) | (1 << CParser.RightBracket) | (1 << CParser.LeftBrace))) != 0) or ((((_la - 64)) & ~0x3f) == 0 and ((1 << (_la - 64)) & ((1 << (CParser.RightBrace - 64)) | (1 << (CParser.Less - 64)) | (1 << (CParser.LessEqual - 64)) | (1 << (CParser.Greater - 64)) | (1 << (CParser.GreaterEqual - 64)) | (1 << (CParser.LeftShift - 64)) | (1 << (CParser.RightShift - 64)) | (1 << (CParser.Plus - 64)) | (1 << (CParser.PlusPlus - 64)) | (1 << (CParser.Minus - 64)) | (1 << (CParser.MinusMinus - 64)) | (1 << (CParser.Star - 64)) | (1 << (CParser.Div - 64)) | (1 << (CParser.Mod - 64)) | (1 << (CParser.And - 64)) | (1 << (CParser.Or - 64)) | (1 << (CParser.AndAnd - 64)) | (1 << (CParser.OrOr - 64)) | (1 << (CParser.Caret - 64)) | (1 << (CParser.Not - 64)) | (1 << (CParser.Tilde - 64)) | (1 << (CParser.Question - 64)) | (1 << (CParser.Colon - 64)) | (1 << (CParser.Semi - 64)) | (1 << (CParser.Comma - 64)) | (1 << (CParser.Assign - 64)) | (1 << (CParser.StarAssign - 64)) | (1 << (CParser.DivAssign - 64)) | (1 << (CParser.ModAssign - 64)) | (1 << (CParser.PlusAssign - 64)) | (1 << (CParser.MinusAssign - 64)) | (1 << (CParser.LeftShiftAssign - 64)) | (1 << (CParser.RightShiftAssign - 64)) | (1 << (CParser.AndAssign - 64)) | (1 << (CParser.XorAssign - 64)) | (1 << (CParser.OrAssign - 64)) | (1 << (CParser.Equal - 64)) | (1 << (CParser.NotEqual - 64)) | (1 << (CParser.Arrow - 64)) | (1 << (CParser.Dot - 64)) | (1 << (CParser.Ellipsis - 64)) | (1 << (CParser.Identifier - 64)) | (1 << (CParser.Constant - 64)) | (1 << (CParser.DigitSequence - 64)) | (1 << (CParser.StringLiteral - 64)) | (1 << (CParser.PreprocessorDirective - 64)) | (1 << (CParser.AsmBlock - 64)) | (1 << (CParser.Whitespace - 64)) | (1 << (CParser.Newline - 64)) | (1 << (CParser.BlockComment - 64)) | (1 << (CParser.LineComment - 64)))) != 0):
+            while (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.T__3) | (1 << CParser.T__4) | (1 << CParser.T__5) | (1 << CParser.T__6) | (1 << CParser.T__7) | (1 << CParser.T__8) | (1 << CParser.T__9) | (1 << CParser.T__10) | (1 << CParser.T__11) | (1 << CParser.T__12) | (1 << CParser.T__13) | (1 << CParser.Auto) | (1 << CParser.Break) | (1 << CParser.Case) | (1 << CParser.Char) | (1 << CParser.Const) | (1 << CParser.Continue) | (1 << CParser.Default) | (1 << CParser.Do) | (1 << CParser.Double) | (1 << CParser.Else) | (1 << CParser.Enum) | (1 << CParser.Extern) | (1 << CParser.Float) | (1 << CParser.For) | (1 << CParser.Goto) | (1 << CParser.If) | (1 << CParser.Inline) | (1 << CParser.Int) | (1 << CParser.Long) | (1 << CParser.Register) | (1 << CParser.Restrict) | (1 << CParser.Return) | (1 << CParser.Short) | (1 << CParser.Signed) | (1 << CParser.Sizeof) | (1 << CParser.Static) | (1 << CParser.Struct) | (1 << CParser.Switch) | (1 << CParser.Typedef) | (1 << CParser.Union) | (1 << CParser.Unsigned) | (1 << CParser.Void) | (1 << CParser.Volatile) | (1 << CParser.While) | (1 << CParser.Alignas) | (1 << CParser.Alignof) | (1 << CParser.Atomic) | (1 << CParser.Bool) | (1 << CParser.Complex) | (1 << CParser.Generic) | (1 << CParser.Imaginary) | (1 << CParser.Noreturn) | (1 << CParser.StaticAssert) | (1 << CParser.ThreadLocal) | (1 << CParser.LeftParen) | (1 << CParser.LeftBracket) | (1 << CParser.RightBracket) | (1 << CParser.LeftBrace))) != 0) or ((((_la - 64)) & ~0x3f) == 0 and ((1 << (_la - 64)) & ((1 << (CParser.RightBrace - 64)) | (1 << (CParser.Less - 64)) | (1 << (CParser.LessEqual - 64)) | (1 << (CParser.Greater - 64)) | (1 << (CParser.GreaterEqual - 64)) | (1 << (CParser.LeftShift - 64)) | (1 << (CParser.RightShift - 64)) | (1 << (CParser.Plus - 64)) | (1 << (CParser.PlusPlus - 64)) | (1 << (CParser.Minus - 64)) | (1 << (CParser.MinusMinus - 64)) | (1 << (CParser.Star - 64)) | (1 << (CParser.Div - 64)) | (1 << (CParser.Mod - 64)) | (1 << (CParser.And - 64)) | (1 << (CParser.Or - 64)) | (1 << (CParser.AndAnd - 64)) | (1 << (CParser.OrOr - 64)) | (1 << (CParser.Caret - 64)) | (1 << (CParser.Not - 64)) | (1 << (CParser.Tilde - 64)) | (1 << (CParser.Question - 64)) | (1 << (CParser.Colon - 64)) | (1 << (CParser.Semi - 64)) | (1 << (CParser.Comma - 64)) | (1 << (CParser.Assign - 64)) | (1 << (CParser.StarAssign - 64)) | (1 << (CParser.DivAssign - 64)) | (1 << (CParser.ModAssign - 64)) | (1 << (CParser.PlusAssign - 64)) | (1 << (CParser.MinusAssign - 64)) | (1 << (CParser.LeftShiftAssign - 64)) | (1 << (CParser.RightShiftAssign - 64)) | (1 << (CParser.AndAssign - 64)) | (1 << (CParser.XorAssign - 64)) | (1 << (CParser.OrAssign - 64)) | (1 << (CParser.Equal - 64)) | (1 << (CParser.NotEqual - 64)) | (1 << (CParser.Arrow - 64)) | (1 << (CParser.Dot - 64)) | (1 << (CParser.Ellipsis - 64)) | (1 << (CParser.Identifier - 64)) | (1 << (CParser.IntegerConstant - 64)) | (1 << (CParser.FloatingConstant - 64)) | (1 << (CParser.FractionalConstant - 64)) | (1 << (CParser.DigitSequence - 64)) | (1 << (CParser.HexadecimalFractionalConstant - 64)) | (1 << (CParser.Constant - 64)) | (1 << (CParser.StringLiteral - 64)) | (1 << (CParser.PreprocessorDirective - 64)) | (1 << (CParser.AsmBlock - 64)) | (1 << (CParser.Whitespace - 64)) | (1 << (CParser.Newline - 64)) | (1 << (CParser.BlockComment - 64)) | (1 << (CParser.LineComment - 64)))) != 0):
                 self.state = 823
                 self._errHandler.sync(self)
                 token = self._input.LA(1)
-                if token in [CParser.T__0, CParser.T__1, CParser.T__2, CParser.T__3, CParser.T__4, CParser.T__5, CParser.T__6, CParser.T__7, CParser.T__8, CParser.T__9, CParser.T__10, CParser.T__11, CParser.T__12, CParser.T__13, CParser.Auto, CParser.Break, CParser.Case, CParser.Char, CParser.Const, CParser.Continue, CParser.Default, CParser.Do, CParser.Double, CParser.Else, CParser.Enum, CParser.Extern, CParser.Float, CParser.For, CParser.Goto, CParser.If, CParser.Inline, CParser.Int, CParser.Long, CParser.Register, CParser.Restrict, CParser.Return, CParser.Short, CParser.Signed, CParser.Sizeof, CParser.Static, CParser.Struct, CParser.Switch, CParser.Typedef, CParser.Union, CParser.Unsigned, CParser.Void, CParser.Volatile, CParser.While, CParser.Alignas, CParser.Alignof, CParser.Atomic, CParser.Bool, CParser.Complex, CParser.Generic, CParser.Imaginary, CParser.Noreturn, CParser.StaticAssert, CParser.ThreadLocal, CParser.LeftBracket, CParser.RightBracket, CParser.LeftBrace, CParser.RightBrace, CParser.Less, CParser.LessEqual, CParser.Greater, CParser.GreaterEqual, CParser.LeftShift, CParser.RightShift, CParser.Plus, CParser.PlusPlus, CParser.Minus, CParser.MinusMinus, CParser.Star, CParser.Div, CParser.Mod, CParser.And, CParser.Or, CParser.AndAnd, CParser.OrOr, CParser.Caret, CParser.Not, CParser.Tilde, CParser.Question, CParser.Colon, CParser.Semi, CParser.Comma, CParser.Assign, CParser.StarAssign, CParser.DivAssign, CParser.ModAssign, CParser.PlusAssign, CParser.MinusAssign, CParser.LeftShiftAssign, CParser.RightShiftAssign, CParser.AndAssign, CParser.XorAssign, CParser.OrAssign, CParser.Equal, CParser.NotEqual, CParser.Arrow, CParser.Dot, CParser.Ellipsis, CParser.Identifier, CParser.Constant, CParser.DigitSequence, CParser.StringLiteral, CParser.PreprocessorDirective, CParser.AsmBlock, CParser.Whitespace, CParser.Newline, CParser.BlockComment, CParser.LineComment]:
+                if token in [CParser.T__0, CParser.T__1, CParser.T__2, CParser.T__3, CParser.T__4, CParser.T__5, CParser.T__6, CParser.T__7, CParser.T__8, CParser.T__9, CParser.T__10, CParser.T__11, CParser.T__12, CParser.T__13, CParser.Auto, CParser.Break, CParser.Case, CParser.Char, CParser.Const, CParser.Continue, CParser.Default, CParser.Do, CParser.Double, CParser.Else, CParser.Enum, CParser.Extern, CParser.Float, CParser.For, CParser.Goto, CParser.If, CParser.Inline, CParser.Int, CParser.Long, CParser.Register, CParser.Restrict, CParser.Return, CParser.Short, CParser.Signed, CParser.Sizeof, CParser.Static, CParser.Struct, CParser.Switch, CParser.Typedef, CParser.Union, CParser.Unsigned, CParser.Void, CParser.Volatile, CParser.While, CParser.Alignas, CParser.Alignof, CParser.Atomic, CParser.Bool, CParser.Complex, CParser.Generic, CParser.Imaginary, CParser.Noreturn, CParser.StaticAssert, CParser.ThreadLocal, CParser.LeftBracket, CParser.RightBracket, CParser.LeftBrace, CParser.RightBrace, CParser.Less, CParser.LessEqual, CParser.Greater, CParser.GreaterEqual, CParser.LeftShift, CParser.RightShift, CParser.Plus, CParser.PlusPlus, CParser.Minus, CParser.MinusMinus, CParser.Star, CParser.Div, CParser.Mod, CParser.And, CParser.Or, CParser.AndAnd, CParser.OrOr, CParser.Caret, CParser.Not, CParser.Tilde, CParser.Question, CParser.Colon, CParser.Semi, CParser.Comma, CParser.Assign, CParser.StarAssign, CParser.DivAssign, CParser.ModAssign, CParser.PlusAssign, CParser.MinusAssign, CParser.LeftShiftAssign, CParser.RightShiftAssign, CParser.AndAssign, CParser.XorAssign, CParser.OrAssign, CParser.Equal, CParser.NotEqual, CParser.Arrow, CParser.Dot, CParser.Ellipsis, CParser.Identifier, CParser.IntegerConstant, CParser.FloatingConstant, CParser.FractionalConstant, CParser.DigitSequence, CParser.HexadecimalFractionalConstant, CParser.Constant, CParser.StringLiteral, CParser.PreprocessorDirective, CParser.AsmBlock, CParser.Whitespace, CParser.Newline, CParser.BlockComment, CParser.LineComment]:
                     self.state = 818
                     _la = self._input.LA(1)
                     if _la <= 0 or _la==CParser.LeftParen or _la==CParser.RightParen:
@@ -5850,7 +5855,7 @@ class CParser ( Parser ):
                 self.state = 928
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 927
                     self.assignmentExpression()
 
@@ -5959,7 +5964,7 @@ class CParser ( Parser ):
                         self.state = 967
                         self._errHandler.sync(self)
                         _la = self._input.LA(1)
-                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                        if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                             self.state = 966
                             self.assignmentExpression()
 
@@ -6631,7 +6636,7 @@ class CParser ( Parser ):
                 self.state = 1088
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1080
                     self.logicalOrExpression(0)
                     self.state = 1085
@@ -6657,7 +6662,7 @@ class CParser ( Parser ):
                     self.state = 1099
                     self._errHandler.sync(self)
                     _la = self._input.LA(1)
-                    if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                    if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                         self.state = 1091
                         self.logicalOrExpression(0)
                         self.state = 1096
@@ -6808,7 +6813,7 @@ class CParser ( Parser ):
             self.state = 1125
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.T__3) | (1 << CParser.T__4) | (1 << CParser.T__5) | (1 << CParser.T__6) | (1 << CParser.T__7) | (1 << CParser.T__8) | (1 << CParser.T__9) | (1 << CParser.T__10) | (1 << CParser.T__11) | (1 << CParser.T__12) | (1 << CParser.Auto) | (1 << CParser.Break) | (1 << CParser.Case) | (1 << CParser.Char) | (1 << CParser.Const) | (1 << CParser.Continue) | (1 << CParser.Default) | (1 << CParser.Do) | (1 << CParser.Double) | (1 << CParser.Enum) | (1 << CParser.Extern) | (1 << CParser.Float) | (1 << CParser.For) | (1 << CParser.Goto) | (1 << CParser.If) | (1 << CParser.Inline) | (1 << CParser.Int) | (1 << CParser.Long) | (1 << CParser.Register) | (1 << CParser.Restrict) | (1 << CParser.Return) | (1 << CParser.Short) | (1 << CParser.Signed) | (1 << CParser.Sizeof) | (1 << CParser.Static) | (1 << CParser.Struct) | (1 << CParser.Switch) | (1 << CParser.Typedef) | (1 << CParser.Union) | (1 << CParser.Unsigned) | (1 << CParser.Void) | (1 << CParser.Volatile) | (1 << CParser.While) | (1 << CParser.Alignas) | (1 << CParser.Alignof) | (1 << CParser.Atomic) | (1 << CParser.Bool) | (1 << CParser.Complex) | (1 << CParser.Generic) | (1 << CParser.Noreturn) | (1 << CParser.StaticAssert) | (1 << CParser.ThreadLocal) | (1 << CParser.LeftParen) | (1 << CParser.LeftBrace))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Semi - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.T__3) | (1 << CParser.T__4) | (1 << CParser.T__5) | (1 << CParser.T__6) | (1 << CParser.T__7) | (1 << CParser.T__8) | (1 << CParser.T__9) | (1 << CParser.T__10) | (1 << CParser.T__11) | (1 << CParser.T__12) | (1 << CParser.Auto) | (1 << CParser.Break) | (1 << CParser.Case) | (1 << CParser.Char) | (1 << CParser.Const) | (1 << CParser.Continue) | (1 << CParser.Default) | (1 << CParser.Do) | (1 << CParser.Double) | (1 << CParser.Enum) | (1 << CParser.Extern) | (1 << CParser.Float) | (1 << CParser.For) | (1 << CParser.Goto) | (1 << CParser.If) | (1 << CParser.Inline) | (1 << CParser.Int) | (1 << CParser.Long) | (1 << CParser.Register) | (1 << CParser.Restrict) | (1 << CParser.Return) | (1 << CParser.Short) | (1 << CParser.Signed) | (1 << CParser.Sizeof) | (1 << CParser.Static) | (1 << CParser.Struct) | (1 << CParser.Switch) | (1 << CParser.Typedef) | (1 << CParser.Union) | (1 << CParser.Unsigned) | (1 << CParser.Void) | (1 << CParser.Volatile) | (1 << CParser.While) | (1 << CParser.Alignas) | (1 << CParser.Alignof) | (1 << CParser.Atomic) | (1 << CParser.Bool) | (1 << CParser.Complex) | (1 << CParser.Generic) | (1 << CParser.Noreturn) | (1 << CParser.StaticAssert) | (1 << CParser.ThreadLocal) | (1 << CParser.LeftParen) | (1 << CParser.LeftBrace))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Semi - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                 self.state = 1124
                 self.blockItemList(0)
 
@@ -6981,7 +6986,7 @@ class CParser ( Parser ):
             self.state = 1144
             self._errHandler.sync(self)
             _la = self._input.LA(1)
-            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+            if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                 self.state = 1143
                 self.expression(0)
 
@@ -7238,7 +7243,7 @@ class CParser ( Parser ):
                 self.state = 1190
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1189
                     self.forExpression(0)
 
@@ -7248,7 +7253,7 @@ class CParser ( Parser ):
                 self.state = 1194
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1193
                     self.forExpression(0)
 
@@ -7260,7 +7265,7 @@ class CParser ( Parser ):
                 self.state = 1197
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1196
                     self.expression(0)
 
@@ -7270,7 +7275,7 @@ class CParser ( Parser ):
                 self.state = 1201
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1200
                     self.forExpression(0)
 
@@ -7280,7 +7285,7 @@ class CParser ( Parser ):
                 self.state = 1205
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1204
                     self.forExpression(0)
 
@@ -7497,7 +7502,7 @@ class CParser ( Parser ):
                 self.state = 1235
                 self._errHandler.sync(self)
                 _la = self._input.LA(1)
-                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
+                if (((_la) & ~0x3f) == 0 and ((1 << _la) & ((1 << CParser.T__0) | (1 << CParser.T__1) | (1 << CParser.T__2) | (1 << CParser.Sizeof) | (1 << CParser.Alignof) | (1 << CParser.Generic) | (1 << CParser.LeftParen))) != 0) or ((((_la - 71)) & ~0x3f) == 0 and ((1 << (_la - 71)) & ((1 << (CParser.Plus - 71)) | (1 << (CParser.PlusPlus - 71)) | (1 << (CParser.Minus - 71)) | (1 << (CParser.MinusMinus - 71)) | (1 << (CParser.Star - 71)) | (1 << (CParser.And - 71)) | (1 << (CParser.AndAnd - 71)) | (1 << (CParser.Not - 71)) | (1 << (CParser.Tilde - 71)) | (1 << (CParser.Identifier - 71)) | (1 << (CParser.DigitSequence - 71)) | (1 << (CParser.Constant - 71)) | (1 << (CParser.StringLiteral - 71)))) != 0):
                     self.state = 1234
                     self.expression(0)
 

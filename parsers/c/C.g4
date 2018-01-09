@@ -681,14 +681,6 @@ HexQuad
     :   HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit
     ;
 
-Constant
-    :   IntegerConstant
-    |   FloatingConstant
-    //|   EnumerationConstant
-    |   CharacterConstant
-    ;
-
-fragment
 IntegerConstant
     :   DecimalConstant IntegerSuffix?
     |   OctalConstant IntegerSuffix?
@@ -759,7 +751,6 @@ LongLongSuffix
     :   'll' | 'LL'
     ;
 
-fragment
 FloatingConstant
     :   DecimalFloatingConstant
     |   HexadecimalFloatingConstant
@@ -777,7 +768,6 @@ HexadecimalFloatingConstant
     |   HexadecimalPrefix HexadecimalDigitSequence BinaryExponentPart FloatingSuffix?
     ;
 
-fragment
 FractionalConstant
     :   DigitSequence? '.' DigitSequence
     |   DigitSequence '.'
@@ -798,7 +788,6 @@ DigitSequence
     :   Digit+
     ;
 
-fragment
 HexadecimalFractionalConstant
     :   HexadecimalDigitSequence? '.' HexadecimalDigitSequence
     |   HexadecimalDigitSequence '.'
@@ -826,6 +815,12 @@ CharacterConstant
     |   'L\'' CCharSequence '\''
     |   'u\'' CCharSequence '\''
     |   'U\'' CCharSequence '\''
+    ;
+
+Constant
+    :   IntegerConstant
+    |   FloatingConstant
+    |   CharacterConstant
     ;
 
 fragment
