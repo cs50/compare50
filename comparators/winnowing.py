@@ -15,14 +15,30 @@ class WinnowingIndex(object):
     def _insert(self, h, id, span):
         self.index.setdefault(h, set()).add((id, span))
 
-    def extend(self, other):
+    def __iadd__(self, other):
+        if other.k != self.k:
+            raise Exception("Combining indices of different n-gram lengths")
         for h, entry in other.index.items():
             for id, span in entry:
                 self._insert(h, id, span)
+        return self
 
-    def remove(self, other):
+    def __add__(self, other):
+        result = WinnowingIndex(self.k, [], None)
+        result += self
+        result += other
+        return result
+
+    def __isub__(self, other):
         for h in other.index.keys():
-            self.index.pop(h)
+            self.index.pop(h, None)
+        return self
+
+    def __sub__(self, other):
+        result = WinnowingIndex(self.k, [], None)
+        result += self
+        result -= other
+        return result
 
     def compare(self, other):
         # validate other index

@@ -7,7 +7,8 @@ from comparators.winnowing import Winnowing
 from parsers.c.CLexer import CLexer
 from parsers.python.Python3Lexer import Python3Lexer
 
-from util import Match, Span
+from util import Span
+from compare import compare
 
 
 def preprocess_and_fingerprint():
@@ -45,39 +46,22 @@ def compare_two():
 
 
 def similarities():
-    def plain_index(filename):
-        preprocessor = Nop()
-        comparator = Winnowing(16, 32)
-        with open(filename, "r") as f:
-            text = f.read()
-        return comparator.create_index(filename, preprocessor.process(text))
-    def processed_index(filename):
-        preprocessor = TokenProcessor(Python3Lexer, NormalizeIdentifiers())
-        comparator = Winnowing(8, 16, by_span=True)
-        with open(filename, "r") as f:
-            text = f.read()
-        return comparator.create_index(filename, preprocessor.process(text))
-    dirs = [f"Similarities/{d}" for d in os.listdir("Similarities")
-            if os.path.isdir(f"Similarities/{d}")]
-    helpers = [f"{d}/helpers.py" for d in dirs]
-    plain, processed = plain_index(helpers[0]), processed_index(helpers[0])
-    for helper in helpers[1:]:
-        plain.extend(plain_index(helper))
-        processed.extend(processed_index(helper))
-    plain_results = plain.compare(plain)
-    processed_results = processed.compare(processed)
-    results = Match.combine([plain_results, processed_results], weights=[1, 1])
-    results = processed_results # temp
+    submissions = [f"submissions/{d}/helpers.py"
+                   for d in os.listdir("submissions")
+                   if os.path.isdir(f"submissions/{d}")]
+    results = compare("similarities/helpers.py", submissions)
     for i, result in enumerate(results[:8]):
         with open(result.id1, "r") as f:
             text1 = f.read()
         with open(result.id2, "r") as f:
             text2 = f.read()
         with open(f"out{i}a.txt", "w") as f:
-            f.write(f"{result.id1}, {result.id2} (weight: {result.weight})\n\n")
+            f.write(f"{result.id1}, ")
+            f.write(f"{result.id2} (weight: {result.weight})\n\n")
             f.write(Span.highlight(result.spans1, text1))
         with open(f"out{i}b.txt", "w") as f:
-            f.write(f"{result.id1}, {result.id2} (weight: {result.weight})\n\n")
+            f.write(f"{result.id1}, ")
+            f.write(f"{result.id2} (weight: {result.weight})\n\n")
             f.write(Span.highlight(result.spans2, text2))
 
 

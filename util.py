@@ -48,7 +48,6 @@ class Span(object):
                 combined.append(match.pop(0))
         return "".join(combined)
 
-
     def __repr__(self):
         return f"Span({self.start}:{self.stop})"
 
@@ -98,7 +97,8 @@ class Match(object):
         self._spans2 = spans2 if keep_order else spans1
 
     def __repr__(self):
-        return f"Match({self.weight}, {self.id1}{self.spans1}, {self.id2}{self.spans2})"
+        return (f"Match({self.weight}, " +
+                f"{self.id1}{self.spans1}, {self.id2}{self.spans2})")
 
     @property
     def weight(self):
@@ -155,7 +155,6 @@ class Match(object):
                                 match.spans2)
                 combined_matches[match.id_pair()] = acc
         return Match.ordered(combined_matches.values())
-
 
     def report_colored(self, text1, text2):
         header = f"{self.id1}, {self.id2} (weight: {self.weight})"
