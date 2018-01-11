@@ -61,21 +61,26 @@ class WinnowingIndex(object):
             spans2 = Span.coalesce(spans2)
             results.append(Match(weight, id1, spans1, id2, spans2))
 
-        return sorted(results, key=lambda m: m.weight, reverse=True)
+        return Match.ordered(results)
 
 
 class Winnowing(object):
-    def __init__(self, k, t):
+    def __init__(self, k, t, by_span=False):
         self.k = k
         self.w = t - k + 1
+        self.by_span = by_span
 
     def create_index(self, id, text):
         """
         Given a ProcessedText, return a set of (hash, position) fingerprints
         """
-        indices, chars = zip(*text.chars())
-        hashes = [self._compute_hash(chars[i:i+self.k])
-                  for i in range(len(chars) - self.k + 1)]
+        if self.by_span:
+            indices = [span.start for span in text.spans]
+            items = [span.text for span in text.spans]
+        else:
+            indices, items = zip(*text.chars())
+        hashes = [self._compute_hash(items[i:i+self.k])
+                  for i in range(len(items) - self.k + 1)]
 
         # circular buffer holding window
         buf = [math.inf] * self.w
