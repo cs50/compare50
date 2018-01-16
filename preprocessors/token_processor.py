@@ -1,135 +1,77 @@
-import antlr4
-from parsers.c.CLexer import CLexer
-from parsers.python.Python3Lexer import Python3Lexer
+from pygments.lexers.c_cpp import CLexer
+from pygments.lexers.python import Python3Lexer
+from pygments.token import Token, String, Name, Number
 
 from util import TextSpan, ProcessedText
 
 
-class BaseMapper(object):
-    def process(self, tokens):
-        """Detect language and dispatch to specialized subclass method"""
-        if not tokens:
-            return tokens
-        # remove 'Lexer' from lexer name to get language
-        lang = tokens[0].getTokenSource().__class__.__name__[:-5]
-        return getattr(self, "process" + lang)(tokens)
-
-
-class NormalizeIdentifiers(BaseMapper):
+class NormalizeIdentifiers(object):
     """Replaces all identifiers with `v`"""
-    def processPython3(self, tokens):
-        for tok in tokens:
-            if tok.type == Python3Lexer.NAME:
-                tok.text = "v"
-        return tokens
-
-    def processC(self, tokens):
-        for tok in tokens:
-            if tok.type == CLexer.Identifier:
-                tok.text = "v"
-        return tokens
+    def process(self, language, tokens):
+        for start, stop, tok, val in tokens:
+            if tok in Name:
+                yield (start, stop, tok, "v")
+            else:
+                yield (start, stop, tok, val)
 
 
-class NormalizeStringLiterals(BaseMapper):
+class NormalizeStringLiterals(object):
     """Replaces string literals with empty strings"""
-    def processPython3(self, tokens):
-        str_types = [Python3Lexer.STRING_LITERAL, Python3Lexer.BYTES_LITERAL]
-        for tok in tokens:
-            if tok.type in str_types:
-                tok.text = '""'
-        return tokens
-
-    def processC(self, tokens):
-        for tok in tokens:
-            if tok.type == CLexer.StringLiteral:
-                tok.text = '""'
-            if tok.type == CLexer.CharacterConstant:
-                tok.text = "''"
-        return tokens
+    def process(self, language, tokens):
+        for start, stop, tok, val in tokens:
+            if tok in String.Char:
+                yield (start, stop, tok, "''")
+            elif tok in String:
+                yield (start, stop, tok, '""')
+            else:
+                yield (start, stop, tok, val)
 
 
-class NormalizeNumericLiterals(BaseMapper):
+class NormalizeNumericLiterals(object):
     """Replaces numeric literals with their types"""
-    def processPython3(self, tokens):
-        int_types = [
-            Python3Lexer.DECIMAL_INTEGER,
-            Python3Lexer.OCT_INTEGER,
-            Python3Lexer.HEX_INTEGER,
-            Python3Lexer.BIN_INTEGER
-        ]
-        for tok in tokens:
-            if tok.type in int_types:
-                tok.text = "INT"
-            elif tok.type == Python3Lexer.FLOAT_NUMBER:
-                tok.text = "FLOAT"
-            elif tok.type == Python3Lexer.IMAG_NUMBER:
-                tok.text = "IMAG"
-        return tokens
-
-    def processC(self, tokens):
-        float_types = [CLexer.FloatingConstant, CLexer.FractionalConstant]
-        for tok in tokens:
-            if tok.type == CLexer.IntegerConstant:
-                tok.text = "INT"
-            elif tok.type in float_types:
-                tok.text = "FLOAT"
-        return tokens
+    def process(self, language, tokens):
+        for start, stop, tok, val in tokens:
+            if tok in Number.Integer:
+                yield (start, stop, tok, "INT")
+            elif tok in Number.Float:
+                yield (start, stop, tok, "FLOAT")
+            elif tok in Number:
+                yield (start, stop, tok, "NUM")
 
 
-class ExtractIdentifiers(BaseMapper):
+class ExtractIdentifiers(object):
     """Keeps only the first instance of each identifier used"""
-    def extractIDs(self, tokens, id_tok_type):
-        id_toks = []
-        for tok in tokens:
-            if tok.type == id_tok_type:
-                if not any(id.text == tok.text for id in id_toks):
-                    id_toks.append(tok)
-        return id_toks
-
-    def processPython3(self, tokens):
-        return self.extractIDs(tokens, Python3Lexer.NAME)
-
-    def processC(self, tokens):
-        return self.extractIDs(tokens, CLexer.Identifier)
+    def process(self, language, tokens):
+        names = []
+        for start, stop, tok, val in tokens:
+            if tok in Name and val not in names:
+                names.append(val)
+                yield (start, stop, tok, val)
 
 
 class TokenPrinter(object):
     """Prints the tokens but does not modify them. Useful for debugging."""
-    def process(self, tokens):
-        for tok in tokens:
-            print(tok.text, end="")
-        print()
-        return tokens
-
-
-class TextEmitter(object):
-    """Emits tokens to spans using their text contents"""
-    def emit(self, tokens):
-        return ProcessedText([TextSpan(tok.start, tok.stop, tok.text)
-                              for tok in tokens])
-
-
-class TypeEmitter(object):
-    """Emits tokens to spans by token type, rather than by contents"""
-    def emit(self, tokens):
-        return ProcessedText([TextSpan(tok.start, tok.stop, f"{tok.type:X}")
-                              for tok in tokens])
+    def process(self, language, tokens):
+        for start, stop, tok, val in tokens:
+            print(val, end="")
+            yield (start, stop, tok, val)
 
 
 class TokenProcessor(object):
-    """A preprocessor that composes multiple functions of token streams
-    and an emitter"""
-    def __init__(self, lexer, *mappers, emitter=TextEmitter()):
-        self.lexer = lexer
+    """A preprocessor that composes multiple functions of token streams"""
+    def __init__(self, language, *mappers):
+        self.language = language
+        self.lexer = {"Python3": Python3Lexer, "C": CLexer}[language]
         self.mappers = mappers
-        self.emitter = emitter
 
     def process(self, text):
-        input = antlr4.InputStream(text)
-        lexer = self.lexer(input)
-        stream = antlr4.CommonTokenStream(lexer)
-        stream.fill()
-        tokens = stream.tokens
+        lexer = self.lexer()
+        tokens = list(lexer.get_tokens_unprocessed(text))
+        tokens.append((None, len(text)))
+        tokens = [(tokens[i][0], tokens[i+1][0], tokens[i][1], tokens[i][2])
+                  for i in range(len(tokens) - 1)]
+        for t in tokens: print(t)
         for mapper in self.mappers:
-            tokens = mapper.process(tokens)
-        return self.emitter.emit(tokens)
+            tokens = mapper.process(self.language, tokens)
+        spans = [TextSpan(start, stop, val) for start, stop, _, val in tokens]
+        return ProcessedText(spans)

@@ -11,7 +11,7 @@ CONFIG = {
     ".py": [
         (Nop(), Winnowing(16, 32), 1),
         (TokenProcessor(
-            Python3Lexer,
+            "Python3",
             NormalizeIdentifiers(),
             NormalizeStringLiterals()),
          Winnowing(10, 20), 1)
@@ -19,7 +19,7 @@ CONFIG = {
     ".c": [
         (Nop(), Winnowing(16, 32), 1),
         (TokenProcessor(
-            CLexer,
+            "C",
             NormalizeIdentifiers(),
             NormalizeStringLiterals()),
          Winnowing(10, 20), 1)

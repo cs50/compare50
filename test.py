@@ -14,16 +14,16 @@ from compare import compare
 def preprocess_and_fingerprint():
     _, ext = os.path.splitext(sys.argv[1])
     if ext == ".py":
-        lexer = Python3Lexer
+        lang = "Python3"
     elif ext == ".c":
-        lexer = CLexer
+        lang = "C"
     with open(sys.argv[1], "r") as f:
         text = f.read()
     preprocessor = TokenProcessor(
-        lexer,
-        NormalizeIdentifiers(),
+        lang,
+        # NormalizeIdentifiers(),
         NormalizeStringLiterals(),
-        NormalizeNumericLiterals(),
+        # NormalizeNumericLiterals(),
         # ExtractIdentifiers(),
         TokenPrinter()
     )
@@ -66,6 +66,6 @@ def similarities():
 
 
 if __name__ == "__main__":
-    # preprocess_and_fingerprint()
+    preprocess_and_fingerprint()
     # compare_two()
-    similarities()
+    # similarities()
