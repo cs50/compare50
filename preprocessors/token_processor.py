@@ -5,6 +5,20 @@ from pygments.token import Token, String, Name, Number
 from util import TextSpan, ProcessedText
 
 
+class StripWhitespace(object):
+    def process(self, language, tokens):
+        for start, stop, tok, val in tokens:
+            if tok not in Token.Text or not val.isspace():
+                yield (start, stop, tok, val)
+
+
+class StripComments(object):
+    def process(self, language, tokens):
+        for start, stop, tok, val, in tokens:
+            if tok not in Token.Comment:
+                yield (start, stop, tok, val)
+
+
 class NormalizeIdentifiers(object):
     """Replaces all identifiers with `v`"""
     def process(self, language, tokens):
@@ -17,14 +31,22 @@ class NormalizeIdentifiers(object):
 
 class NormalizeStringLiterals(object):
     """Replaces string literals with empty strings"""
+
     def process(self, language, tokens):
+        # True if last token was changed, used to coalesce adjacent strings
+        normed = False
         for start, stop, tok, val in tokens:
             if tok in String.Char:
-                yield (start, stop, tok, "''")
+                if not normed:
+                    yield (start, stop, tok, "''")
+                normed = True
             elif tok in String:
-                yield (start, stop, tok, '""')
+                if not normed:
+                    yield (start, stop, tok, '""')
+                normed = True
             else:
                 yield (start, stop, tok, val)
+                normed = False
 
 
 class NormalizeNumericLiterals(object):
@@ -37,6 +59,8 @@ class NormalizeNumericLiterals(object):
                 yield (start, stop, tok, "FLOAT")
             elif tok in Number:
                 yield (start, stop, tok, "NUM")
+            else:
+                yield (start, stop, tok, val)
 
 
 class ExtractIdentifiers(object):
@@ -49,8 +73,24 @@ class ExtractIdentifiers(object):
                 yield (start, stop, tok, val)
 
 
+class Buffer(object):
+    """Collects all tokens in a list before passing them on. Useful for
+    serializing side effects of previous and subsequent filters."""
+    def process(self, language, tokens):
+        for t in list(tokens):
+            yield t
+
+
 class TokenPrinter(object):
-    """Prints the tokens but does not modify them. Useful for debugging."""
+    """Prints all token data. Useful for debugging."""
+    def process(self, language, tokens):
+        for t in tokens:
+            print(t)
+            yield t
+
+
+class TextPrinter(object):
+    """Prints token values but does not modify them. Useful for debugging."""
     def process(self, language, tokens):
         for start, stop, tok, val in tokens:
             print(val, end="")
@@ -70,7 +110,6 @@ class TokenProcessor(object):
         tokens.append((None, len(text)))
         tokens = [(tokens[i][0], tokens[i+1][0], tokens[i][1], tokens[i][2])
                   for i in range(len(tokens) - 1)]
-        for t in tokens: print(t)
         for mapper in self.mappers:
             tokens = mapper.process(self.language, tokens)
         spans = [TextSpan(start, stop, val) for start, stop, _, val in tokens]

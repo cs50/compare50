@@ -4,9 +4,6 @@ from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 
-from parsers.c.CLexer import CLexer
-from parsers.python.Python3Lexer import Python3Lexer
-
 from util import Span
 from compare import compare
 
@@ -21,11 +18,15 @@ def preprocess_and_fingerprint():
         text = f.read()
     preprocessor = TokenProcessor(
         lang,
+        # StripWhitespace(),
+        # StripComments(),
         # NormalizeIdentifiers(),
-        NormalizeStringLiterals(),
+        # NormalizeStringLiterals(),
         # NormalizeNumericLiterals(),
-        # ExtractIdentifiers(),
-        TokenPrinter()
+        ExtractIdentifiers(),
+        TokenPrinter(),
+        Buffer(),
+        TextPrinter()
     )
     comparator = Winnowing(12, 24)
     result = comparator.create_index(sys.argv[1], preprocessor.process(text))

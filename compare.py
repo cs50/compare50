@@ -1,6 +1,4 @@
 import os
-from parsers.python.Python3Lexer import Python3Lexer
-from parsers.c.CLexer import CLexer
 from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
@@ -12,6 +10,8 @@ CONFIG = {
         (Nop(), Winnowing(16, 32), 1),
         (TokenProcessor(
             "Python3",
+            StripWhitespace(),
+            StripComments(),
             NormalizeIdentifiers(),
             NormalizeStringLiterals()),
          Winnowing(10, 20), 1)
@@ -20,6 +20,8 @@ CONFIG = {
         (Nop(), Winnowing(16, 32), 1),
         (TokenProcessor(
             "C",
+            StripWhitespace(),
+            StripComments(),
             NormalizeIdentifiers(),
             NormalizeStringLiterals()),
          Winnowing(10, 20), 1)
