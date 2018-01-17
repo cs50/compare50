@@ -7,7 +7,10 @@ from util import Match
 # map file extensions to lists of (preprocessor, comparator, weight) triples
 CONFIG = {
     ".py": [
-        (Nop(), Winnowing(16, 32), 1),
+        (TokenProcessor(
+            "Python3",
+            StripWhitespace()),
+         Winnowing(16, 32), 1),
         (TokenProcessor(
             "Python3",
             StripWhitespace(),
@@ -17,7 +20,10 @@ CONFIG = {
          Winnowing(10, 20), 1)
     ],
     ".c": [
-        (Nop(), Winnowing(16, 32), 1),
+        (TokenProcessor(
+            "C",
+            StripWhitespace()),
+         Winnowing(16, 32), 1),
         (TokenProcessor(
             "C",
             StripWhitespace(),
@@ -53,7 +59,7 @@ def compare(distro_path, submission_paths, corpus_paths=[]):
     for distro_idx, submission_idx in zip(distro_indices, submission_indices):
         submission_idx -= distro_idx
 
-    # add submission and remove distro data to corpus if there is one
+    # add submission and remove distro data from corpus if there is one
     if corpus_indices:
         index_classes = zip(distro_indices, submission_indices, corpus_indices)
         for distro_index, submission_index, corpus_index in index_classes:

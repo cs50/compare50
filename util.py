@@ -136,7 +136,7 @@ class Match(object):
         for i, match_list in enumerate(match_lists):
             scores = [m.weight for m in match_list]
             mean = statistics.mean(scores)
-            stdev = statistics.pstdev(scores)
+            stdev = statistics.pstdev(scores) if len(match_list) > 1 else 1
             mult = weights[i] if weights else 1
             for match in match_list:
                 adjusted_weight = (match.weight - mean) / stdev * mult

@@ -97,33 +97,28 @@ class Winnowing(object):
             indices, items = zip(*text.chars())
         hashes = [self._compute_hash(items[i:i+self.k])
                   for i in range(len(items) - self.k + 1)]
-
         # circular buffer holding window
-        buf = [math.inf] * self.w
+        buf = [(math.inf, Span(0, 0))] * self.w
         # index of minimum hash in buffer
         min_idx = 0
         fingerprints = []
         for i in range(len(hashes)):
             # index in buffer
             idx = i % self.w
-            buf[idx] = hashes[i]
+            span_end = indices[i+self.k-1] + len(items[i+self.k-1])
+            buf[idx] = (hashes[i], Span(indices[i], span_end))
             if min_idx == idx:
                 # old min not in window, search left for new min
                 for j in range(1, self.w):
                     search_idx = (idx - j) % self.w
-                    if buf[search_idx] < buf[min_idx]:
+                    if buf[search_idx][0] < buf[min_idx][0]:
                         min_idx = search_idx
-                fingerprints.append(
-                    (buf[min_idx], Span(indices[i], indices[i+self.k-1]+1))
-                )
+                fingerprints.append(buf[min_idx])
             else:
                 # compare new hash to old min (robust winnowing)
-                if buf[idx] < buf[min_idx]:
+                if buf[idx][0] < buf[min_idx][0]:
                     min_idx = idx
-                    fingerprints.append(
-                        (buf[min_idx], Span(indices[i], indices[i+self.k-1]+1))
-                    )
-
+                    fingerprints.append(buf[min_idx])
         return WinnowingIndex(self.k, fingerprints, id)
 
     def _compute_hash(self, s):

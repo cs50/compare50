@@ -47,9 +47,10 @@ def compare_two():
 
 
 def similarities():
-    submissions = [f"submissions/{d}/helpers.py"
-                   for d in os.listdir("submissions")
-                   if os.path.isdir(f"submissions/{d}")]
+    directory = sys.argv[1]
+    submissions = [f"{directory}/{d}/helpers.py"
+                   for d in os.listdir(f"{directory}")
+                   if os.path.isdir(f"{directory}/{d}")]
     results = compare("similarities/helpers.py", submissions)
     for i, result in enumerate(results[:8]):
         with open(result.id1, "r") as f:
@@ -67,6 +68,6 @@ def similarities():
 
 
 if __name__ == "__main__":
-    preprocess_and_fingerprint()
+    # preprocess_and_fingerprint()
     # compare_two()
-    # similarities()
+    similarities()
