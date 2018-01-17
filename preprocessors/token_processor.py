@@ -2,7 +2,7 @@ from pygments.lexers.c_cpp import CLexer
 from pygments.lexers.python import Python3Lexer
 from pygments.token import Token, String, Name, Number
 
-from util import TextSpan, ProcessedText
+from util import Span, ProcessedText
 
 
 class StripWhitespace(object):
@@ -104,7 +104,9 @@ class TokenProcessor(object):
         self.lexer = {"Python3": Python3Lexer, "C": CLexer}[language]
         self.mappers = mappers
 
-    def process(self, text):
+    def process(self, file):
+        with open(file, "r") as f:
+            text = f.read()
         lexer = self.lexer()
         tokens = list(lexer.get_tokens_unprocessed(text))
         tokens.append((None, len(text)))
@@ -112,5 +114,6 @@ class TokenProcessor(object):
                   for i in range(len(tokens) - 1)]
         for mapper in self.mappers:
             tokens = mapper.process(self.language, tokens)
-        spans = [TextSpan(start, stop, val) for start, stop, _, val in tokens]
+        spans = [(val, Span(start, stop, file))
+                  for start, stop, _, val in tokens]
         return ProcessedText(spans)

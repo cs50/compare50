@@ -1,19 +1,20 @@
 import hashlib
 import math
+import os
 
 from util import Span, Match
 
 
 class WinnowingIndex(object):
     """A reverse index mapping hashes to (id, span) pairs"""
-    def __init__(self, k, fingerprints, id):
+    def __init__(self, k, fingerprints, submission_id):
         self.k = k
         self.index = dict()
         for h, span in fingerprints:
-            self._insert(h, id, span)
+            self._insert(h, submission_id, span)
 
-    def _insert(self, h, id, span):
-        self.index.setdefault(h, set()).add((id, span))
+    def _insert(self, h, submission_id, span):
+        self.index.setdefault(h, set()).add((submission_id, span))
 
     def __iadd__(self, other):
         if other.k != self.k:
@@ -86,10 +87,13 @@ class Winnowing(object):
         self.w = t - k + 1
         self.by_span = by_span
 
-    def create_index(self, id, text):
+    def create_index(self, file, preprocessor):
         """
-        Given a ProcessedText, return a set of (hash, position) fingerprints
+        Given a preprocessor and file, return a set of (hash, position)
+        fingerprints
         """
+        text = preprocessor.process(file)
+        submission_id = os.path.dirname(file)
         if self.by_span:
             indices = [span.start for span in text.spans]
             items = [span.text for span in text.spans]
@@ -98,7 +102,7 @@ class Winnowing(object):
         hashes = [self._compute_hash(items[i:i+self.k])
                   for i in range(len(items) - self.k + 1)]
         # circular buffer holding window
-        buf = [(math.inf, Span(0, 0))] * self.w
+        buf = [(math.inf, Span(0, 0, None))] * self.w
         # index of minimum hash in buffer
         min_idx = 0
         fingerprints = []
@@ -106,7 +110,7 @@ class Winnowing(object):
             # index in buffer
             idx = i % self.w
             span_end = indices[i+self.k-1] + len(items[i+self.k-1])
-            buf[idx] = (hashes[i], Span(indices[i], span_end))
+            buf[idx] = (hashes[i], Span(indices[i], span_end, file))
             if min_idx == idx:
                 # old min not in window, search left for new min
                 for j in range(1, self.w):
@@ -119,7 +123,7 @@ class Winnowing(object):
                 if buf[idx][0] < buf[min_idx][0]:
                     min_idx = idx
                     fingerprints.append(buf[min_idx])
-        return WinnowingIndex(self.k, fingerprints, id)
+        return WinnowingIndex(self.k, fingerprints, submission_id)
 
     def _compute_hash(self, s):
         """Given a string or list of strings, generate a hash."""

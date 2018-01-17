@@ -14,8 +14,6 @@ def preprocess_and_fingerprint():
         lang = "Python3"
     elif ext == ".c":
         lang = "C"
-    with open(sys.argv[1], "r") as f:
-        text = f.read()
     preprocessor = TokenProcessor(
         lang,
         # StripWhitespace(),
@@ -29,7 +27,7 @@ def preprocess_and_fingerprint():
         TextPrinter()
     )
     comparator = Winnowing(12, 24)
-    result = comparator.create_index(sys.argv[1], preprocessor.process(text))
+    result = comparator.create_index(sys.argv[1], preprocessor)
     print(result)
     print(len(repr(result)))
 
@@ -38,9 +36,7 @@ def compare_two():
     def index(filename):
         preprocessor = Nop()
         comparator = Winnowing(16, 24)
-        with open(filename, "r") as f:
-            text = f.read()
-        return comparator.create_index(filename, preprocessor.process(text))
+        return comparator.create_index(filename, preprocessor)
     index1 = index(sys.argv[1])
     index2 = index(sys.argv[2])
     print(index1.compare(index2))
@@ -53,9 +49,9 @@ def similarities():
                    if os.path.isdir(f"{directory}/{d}")]
     results = compare("similarities/helpers.py", submissions)
     for i, result in enumerate(results[:8]):
-        with open(result.id1, "r") as f:
+        with open(f"{result.id1}/helpers.py", "r") as f:
             text1 = f.read()
-        with open(result.id2, "r") as f:
+        with open(f"{result.id2}/helpers.py", "r") as f:
             text2 = f.read()
         with open(f"out{i}a.txt", "w") as f:
             f.write(f"{result.id1}, ")

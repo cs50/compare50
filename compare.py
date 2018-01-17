@@ -41,10 +41,8 @@ def compare(distro_path, submission_paths, corpus_paths=[]):
     _, extension = os.path.splitext(distro_path)
 
     def indices(path):
-        with open(path, "r") as f:
-            text = f.read()
         return [
-            comparator.create_index(path, preprocessor.process(text))
+            comparator.create_index(path, preprocessor)
             for preprocessor, comparator, _ in CONFIG[extension]
         ]
     distro_indices = indices(distro_path)

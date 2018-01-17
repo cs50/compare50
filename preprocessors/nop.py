@@ -1,7 +1,9 @@
-from util import TextSpan, ProcessedText
+from util import Span, ProcessedText
 
 
 class Nop(object):
 
-    def process(self, text):
-        return ProcessedText([TextSpan(0, len(text), text)])
+    def process(self, file):
+        with open(file, "r") as f:
+            text = f.read()
+        return ProcessedText([(text, Span(0, len(text), file))])
