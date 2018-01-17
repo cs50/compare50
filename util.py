@@ -27,7 +27,8 @@ class Span(object):
         coalesced = [spans[0]]
         for span in spans[1:]:
             if span.start <= coalesced[-1].stop:
-                coalesced[-1] = Span(coalesced[-1].start, span.stop)
+                if span.stop > coalesced[-1].stop:
+                    coalesced[-1] = Span(coalesced[-1].start, span.stop)
             else:
                 coalesced.append(span)
         return coalesced
@@ -131,7 +132,7 @@ class Match(object):
     def combine(match_lists, weights=None):
         """Normalizes and optionally weights each list of matches in
         `match_lists`, and combines like matches from the lists to create a
-        final ordering"""
+        final ordering of matches"""
         combined_matches = {}
         for i, match_list in enumerate(match_lists):
             scores = [m.weight for m in match_list]
