@@ -3,25 +3,12 @@ body, h1, h4, h5 {
     font-family: inherit;
 }
 
-/* Wrap URLs in alerts */
-.alert {
-    overflow-wrap: break-word;
-}
-
 /* Don't underline title */
 .block-title a {
     color: #000;
     text-decoration: none;
 }
 
-/* Keep below label */
-.custom-select {
-    display: block;
-    width: initial;
-}
-
-/* Keep lines together */
-.form-group small {
-    display: block;
-    line-height: initial;
+.form-check {
+    padding-left: initial;
 }
