@@ -91,7 +91,8 @@ class WinnowingIndex(object):
 
 
 class Winnowing(object):
-    def __init__(self, k, t, by_span=False):
+    def __init__(self, preprocessor, k, t, by_span=False):
+        self.preprocessor = preprocessor
         self.k = k
         self.w = t - k + 1
         self.by_span = by_span
@@ -99,12 +100,12 @@ class Winnowing(object):
     def empty_index(self):
         return WinnowingIndex.empty(self.k)
 
-    def create_index(self, file, sub_id, preprocessor):
+    def create_index(self, file, sub_id):
         """
         Given a file, submission id, and preprocessor, return a set of
         (hash, position) fingerprints
         """
-        text = preprocessor.process(file)
+        text = self.preprocessor.process(file)
         if self.by_span:
             indices = [span.start for span in text.spans]
             items = [span.text for span in text.spans]

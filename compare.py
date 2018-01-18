@@ -5,35 +5,39 @@ from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 # map file extensions to lists of (preprocessor, comparator, weight) triples
 CONFIG = {
-    ".py": [
-        (TokenProcessor(
-            "Python3",
-            StripWhitespace()),
-         Winnowing(16, 32), 1),
-        (TokenProcessor(
-            "Python3",
-            StripWhitespace(),
-            StripComments(),
-            NormalizeIdentifiers(),
-            NormalizeStringLiterals()),
-         Winnowing(10, 20), 1)
-    ],
-    ".c": [
-        (TokenProcessor(
-            "C",
-            StripWhitespace()),
-         Winnowing(16, 32), 1),
-        (TokenProcessor(
-            "C",
-            StripWhitespace(),
-            StripComments(),
-            NormalizeIdentifiers(),
-            NormalizeStringLiterals()),
-         Winnowing(10, 20), 1)
-    ],
-    "default": [
-        (Nop(), Winnowing(20, 40))
-    ]
+    ".py": {
+        "strip_ws": Winnowing(
+            TokenProcessor(
+                "Python3",
+                StripWhitespace()),
+            16, 32),
+        "strip_all": Winnowing(
+            TokenProcessor(
+                "Python3",
+                StripWhitespace(),
+                StripComments(),
+                NormalizeIdentifiers(),
+                NormalizeStringLiterals()),
+            10, 20)
+    },
+    ".c": {
+        "strip_ws": Winnowing(
+            TokenProcessor(
+                "C",
+                StripWhitespace()),
+            16, 32),
+        "strip_all": Winnowing(
+            TokenProcessor(
+                "C",
+                StripWhitespace(),
+                StripComments(),
+                NormalizeIdentifiers(),
+                NormalizeStringLiterals()),
+            10, 20)
+    },
+    "default": {
+        "default": Winnowing(Nop(), 20, 40)
+    }
 }
 
 
@@ -66,11 +70,11 @@ def compare(distro, submissions, corpus=[]):
         indices = {ext: [] for ext in extensions}
         for ext in extensions:
             files = files.setdefault(ext, [])
-            for preprocessor, comparator, weight in CONFIG[ext]:
+            for name, comparator in CONFIG[ext].items():
                 index = comparator.empty_index()
-                for file in files:
-                    index += comparator.create_index(*file, preprocessor)
-                indices[ext].append((index, weight))
+                for file, sub_id in files:
+                    index += comparator.create_index(file, sub_id)
+                indices[ext].append((index, name))
         return indices
 
     # create (index, weight) pairs for used file types
@@ -92,10 +96,13 @@ def compare(distro, submissions, corpus=[]):
     results = dict()
     for ext in extensions:
         index_pairs = zip(sub_indices[ext], corpus_indices[ext])
-        for (sub_idx, _), (corpus_idx, _) in index_pairs:
+        for (sub_idx, pass_name), (corpus_idx, _) in index_pairs:
             for sub_pair, score, span_pairs in sub_idx.compare(corpus_idx):
                 entry = results.setdefault(sub_pair, dict())
-                entry.setdefault(ext, []).append((score, span_pairs))
+                entry = entry.setdefault(pass_name, (0, []))
+                new_score = entry[0] + score
+                new_span_pairs = entry[1] + span_pairs
+                results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
     # TODO: combine exts within each submission? use weights?
     return results
