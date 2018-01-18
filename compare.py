@@ -1,9 +1,8 @@
 import os
+from itertools import chain
 from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
-from util import Match
-
 # map file extensions to lists of (preprocessor, comparator, weight) triples
 CONFIG = {
     ".py": [
@@ -31,43 +30,72 @@ CONFIG = {
             NormalizeIdentifiers(),
             NormalizeStringLiterals()),
          Winnowing(10, 20), 1)
+    ],
+    "default": [
+        (Nop(), Winnowing(20, 40))
     ]
 }
 
 
-def compare(distro_path, submission_paths, corpus_paths=[]):
+def compare(distro, submissions, corpus=[]):
     """Compares a group of submissions to each other and to an optional
     other corpus. Returns an ordered list of Results."""
-    _, extension = os.path.splitext(distro_path)
 
-    def indices(path):
-        return [
-            comparator.create_index(path, preprocessor)
-            for preprocessor, comparator, _ in CONFIG[extension]
-        ]
-    distro_indices = indices(distro_path)
+    def by_extension(entries):
+        results = {}
+        for file, sub in entries:
+            _, ext = os.path.splitext(file)
+            if ext not in CONFIG.keys():
+                ext = "default"
+            results.setdefault(ext, []).append((file, sub))
+        return results
 
-    # for each type of index, combine for all submission or corpus files
-    submission_indices = [sum(idxs[1:], idxs[0]) for idxs in
-                          zip(*[indices(path) for path in submission_paths])]
-    corpus_indices = [sum(idxs[1:], idxs[0]) for idxs in
-                      zip(*[indices(path) for path in corpus_paths])]
+    # pair each file with its submission index and split by extension
+    distro_files = by_extension((file, distro) for file in distro)
+    sub_files = by_extension(chain(*[[(file, sub) for file in sub]
+                                     for sub in submissions]))
+    corpus_files = by_extension(chain(*[[(file, sub) for file in sub]
+                                        for sub in corpus]))
+
+    # get deterministic ordering of extensions
+    extensions = list(set(distro_files.keys()) |
+                      set(sub_files.keys()) |
+                      set(corpus_files.keys()))
+
+    def indices(files):
+        indices = {ext: [] for ext in extensions}
+        for ext in extensions:
+            files = files.setdefault(ext, [])
+            for preprocessor, comparator, weight in CONFIG[ext]:
+                index = comparator.empty_index()
+                for file in files:
+                    index += comparator.create_index(*file, preprocessor)
+                indices[ext].append((index, weight))
+        return indices
+
+    # create (index, weight) pairs for used file types
+    distro_indices = indices(distro_files)
+    sub_indices = indices(sub_files)
+    corpus_indices = indices(corpus_files)
 
     # remove distro data from submissions
-    for distro_idx, submission_idx in zip(distro_indices, submission_indices):
-        submission_idx -= distro_idx
+    for ext in extensions:
+        index_sets = zip(distro_indices[ext],
+                         sub_indices[ext],
+                         corpus_indices[ext])
+        for (distro_idx, _), (sub_idx, _), (corpus_idx, _) in index_sets:
+            sub_idx -= distro_idx
+            corpus_idx += sub_idx
+            corpus_idx -= distro_idx
 
-    # add submission and remove distro data from corpus if there is one
-    if corpus_indices:
-        index_classes = zip(distro_indices, submission_indices, corpus_indices)
-        for distro_index, submission_index, corpus_index in index_classes:
-            corpus_index += submission_index
-            corpus_index -= distro_index
-    else:
-        corpus_indices = submission_indices
+    # perform comparisons
+    results = dict()
+    for ext in extensions:
+        index_pairs = zip(sub_indices[ext], corpus_indices[ext])
+        for (sub_idx, _), (corpus_idx, _) in index_pairs:
+            for sub_pair, score, span_pairs in sub_idx.compare(corpus_idx):
+                entry = results.setdefault(sub_pair, dict())
+                entry.setdefault(ext, []).append((score, span_pairs))
 
-    # perform comparisons and combine results
-    results = [s.compare(c)
-               for s, c in zip(submission_indices, corpus_indices)]
-    weights = [w for _, _, w in CONFIG[extension]]
-    return Match.combine(results, weights=weights)
+    # TODO: combine exts within each submission? use weights?
+    return results

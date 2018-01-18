@@ -1,10 +1,10 @@
 import sys
 import os
+import pprint
 from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 
-from util import Span
 from compare import compare
 
 
@@ -44,23 +44,14 @@ def compare_two():
 
 def similarities():
     directory = sys.argv[1]
-    submissions = [f"{directory}/{d}/helpers.py"
-                   for d in os.listdir(f"{directory}")
-                   if os.path.isdir(f"{directory}/{d}")]
-    results = compare("similarities/helpers.py", submissions)
-    for i, result in enumerate(results[:8]):
-        with open(f"{result.id1}/helpers.py", "r") as f:
-            text1 = f.read()
-        with open(f"{result.id2}/helpers.py", "r") as f:
-            text2 = f.read()
-        with open(f"out{i}a.txt", "w") as f:
-            f.write(f"{result.id1}, ")
-            f.write(f"{result.id2} (weight: {result.weight})\n\n")
-            f.write(Span.highlight(result.spans1, text1))
-        with open(f"out{i}b.txt", "w") as f:
-            f.write(f"{result.id1}, ")
-            f.write(f"{result.id2} (weight: {result.weight})\n\n")
-            f.write(Span.highlight(result.spans2, text2))
+    submission_dirs = [f"{directory}/{d}"
+                       for d in os.listdir(f"{directory}")
+                       if os.path.isdir(f"{directory}/{d}")]
+    submissions = [(f"{d}/helpers.py",) for d in submission_dirs]
+    distro = ("similarities/helpers.py",)
+    results = compare(distro, submissions)
+    pp = pprint.PrettyPrinter(width=1, indent=1, compact=True)
+    pp.pprint(results)
 
 
 if __name__ == "__main__":

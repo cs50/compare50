@@ -1,31 +1,30 @@
 import hashlib
 import math
-import os
 
-from util import Span, Match
+from util import Span
 
 
 class WinnowingIndex(object):
     """A reverse index mapping hashes to (id, span) pairs"""
-    def __init__(self, k, fingerprints, submission_id):
+    def __init__(self, k, fingerprints, sub_id):
         self.k = k
         self.index = dict()
         for h, span in fingerprints:
-            self._insert(h, submission_id, span)
+            self._insert(h, sub_id, span)
 
-    def _insert(self, h, submission_id, span):
-        self.index.setdefault(h, set()).add((submission_id, span))
+    def _insert(self, h, sub_id, span):
+        self.index.setdefault(h, set()).add((sub_id, span))
 
     def __iadd__(self, other):
         if other.k != self.k:
             raise Exception("Combining indices of different n-gram lengths")
         for h, entry in other.index.items():
-            for id, span in entry:
-                self._insert(h, id, span)
+            for sub_id, span in entry:
+                self._insert(h, sub_id, span)
         return self
 
     def __add__(self, other):
-        result = WinnowingIndex(self.k, [], None)
+        result = WinnowingIndex.empty(self.k)
         result += self
         result += other
         return result
@@ -36,7 +35,7 @@ class WinnowingIndex(object):
         return self
 
     def __sub__(self, other):
-        result = WinnowingIndex(self.k, [], None)
+        result = WinnowingIndex.empty(self.k)
         result += self
         result -= other
         return result
@@ -48,37 +47,47 @@ class WinnowingIndex(object):
         if self.k != other.k:
             raise Exception("comparison with different n-gram lengths")
 
-        # map id pairs to pairs of lists of spans
+        # map id pairs to lists of pairs of sets of spans
         matches = {}
         # map id pairs to the number of distinct shared hashes
-        # TODO: weight hashes by frequency across all files
-        weights = {}
-        common_keys = set(self.index.keys()) & set(other.index.keys())
-        for key in common_keys:
+        # TODO: weight by min file length
+        scores = {}
+        common_hashes = set(self.index.keys()) & set(other.index.keys())
+        for h in common_hashes:
+            # record pairs seen to prevent double counting
+            processed = set()
+
+            # map submissions to spans for both indices
             local_spans = {}
-            for id, span in self.index[key]:
-                local_spans.setdefault(id, []).append(span)
+            for sub_id, span in self.index[h]:
+                local_spans.setdefault(sub_id, set()).add(span)
             other_spans = {}
-            for id, span in other.index[key]:
-                other_spans.setdefault(id, []).append(span)
-            for id1, spans1 in local_spans.items():
-                for id2, spans2 in other_spans.items():
-                    if id1 != id2 and (id2, id1) not in matches:
-                        pair = (id1, id2)
-                        matches_entry = matches.setdefault(pair, ([], []))
-                        matches_entry[0].extend(spans1)
-                        matches_entry[1].extend(spans2)
-                        weights[pair] = weights.setdefault(pair, 0) + 1
+            for sub_id, span in other.index[h]:
+                other_spans.setdefault(sub_id, set()).add(span)
 
-        # coalesce spans and create match objects
-        results = []
-        for (id1, id2), (spans1, spans2) in matches.items():
-            weight = weights[(id1, id2)]
-            spans1 = Span.coalesce(spans1)
-            spans2 = Span.coalesce(spans2)
-            results.append(Match(weight, id1, spans1, id2, spans2))
+            # record submissions that share the current hash
+            for sub_id1, spans1 in local_spans.items():
+                for sub_id2, spans2 in other_spans.items():
+                    # normalize order of submission pair
+                    if sub_id2 > sub_id1:
+                        sub_id1, sub_id2 = sub_id2, sub_id1
+                        spans1, spans2 = spans2, spans1
 
-        return Match.ordered(results)
+                    # ignore repeats and matches with self
+                    pair = (sub_id1, sub_id2)
+                    if sub_id1 == sub_id2 or pair in processed:
+                        continue
+
+                    # update results
+                    processed.add(pair)
+                    matches.setdefault(pair, []).append((spans1, spans2))
+                    scores[pair] = scores.setdefault(pair, 0) + 1
+
+        return [(pair, scores[pair], matches[pair]) for pair in matches.keys()]
+
+    @staticmethod
+    def empty(k):
+        return WinnowingIndex(k, [], None)
 
 
 class Winnowing(object):
@@ -87,13 +96,15 @@ class Winnowing(object):
         self.w = t - k + 1
         self.by_span = by_span
 
-    def create_index(self, file, preprocessor):
+    def empty_index(self):
+        return WinnowingIndex.empty(self.k)
+
+    def create_index(self, file, sub_id, preprocessor):
         """
-        Given a preprocessor and file, return a set of (hash, position)
-        fingerprints
+        Given a file, submission id, and preprocessor, return a set of
+        (hash, position) fingerprints
         """
         text = preprocessor.process(file)
-        submission_id = os.path.dirname(file)
         if self.by_span:
             indices = [span.start for span in text.spans]
             items = [span.text for span in text.spans]
@@ -123,7 +134,7 @@ class Winnowing(object):
                 if buf[idx][0] < buf[min_idx][0]:
                     min_idx = idx
                     fingerprints.append(buf[min_idx])
-        return WinnowingIndex(self.k, fingerprints, submission_id)
+        return WinnowingIndex(self.k, fingerprints, sub_id)
 
     def _compute_hash(self, s):
         """Given a string or list of strings, generate a hash."""

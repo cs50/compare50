@@ -115,5 +115,5 @@ class TokenProcessor(object):
         for mapper in self.mappers:
             tokens = mapper.process(self.language, tokens)
         spans = [(val, Span(start, stop, file))
-                  for start, stop, _, val in tokens]
+                 for start, stop, _, val in tokens]
         return ProcessedText(spans)
