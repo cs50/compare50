@@ -1,0 +1,14 @@
+{% extends "index.html" %}
+
+{% block message %}
+<div class="alert alert-danger border" role="alert">
+    Google's URL shortner seems to be having some issues. But try again!
+</div>
+<script>
+
+    $(function() {
+        $('button').focus();
+    });
+
+</script>
+{% endblock %}

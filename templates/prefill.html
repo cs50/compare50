@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+    <div class="alert alert-warning border" role="alert">
+        {% if questions | length > 0 %}
+        Your form has
+        {% if questions | length == 1 %}
+        1 question,
+        {% else %}
+        {{ questions | length }} questions,
+        {% endif %}
+        excerpted below, that can be pre-filled.
+        {% else %}
+        Your form doesn't have any (short answer text or long answer text) questions that can be pre-filled. But you can still add authentication to it.
+        {% endif %}
+    </div>
+
+    <form action="{{ url_for("post") }}" form-inline method="post">
+        <input name="endpoint" type="hidden" value="{{ endpoint }}"/>
+        <input name="url" type="hidden" value="{{ url }}"/>
+        <div class="mb-3">
+            {% for q in questions %}
+                <div class="form-group">
+                    <label>
+                        <strong>
+                            {{ q["aria-label"] }}
+                        </strong>
+                    </label>
+                    <select class="custom-select" name="{{ q["name"] }}">
+                        <option value="">Don't pre-fill</option>
+                        {% if endpoint == "edx" %}
+                            {% if q["aria-label"].lower().startswith(("edx", "username")) %}
+                                <option selected value="$preferred_username">
+                            {% else %}
+                                <option value="$preferred_username">
+                            {% endif %}
+                                Pre-fill with respondent's edX username
+                            </option>
+                        {% elif endpoint == "harvard" %}
+                            {% if q["aria-label"].lower().startswith(("harvard id", "huid")) %}
+                                <option selected value="$huid">
+                            {% else %}
+                                <option value="$huid">
+                            {% endif %}
+                                Pre-fill with respondent's HUID
+                            </option>
+                        {% elif endpoint == "yale" %}
+                            {% if q["aria-label"].lower().startswith(("yale netid", "netid")) %}
+                                <option selected value="$netid">
+                            {% else %}
+                                <option value="$netid">
+                            {% endif %}
+                                Pre-fill with respondent's NetID
+                            </option>
+                        {% endif %}
+                        {% if q["aria-label"].lower().startswith(("first and last name", "full name", "name")) %}
+                            <option selected value="$name">
+                        {% else %}
+                            <option value="$name">
+                        {% endif %}
+                            Pre-fill with respondent's name
+                        </option>
+                        {% if q["aria-label"].lower().startswith(("email", "your email")) %}
+                            <option selected value="$email">
+                        {% else %}
+                            <option value="$email">
+                        {% endif %}
+                            Pre-fill with respondent's email adddress
+                        </option>
+                    </select>
+                </div>
+            {% endfor %}
+        </div>
+        <button class="btn btn-primary mb-3">Next</button>
+        <div class="form-group">
+            <small>
+                {% if endpoint == "edx" %}
+                    You'll be prompted to authenticate via edX.
+                {% elif endpoint == "github" %}
+                    You'll be prompted to authenticate via GitHub.
+                {% elif endpoint == "harvard" %}
+                    You'll be prompted to authenticate via HarvardKey.
+                {% elif endpoint == "yale" %}
+                    You'll be prompted to authenticate via Yale NetID.
+                {% endif %}
+            </small>
+        </div>
+    </form>
+
+{% endblock %}

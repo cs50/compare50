@@ -1,0 +1,6 @@
+Flask-Migrate
+Flask-Session
+Flask-UUID
+mysqlclient
+raven[flask]
+validators

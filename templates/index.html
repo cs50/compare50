@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+    {% block message %}{% endblock %}
+
+    <form action="{{ url_for("post") }}" method="post">
+        <input autofocus autocomplete="off" class="form-control mb-3" name="url" placeholder="URL of Google Form" required type="url" value="{{ url }}"/>
+        <div class="mb-3">
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input {% if endpoint == "edx" %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="edx"/>
+                    <strong>Authenticate respondents via edX.</strong> Pre-fill your form with respondent's edX username, email address, and name.
+                </label>
+            </div>
+            <div class="disabled form-check">
+                <label class="form-check-label" data-animation="false" data-placement="left" data-toggle="tooltip" data-trigger="hover" title="Coming Soon">
+                    <input {% if endpoint == "github" %}checked{% endif %} class="form-check-input" disabled name="endpoint" required type="radio" value="github"/>
+                    <strong>Authenticate respondents via GitHub.</strong> Pre-fill your form with respondent's GitHub username, email address, and name.
+                </label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input {% if endpoint == "harvard" or (not endpoint and remote_addr and remote_addr.startswith(("140.247.", "128.103."))) %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="harvard"/>
+                    <strong>Authenticate respondents via HarvardKey.</strong> Pre-fill your form with respondent's HUID, email address, and name.
+                </label>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input {% if endpoint == "yale" or (not endpoint and remote_addr and remote_addr.startswith(("128.36.", "130.132."))) %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="yale"/>
+                    <strong>Authenticate respondents via Yale NetID.</strong> Pre-fill your form with respondent's NetID, email address, and name.
+                </label>
+            </div>
+        </div>
+        <button class="btn btn-primary mb-3">Next</button>
+    </form>
+
+    <script>
+
+        $(function() {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
+    </script>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block main %}
+
+    <div class="alert alert-success border" role="alert">
+        Share the URL below with your (prospective) respondents!       
+    </div>
+
+    <form>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <button class="btn btn-success" data-clipboard-target="#url" type="button">
+                    <span class="icon icon-clipboard"></span>
+                    Copy
+                </button>
+            </div>
+            <input autofocus class="form-control" id="url" readonly type="url" value="{{ url }}"/>
+        </div>
+        <div class="form-group">
+            <small>Note that CS50 can only pre-fill, not submit, your form. Respondents can still change or delete the pre-filled values before submitting. And some values (that would otherwise be pre-filled) might not be available for some respondents.</small>
+        </div>
+    </form>
+
+    <script>
+
+        $(function() {
+            $('#url').select();
+            new Clipboard('.btn');
+        });
+
+    </script>
+
+{% endblock %}

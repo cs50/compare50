@@ -1,0 +1,7 @@
+{% extends "index.html" %}
+
+{% block message %}
+<div class="alert alert-danger border" role="alert">
+    You're trying to configure the URL via which to edit, not view, a Google Form. Open <a href="{{ url }}" target="_blank">that form</a> in another tab, preview the form (via the form's eye icon), copy its URL (which should end in <tt>/viewform</tt>), and then paste that URL here.
+</div>
+{% endblock %}
