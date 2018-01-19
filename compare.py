@@ -55,11 +55,13 @@ def compare(distro, submissions, corpus=[]):
         return results
 
     # pair each file with its submission index and split by extension
-    distro_files = by_extension((file, distro) for file in distro)
-    sub_files = by_extension(chain(*[[(file, sub) for file in sub]
-                                     for sub in submissions]))
-    corpus_files = by_extension(chain(*[[(file, sub) for file in sub]
-                                        for sub in corpus]))
+    distro_files = by_extension((file, 0) for file in distro)
+    sub_files = by_extension((file, 1 + i)
+                             for i, sub in enumerate(submissions)
+                             for file in sub)
+    corpus_files = by_extension((file, len(submissions) + 1 + i)
+                                for i, sub in enumerate(corpus)
+                                for file in sub)
 
     # get deterministic ordering of extensions
     extensions = list(set(distro_files.keys()) |
@@ -104,5 +106,7 @@ def compare(distro, submissions, corpus=[]):
                 new_span_pairs = entry[1] + span_pairs
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
-    # TODO: combine exts within each submission? use weights?
-    return results
+    # convert submission indices back into submission tuples for reporting
+    combined_input = [distro] + submissions + corpus
+    return {(combined_input[i], combined_input[j]): v
+            for (i, j), v in results.items()}
