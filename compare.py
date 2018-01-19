@@ -8,31 +8,27 @@ CONFIG = {
     ".py": {
         "strip_ws": Winnowing(
             TokenProcessor(
-                "Python3",
-                StripWhitespace()),
+                strip_whitespace),
             16, 32),
         "strip_all": Winnowing(
             TokenProcessor(
-                "Python3",
-                StripWhitespace(),
-                StripComments(),
-                NormalizeIdentifiers(),
-                NormalizeStringLiterals()),
+                strip_whitespace,
+                strip_comments,
+                normalize_identifiers,
+                normalize_string_literals),
             10, 20, by_span=True)
     },
     ".c": {
         "strip_ws": Winnowing(
             TokenProcessor(
-                "C",
-                StripWhitespace()),
+                strip_whitespace),
             16, 32),
         "strip_all": Winnowing(
             TokenProcessor(
-                "C",
-                StripWhitespace(),
-                StripComments(),
-                NormalizeIdentifiers(),
-                NormalizeStringLiterals()),
+                strip_whitespace,
+                strip_comments,
+                normalize_identifiers,
+                normalize_string_literals),
             10, 20, by_span=True)
     },
     "default": {

@@ -11,37 +11,22 @@ from compare import compare
 
 def preprocess_and_fingerprint():
     _, ext = os.path.splitext(sys.argv[1])
-    if ext == ".py":
-        lang = "Python3"
-    elif ext == ".c":
-        lang = "C"
     preprocessor = TokenProcessor(
-        lang,
-        # StripWhitespace(),
-        # StripComments(),
-        # NormalizeIdentifiers(),
-        NormalizeStringLiterals(),
-        # NormalizeNumericLiterals(),
-        # ExtractIdentifiers(),
-        TokenPrinter(),
-        Buffer(),
-        TextPrinter()
+        strip_whitespace,
+        strip_comments,
+        normalize_case,
+        normalize_identifiers,
+        normalize_string_literals,
+        normalize_numeric_literals,
+        # extract_identifiers,
+        token_printer,
+        buffer,
+        text_printer
     )
     comparator = Winnowing(preprocessor, 12, 24)
     result = comparator.create_index(sys.argv[1], None)
     print(result)
     print(len(repr(result)))
-
-
-def compare_two():
-    def index(filename):
-        preprocessor = Nop()
-        comparator = Winnowing(16, 24)
-        return comparator.create_index(filename, preprocessor)
-    index1 = index(sys.argv[1])
-    index2 = index(sys.argv[2])
-    print(index1.compare(index2))
-
 
 def similarities():
     directory = sys.argv[1]
@@ -116,5 +101,4 @@ def report(results):
 
 if __name__ == "__main__":
     # preprocess_and_fingerprint()
-    # compare_two()
     similarities()
