@@ -18,7 +18,7 @@ CONFIG = {
                 StripComments(),
                 NormalizeIdentifiers(),
                 NormalizeStringLiterals()),
-            10, 20)
+            10, 20, by_span=True)
     },
     ".c": {
         "strip_ws": Winnowing(
@@ -33,7 +33,7 @@ CONFIG = {
                 StripComments(),
                 NormalizeIdentifiers(),
                 NormalizeStringLiterals()),
-            10, 20)
+            10, 20, by_span=True)
     },
     "default": {
         "default": Winnowing(Nop(), 20, 40)
@@ -69,10 +69,10 @@ def compare(distro, submissions, corpus=[]):
     def indices(files):
         indices = {ext: [] for ext in extensions}
         for ext in extensions:
-            files = files.setdefault(ext, [])
+            file_list = files.setdefault(ext, [])
             for name, comparator in CONFIG[ext].items():
                 index = comparator.empty_index()
-                for file, sub_id in files:
+                for file, sub_id in file_list:
                     index += comparator.create_index(file, sub_id)
                 indices[ext].append((index, name))
         return indices

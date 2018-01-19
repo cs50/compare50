@@ -69,7 +69,7 @@ class WinnowingIndex(object):
             for sub_id1, spans1 in local_spans.items():
                 for sub_id2, spans2 in other_spans.items():
                     # normalize order of submission pair
-                    if sub_id2 > sub_id1:
+                    if sub_id2 < sub_id1:
                         sub_id1, sub_id2 = sub_id2, sub_id1
                         spans1, spans2 = spans2, spans1
 
@@ -107,10 +107,13 @@ class Winnowing(object):
         """
         text = self.preprocessor.process(file)
         if self.by_span:
-            indices = [span.start for span in text.spans]
-            items = [span.text for span in text.spans]
+            indices = [span.start for _, span in text.spans]
+            indices.append(text.spans[-1][1].stop)
+            items = [text for text, _ in text.spans]
         else:
-            indices, items = zip(*text.chars())
+            indices, items = map(list, zip(*text.chars()))
+            indices.append(indices[-1] + 1)
+
         hashes = [self._compute_hash(items[i:i+self.k])
                   for i in range(len(items) - self.k + 1)]
         # circular buffer holding window
@@ -121,8 +124,7 @@ class Winnowing(object):
         for i in range(len(hashes)):
             # index in buffer
             idx = i % self.w
-            span_end = indices[i+self.k-1] + len(items[i+self.k-1])
-            buf[idx] = (hashes[i], Span(indices[i], span_end, file))
+            buf[idx] = (hashes[i], Span(indices[i], indices[i+self.k], file))
             if min_idx == idx:
                 # old min not in window, search left for new min
                 for j in range(1, self.w):
