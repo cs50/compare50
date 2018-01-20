@@ -52,9 +52,6 @@ class WinnowingIndex(object):
         scores = {}
         common_hashes = set(self.index.keys()) & set(other.index.keys())
         for h in common_hashes:
-            # record pairs seen to prevent double counting
-            processed = set()
-
             # map submissions to spans for both indices
             local_spans = {}
             for sub_id, span in self.index[h]:
@@ -66,22 +63,20 @@ class WinnowingIndex(object):
             # record submissions that share the current hash
             for sub_id1, spans1 in local_spans.items():
                 for sub_id2, spans2 in other_spans.items():
-                    # normalize order of submission pair
-                    if sub_id1 <= sub_id1:
-                        n_id1, n_id2 = sub_id1, sub_id2
-                        n_spans1, n_spans2 = spans1, spans2
-                    if sub_id2 < sub_id1:
-                        n_id1, n_id2 = sub_id2, sub_id1
-                        n_spans1, n_spans2 = spans2, spans1
-
-                    # ignore repeats and matches with self
-                    pair = (n_id1, n_id2)
-                    if n_id1 == n_id2 or pair in processed:
+                    # XXX: depends on "submission" being local and
+                    # "corpus" being other, and also on all
+                    # "submission" ids being less than all "corpus"
+                    # ids. The non-hack way is to normalize order of
+                    # the sub_id pair (into fresh variables) and
+                    # continue only if they are equal or already
+                    # processed. Reduces `compare` time by 37% with
+                    # n=640.
+                    if sub_id2 <= sub_id1:
                         continue
 
                     # update results
-                    processed.add(pair)
-                    matches.setdefault(pair, []).append((n_spans1, n_spans2))
+                    pair = (sub_id1, sub_id2)
+                    matches.setdefault(pair, []).append((spans1, spans2))
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
         return [(pair, scores[pair], matches[pair]) for pair in matches.keys()]
@@ -102,8 +97,8 @@ class Winnowing(object):
 
     def create_index(self, file, text, sub_id):
         """
-        Given a file name, preprocessed text, and submission id, return a set of
-        (hash, position) fingerprints
+        Given a file name, preprocessed text, and submission id, return a set
+        of (hash, position) fingerprints
         """
         if self.by_span:
             indices = [span.start for _, span in text.spans]
