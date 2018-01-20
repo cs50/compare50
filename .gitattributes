@@ -1,6 +1,0 @@
-parsers/python/*.py linguist-generated=true
-parsers/python/*.interp linguist-generated=true
-parsers/python/*.tokens linguist-generated=true
-parsers/c/*.py linguist-generated=true
-parsers/c/*.interp linguist-generated=true
-parsers/c/*.tokens linguist-generated=true
