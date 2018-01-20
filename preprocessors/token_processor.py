@@ -1,5 +1,3 @@
-import pygments
-import pygments.lexers
 from pygments.token import Token, String, Name, Number
 
 from util import Span, ProcessedText
@@ -97,22 +95,13 @@ class TokenProcessor(object):
     def __init__(self, *mappers):
         self.mappers = mappers
 
-    def process(self, file):
+    def process(self, file, lexer):
         with open(file, "r") as f:
             text = f.read()
 
-        # try getting lexer by filename then contents, fallback to text lexer
-        try:
-            lexer = pygments.lexers.get_lexer_for_filename(file)
-        except pygments.util.ClassNotFound:
-            try:
-                lexer = pygments.lexers.guess_lexer(text)
-            except pygments.util.ClassNotFound:
-                lexer = pygments.lexers.special.TextLexer()
-
         tokens = list(lexer.get_tokens_unprocessed(text))
 
-        # add end index to token stream
+        # add stop index to token stream
         tokens.append((None, len(text)))
         tokens = [(tokens[i][0], tokens[i+1][0], tokens[i][1], tokens[i][2])
                   for i in range(len(tokens) - 1)]

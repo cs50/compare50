@@ -1,6 +1,4 @@
-import hashlib
 import math
-
 from util import Span
 
 
@@ -69,18 +67,21 @@ class WinnowingIndex(object):
             for sub_id1, spans1 in local_spans.items():
                 for sub_id2, spans2 in other_spans.items():
                     # normalize order of submission pair
+                    if sub_id1 <= sub_id1:
+                        n_id1, n_id2 = sub_id1, sub_id2
+                        n_spans1, n_spans2 = spans1, spans2
                     if sub_id2 < sub_id1:
-                        sub_id1, sub_id2 = sub_id2, sub_id1
-                        spans1, spans2 = spans2, spans1
+                        n_id1, n_id2 = sub_id2, sub_id1
+                        n_spans1, n_spans2 = spans2, spans1
 
                     # ignore repeats and matches with self
-                    pair = (sub_id1, sub_id2)
-                    if sub_id1 == sub_id2 or pair in processed:
+                    pair = (n_id1, n_id2)
+                    if n_id1 == n_id2 or pair in processed:
                         continue
 
                     # update results
                     processed.add(pair)
-                    matches.setdefault(pair, []).append((spans1, spans2))
+                    matches.setdefault(pair, []).append((n_spans1, n_spans2))
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
         return [(pair, scores[pair], matches[pair]) for pair in matches.keys()]
@@ -91,8 +92,7 @@ class WinnowingIndex(object):
 
 
 class Winnowing(object):
-    def __init__(self, preprocessor, k, t, by_span=False):
-        self.preprocessor = preprocessor
+    def __init__(self, k, t, by_span=False):
         self.k = k
         self.w = t - k + 1
         self.by_span = by_span
@@ -100,12 +100,11 @@ class Winnowing(object):
     def empty_index(self):
         return WinnowingIndex.empty(self.k)
 
-    def create_index(self, file, sub_id):
+    def create_index(self, file, text, sub_id):
         """
-        Given a file, submission id, and preprocessor, return a set of
+        Given a file name, preprocessed text, and submission id, return a set of
         (hash, position) fingerprints
         """
-        text = self.preprocessor.process(file)
         if self.by_span:
             indices = [span.start for _, span in text.spans]
             indices.append(text.spans[-1][1].stop)
@@ -114,8 +113,9 @@ class Winnowing(object):
             indices, items = map(list, zip(*text.chars()))
             indices.append(indices[-1] + 1)
 
-        hashes = [self._compute_hash(items[i:i+self.k])
+        hashes = [self._hash((items[i:i+self.k]))
                   for i in range(len(items) - self.k + 1)]
+
         # circular buffer holding window
         buf = [(math.inf, Span(0, 0, None))] * self.w
         # index of minimum hash in buffer
@@ -139,9 +139,5 @@ class Winnowing(object):
                     fingerprints.append(buf[min_idx])
         return WinnowingIndex(self.k, fingerprints, sub_id)
 
-    def _compute_hash(self, s):
-        """Given a string or list of strings, generate a hash."""
-        hasher = hashlib.sha256()
-        for t in s:
-            hasher.update(t.encode("utf-8"))
-        return int(hasher.hexdigest()[:16], 16)
+    def _hash(self, s):
+        return hash("".join(s))

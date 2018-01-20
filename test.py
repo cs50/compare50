@@ -2,7 +2,6 @@ import sys
 import os
 import pprint
 from termcolor import colored
-from preprocessors.nop import Nop
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 
@@ -37,7 +36,7 @@ def similarities():
                          if os.path.isfile(f"{d}/{f}"))
                    for d in submission_dirs]
     distro = ("similarities/helpers.py",)
-    results = compare(distro, submissions)
+    results = compare(submissions, distro=distro)
     # pp = pprint.PrettyPrinter(width=1, indent=1, compact=True)
     # pp.pprint(results)
 
@@ -46,8 +45,14 @@ def similarities():
         ws_score = (results[pair].get("strip_ws") or [0])[0]
         return all_score + ws_score
 
-    top_matches = sorted(results.keys(), key=sort_fn, reverse=True)[:8]
-    report(results[key] for key in top_matches)
+    sorted_pairs = sorted(results.keys(), key=sort_fn, reverse=True)
+    # for pair in sorted_pairs:
+    #     scores = ((results[pair].get("strip_ws") or [0])[0],
+    #               (results[pair].get("strip_all") or [0])[0])
+    #     subA = os.path.normpath(pair[0][0]).split(os.path.sep)[1].split("-")[0]
+    #     subB = os.path.normpath(pair[1][0]).split(os.path.sep)[1].split("-")[0]
+    #     print(subA, subB, scores)
+    report(results[pair] for pair in sorted_pairs[:8])
 
 
 def highlight(spans, text, color="red"):
@@ -56,6 +61,7 @@ def highlight(spans, text, color="red"):
     non_match = [text[:spans[0].start]]
     for i in range(1, len(spans)):
         non_match.append(text[spans[i-1].stop:spans[i].start])
+    non_match.append(text[spans[-1].stop:])
     match = [colored(text[s.start:s.stop], color) for s in spans]
     combined = []
     for i in range(len(non_match) + len(match)):
