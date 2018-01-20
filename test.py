@@ -35,7 +35,10 @@ def similarities():
     submissions = [tuple(f"{d}/{f}" for f in os.listdir(d)
                          if os.path.isfile(f"{d}/{f}"))
                    for d in submission_dirs]
-    distro = ("similarities/helpers.py",)
+    if len(sys.argv) >= 3:
+        distro = tuple(f"{sys.argv[2]}/{f}" for f in os.listdir(sys.argv[2]))
+    else:
+        distro = None
     results = compare(submissions, distro=distro)
     # pp = pprint.PrettyPrinter(width=1, indent=1, compact=True)
     # pp.pprint(results)

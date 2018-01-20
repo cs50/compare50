@@ -4,12 +4,13 @@
 The entry point to the comparison engine is the `compare1 function in
 compare.py.
 
-`compare(submissions, distro=[], corpus=[])`
+`compare(submissions, distro=None, corpus=[])`
 
 - `submissions`: a list of tuples, where each tuple contains the file
   paths comprising a single student submission.
 - `distro`: a tuple of file paths comprising the distribution code to
-  be excluded from the comparison.
+  be excluded from the comparison, or `None` if there is no
+  distribution code.
 - `corpus`: a list of tuples, where each tuple contains the file paths
   comprising a single student submission.
 
@@ -36,6 +37,23 @@ the following properties:
 - `stop`: the index one past the end of the span
 
 (TODO: user-supplied configurations)
+
+## Testing
+
+`python3 test.py submission_dir [distro_dir]`
+
+`submission_dir` is a directory containing one subdirectory per
+submission. Each submission subdirectory has its submission's files as
+direct children.
+
+`distro_dir` is an optional directory containing the distribution code
+files as direct children.
+
+`test.py` will write files containing termcolored reports for the
+individual and combined passes for the top 8 most similar pairs of
+submissions.
+
+(TODO: unit tests, regression tests, other real tests)
 
 ## Determinism
 Fingerprint hashing is currently done using Python's built in `hash`

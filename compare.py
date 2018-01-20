@@ -17,9 +17,9 @@ CONFIG = {
 }
 
 
-def compare(submissions, distro=[], corpus=[]):
+def compare(submissions, distro=None, corpus=[]):
     """Compares a group of submissions to each other and to an optional
-    other corpus. Returns an ordered list of Results."""
+    other corpus."""
 
     def by_file_type(entries):
         results = {}
@@ -34,7 +34,7 @@ def compare(submissions, distro=[], corpus=[]):
         return results
 
     # pair each file with its submission index and lexer and split by file type
-    distro_files = by_file_type((file, 0) for file in distro)
+    distro_files = by_file_type((file, 0) for file in distro) if distro else {}
     sub_files = by_file_type((file, 1 + i)
                              for i, sub in enumerate(submissions)
                              for file in sub)
