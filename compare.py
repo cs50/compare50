@@ -5,6 +5,7 @@ from comparators.winnowing import Winnowing
 
 
 # map pass names to (preprocessor, comparator) pairs
+# TODO: make configuration an optional parameter to `compare`
 CONFIG = {
     "strip_ws": (TokenProcessor(strip_whitespace),
                  Winnowing(16, 32)),
@@ -58,12 +59,12 @@ def compare(submissions, distro=[], corpus=[]):
                 indices[ftype].append((index, pass_name))
         return indices
 
-    # create (index, weight) pairs for used file types
+    # create list of (index, pass name) pairs for each file type
     distro_indices = indices(distro_files)
     sub_indices = indices(sub_files)
     corpus_indices = indices(corpus_files)
 
-    # remove distro data from submissions
+    # remove distro data from indices and add submission data to corpus data
     for ftype in file_types:
         index_sets = zip(distro_indices[ftype],
                          sub_indices[ftype],
@@ -73,7 +74,7 @@ def compare(submissions, distro=[], corpus=[]):
             corpus_idx += sub_idx
             corpus_idx -= distro_idx
 
-    # perform comparisons
+    # perform comparisons between files of same type
     results = {}
     for ftype in file_types:
         index_pairs = zip(sub_indices[ftype], corpus_indices[ftype])
@@ -87,7 +88,7 @@ def compare(submissions, distro=[], corpus=[]):
                 new_span_pairs = entry[1] + span_pairs
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
-    # convert submission indices back into submission tuples for reporting
+    # convert submission indices back into submission tuples
     combined_input = [distro] + submissions + corpus
     return {(combined_input[i], combined_input[j]): v
             for (i, j), v in results.items()}
