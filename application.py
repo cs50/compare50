@@ -3,10 +3,10 @@ import os
 import uuid
 
 from flask import Flask, abort, redirect, render_template, request, send_from_directory, session, url_for
-from flask.ext.uuid import FlaskUUID
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_uuid import FlaskUUID
 from raven.contrib.flask import Sentry
 from tempfile import mkdtemp
 

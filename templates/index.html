@@ -4,67 +4,40 @@
 
     {% block message %}{% endblock %}
 
-    <form action="{{ url_for("post") }}" method="post">
-        <div class="form-group">
-            <label for="files"><strong>Students' Files</strong></label>
-            <input class="form-control" id="files" name="files" required type="file"/>
-        </div>
-        <div class="form-group">
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" name="endpoint" required type="radio"/>
-                    <strong>Compare files.</strong> 
-                </label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" name="endpoint" required type="radio"/>
-                    <strong>Compare subdirectories.</strong>
-                </label>
+    <form action="{{ url_for("post") }}" enctype="multipart/form-data" method="post">
+        <div class="form-group" id="foo">
+            FOO
+            <div class="fallback">
+                <input multiple name="files" type="file"/>
             </div>
         </div>
-        <div class="form-group">
-            <label for="distribution">Distribution Code</label>
-            <input class="form-control" id="distribution" name="distribution" type="file"/>
-        </div>
-        <div class="form-group">
-            <label for="past">Past Students' Files</label>
-            <input class="form-control" id="past" name="past" type="file"/>
-        </div>
-
-        <div class="mb-3">
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input {% if endpoint == "edx" %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="edx"/>
-                    <strong>Authenticate respondents via edX.</strong> Pre-fill your form with respondent's edX username, email address, and name.
-                </label>
-            </div>
-            <div class="disabled form-check">
-                <label class="form-check-label" data-animation="false" data-placement="left" data-toggle="tooltip" data-trigger="hover" title="Coming Soon">
-                    <input {% if endpoint == "github" %}checked{% endif %} class="form-check-input" disabled name="endpoint" required type="radio" value="github"/>
-                    <strong>Authenticate respondents via GitHub.</strong> Pre-fill your form with respondent's GitHub username, email address, and name.
-                </label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input {% if endpoint == "harvard" or (not endpoint and remote_addr and remote_addr.startswith(("140.247.", "128.103."))) %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="harvard"/>
-                    <strong>Authenticate respondents via HarvardKey.</strong> Pre-fill your form with respondent's HUID, email address, and name.
-                </label>
-            </div>
-            <div class="form-check">
-                <label class="form-check-label">
-                    <input {% if endpoint == "yale" or (not endpoint and remote_addr and remote_addr.startswith(("128.36.", "130.132."))) %}checked{% endif %} class="form-check-input" name="endpoint" required type="radio" value="yale"/>
-                    <strong>Authenticate respondents via Yale NetID.</strong> Pre-fill your form with respondent's NetID, email address, and name.
-                </label>
-            </div>
-        </div>
-        <button class="btn btn-primary mb-3">Next</button>
+        <button class="btn btn-primary" type="submit">Compare</button>
     </form>
 
     <script>
 
         $(function() {
-            $('[data-toggle="tooltip"]').tooltip();
+
+            Dropzone.autoDiscover = false;
+            $('#foo').dropzone({
+                autoProcessQueue: false,
+                createImageThumbnails: false,
+                forceFallback: true,
+                init: function() {
+                    var myDropzone = this;
+                    this.on('sendingmultiple', function() {
+                    });
+                    this.on('successmultiple', function(files, response) {
+                    });
+                    this.on('errormultiple', function(files, response) {
+                    });
+                },
+                method: 'post',
+                paramName: 'files',
+                uploadMultiple: true,
+                url: '/'
+            });
+
         });
 
     </script>

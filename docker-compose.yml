@@ -17,7 +17,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - .:/srv/www
+      - .:/var/www
   mysql:
     image: mysql
     environment:
