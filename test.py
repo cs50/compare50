@@ -49,12 +49,12 @@ def similarities():
         return all_score + ws_score
 
     sorted_pairs = sorted(results.keys(), key=sort_fn, reverse=True)
-    # for pair in sorted_pairs:
-    #     scores = ((results[pair].get("strip_ws") or [0])[0],
-    #               (results[pair].get("strip_all") or [0])[0])
-    #     subA = os.path.normpath(pair[0][0]).split(os.path.sep)[1].split("-")[0]
-    #     subB = os.path.normpath(pair[1][0]).split(os.path.sep)[1].split("-")[0]
-    #     print(subA, subB, scores)
+    for pair in sorted_pairs[:100]:
+        scores = ((results[pair].get("strip_ws") or [0])[0],
+                  (results[pair].get("strip_all") or [0])[0])
+        subA = os.path.normpath(pair[0][0]).split(os.path.sep)[1].split("-")[0]
+        subB = os.path.normpath(pair[1][0]).split(os.path.sep)[1].split("-")[0]
+        print(subA, subB, scores)
     report(results[pair] for pair in sorted_pairs[:8])
 
 

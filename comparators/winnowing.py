@@ -101,12 +101,18 @@ class Winnowing(object):
         of (hash, position) fingerprints
         """
         if self.by_span:
+            if not text.spans:
+                return self.empty_index()
             indices = [span.start for _, span in text.spans]
             indices.append(text.spans[-1][1].stop)
             items = [text for text, _ in text.spans]
         else:
-            indices, items = map(list, zip(*text.chars()))
-            indices.append(indices[-1] + 1)
+            try:
+                indices, items = map(list, zip(*text.chars()))
+                indices.append(indices[-1] + 1)
+            except ValueError:
+                # zip failed because text.chars() is empty
+                return self.empty_index()
 
         hashes = [self._hash((items[i:i+self.k]))
                   for i in range(len(items) - self.k + 1)]

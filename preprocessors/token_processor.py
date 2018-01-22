@@ -102,7 +102,7 @@ class TokenProcessor(object):
         tokens = list(lexer.get_tokens_unprocessed(text))
 
         # add stop index to token stream
-        tokens.append((None, len(text)))
+        tokens.append((len(text),))
         tokens = [(tokens[i][0], tokens[i+1][0], tokens[i][1], tokens[i][2])
                   for i in range(len(tokens) - 1)]
 
