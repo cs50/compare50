@@ -1,45 +1,61 @@
-{% extends "layout.html" %}
+<!DOCTYPE html>
 
-{% block main %}
+<html lang="en">
 
-    {% block message %}{% endblock %}
+    <head>
 
-    <form action="{{ url_for("post") }}" enctype="multipart/form-data" method="post">
-        <div class="form-group" id="foo">
-            FOO
-            <div class="fallback">
-                <input multiple name="files" type="file"/>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+
+        <link href="/static/favicon.ico" rel="icon"/>
+
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="/static/toolkit-minimal.min.css" rel="stylesheet"/>
+        <link href="/static/styles.css" rel="stylesheet"/>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+        <script src="/static/toolkit.min.js"></script>
+        <script src="/static/dropzone.js"></script>
+
+        <title>CS50 Compare</title>
+
+    </head>
+
+    <body>
+        <div class="container p-3">
+            <div class="block text-left">
+                <h1 class="block-title mb-0"><a href="{{ url_for('get') }}">CS50 Compare</a></h1>
+                <h4 class="mb-0">Compare files for similarities.</h4>
+                <h5 class="mb-3">
+                    <small>Email <a href="mailto:sysadmins@cs50.harvard.edu">sysadmins@cs50.harvard.edu</a> about bugs (or lack of features).</small>
+                </h5>
+
+                <form action="{{ url_for("post") }}" enctype="multipart/form-data" method="post">
+                    <div class="form-group">
+                        Submissions
+                        <div class="fallback">
+                            <input multiple name="submissions" type="file"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        Distros
+                        <div class="fallback">
+                            <input multiple name="distros" type="file"/>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        Archives
+                        <div class="fallback">
+                            <input multiple name="archives" type="file"/>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">Compare</button>
+                </form>
+
             </div>
         </div>
-        <button class="btn btn-primary" type="submit">Compare</button>
-    </form>
+    </body>
 
-    <script>
-
-        $(function() {
-
-            Dropzone.autoDiscover = false;
-            $('#foo').dropzone({
-                autoProcessQueue: false,
-                createImageThumbnails: false,
-                forceFallback: true,
-                init: function() {
-                    var myDropzone = this;
-                    this.on('sendingmultiple', function() {
-                    });
-                    this.on('successmultiple', function(files, response) {
-                    });
-                    this.on('errormultiple', function(files, response) {
-                    });
-                },
-                method: 'post',
-                paramName: 'files',
-                uploadMultiple: true,
-                url: '/'
-            });
-
-        });
-
-    </script>
-
-{% endblock %}
+</html>

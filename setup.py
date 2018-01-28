@@ -11,7 +11,7 @@ setup(
     ],
     description="This is compare50, with which you can compare files for similarities.",
     install_requires=["backports.shutil_get_terminal_size"],
-    keywords=["compare", "compare50"],
+    keywords=["backports.shutil_which", "compare", "compare50"],
     name="compare50",
     scripts=["compare50"],
     url="https://github.com/cs50/compare50",

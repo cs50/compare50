@@ -2,5 +2,7 @@ Flask-Migrate
 Flask-Session
 Flask-UUID
 mysqlclient
+patool
 raven[flask]
 validators
+uuid

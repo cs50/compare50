@@ -67,3 +67,19 @@ always be salted the same way.
 If fingerprint hashes are ever serialized, we will need to switch to a
 deterministic hash function, since even constantly-salted `hash` could
 change in between Python versions.
+
+## Web App Notes
+
+```
+FLASK_APP=application.py flask db init
+vim migrations/alembic.ini 
+FLASK_APP=application.py flask db migrate
+FLASK_APP=application.py flask db upgrade
+```
+
+## TODO
+
+* Disallow identical names in same dir.
+* Add support for drag-and-drop (with relative paths).
+* CLI
+* Add error handling so that files are deleted in event of failure.

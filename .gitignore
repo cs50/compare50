@@ -1,6 +1,6 @@
-__pycache__
 .*
-!.gitattributes
 !.gitignore
 !.travis.yml
-*.egg-info
+*.egg-info/
+__pycache__/
+flask_session/
