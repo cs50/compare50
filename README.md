@@ -83,3 +83,4 @@ FLASK_APP=application.py flask db upgrade
 * Add support for drag-and-drop (with relative paths).
 * CLI
 * Add error handling so that files are deleted in event of failure.
+* Return URL with https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Location, not 302.

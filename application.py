@@ -66,9 +66,7 @@ def get():
 @app.route("/", methods=["POST"])
 def post():
 
-    print(request.stream.read())
-
-    # Check for files 
+    # Check for files
     if not request.files.getlist("submissions"):
         abort(make_response(jsonify(error="missing submissions"), 400))
 
@@ -84,6 +82,9 @@ def post():
     submissions = os.path.join(parent, "submissions")
     os.mkdir(submissions)
     for file in request.files.getlist("submissions"):
+        print(file)
+        print(file.headers)
+        print(file.filename)
         save(file, submissions)
 
     # Save distros, if any

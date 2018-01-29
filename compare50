@@ -47,7 +47,7 @@ def main():
     files = []
     for path in args.submissions:
         for file in walk(path):
-            files.append(("submissions", (file, open(file, "rb"))))
+            files.append(("submissions", (file, open(file, "rb"), None, {"X-Foo": "bar"})))
 
     response = requests.post(app_url, allow_redirects=False, files=files)
     if response.status_code == 302:
@@ -92,13 +92,14 @@ def excepthook(type, value, tb):
 sys.excepthook = excepthook
 
 
-def walk(directory):
-    """Walks directory recursively, returning sorted list of paths of files      
-therein."""
+def walk(path):
+    """Walks directory recursively, returning sorted list of paths of files therein."""
+    if os.path.isfile(path):
+        return [os.path.normpath(path)]
     files = []
     for (dirpath, dirnames, filenames) in os.walk(directory):
         for filename in filenames:
-            files.append(os.path.join(dirpath, filename))
+            files.append(os.path.normpath(os.path.join(dirpath, filename)))
     return files
 
 
