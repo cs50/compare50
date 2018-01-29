@@ -1,5 +1,7 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
+import os
+import requests
 import sys
 
 from argparse import ArgumentParser
@@ -33,14 +35,32 @@ def main():
 
     # Parse command-line arguments
     parser = ArgumentParser(description="A command-line tool that compares files for similarties.")
+    parser.add_argument("-a", "--archive", action="append", help="path to archived files to be compared", metavar="PATH")
+    parser.add_argument("-d", "--distro", action="append", help="path to distro to be factored out", metavar="PATH")
     parser.add_argument("-V", "--version", action="version",
                         version="%(prog)s {}".format(__version__))
+    parser.add_argument("submissions", help="submissions to be compared", metavar="PATH", nargs="+")
     args = parser.parse_args(sys.argv[1:])
 
+    app_url = os.environ.get("APP_URL") or "https://compare.cs50.io/"
+
+    files = []
+    for path in args.submissions:
+        for file in walk(path):
+            files.append(("submissions", (file, open(file, "rb"))))
+
+    response = requests.post(app_url, allow_redirects=False, files=files)
+    if response.status_code == 302:
+        print(response.headers["location"])
+        sys.exit(0)
+    else:
+        print(response.status_code)
+        print(response.text)
+        sys.exit(1)
 
 def cancel():
     """Report cancellation."""
-    cprint("Rendering cancelled.", "red")
+    cprint("Cancelled.", "red")  # TODO: decide on wording
     sys.exit(1)
 
 
@@ -70,6 +90,16 @@ def excepthook(type, value, tb):
 
 
 sys.excepthook = excepthook
+
+
+def walk(directory):
+    """Walks directory recursively, returning sorted list of paths of files      
+therein."""
+    files = []
+    for (dirpath, dirnames, filenames) in os.walk(directory):
+        for filename in filenames:
+            files.append(os.path.join(dirpath, filename))
+    return files
 
 
 if __name__ == "__main__":

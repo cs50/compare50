@@ -41,10 +41,10 @@ ARCHIVES = [".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz"]
 
 # Supported helper applications
 HELPERS = {
-    "7z": (".7z"),
-    "compress": (".z"),
-    "unrar": (".rar"),
-    "xz": (".xz")
+    "7z": [".7z"],
+    "compress": [".z"],
+    "unrar": [".rar"],
+    "xz": [".xz"]
 }
 for progname, extensions in HELPERS.items():
     if which(progname):
@@ -65,6 +65,8 @@ def get():
 
 @app.route("/", methods=["POST"])
 def post():
+
+    print(request.stream.read())
 
     # Check for files 
     if not request.files.getlist("submissions"):
