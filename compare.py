@@ -22,6 +22,8 @@ def compare(submissions, distro=None, corpus=[]):
     other corpus."""
 
     def by_file_type(entries):
+        """Take list of (file, submission id) pairs and return dict mapping
+        lexer name to list of (file, submission id, lexer) tuples"""
         results = {}
         for file, sub in entries:
             # get lexer by filename, fallback to text lexer
@@ -42,12 +44,14 @@ def compare(submissions, distro=None, corpus=[]):
                                 for i, sub in enumerate(corpus)
                                 for file in sub)
 
-    # get deterministic ordering of file types
+    # get deterministic ordering of file types (i.e. lexer names)
     file_types = list(set(distro_files.keys()) |
                       set(sub_files.keys()) |
                       set(corpus_files.keys()))
 
     def indices(files):
+        """Return dict mapping file type (lexer name) to list of
+        (index, pass name) pairs"""
         indices = {ftype: [] for ftype in file_types}
         for ftype in file_types:
             file_list = files.get(ftype) or []
@@ -64,11 +68,12 @@ def compare(submissions, distro=None, corpus=[]):
     sub_indices = indices(sub_files)
     corpus_indices = indices(corpus_files)
 
-    # remove distro data from indices and add submission data to corpus data
+    # remove distro from indices and add submissions to corpus
     for ftype in file_types:
         index_sets = zip(distro_indices[ftype],
                          sub_indices[ftype],
                          corpus_indices[ftype])
+        # for each pass in file type, modify indices
         for (distro_idx, _), (sub_idx, _), (corpus_idx, _) in index_sets:
             sub_idx -= distro_idx
             corpus_idx += sub_idx
@@ -80,12 +85,14 @@ def compare(submissions, distro=None, corpus=[]):
         index_pairs = zip(sub_indices[ftype], corpus_indices[ftype])
         for (sub_idx, pass_name), (corpus_idx, _) in index_pairs:
             for sub_pair, score, span_pairs in sub_idx.compare(corpus_idx):
+                # get previous score and spans for these submissions and pass
                 entry = results.setdefault(sub_pair, {})
-                entry = entry.setdefault(pass_name, (0, []))
+                old_score, old_span_pairs = entry.setdefault(pass_name, (0, []))
                 # TODO: do we need a more sophisticated way of combining scores
                 # from different file types in for a single pass?
-                new_score = entry[0] + score
-                new_span_pairs = entry[1] + span_pairs
+                new_score = old_score + score
+                new_span_pairs = old_span_pairs + span_pairs
+                # update result score and span pairs
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
     # convert submission indices back into submission tuples

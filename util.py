@@ -18,6 +18,8 @@ class Span(object):
 
     @staticmethod
     def coalesce(spans):
+        """Given a list of spans, return an equivalent list of non-overlapping
+        spans"""
         if not spans:
             return None
         file_map = {}

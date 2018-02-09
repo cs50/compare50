@@ -5,8 +5,9 @@ from util import Span, ProcessedText
 
 def strip_whitespace(tokens):
     for start, stop, tok, val in tokens:
-        # TODO: strip whitespace from text tokens
-        if tok not in Token.Text or not val.isspace():
+        if tok in Token.Text:
+            val = "".join(val.split())
+        if val:
             yield (start, stop, tok, val)
 
 
