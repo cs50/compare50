@@ -1,5 +1,6 @@
 import pygments
 import pygments.lexers
+import pygments.lexers.special
 from preprocessors.token_processor import *
 from comparators.winnowing import Winnowing
 

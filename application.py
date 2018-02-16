@@ -13,6 +13,8 @@ from raven.contrib.flask import Sentry
 from tempfile import gettempdir, mkstemp
 from werkzeug.utils import secure_filename
 
+from compare import compare
+
 import patoolib
 
 # Application
@@ -23,7 +25,10 @@ Sentry(app)
 
 # Database
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://{}:{}@{}/{}".format(
-    os.environ["MYSQL_USERNAME"], os.environ["MYSQL_PASSWORD"], os.environ["MYSQL_HOST"], os.environ["MYSQL_DATABASE"])
+    os.environ["MYSQL_USERNAME"],
+    os.environ["MYSQL_PASSWORD"],
+    os.environ["MYSQL_HOST"],
+    os.environ["MYSQL_DATABASE"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 Migrate(app, db)
@@ -93,6 +98,8 @@ def post():
         os.mkdir(distros)
         for file in request.files.getlist("distros"):
             save(file, distros)
+    else:
+        distros = None
 
     # Save archives, if any
     if request.files.getlist("archives"):
@@ -100,9 +107,21 @@ def post():
         os.mkdir(archives)
         for file in request.files.getlist("archives"):
             save(file, archives)
+    else:
+        archives = None
+
+    print("submission parent dirs:", [x for x in os.listdir(submissions)
+                               if os.path.isdir(os.path.join(submissions, x))])
+
+    submissions = walk_submissions(submissions)
+    distros = walk(distro) if distros else []
+    archives = walk_submissions(archives) if archives else []
+
+    print("submissions:", submissions)
 
     # TODO
-    # results = compare(walk(files), walk(distros), walk(archives))
+    results = compare(submissions, distros, archives)
+    print(results)
 
     # Redirect to results
     return redirect(url_for("results", id=id))
@@ -125,6 +144,7 @@ def save(file, dirpath):
             os.mkdir(path)
             try:
                 patoolib.extract_archive(pathname, outdir=path)
+                print("Extracted!")
             except patoolib.util.PatoolError:
                 abort(500) # TODO: pass helpful message
             os.remove(pathname)
@@ -142,3 +162,14 @@ def walk(directory):
             files.append(os.path.join(dirpath, filename))
     sorted(sorted(files), key=str.upper)
     return files
+
+def walk_submissions(directory):
+    """Walks directory recursively, returning a list of submissions that are lists of files."""
+    for (dirpath, dirnames, filenames) in os.walk(directory):
+        if len(dirnames) == 0:
+            # single submission
+            return [tuple(sorted([os.path.join(dirpath, f)
+                                  for f in filenames]))]
+        if len(dirnames) > 1:
+            # multiple submissions, each in own subdirectory
+            return [tuple(walk(os.path.join(dirpath, d))) for d in dirnames]

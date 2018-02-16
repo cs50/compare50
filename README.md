@@ -69,6 +69,10 @@ deterministic hash function, since even constantly-salted `hash` could
 change in between Python versions.
 
 ## Web App Notes
+Separate submissions in *Submissions* and *Archives* must be in
+separate directories, even they consist of a single file. For each of
+these categories, all submissions must either share a parent directory
+or be submitted individually.
 
 ```
 FLASK_APP=application.py flask db init
