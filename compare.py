@@ -5,8 +5,7 @@ from comparators.winnowing import Winnowing
 
 
 # map pass names to (preprocessor, comparator) pairs
-# TODO: make configuration an optional parameter to `compare`
-CONFIG = {
+DEFAULT_CONFIG = {
     "strip_ws": (TokenProcessor(strip_whitespace),
                  Winnowing(16, 32)),
     "strip_all": (TokenProcessor(strip_whitespace,
@@ -17,7 +16,7 @@ CONFIG = {
 }
 
 
-def compare(submissions, distro=None, corpus=[]):
+def compare(submissions, distro=None, corpus=[], config=DEFAULT_CONFIG):
     """Compares a group of submissions to each other and to an optional
     other corpus."""
 
@@ -55,7 +54,7 @@ def compare(submissions, distro=None, corpus=[]):
         indices = {ftype: [] for ftype in file_types}
         for ftype in file_types:
             file_list = files.get(ftype) or []
-            for pass_name, (preprocessor, comparator) in CONFIG.items():
+            for pass_name, (preprocessor, comparator) in config.items():
                 index = comparator.empty_index()
                 for file, sub_id, lexer in file_list:
                     text = preprocessor.process(file, lexer)
