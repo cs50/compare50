@@ -1,6 +1,6 @@
 # celery daemon in Docker
 
-## Building
+## Building:
 
 ```
 # cd into this directory
