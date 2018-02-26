@@ -1,4 +1,4 @@
-# celery dameon in Docker
+# celery daemon in Docker
 
 ## Building
 
