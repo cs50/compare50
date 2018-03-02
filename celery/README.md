@@ -12,7 +12,7 @@ $ docker build -t repo/name:tag .
 ## Running:
 
 ```
-$ docker run -it --rm repo/name:tag
+$ docker run -it -v/var/lib/mysql --rm repo/name:tag
 ```
 
 This starts a docker container whose initial commands are:
