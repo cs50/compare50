@@ -6,3 +6,4 @@ patool
 raven[flask]
 validators
 uuid
+celery

@@ -14,8 +14,15 @@ from tempfile import gettempdir, mkstemp
 from werkzeug.utils import secure_filename
 
 from compare import compare
+from tasks import compare_task
 
 import patoolib
+
+db_uri = "mysql://{}:{}@{}/{}".format(
+    os.environ["MYSQL_USERNAME"],
+    os.environ["MYSQL_PASSWORD"],
+    os.environ["MYSQL_HOST"],
+    os.environ["MYSQL_DATABASE"])
 
 # Application
 app = Flask(__name__)
@@ -24,14 +31,13 @@ app = Flask(__name__)
 Sentry(app)
 
 # Database
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://{}:{}@{}/{}".format(
-    os.environ["MYSQL_USERNAME"],
-    os.environ["MYSQL_PASSWORD"],
-    os.environ["MYSQL_HOST"],
-    os.environ["MYSQL_DATABASE"])
+app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 Migrate(app, db)
+
+# Create database for celery
+db.engine.execute("CREATE DATABASE IF NOT EXISTS celerydb;")
 
 # Enable UUID-based routes
 FlaskUUID(app)
@@ -113,17 +119,15 @@ def post():
     print("submission parent dirs:", [x for x in os.listdir(submissions)
                                if os.path.isdir(os.path.join(submissions, x))])
 
-    submissions = walk_submissions(submissions)
-    distros = walk(distro) if distros else []
-    archives = walk_submissions(archives) if archives else []
 
     print("submissions:", submissions)
 
     # TODO
-    results = compare(submissions, distros, archives)
-    print(results)
+    compare_task.apply_async(task_id=id)
+    # print(results)
 
     # Redirect to results
+    print("redirecting")
     return redirect(url_for("results", id=id))
 
 
