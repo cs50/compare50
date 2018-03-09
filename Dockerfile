@@ -22,7 +22,6 @@ RUN pip3 install -r /tmp/requirements.txt && rm -f /tmp/requirements.txt
 # celery daemon
 # http://docs.celeryproject.org/en/latest/userguide/daemonizing.html
 RUN wget https://raw.githubusercontent.com/celery/celery/3.1/extra/generic-init.d/celeryd --output-document=/etc/init.d/celeryd
-RUN echo DEFAULT_USER=\"root\" >> /etc/default/celeryd
 
 RUN chmod a+x /etc/init.d/celeryd
 
@@ -39,7 +38,7 @@ ENV CELERY_BIN="/opt/pyenv/shims/celery"
 ENV CELERY_CREATE_DIRS=1
 
 # change to this directory before running celery
-ENV CELERYD_CHDIR="/root/"
+ENV CELERYD_CHDIR="/var/www/"
 
 # # group to run celery as
 ENV CELERYD_GROUP="root"
@@ -54,10 +53,14 @@ ENV CELERYD_NODES=1
 # how many tasks per worker
 ENV CELERYD_OPTS="--concurrency=1"
 
-# # user to run celery as
-# ENV CELERYD_USER="root"
+# user to run celery as
+ENV CELERYD_USER="root"
+
+# CMD service rabbitmq-server start && \
+#     rabbitmqctl status && \
+#     service celeryd start && \
+#     passenger start
 
 CMD service rabbitmq-server start && \
-    rabbitmqctl status && \
-    service celeryd start && \
+    /etc/init.d/celeryd start && \
     passenger start

@@ -1,5 +1,5 @@
 import math
-from util import Span
+from compare.util import Span
 
 
 class WinnowingIndex(object):

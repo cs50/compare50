@@ -1,6 +1,6 @@
 from pygments.token import Token, String, Name, Number
 
-from util import Span, ProcessedText
+from compare.util import Span, ProcessedText
 
 
 def strip_whitespace(tokens):

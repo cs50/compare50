@@ -1,57 +1,62 @@
-class Span(object):
-    def __init__(self, start, stop, file):
-        self._start = start
-        self._stop = stop
-        self._file = file
+import os
 
-    @property
-    def start(self):
-        return self._start
+from backports.shutil_which import which
+from tempfile import gettempdir, mkstemp
+from werkzeug.utils import secure_filename
 
-    @property
-    def stop(self):
-        return self._stop
+import patoolib
 
-    @property
-    def file(self):
-        return self._file
+# Supported archives, per https://github.com/wummel/patool
+ARCHIVES = [".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz"]
 
-    @staticmethod
-    def coalesce(spans):
-        """Given a list of spans, return an equivalent list of non-overlapping
-        spans"""
-        if not spans:
-            return None
-        file_map = {}
-        for span in spans:
-            file_map.setdefault(span.file, []).append(span)
-        results = []
-        for f, spans in file_map.items():
-            spans = sorted(spans, key=lambda s: s.start)
-            coalesced = [spans[0]]
-            for span in spans[1:]:
-                if span.start <= coalesced[-1].stop:
-                    if span.stop > coalesced[-1].stop:
-                        coalesced[-1] = Span(coalesced[-1].start, span.stop, f)
-                else:
-                    coalesced.append(span)
-            results.extend(coalesced)
-        return results
+# Supported helper applications
+HELPERS = {
+    "7z": [".7z"],
+    "compress": [".z"],
+    "unrar": [".rar"],
+    "xz": [".xz"]
+}
+for progname, extensions in HELPERS.items():
+    if which(progname):
+        ARCHIVES.extend(extensions)
 
-    def __repr__(self):
-        return f"Span({self.start}:{self.stop})"
+def save(file, dirpath):
+    """Saves file at dirpath, extracting to identically named folder if archive."""
+    filename = secure_filename(file.filename)
+    path = os.path.join(dirpath, filename)
+    if path.lower().endswith(tuple(ARCHIVES)):
+        try:
+            _, pathname = mkstemp(filename)
+            file.save(pathname)
+            os.mkdir(path)
+            try:
+                patoolib.extract_archive(pathname, outdir=path)
+                print("Extracted!")
+            except patoolib.util.PatoolError:
+                abort(500) # TODO: pass helpful message
+            os.remove(pathname)
+        except Exception:
+            abort(500) # TODO: pass helpful message
+    else:
+        file.save(path)
 
 
-class ProcessedText(object):
-    """A sequence of (fragment, span) pairs"""
-    def __init__(self, spans):
-        self._spans = spans
+def walk(directory):
+    """Walks directory recursively, returning sorted list of paths of files therein."""
+    files = []
+    for (dirpath, dirnames, filenames) in os.walk(directory):
+        for filename in filenames:
+            files.append(os.path.join(dirpath, filename))
+    sorted(sorted(files), key=str.upper)
+    return files
 
-    @property
-    def spans(self):
-        return self._spans
-
-    def chars(self):
-        for fragment, span in self.spans:
-            for i, c in enumerate(fragment):
-                yield (span.start + i, c)
+def walk_submissions(directory):
+    """Walks directory recursively, returning a list of submissions that are lists of files."""
+    for (dirpath, dirnames, filenames) in os.walk(directory):
+        if len(dirnames) == 0:
+            # single submission
+            return [tuple(sorted([os.path.join(dirpath, f)
+                                  for f in filenames]))]
+        if len(dirnames) > 1:
+            # multiple submissions, each in own subdirectory
+            return [tuple(walk(os.path.join(dirpath, d))) for d in dirnames]
