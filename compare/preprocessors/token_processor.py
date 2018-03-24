@@ -96,7 +96,7 @@ class TokenProcessor(object):
     def __init__(self, *mappers):
         self.mappers = mappers
 
-    def process(self, file, lexer):
+    def process(self, file_id, file, lexer):
         with open(file, "r") as f:
             text = f.read()
 
@@ -112,6 +112,6 @@ class TokenProcessor(object):
             tokens = mapper(tokens)
 
         # produce (fragment, span) output
-        spans = [(val, Span(start, stop, file))
+        spans = [(val, Span(start, stop, file_id))
                  for start, stop, _, val in tokens]
         return ProcessedText(spans)

@@ -1,4 +1,5 @@
 class Span(object):
+    __slots__ = ["_start", "_stop", "_file"]
     def __init__(self, start, stop, file):
         self._start = start
         self._stop = stop
@@ -39,7 +40,7 @@ class Span(object):
         return results
 
     def __repr__(self):
-        return f"Span({self.start}:{self.stop})"
+        return f"Span({self.file}:{self.start}:{self.stop})"
 
 
 class ProcessedText(object):

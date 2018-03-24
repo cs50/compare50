@@ -56,11 +56,6 @@ ENV CELERYD_OPTS="--concurrency=1"
 # user to run celery as
 ENV CELERYD_USER="root"
 
-# CMD service rabbitmq-server start && \
-#     rabbitmqctl status && \
-#     service celeryd start && \
-#     passenger start
-
 CMD service rabbitmq-server start && \
     /etc/init.d/celeryd start && \
     passenger start

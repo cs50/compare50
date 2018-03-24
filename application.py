@@ -110,7 +110,7 @@ def results(id):
     result = AsyncResult(id)
     print(f"Task status: {result.state}")
     if result.state == "FAILURE":
-        print(result.traceback)
+        print(result.result)
     elif result.state == "SUCCESS":
         with open(result.result, "r") as f:
             return Response(f.read(), mimetype="text/json")

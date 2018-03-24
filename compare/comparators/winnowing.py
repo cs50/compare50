@@ -96,9 +96,8 @@ class Winnowing(object):
         return WinnowingIndex.empty(self.k)
 
     def create_index(self, file, text, sub_id):
-        """
-        Given a file name, preprocessed text, and submission id, return a set
-        of (hash, position) fingerprints
+        """Given a file, preprocessed text, and submission id, return a set
+        of (hash, span) fingerprints
         """
         if self.by_span:
             if not text.spans:

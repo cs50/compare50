@@ -18,9 +18,11 @@ All submissions in `submissions` are compared with every other
 submission in `submissions` and with every submission in
 `corpus`. Submissions in `corpus` are not compared with each other.
 
-`compare` returns a structure with the following layout:
+`compare` returns a tuple of (list of files, list of lists of file
+indices corresponding to submissions, results), where results has the
+following layout:
 
-- dict mapping pair of submission file tuples to
+- dict mapping pair of submission indices to
   - dict mapping pass name to pair of
     - similarity score for pass, and
     - list of pairs corresponding to fragments, containing
@@ -32,7 +34,7 @@ not find any similarities may be omitted.
 
 A `Span` represents a contiguous span of characters in a file, and has
 the following properties:
-- `file`: the path of the file this span is within
+- `file`: the index of the file this span is within
 - `start`: the index of the first character in the span
 - `stop`: the index one past the end of the span
 

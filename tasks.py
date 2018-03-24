@@ -15,9 +15,18 @@ app = Celery("tasks",
                  os.environ["MYSQL_HOST"]),
              broker="amqp://localhost")
 
+
+class ResultEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, set):
+            return list(obj)
+        if isinstance(obj, Span):
+            return [obj.file, obj.start, obj.stop]
+        return json.JSONEncoder.default(self, obj)
+
+
 @app.task(bind=True)
 def compare_task(self):
-    print(f"starting compare task for {self.request.id}")
     parent = os.path.join(gettempdir(), self.request.id)
 
     # find directories where files were saved
@@ -30,42 +39,16 @@ def compare_task(self):
     distros = walk(distro_dir) if os.path.exists(distro_dir) else []
     archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
 
-    results = compare(submissions, distros, archives)
+    files, groups, results = compare(submissions, distros, archives)
 
-    # cannot use tuples as keys or sets in json, so do translation
-    results = [
-        {
-            "files": files,
-            "passes": {
-                name: (score, [
-                    (
-                        [
-                            {
-                                "file": files[0].index(f.file),
-                                "start": f.start,
-                                "stop": f.stop
-                            }
-                        for f in a_frags
-                        ],
-                        [
-                            {
-                                "file": files[1].index(f.file),
-                                "start": f.start,
-                                "stop": f.stop
-                            }
-                        for f in b_frags
-                        ]
-                    )
-                    for a_frags, b_frags in frag_pairs
-                ])
-                for name, (score, frag_pairs) in passes.items()
-            }
-        }
-        for files, passes in results.items()
-    ]
+    # cannot use tuples as keys in json
+    results = [{"subs": sub_pair, "passes": passes}
+               for sub_pair, passes in results.items()]
 
     result_path = os.path.join(parent, "results.json")
     with open(result_path, "w") as f:
-        f.write(json.dumps(results))
-    print(f"Finished {self.request.id}!")
+        json.dump({"files": files, "groups": groups, "results": results},
+                  f,
+                  separators=(",", ":"),
+                  cls=ResultEncoder)
     return result_path

@@ -2,10 +2,10 @@ import sys
 import os
 import pprint
 from termcolor import colored
-from preprocessors.token_processor import *
-from comparators.winnowing import Winnowing
+from compare.preprocessors.token_processor import *
+from compare.comparators.winnowing import Winnowing
 
-from compare import compare
+from compare.compare import compare
 
 
 def preprocess_and_fingerprint():
@@ -38,8 +38,8 @@ def similarities():
     if len(sys.argv) >= 3:
         distro = tuple(f"{sys.argv[2]}/{f}" for f in os.listdir(sys.argv[2]))
     else:
-        distro = None
-    results = compare(submissions, distro=distro)
+        distro = []
+    files, groups, results = compare(submissions, distro=distro)
     # pp = pprint.PrettyPrinter(width=1, indent=1, compact=True)
     # pp.pprint(results)
 
@@ -52,10 +52,10 @@ def similarities():
     for pair in sorted_pairs[:100]:
         scores = ((results[pair].get("strip_ws") or [0])[0],
                   (results[pair].get("strip_all") or [0])[0])
-        subA = os.path.normpath(pair[0][0]).split(os.path.sep)[1].split("-")[0]
-        subB = os.path.normpath(pair[1][0]).split(os.path.sep)[1].split("-")[0]
+        subA = os.path.normpath(files[groups[pair[0]][0]]).split(os.path.sep)[1].split("-")[0]
+        subB = os.path.normpath(files[groups[pair[1]][0]]).split(os.path.sep)[1].split("-")[0]
         print(subA, subB, scores)
-    report(results[pair] for pair in sorted_pairs[:8])
+    report((results[pair] for pair in sorted_pairs[:8]), files)
 
 
 def highlight(spans, text, color="red"):
@@ -75,7 +75,7 @@ def highlight(spans, text, color="red"):
     return "".join(combined)
 
 
-def report(results):
+def report(results, file_names):
     def write_report(filename, spans, score):
         files = set(span.file for span in spans)
         by_file = {file: [] for file in files}
@@ -84,9 +84,9 @@ def report(results):
         with open(filename, "w") as output:
             output.write(f"score: {score}\n")
             for file, spans in by_file.items():
-                with open(file, "r") as f:
+                with open(file_names[file], "r") as f:
                     text = f.read()
-                output.write(file)
+                output.write(file_names[file])
                 output.write("\n\n")
                 output.write(highlight(Span.coalesce(spans), text))
                 output.write("\n\n")

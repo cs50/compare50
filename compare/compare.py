@@ -17,49 +17,78 @@ DEFAULT_CONFIG = {
 }
 
 
-def compare(submissions, distro=None, corpus=[], config=DEFAULT_CONFIG):
+def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
     """Compares a group of submissions to each other and to an optional
     other corpus."""
 
-    def by_file_type(entries):
-        """Take list of (file, submission id) pairs and return dict mapping
-        lexer name to list of (file, submission id, lexer) tuples"""
+    files = [] # list of all files
+    groups = [] # lists of file ids
+    group_of_file = [] # list of group ids
+    sub_groups = [] # list of group ids
+    corpus_groups = [] # list of group ids
+
+    for f in distro:
+        distro_ids.append(len(files))
+        group_of_file.append(len(groups))
+        files.append(f)
+    groups.append(list(range(len(files))))
+
+    for s in submissions:
+        sub = []
+        for f in s:
+            sub.append(len(files))
+            group_of_file.append(len(groups))
+            files.append(f)
+        sub_groups.append(len(groups))
+        groups.append(sub)
+
+    for s in corpus:
+        sub = []
+        for f in s:
+            sub.append(len(files))
+            group_of_file.append(len(groups))
+            files.append(f)
+        corpus_groups.append(len(groups))
+        groups.append(sub)
+
+    # single TextLexer instance to use for all plain text files
+    text_lexer = pygments.lexers.special.TextLexer()
+
+    def by_file_type(file_ids):
+        """Take list of file ids and return dict mapping lexer name to list of
+        (file, submission id, lexer) tuples"""
         results = {}
-        for file, sub in entries:
+        for f in file_ids:
             # get lexer by filename, fallback to text lexer
             try:
-                lexer = pygments.lexers.get_lexer_for_filename(file)
+                lexer = pygments.lexers.get_lexer_for_filename(files[f])
             except pygments.util.ClassNotFound:
-                lexer = pygments.lexers.special.TextLexer()
+                lexer = text_lexer
             # use lexer name as proxy for file type
-            results.setdefault(lexer.name, []).append((file, sub, lexer))
+            results.setdefault(lexer.name, []).append((f, lexer))
         return results
 
     # pair each file with its submission index and lexer and split by file type
-    distro_files = by_file_type((file, 0) for file in distro) if distro else {}
-    sub_files = by_file_type((file, 1 + i)
-                             for i, sub in enumerate(submissions)
-                             for file in sub)
-    corpus_files = by_file_type((file, len(submissions) + 1 + i)
-                                for i, sub in enumerate(corpus)
-                                for file in sub)
+    distro_files = by_file_type(groups[0])
+    sub_files = by_file_type([f for g in sub_groups for f in groups[g]])
+    corpus_files = by_file_type([f for g in corpus_groups for f in groups[g]])
 
     # get deterministic ordering of file types (i.e. lexer names)
     file_types = list(set(distro_files.keys()) |
                       set(sub_files.keys()) |
                       set(corpus_files.keys()))
 
-    def indices(files):
+    def indices(typed_files):
         """Return dict mapping file type (lexer name) to list of
         (index, pass name) pairs"""
         indices = {ftype: [] for ftype in file_types}
         for ftype in file_types:
-            file_list = files.get(ftype) or []
+            file_list = typed_files.get(ftype) or []
             for pass_name, (preprocessor, comparator) in config.items():
                 index = comparator.empty_index()
-                for file, sub_id, lexer in file_list:
-                    text = preprocessor.process(file, lexer)
-                    index += comparator.create_index(file, text, sub_id)
+                for f, lexer in file_list:
+                    text = preprocessor.process(f, files[f], lexer)
+                    index += comparator.create_index(f, text, group_of_file[f])
                 indices[ftype].append((index, pass_name))
         return indices
 
@@ -96,6 +125,4 @@ def compare(submissions, distro=None, corpus=[], config=DEFAULT_CONFIG):
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
     # convert submission indices back into submission tuples
-    combined_input = [distro] + submissions + corpus
-    return {(combined_input[i], combined_input[j]): v
-            for (i, j), v in results.items()}
+    return (files, groups, results)
