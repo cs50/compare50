@@ -38,7 +38,7 @@ class WinnowingIndex(object):
         result -= other
         return result
 
-    def compare(self, other):
+    def compare(self, other, n):
         # validate other index
         if not isinstance(other, WinnowingIndex):
             raise Exception("comparison between different index types")
@@ -79,7 +79,9 @@ class WinnowingIndex(object):
                     matches.setdefault(pair, []).append((spans1, spans2))
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
-        return [(pair, scores[pair], matches[pair]) for pair in matches.keys()]
+        top_pairs = map(lambda x: x[0],
+                        sorted(scores.items(), key=lambda x: x[1])[:n])
+        return [(pair, scores[pair], matches[pair]) for pair in top_pairs]
 
     @staticmethod
     def empty(k):

@@ -78,42 +78,29 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
                       set(sub_files.keys()) |
                       set(corpus_files.keys()))
 
-    def indices(typed_files):
-        """Return dict mapping file type (lexer name) to list of
-        (index, pass name) pairs"""
-        indices = {ftype: [] for ftype in file_types}
-        for ftype in file_types:
-            file_list = typed_files.get(ftype) or []
-            for pass_name, (preprocessor, comparator) in config.items():
+    results = {}
+
+    # process one file type and pass at a time to keep memory usage down
+    for ftype in file_types:
+        for pass_name, (preprocessor, comparator) in config.items():
+
+            def make_index(typed_files):
                 index = comparator.empty_index()
-                for f, lexer in file_list:
+                for f, lexer in (typed_files.get(ftype) or []):
                     text = preprocessor.process(f, files[f], lexer)
                     index += comparator.create_index(f, text, group_of_file[f])
-                indices[ftype].append((index, pass_name))
-        return indices
+                return index
 
-    # create list of (index, pass name) pairs for each file type
-    distro_indices = indices(distro_files)
-    sub_indices = indices(sub_files)
-    corpus_indices = indices(corpus_files)
+            distro_index = make_index(distro_files)
+            sub_index = make_index(sub_files)
+            corpus_index = make_index(corpus_files)
 
-    # remove distro from indices and add submissions to corpus
-    for ftype in file_types:
-        index_sets = zip(distro_indices[ftype],
-                         sub_indices[ftype],
-                         corpus_indices[ftype])
-        # for each pass in file type, modify indices
-        for (distro_idx, _), (sub_idx, _), (corpus_idx, _) in index_sets:
-            sub_idx -= distro_idx
-            corpus_idx += sub_idx
-            corpus_idx -= distro_idx
+            # remove distro from indices and add submissions to corpus
+            sub_index -= distro_index
+            corpus_index -= distro_index
+            corpus_index += sub_index
 
-    # perform comparisons between files of same type
-    results = {}
-    for ftype in file_types:
-        index_pairs = zip(sub_indices[ftype], corpus_indices[ftype])
-        for (sub_idx, pass_name), (corpus_idx, _) in index_pairs:
-            for sub_pair, score, span_pairs in sub_idx.compare(corpus_idx):
+            for sub_pair, score, span_pairs in sub_index.compare(corpus_index, 1000):
                 # get previous score and spans for these submissions and pass
                 entry = results.setdefault(sub_pair, {})
                 old_score, old_span_pairs = entry.setdefault(pass_name, (0, []))
@@ -124,5 +111,4 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
                 # update result score and span pairs
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
-    # convert submission indices back into submission tuples
-    return (files, groups, results)
+    return files, groups, results
