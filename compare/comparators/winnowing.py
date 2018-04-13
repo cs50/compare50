@@ -80,7 +80,7 @@ class WinnowingIndex(object):
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
         top_pairs = map(lambda x: x[0],
-                        sorted(scores.items(), key=lambda x: x[1])[:n])
+                        sorted(scores.items(), key=lambda x: x[1], reverse=True)[:n])
         return [(pair, scores[pair], matches[pair]) for pair in top_pairs]
 
     @staticmethod
