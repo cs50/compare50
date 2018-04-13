@@ -111,4 +111,4 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
                 # update result score and span pairs
                 results[sub_pair][pass_name] = (new_score, new_span_pairs)
 
-    return files, groups, results
+    return files, groups, list(config.keys()), results

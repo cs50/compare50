@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+    <head>
+
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+
+        <link href="/static/favicon.ico" rel="icon"/>
+
+        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet"/>
+        <link href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap.css" rel="stylesheet"/>
+        <link href="/static/toolkit-minimal.min.css" rel="stylesheet"/>
+        <link href="/static/styles.css" rel="stylesheet"/>
+
+        <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.10.16/js/dataTables.bootstrap.js"></script>
+        <script src="/static/toolkit.min.js"></script>
+        <script src="/static/dropzone.js"></script>
+
+        <script>
+          $(document).ready(function() {
+              $('#results').DataTable();
+          });
+        </script>
+        <title>CS50 Compare</title>
+
+    </head>
+
+    <body>
+
+      <div class="container">
+        <h1>Compare50 Results</h1>
+        <div class="container">
+          <table id="results" class="table table-striped table-bordered table-hover" cellspacing="0" width="100%">
+            <thead>
+              <tr>
+                <th>A</th>
+                <th>B</th>
+                {% for name in info["passes"] %}
+                <th>{{name}}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for pair in info["results"] %}
+              <tr>
+                {% for sub in pair["subs"] %}
+                <td>
+                  {% for fidx in info["groups"][sub] %}
+                  {{ info["files"][fidx] }},
+                  {% endfor %}
+                </td>
+                {% endfor %}
+                {% for pass in info["passes"] %}
+                <td>
+                  {% if pair["passes"][pass] %}
+                  {{ pair["passes"][pass][0] }}
+                  {% endif %}
+                </td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </body>
+
+</html>

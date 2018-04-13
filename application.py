@@ -1,4 +1,5 @@
 import flask_migrate
+import json
 import os
 import tarfile
 import uuid
@@ -111,7 +112,9 @@ def results(id):
     print(f"Task status: {result.state}")
     if result.state == "FAILURE":
         print(result.result)
+        # TODO: return error page to user
     elif result.state == "SUCCESS":
         with open(result.result, "r") as f:
-            return Response(f.read(), mimetype="text/json")
+            info = json.load(f)
+        return render_template("results.html", info=info)
     return jsonify(walk(os.path.join(gettempdir(), str(id))))

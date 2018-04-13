@@ -39,7 +39,7 @@ def similarities():
         distro = tuple(f"{sys.argv[2]}/{f}" for f in os.listdir(sys.argv[2]))
     else:
         distro = []
-    files, groups, results = compare(submissions, distro=distro)
+    files, groups, passes, results = compare(submissions, distro=distro)
     # pp = pprint.PrettyPrinter(width=1, indent=1, compact=True)
     # pp.pprint(results)
 

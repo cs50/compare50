@@ -39,16 +39,21 @@ def compare_task(self):
     distros = walk(distro_dir) if os.path.exists(distro_dir) else []
     archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
 
-    files, groups, results = compare(submissions, distros, archives)
+    files, groups, passes, results = compare(submissions, distros, archives)
+
+    # remove redundancy from file paths
+    files = [os.path.relpath(f, parent) for f in files]
 
     # cannot use tuples as keys in json
     results = [{"subs": sub_pair, "passes": passes}
                for sub_pair, passes in results.items()]
-
+    info = {
+        "files": files,
+        "groups": groups,
+        "passes": passes,
+        "results": results
+    }
     result_path = os.path.join(parent, "results.json")
     with open(result_path, "w") as f:
-        json.dump({"files": files, "groups": groups, "results": results},
-                  f,
-                  separators=(",", ":"),
-                  cls=ResultEncoder)
+        json.dump(info, f, separators=(",", ":"), cls=ResultEncoder)
     return result_path
