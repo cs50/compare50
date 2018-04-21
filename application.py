@@ -107,7 +107,6 @@ def post():
 
 @app.route("/<uuid:id>")
 def results(id):
-    """TODO"""
     result = AsyncResult(id)
     print(f"Task status: {result.state}")
     if result.state == "FAILURE":
@@ -116,5 +115,24 @@ def results(id):
     elif result.state == "SUCCESS":
         with open(result.result, "r") as f:
             info = json.load(f)
-        return render_template("results.html", info=info)
+        return render_template("results.html", id=id, info=info)
     return jsonify(walk(os.path.join(gettempdir(), str(id))))
+
+@app.route("/<uuid:id>/compare")
+def compare(id):
+    result = AsyncResult(id)
+    if result.state != "SUCCESS":
+        return redirect(f"/{id}")
+    a = request.args.get("a")
+    b = request.args.get("b")
+    if a is None or b is None or not a.isdigit() or not b.isdigit():
+        # TODO: error?
+        return redirect(f"/{id}")
+    with open(result.result, "r") as f:
+        results = json.load(f)
+        pair = [int(a), int(b)]
+        for result in results["results"]:
+            if result["subs"] == pair:
+                return jsonify(result["passes"])
+        # TOOD: error?
+        return jsonify("error")

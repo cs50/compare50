@@ -51,9 +51,11 @@
               <tr>
                 {% for sub in pair["subs"] %}
                 <td>
-                  {% for fidx in info["groups"][sub] %}
-                  {{ info["files"][fidx] }},
-                  {% endfor %}
+                  <a href=/{{id}}/compare?a={{ pair["subs"][0] }}&b={{ pair["subs"][1] }}>
+                    {% for fidx in info["groups"][sub] %}
+                    {{ info["files"][fidx] }},
+                    {% endfor %}
+                  </a>
                 </td>
                 {% endfor %}
                 {% for pass in info["passes"] %}
