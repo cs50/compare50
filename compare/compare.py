@@ -1,8 +1,8 @@
 import pygments
 import pygments.lexers
 import pygments.lexers.special
-from compare.preprocessors.token_processor import *
-from compare.comparators.winnowing import Winnowing
+from compare.token_processor import *
+from compare.winnowing import Winnowing
 
 
 # map pass names to (preprocessor, comparator) pairs
