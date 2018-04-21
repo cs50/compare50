@@ -57,5 +57,5 @@ ENV CELERYD_OPTS="--concurrency=1"
 ENV CELERYD_USER="root"
 
 CMD service rabbitmq-server start && \
-    /etc/init.d/celeryd start && \
+    /etc/init.d/celeryd stop; /etc/init.d/celeryd start && \
     passenger start
