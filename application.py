@@ -10,6 +10,7 @@ from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_uuid import FlaskUUID
 from raven.contrib.flask import Sentry
+from sqlalchemy.sql import func
 from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
@@ -41,6 +42,58 @@ FlaskUUID(app)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
+
+
+class Upload(db.Model):
+    """Represents a particular batch of uploaded submissions"""
+    id = db.Column(db.INT, primary_key=True)
+    uuid = db.Column(db.CHAR(36), nullable=False, unique=True)
+    created = db.Column(db.TIMESTAMP, nullable=False, default=func.now())
+    passes = db.relationship("Pass", backref="upload")
+    submissions = db.relationship("Submission", backref="upload")
+    hashes = db.relationship("Hash", backref="upload")
+
+
+class Pass(db.Model):
+    """Represents a run of a preprocessing and fingerprinting
+    configuration for on an upload"""
+    id = db.Column(db.INT, primary_key=True)
+    # TODO: make config rich enough to re-run pass
+    config = db.Column(db.VARCHAR(255), nullable=False)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+
+
+class Submission(db.Model):
+    """Represents a student's submission comprised of some number of files"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    path = db.Column(db.VARCHAR(255), nullable=False)
+    files = db.relationship("File", backref="submission")
+
+
+class File(db.Model):
+    """Represents a single uploaded file"""
+    id = db.Column(db.INT, primary_key=True)
+    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+    path = db.Column(db.VARCHAR(255), nullable=False)
+    fragments = db.relationship("Fragment", backref="file")
+
+
+class Hash(db.Model):
+    """Represents a chunk of code that may be contained within multiple files"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    fragments = db.relationship("Fragment", backref="hash")
+
+
+class Fragment(db.Model):
+    """Represents a particular section of text in a file"""
+    id = db.Column(db.INT, primary_key=True)
+    hash_id = db.Column(db.INT, db.ForeignKey("hash.id", ondelete="CASCADE"), nullable=False)
+    file_id = db.Column(db.INT, db.ForeignKey("file.id", ondelete="CASCADE"), nullable=False)
+    start = db.Column(db.INT, nullable=False)
+    end = db.Column(db.INT, nullable=False)
+
 
 @app.before_first_request
 def before_first_request():
