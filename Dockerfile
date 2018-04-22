@@ -29,7 +29,7 @@ RUN chmod a+x /etc/init.d/celeryd
 # http://docs.celeryproject.org/en/latest/userguide/daemonizing.html#available-options
 
 # name of python script containing celery app
-ENV CELERY_APP="tasks"
+ENV CELERY_APP="application.celery"
 
 # path for celery binary
 ENV CELERY_BIN="/opt/pyenv/shims/celery"
@@ -57,5 +57,5 @@ ENV CELERYD_OPTS="--concurrency=1"
 ENV CELERYD_USER="root"
 
 CMD service rabbitmq-server start && \
-    /etc/init.d/celeryd stop; /etc/init.d/celeryd start && \
+    /etc/init.d/celeryd restart || /etc/init.d/celeryd start && \
     passenger start

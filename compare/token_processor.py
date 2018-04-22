@@ -112,6 +112,6 @@ class TokenProcessor(object):
             tokens = mapper(tokens)
 
         # produce (fragment, span) output
-        spans = [(val, Span(start, stop, file_id))
+        spans = [(val, Span(start, stop, file_id, None))
                  for start, stop, _, val in tokens]
         return ProcessedText(spans)

@@ -1,10 +1,11 @@
 import flask_migrate
-import json
+# import json
 import os
 import tarfile
 import uuid
 
-from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, url_for
+from celery import Celery
+from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, url_for, has_app_context
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -14,7 +15,7 @@ from sqlalchemy.sql import func
 from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
-from tasks import compare_task
+from compare import compare as compare50
 from util import save, walk, walk_submissions
 
 db_uri = "mysql://{}:{}@{}/{}".format(
@@ -43,6 +44,44 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+# https://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
+class FlaskCelery(Celery):
+    def __init__(self, *args, **kwargs):
+
+        super(FlaskCelery, self).__init__(*args, **kwargs)
+        self.patch_task()
+
+        if 'app' in kwargs:
+            self.init_app(kwargs['app'])
+
+    def patch_task(self):
+        TaskBase = self.Task
+        _celery = self
+
+        class ContextTask(TaskBase):
+            abstract = True
+
+            def __call__(self, *args, **kwargs):
+                if has_app_context():
+                    return TaskBase.__call__(self, *args, **kwargs)
+                else:
+                    with _celery.app.app_context():
+                        return TaskBase.__call__(self, *args, **kwargs)
+
+        self.Task = ContextTask
+
+    def init_app(self, app):
+        self.app = app
+        self.config_from_object(app.config)
+
+celery = FlaskCelery("compare50",
+                     backend="db+mysql://{}:{}@{}/celerydb".format(
+                         os.environ["MYSQL_USERNAME"],
+                         os.environ["MYSQL_PASSWORD"],
+                         os.environ["MYSQL_HOST"]),
+                     broker="amqp://localhost",
+                     app=app)
+
 
 class Upload(db.Model):
     """Represents a particular batch of uploaded submissions"""
@@ -51,7 +90,6 @@ class Upload(db.Model):
     created = db.Column(db.TIMESTAMP, nullable=False, default=func.now())
     passes = db.relationship("Pass", backref="upload")
     submissions = db.relationship("Submission", backref="upload")
-    hashes = db.relationship("Hash", backref="upload")
 
 
 class Pass(db.Model):
@@ -61,6 +99,10 @@ class Pass(db.Model):
     # TODO: make config rich enough to re-run pass
     config = db.Column(db.VARCHAR(255), nullable=False)
     upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    hashes = db.relationship("Hash", backref="pass")
+
+    def __init__(self, config):
+        self.config = config
 
 
 class Submission(db.Model):
@@ -82,7 +124,7 @@ class File(db.Model):
 class Hash(db.Model):
     """Represents a chunk of code that may be contained within multiple files"""
     id = db.Column(db.INT, primary_key=True)
-    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    pass_id = db.Column(db.INT, db.ForeignKey("pass.id", ondelete="CASCADE"), nullable=False)
     fragments = db.relationship("Fragment", backref="hash")
 
 
@@ -166,9 +208,10 @@ def results(id):
         print(result.result)
         # TODO: return error page to user
     elif result.state == "SUCCESS":
-        with open(result.result, "r") as f:
-            info = json.load(f)
-        return render_template("results.html", id=id, info=info)
+        # with open(result.result, "r") as f:
+        #     info = json.load(f)
+        # return render_template("results.html", id=id, info=info)
+        return jsonify("ok")
     return jsonify(walk(os.path.join(gettempdir(), str(id))))
 
 @app.route("/<uuid:id>/compare")
@@ -181,11 +224,66 @@ def compare(id):
     if a is None or b is None or not a.isdigit() or not b.isdigit():
         # TODO: error?
         return redirect(f"/{id}")
-    with open(result.result, "r") as f:
-        results = json.load(f)
-        pair = [int(a), int(b)]
-        for result in results["results"]:
-            if result["subs"] == pair:
-                return jsonify(result["passes"])
-        # TOOD: error?
-        return jsonify("error")
+    return jsonify("ok")
+
+
+@celery.task(bind=True)
+def compare_task(self):
+    parent = os.path.join(gettempdir(), self.request.id)
+
+    # find directories where files were saved
+    submission_dir = os.path.join(parent, "submissions")
+    distro_dir = os.path.join(parent, "distros")
+    archive_dir = os.path.join(parent, "archives")
+
+    # get submission lists
+    submissions = walk_submissions(submission_dir)
+    distros = walk(distro_dir) if os.path.exists(distro_dir) else []
+    archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
+
+    print("Running comparison")
+    passes, files, subs, spans, results = compare50.compare(submissions, distros, archives)
+
+    print("Storing data")
+
+    # create upload and passes
+    upload = Upload()
+    upload.uuid = self.request.id
+    db_passes = {pass_name: Pass(pass_name) for pass_name in passes}
+    upload.passes = list(db_passes.values())
+
+    # create submissions and files
+    db_files = [None] * len(files)
+    for sub in subs:
+        if len(sub) == 0:
+            continue
+        s = Submission()
+        sub_root = os.path.commonpath([files[f] for f in sub])
+        if len(sub) == 1:
+            sub_root = os.path.dirname(sub_root)
+        s.path = os.path.relpath(sub_root, parent)
+        for i in sub:
+            f = File()
+            f.path = os.path.relpath(files[i], sub_root)
+            print(files[i], "\n", s.path, "\n", f.path)
+            s.files.append(f)
+            db_files[i] = f
+        upload.submissions.append(s)
+
+    # create hashes and fragments
+    for pass_name, spans in spans.items():
+        hashes = {}
+        for span in spans:
+            hashes.setdefault(span.hash, set()).add(span)
+        for hash, spans in hashes.items():
+            h = Hash()
+            db_passes[pass_name].hashes.append(h)
+            for span in spans:
+                s = Fragment()
+                s.start = span.start
+                s.end = span.stop
+                db_files[span.file].fragments.append(s)
+                h.fragments.append(s)
+
+    db.session.add(upload)
+    db.session.commit()

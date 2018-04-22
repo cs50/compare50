@@ -78,7 +78,10 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
                       set(sub_files.keys()) |
                       set(corpus_files.keys()))
 
+    # map pass then submission pair to score
     results = {}
+    # map pass to spans
+    all_spans = {}
 
     # process one file type and pass at a time to keep memory usage down
     for ftype in file_types:
@@ -100,15 +103,16 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
             corpus_index -= distro_index
             corpus_index += sub_index
 
-            for sub_pair, score, span_pairs in sub_index.compare(corpus_index, 1000):
+            scores, spans = sub_index.compare(corpus_index, 1000)
+            for sub_pair, score in scores:
                 # get previous score and spans for these submissions and pass
-                entry = results.setdefault(sub_pair, {})
-                old_score, old_span_pairs = entry.setdefault(pass_name, (0, []))
+                entry = results.setdefault(pass_name, {})
+                old_score, old_span_pairs = entry.setdefault(sub_pair, (0, []))
                 # TODO: do we need a more sophisticated way of combining scores
                 # from different file types in for a single pass?
-                new_score = old_score + score
-                new_span_pairs = old_span_pairs + span_pairs
-                # update result score and span pairs
-                results[sub_pair][pass_name] = (new_score, new_span_pairs)
+                results[pass_name][sub_pair] = old_score + score
 
-    return files, groups, list(config.keys()), results
+            pass_spans = all_spans.setdefault(pass_name, set())
+            pass_spans |= spans
+
+    return list(config.keys()), files, groups, all_spans, results

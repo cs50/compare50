@@ -7,8 +7,8 @@ class WinnowingIndex(object):
     def __init__(self, k, fingerprints, sub_id):
         self.k = k
         self.index = dict()
-        for h, span in fingerprints:
-            self._insert(h, sub_id, span)
+        for span in fingerprints:
+            self._insert(span.hash, sub_id, span)
 
     def _insert(self, h, sub_id, span):
         self.index.setdefault(h, set()).add((sub_id, span))
@@ -45,7 +45,7 @@ class WinnowingIndex(object):
         if self.k != other.k:
             raise Exception("comparison with different n-gram lengths")
 
-        # map id pairs to lists of pairs of sets of spans
+        # map id pairs to sets of spans
         matches = {}
         # map id pairs to the number of distinct shared hashes
         # TODO: weight by min file length
@@ -76,12 +76,14 @@ class WinnowingIndex(object):
 
                     # update results
                     pair = (sub_id1, sub_id2)
-                    matches.setdefault(pair, []).append((spans1, spans2))
+                    pair_matches = matches.setdefault(pair, set())
+                    pair_matches  |= spans1 | spans2
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
         top_pairs = map(lambda x: x[0],
                         sorted(scores.items(), key=lambda x: x[1], reverse=True)[:n])
-        return [(pair, scores[pair], matches[pair]) for pair in top_pairs]
+        top_spans = set.union(*(matches[pair] for pair in top_pairs))
+        return [(pair, scores[pair]) for pair in top_pairs], top_spans
 
     @staticmethod
     def empty(k):
@@ -119,24 +121,24 @@ class Winnowing(object):
                   for i in range(len(items) - self.k + 1)]
 
         # circular buffer holding window
-        buf = [(math.inf, Span(0, 0, None))] * self.w
+        buf = [Span(0, 0, None, math.inf)] * self.w
         # index of minimum hash in buffer
         min_idx = 0
         fingerprints = []
         for i in range(len(hashes)):
             # index in buffer
             idx = i % self.w
-            buf[idx] = (hashes[i], Span(indices[i], indices[i+self.k], file))
+            buf[idx] = Span(indices[i], indices[i+self.k], file, hashes[i])
             if min_idx == idx:
                 # old min not in window, search left for new min
                 for j in range(1, self.w):
                     search_idx = (idx - j) % self.w
-                    if buf[search_idx][0] < buf[min_idx][0]:
+                    if buf[search_idx].hash < buf[min_idx].hash:
                         min_idx = search_idx
                 fingerprints.append(buf[min_idx])
             else:
                 # compare new hash to old min (robust winnowing)
-                if buf[idx][0] < buf[min_idx][0]:
+                if buf[idx].hash < buf[min_idx].hash:
                     min_idx = idx
                     fingerprints.append(buf[min_idx])
         return WinnowingIndex(self.k, fingerprints, sub_id)

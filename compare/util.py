@@ -1,9 +1,10 @@
 class Span(object):
-    __slots__ = ["_start", "_stop", "_file"]
-    def __init__(self, start, stop, file):
+    __slots__ = ["_start", "_stop", "_file", "_hash"]
+    def __init__(self, start, stop, file, hash):
         self._start = start
         self._stop = stop
         self._file = file
+        self._hash = hash
 
     @property
     def start(self):
@@ -16,6 +17,10 @@ class Span(object):
     @property
     def file(self):
         return self._file
+
+    @property
+    def hash(self):
+        return self._hash
 
     @staticmethod
     def coalesce(spans):
