@@ -80,6 +80,7 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
 
     # map pass then submission pair to score
     results = {}
+
     # map pass to spans
     all_spans = {}
 

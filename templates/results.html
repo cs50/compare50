@@ -41,28 +41,27 @@
               <tr>
                 <th>A</th>
                 <th>B</th>
-                {% for name in info["passes"] %}
-                <th>{{name}}</th>
+                {% for pass in passes %}
+                <th>{{pass}}</th>
                 {% endfor %}
               </tr>
             </thead>
             <tbody>
-              {% for pair in info["results"] %}
+              {% for (id_a, id_b), scores in matches.items() %}
               <tr>
-                {% for sub in pair["subs"] %}
                 <td>
-                  <a href=/{{id}}/compare?a={{ pair["subs"][0] }}&b={{ pair["subs"][1] }}>
-                    {% for fidx in info["groups"][sub] %}
-                    {{ info["files"][fidx] }},
-                    {% endfor %}
+                  <a href=/{{id}}/compare?a={{id_a}}&b={{id_b}}>
+                    {{paths[id_a]}}
                   </a>
                 </td>
-                {% endfor %}
-                {% for pass in info["passes"] %}
                 <td>
-                  {% if pair["passes"][pass] %}
-                  {{ pair["passes"][pass][0] }}
-                  {% endif %}
+                  <a href=/{{id}}/compare?a={{id_a}}&b={{id_b}}>
+                    {{paths[id_b]}}
+                  </a>
+                </td>
+                {% for pass in passes %}
+                <td>
+                  {{scores[pass]}}
                 </td>
                 {% endfor %}
               </tr>

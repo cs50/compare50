@@ -44,6 +44,7 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+# Run celery tasks in Flask context
 # https://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
 class FlaskCelery(Celery):
     def __init__(self, *args, **kwargs):
@@ -74,6 +75,7 @@ class FlaskCelery(Celery):
         self.app = app
         self.config_from_object(app.config)
 
+
 celery = FlaskCelery("compare50",
                      backend="db+mysql://{}:{}@{}/celerydb".format(
                          os.environ["MYSQL_USERNAME"],
@@ -100,6 +102,7 @@ class Pass(db.Model):
     config = db.Column(db.VARCHAR(255), nullable=False)
     upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
     hashes = db.relationship("Hash", backref="pass")
+    matches = db.relationship("Match", backref="pass")
 
     def __init__(self, config):
         self.config = config
@@ -135,6 +138,15 @@ class Fragment(db.Model):
     file_id = db.Column(db.INT, db.ForeignKey("file.id", ondelete="CASCADE"), nullable=False)
     start = db.Column(db.INT, nullable=False)
     end = db.Column(db.INT, nullable=False)
+
+
+class Match(db.Model):
+    """Represents a pair of submissions scored by a pass"""
+    id = db.Column(db.INT, primary_key=True)
+    sub_a = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+    sub_b = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+    pass_id = db.Column(db.INT, db.ForeignKey("pass.id", ondelete="CASCADE"), nullable=False)
+    score = db.Column(db.INT, nullable=False)
 
 
 @app.before_first_request
@@ -208,11 +220,20 @@ def results(id):
         print(result.result)
         # TODO: return error page to user
     elif result.state == "SUCCESS":
-        # with open(result.result, "r") as f:
-        #     info = json.load(f)
-        # return render_template("results.html", id=id, info=info)
-        return jsonify("ok")
+        upload = Upload.query.filter_by(uuid=id).first_or_404()
+        passes = []
+        paths = {}
+        matches = {}
+        for p in upload.passes:
+            passes.append(p.config)
+            for match in p.matches:
+                paths[match.sub_a] = Submission.query.filter_by(id=match.sub_a).first().path
+                paths[match.sub_b] = Submission.query.filter_by(id=match.sub_b).first().path
+                matches.setdefault((match.sub_a, match.sub_b), {})[p.config] = match.score
+        return render_template("results.html", id=id, passes=passes, paths=paths, matches=matches)
+    # TODO: return loading message
     return jsonify(walk(os.path.join(gettempdir(), str(id))))
+
 
 @app.route("/<uuid:id>/compare")
 def compare(id):
@@ -246,35 +267,44 @@ def compare_task(self):
 
     print("Storing data")
 
-    # create upload and passes
+    # create upload
     upload = Upload()
     upload.uuid = self.request.id
+
+    # create passes
     db_passes = {pass_name: Pass(pass_name) for pass_name in passes}
     upload.passes = list(db_passes.values())
 
     # create submissions and files
-    db_files = [None] * len(files)
-    for sub in subs:
+    db_submissions = [None] * len(subs)
+    db_files = {}
+    for i, sub in enumerate(subs):
         if len(sub) == 0:
             continue
-        s = Submission()
-        sub_root = os.path.commonpath([files[f] for f in sub])
-        if len(sub) == 1:
-            sub_root = os.path.dirname(sub_root)
-        s.path = os.path.relpath(sub_root, parent)
-        for i in sub:
-            f = File()
-            f.path = os.path.relpath(files[i], sub_root)
-            print(files[i], "\n", s.path, "\n", f.path)
-            s.files.append(f)
-            db_files[i] = f
+
+        s = db_submissions[i] = Submission()
         upload.submissions.append(s)
 
-    # create hashes and fragments
+        # path of submission
+        if len(sub) == 1:
+            sub_root = os.path.dirname(files[sub[0]])
+        else:
+            sub_root = os.path.commonpath([files[f] for f in sub])
+        s.path = os.path.relpath(sub_root, parent)
+
+        # add files to submission
+        for i in sub:
+            f = db_files[i] = File()
+            s.files.append(f)
+            f.path = os.path.relpath(files[i], sub_root)
+
     for pass_name, spans in spans.items():
+        # map hashes to spans
         hashes = {}
         for span in spans:
             hashes.setdefault(span.hash, set()).add(span)
+
+        # create hashes and fragments
         for hash, spans in hashes.items():
             h = Hash()
             db_passes[pass_name].hashes.append(h)
@@ -284,6 +314,19 @@ def compare_task(self):
                 s.end = span.stop
                 db_files[span.file].fragments.append(s)
                 h.fragments.append(s)
+
+    # commit so we can access submission IDs below
+    db.session.add(upload)
+    db.session.commit()
+
+    # create scored matches
+    for pass_name, scores in results.items():
+        for (sub_a, sub_b), score in scores.items():
+            m = Match()
+            m.sub_a = db_submissions[sub_a].id
+            m.sub_b = db_submissions[sub_b].id
+            m.score = score
+            db_passes[pass_name].matches.append(m)
 
     db.session.add(upload)
     db.session.commit()

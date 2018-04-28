@@ -80,8 +80,9 @@ class WinnowingIndex(object):
                     pair_matches  |= spans1 | spans2
                     scores[pair] = scores.setdefault(pair, 0) + 1
 
-        top_pairs = map(lambda x: x[0],
-                        sorted(scores.items(), key=lambda x: x[1], reverse=True)[:n])
+        top_pairs = list(map(lambda x: x[0],
+                             sorted(scores.items(), key=lambda x: x[1],
+                                    reverse=True)[:n]))
         top_spans = set.union(*(matches[pair] for pair in top_pairs))
         return [(pair, scores[pair]) for pair in top_pairs], top_spans
 
