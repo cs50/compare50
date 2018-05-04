@@ -101,8 +101,8 @@ class Pass(db.Model):
     # TODO: make config rich enough to re-run pass
     config = db.Column(db.VARCHAR(255), nullable=False)
     upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
-    hashes = db.relationship("Hash", backref="pass")
-    matches = db.relationship("Match", backref="pass")
+    hashes = db.relationship("Hash", backref="processor")
+    matches = db.relationship("Match", backref="processor")
 
     def __init__(self, config):
         self.config = config
@@ -244,6 +244,11 @@ def compare(id):
     b = request.args.get("b")
     if a is None or b is None or not a.isdigit() or not b.isdigit():
         # TODO: error?
+        return redirect(f"/{id}")
+    match = Match.query.filter_by(sub_a=a, sub_b=b).first()
+    if match is None:
+        return redirect(f"/{id}")
+    if match.processor.upload.uuid != str(id):
         return redirect(f"/{id}")
     return jsonify("ok")
 
