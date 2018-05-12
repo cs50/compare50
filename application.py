@@ -237,20 +237,37 @@ def results(id):
 
 @app.route("/<uuid:id>/compare")
 def compare(id):
+    # check the worker has finished
     result = AsyncResult(id)
     if result.state != "SUCCESS":
         return redirect(f"/{id}")
+
+    # validate args
     a = request.args.get("a")
     b = request.args.get("b")
     if a is None or b is None or not a.isdigit() or not b.isdigit():
-        # TODO: error?
+        # TODO: error instead?
         return redirect(f"/{id}")
+
+    # check that comparison exists and has correct upload id
     match = Match.query.filter_by(sub_a=a, sub_b=b).first()
-    if match is None:
+    if match is None or match.processor.upload.uuid != str(id):
         return redirect(f"/{id}")
-    if match.processor.upload.uuid != str(id):
-        return redirect(f"/{id}")
-    return jsonify("ok")
+
+    def read_file(f):
+        path = os.path.join(gettempdir(),
+                            f.submission.upload.uuid,
+                            f.submission.path,
+                            f.path)
+        with open(path, "r") as file:
+            return f.path, file.read()
+
+    sub_a = Submission.query.filter_by(id=match.sub_a).first()
+    sub_b = Submission.query.filter_by(id=match.sub_b).first()
+    a_files = map(read_file, sub_a.files)
+    b_files = map(read_file, sub_b.files)
+
+    return render_template("compare.html", a_files=a_files, b_files=b_files)
 
 
 @celery.task(bind=True)

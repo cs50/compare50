@@ -12,3 +12,30 @@ body, h1, h4, h5 {
 .form-check {
     padding-left: initial;
 }
+
+/* split view */
+.split {
+    height: 100%;
+    width: 50%;
+    position: absolute;
+    overflow-x: auto;
+    overflow-y: scroll;
+}
+
+.left {
+    left: 0;
+    border: 1px solid black;
+    border-top: 0;
+}
+
+.right {
+    right: 0;
+    border: 1px solid black;
+    border-left: 0;
+    border-top: 0;
+}
+
+/* style code samples */
+.submission-file {
+    border-top: 1px solid black;
+}
