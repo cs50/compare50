@@ -227,8 +227,8 @@ def results(id):
         for p in upload.passes:
             passes.append(p.config)
             for match in p.matches:
-                paths[match.sub_a] = Submission.query.filter_by(id=match.sub_a).first().path
-                paths[match.sub_b] = Submission.query.filter_by(id=match.sub_b).first().path
+                paths[match.sub_a] = Submission.query.get(match.sub_a).path
+                paths[match.sub_b] = Submission.query.get(match.sub_b).path
                 matches.setdefault((match.sub_a, match.sub_b), {})[p.config] = match.score
         return render_template("results.html", id=id, passes=passes, paths=paths, matches=matches)
     # TODO: return loading message
@@ -254,18 +254,64 @@ def compare(id):
     if match is None or match.processor.upload.uuid != str(id):
         return redirect(f"/{id}")
 
-    def read_file(f):
+
+    sub_a = Submission.query.get(match.sub_a)
+    sub_b = Submission.query.get(match.sub_b)
+    a_frags = Fragment.query.join(File.fragments).\
+              filter(File.submission_id == sub_a.id)
+    b_frags = Fragment.query.join(File.fragments).\
+              filter(File.submission_id == sub_b.id)
+
+    # reduce to only shared fragments
+    a_frags = a_frags.filter(Fragment.hash_id.\
+                             in_(b_frags.with_entities(Fragment.hash_id))).all()
+    b_frags = b_frags.filter(Fragment.hash_id.\
+                             in_(map(lambda f: f.hash_id, a_frags))).all()
+
+    # split frags among files
+    a_files = {f: [] for f in sub_a.files}
+    b_files = {f: [] for f in sub_b.files}
+    for frag in a_frags:
+        a_files[frag.file].append(frag)
+    for frag in b_frags:
+        b_files[frag.file].append(frag)
+
+    def flatten_frags(f, frags):
+        """Return list of (text, hash ids) pairs"""
         path = os.path.join(gettempdir(),
                             f.submission.upload.uuid,
                             f.submission.path,
                             f.path)
         with open(path, "r") as file:
-            return f.path, file.read()
+            text = file.read()
+        frags = sorted(frags, key=lambda f: f.start)
+        result = []
+        cur_frags = []
+        cur_text = []
 
-    sub_a = Submission.query.filter_by(id=match.sub_a).first()
-    sub_b = Submission.query.filter_by(id=match.sub_b).first()
-    a_files = map(read_file, sub_a.files)
-    b_files = map(read_file, sub_b.files)
+        def make_output():
+            return ("".join(cur_text),
+                    " ".join(str(f.hash_id) for f in cur_frags))
+
+        for i, c in enumerate(text):
+            new_frags = [f for f in cur_frags if f.end > i]
+            while frags and frags[0].start == i:
+                new_frags.append(frags.pop(0))
+            if new_frags != cur_frags and cur_text:
+                result.append(make_output())
+                cur_text = []
+            cur_frags = new_frags
+            cur_text.append(c)
+        result.append(make_output())
+        return result
+
+
+    a_files = [(f.path, flatten_frags(f, a_files[f])) for f in sub_a.files]
+    b_files = [(f.path, flatten_frags(f, b_files[f])) for f in sub_b.files]
+
+    print(a_files)
+
+    print(b_files)
 
     return render_template("compare.html", a_files=a_files, b_files=b_files)
 

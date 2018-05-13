@@ -22,6 +22,21 @@
         <script src="/static/toolkit.min.js"></script>
         <script src="/static/dropzone.js"></script>
 
+        <script>
+          $(document).ready(function() {
+              $('.match').hover(function() {
+                  $(this).data('fids').toString().split(' ').forEach(function(fid) {
+                      $(`.match[data-fids~=${fid}]`).addClass('highlight');
+                  });
+              },
+              function() {
+                  $(this).data('fids').toString().split(' ').forEach(function(fid) {
+                      $(`.match[data-fids~=${fid}]`).removeClass('highlight');
+                  });
+              });
+          });
+        </script>
+
         <title>CS50 Compare</title>
 
     </head>
@@ -33,18 +48,28 @@
         <div class="container">
 
           <div class="split left">
-            {% for title, text in a_files %}
+            <div class="submission-file">
+              <h4>hello.c</h4>
+              <pre><code><code class="distro">#include&lt;stdio.h&gt;</code>
+
+int main() {
+    printf(<code class="match" data-fids="0123 4567">"Hello, world!\n"</code><code class="match" data-fids="0123">);</code>
+<code class="match" data-fids="4567">}</code>
+</code></pre>
+            </div>
+            {% for title, fragments in a_files %}
             <div class="submission-file">
               <h4>{{title}}</h4>
-              <pre><code>{{text}}</pre></code>
+              <pre>{% for text, fids in fragments %}<code{% if fids %} class="match"{% endif %} data-fids="{{fids}}">{{text}}</code>{% endfor %}</pre>
             </div>
             {% endfor %}
           </div>
 
           <div class="split right">
-            {% for title, text in b_files %}
+            {% for title, fragments in b_files %}
             <div class="submission-file">
               <h4>{{title}}</h4>
+              <pre>{% for text, fids in fragments %}<code{% if fids %} class="match"{% endif %} data-fids="{{fids}}">{{text}}</code>{% endfor %}</pre>
               <pre><code>{{text}}</pre></code>
             </div>
             {% endfor %}

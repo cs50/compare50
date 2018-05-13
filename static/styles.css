@@ -39,3 +39,17 @@ body, h1, h4, h5 {
 .submission-file {
     border-top: 1px solid black;
 }
+
+/* highlighted code fragments */
+.distro {
+    color: silver;
+}
+
+.match {
+    color: crimson;
+    font-weight: bold;
+}
+
+.highlight {
+    background-color: yellow;
+}
