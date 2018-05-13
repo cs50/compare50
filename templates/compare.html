@@ -48,15 +48,6 @@
         <div class="container">
 
           <div class="split left">
-            <div class="submission-file">
-              <h4>hello.c</h4>
-              <pre><code><code class="distro">#include&lt;stdio.h&gt;</code>
-
-int main() {
-    printf(<code class="match" data-fids="0123 4567">"Hello, world!\n"</code><code class="match" data-fids="0123">);</code>
-<code class="match" data-fids="4567">}</code>
-</code></pre>
-            </div>
             {% for title, fragments in a_files %}
             <div class="submission-file">
               <h4>{{title}}</h4>
