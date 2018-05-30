@@ -104,7 +104,7 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
             corpus_index -= distro_index
             corpus_index += sub_index
 
-            scores, spans = sub_index.compare(corpus_index, 1000)
+            scores, spans = sub_index.compare(corpus_index, 50)
             for sub_pair, score in scores:
                 # get previous score and spans for these submissions and pass
                 entry = results.setdefault(pass_name, {})

@@ -24,7 +24,9 @@
 
         <script>
           $(document).ready(function() {
-              $('#results').DataTable();
+              $('#results').DataTable({
+                  paging: false,
+              });
           });
         </script>
         <title>CS50 Compare</title>
