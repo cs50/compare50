@@ -263,39 +263,89 @@ def compare(id):
               filter(File.submission_id == sub_b.id)
 
     # reduce to only shared fragments
-    a_frags = a_frags.filter(Fragment.hash_id.\
+    a_shared = a_frags.filter(Fragment.hash_id.\
                              in_(b_frags.with_entities(Fragment.hash_id))).all()
-    b_frags = b_frags.filter(Fragment.hash_id.\
-                             in_(map(lambda f: f.hash_id, a_frags))).all()
+    b_shared = b_frags.filter(Fragment.hash_id.\
+                             in_(a_frags.with_entities(Fragment.hash_id))).all()
 
-    # split frags among files
-    a_files = {f: [] for f in sub_a.files}
-    b_files = {f: [] for f in sub_b.files}
-    for frag in a_frags:
-        a_files[frag.file].append(frag)
-    for frag in b_frags:
-        b_files[frag.file].append(frag)
+    a_by_hash = {}
+    b_by_hash = {}
+    for dest, src in ((a_by_hash, a_shared), (b_by_hash, b_shared)):
+        for frag in src:
+            dest.setdefault(frag.hash_id, []).append(frag)
 
-    def flatten_frags(f, frags):
+    def expand_frags(a_frags, b_frags):
+        data = tuple([(frag, frag.start, frag.end) for frag in frags]
+                     for frags in (a_frags, b_frags))
+
+        while True:
+            changed = False
+            prevs = set()
+            nexts = set()
+            for sub_data in data:
+                for frag, start, end in sub_data:
+                    path = os.path.join(gettempdir(),
+                                        frag.file.submission.upload.uuid,
+                                        frag.file.submission.path,
+                                        frag.file.path)
+                    with open(path, "r") as f:
+                        text = f.read()
+                        prevs.add(text[start-1] if start > 0 else None)
+                        nexts.add(text[end] if end < len(text) else None)
+            if len(prevs) == 1 and prevs.pop() is not None:
+                data = tuple([(frag, start-1, end) for frag, start, end in data]
+                             for data in data)
+                changed = True
+            if len(nexts) == 1 and nexts.pop() is not None:
+                data = tuple([(frag, start, end+1) for frag, start, end in data]
+                             for data in data)
+                changed = True
+            if not changed:
+                break
+        return data
+
+    a_expanded = []
+    b_expanded = []
+    for h in set(a_by_hash) | set(b_by_hash):
+        a, b = expand_frags(a_by_hash[h], b_by_hash[h])
+        a_expanded.extend(a)
+        b_expanded.extend(b)
+
+    a_by_file = {f: [] for f in sub_a.files}
+    b_by_file = {f: [] for f in sub_b.files}
+    for dest, src in ((a_by_file, a_expanded), (b_by_file, b_expanded)):
+        for frag, start, end in src:
+            dest[frag.file].append((frag, start, end))
+
+    def flatten_frags(file, frags):
         """Return list of (text, hash ids) pairs"""
+        def get_hash(f):
+            return f[0].hash_id
+
+        def get_start(f):
+            return f[1]
+
+        def get_end(f):
+            return f[2]
+
         path = os.path.join(gettempdir(),
-                            f.submission.upload.uuid,
-                            f.submission.path,
-                            f.path)
+                            file.submission.upload.uuid,
+                            file.submission.path,
+                            file.path)
         with open(path, "r") as file:
             text = file.read()
-        frags = sorted(frags, key=lambda f: f.start)
+        frags = sorted(frags, key=get_start)
         result = []
         cur_frags = []
         cur_text = []
 
         def make_output():
             return ("".join(cur_text),
-                    " ".join(str(f.hash_id) for f in cur_frags))
+                    " ".join(str(get_hash(f)) for f in cur_frags))
 
         for i, c in enumerate(text):
-            new_frags = [f for f in cur_frags if f.end > i]
-            while frags and frags[0].start == i:
+            new_frags = [f for f in cur_frags if get_end(f) > i]
+            while frags and get_start(frags[0]) == i:
                 new_frags.append(frags.pop(0))
             if new_frags != cur_frags and cur_text:
                 result.append(make_output())
@@ -305,14 +355,8 @@ def compare(id):
         result.append(make_output())
         return result
 
-
-    a_files = [(f.path, flatten_frags(f, a_files[f])) for f in sub_a.files]
-    b_files = [(f.path, flatten_frags(f, b_files[f])) for f in sub_b.files]
-
-    print(a_files)
-
-    print(b_files)
-
+    a_files = [(f.path, flatten_frags(f, a_by_file[f])) for f in sub_a.files]
+    b_files = [(f.path, flatten_frags(f, b_by_file[f])) for f in sub_b.files]
     return render_template("compare.html", a_files=a_files, b_files=b_files)
 
 
