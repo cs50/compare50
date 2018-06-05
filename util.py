@@ -45,7 +45,7 @@ def ignored(path):
     """Returns whether the given path ends in an ignored name."""
     ignored_prefixes = [".", "__"]
     name = os.path.basename(path)
-    return any(name.startswith(p) for p in  ignored_prefixes)
+    return any(name.startswith(p) for p in ignored_prefixes)
 
 
 def walk(directory):
