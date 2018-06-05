@@ -41,19 +41,35 @@ def save(file, dirpath):
         file.save(path)
 
 
+def ignored(path):
+    """Returns whether the given path ends in an ignored name."""
+    ignored_prefixes = [".", "__"]
+    name = os.path.basename(path)
+    return any(name.startswith(p) for p in  ignored_prefixes)
+
+
 def walk(directory):
     """Walks directory recursively, returning sorted list of paths of files therein."""
     files = []
     for (dirpath, dirnames, filenames) in os.walk(directory):
+        if ignored(dirpath):
+            continue
         for filename in filenames:
+            if ignored(filename):
+                continue
             files.append(os.path.join(dirpath, filename))
     sorted(sorted(files), key=str.upper)
     return files
 
+
 def walk_submissions(directory):
     """Walks directory recursively, returning a list of submissions that are lists of files."""
     for (dirpath, dirnames, filenames) in os.walk(directory):
-        if len(dirnames) == 0:
+        if ignored(dirpath):
+            continue
+        dirnames = list(filter(lambda d: not ignored(d), dirnames))
+        filenames = list(filter(lambda f: not ignored(f), filenames))
+        if len(filenames) > 0:
             # single submission
             return [tuple(sorted([os.path.join(dirpath, f)
                                   for f in filenames]))]
