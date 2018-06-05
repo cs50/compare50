@@ -16,7 +16,7 @@ from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
 from compare import compare as compare50
-from util import save, walk, walk_submissions
+from util import save, walk, walk_submissions, NotFinishedException, InvalidRequestException
 
 db_uri = "mysql://{}:{}@{}/{}".format(
     os.environ["MYSQL_USERNAME"],
@@ -236,54 +236,102 @@ def results(id):
 
 
 @app.route("/<uuid:id>/compare")
-def compare(id):
+def compare_view(id):
+    try:
+        a, b = request.args.get("a"), request.args.get("b")
+        a_files, b_files = compare(id, a, b)
+    except (NotFinishedException, InvalidRequestException) as e:
+        print(e)
+        return redirect(f"/{id}")
+
+    return render_template("compare.html", a_files=a_files, b_files=b_files)
+
+
+@app.route("/api/<uuid:id>/compare")
+def compare_api(id):
+    try:
+        a, b = request.args.get("a"), request.args.get("b")
+        result = compare(id, a, b)
+    except (NotFinishedException, InvalidRequestException):
+        abort(status.HTTP_400_BAD_REQUEST)
+
+    # TODO: add keys to JSON instead of just having a ton of nested lists
+    return jsonify(result)
+
+
+def compare(id, a, b):
+    """Takes a job ID and two unvalidated submission IDs and returns two
+    lists of (path, flattened fragments) pairs, where each flattened fragment
+    is a (text, fragment IDs) pair
+    """
     # check the worker has finished
     result = AsyncResult(id)
     if result.state != "SUCCESS":
-        return redirect(f"/{id}")
+        # TODO: differentiate between pending and failure
+        raise NotFinishedException()
 
     # validate args
     a = request.args.get("a")
     b = request.args.get("b")
     if a is None or b is None or not a.isdigit() or not b.isdigit():
-        # TODO: error instead?
-        return redirect(f"/{id}")
+        raise InvalidRequestException()
 
     # check that comparison exists and has correct upload id
     match = Match.query.filter_by(sub_a=a, sub_b=b).first()
     if match is None or match.processor.upload.uuid != str(id):
-        return redirect(f"/{id}")
+        raise InvalidRequestException()
 
-
-    sub_a = Submission.query.get(match.sub_a)
-    sub_b = Submission.query.get(match.sub_b)
+    # get fragments from the two submissions
     a_frags = Fragment.query.join(File.fragments).\
-              filter(File.submission_id == sub_a.id)
+              filter(File.submission_id == match.sub_a)
     b_frags = Fragment.query.join(File.fragments).\
-              filter(File.submission_id == sub_b.id)
+              filter(File.submission_id == match.sub_b)
 
     # reduce to only shared fragments
-    a_shared = a_frags.filter(Fragment.hash_id.\
-                             in_(b_frags.with_entities(Fragment.hash_id))).all()
-    b_shared = b_frags.filter(Fragment.hash_id.\
-                             in_(a_frags.with_entities(Fragment.hash_id))).all()
+    a_shared = a_frags.filter(
+        Fragment.hash_id.in_(b_frags.with_entities(Fragment.hash_id))).all()
+    b_shared = b_frags.filter(
+        Fragment.hash_id.in_(a_frags.with_entities(Fragment.hash_id))).all()
 
-    a_by_hash = {}
-    b_by_hash = {}
-    for dest, src in ((a_by_hash, a_shared), (b_by_hash, b_shared)):
+    # maximally expand frags for better presentation
+    a_expanded, b_expanded = expand_frags(a_shared, b_shared)
+
+    a_files = Submission.query.get(a).files
+    b_files = Submission.query.get(b).files
+    a_by_file, b_by_file = {f: [] for f in a_files}, {f: [] for f in b_files}
+    for dest, src in ((a_by_file, a_expanded), (b_by_file, b_expanded)):
+        for frag, start, end in src:
+            dest[frag.file].append((frag, start, end))
+
+    a_result = [(f.path, flatten_frags(f, a_by_file[f])) for f in a_files]
+    b_result = [(f.path, flatten_frags(f, b_by_file[f])) for f in b_files]
+    return a_result, b_result
+
+
+def expand_frags(a_frags, b_frags):
+    """Take lists of Fragment for two submissions and return a list of
+    (Fragment, start, end) for each submission
+    """
+    # map hash ids to fragments
+    a_by_hash, b_by_hash = {}, {}
+    for dest, src in ((a_by_hash, a_frags), (b_by_hash, b_frags)):
         for frag in src:
-            dest.setdefault(frag.hash_id, []).append(frag)
+            dest.setdefault(frag.hash_id, []).append((frag, frag.start, frag.end))
 
-    def expand_frags(a_frags, b_frags):
-        data = tuple([(frag, frag.start, frag.end) for frag in frags]
-                     for frags in (a_frags, b_frags))
+    # expand each set of matching fragments individually
+    a_expanded, b_expanded = [], []
+    for h in a_by_hash.keys():
+        a_frags, b_frags = a_by_hash[h], b_by_hash[h]
 
+        # while previous or next characters match, expand all frags
         while True:
             changed = False
+
+            # find sets of previous and next characters
             prevs = set()
             nexts = set()
-            for sub_data in data:
-                for frag, start, end in sub_data:
+            for frags in a_frags, b_frags:
+                for frag, start, end in frags:
                     path = os.path.join(gettempdir(),
                                         frag.file.submission.upload.uuid,
                                         frag.file.submission.path,
@@ -292,72 +340,67 @@ def compare(id):
                         text = f.read()
                         prevs.add(text[start-1] if start > 0 else None)
                         nexts.add(text[end] if end < len(text) else None)
+
+            # expand start if possible and all characters match
             if len(prevs) == 1 and prevs.pop() is not None:
-                data = tuple([(frag, start-1, end) for frag, start, end in data]
-                             for data in data)
+                a_frags, b_frags = tuple([(frag, start-1, end) for frag, start, end in frags]
+                                         for frags in (a_frags, b_frags))
                 changed = True
+
+            # expand end if possible and all characters match
             if len(nexts) == 1 and nexts.pop() is not None:
-                data = tuple([(frag, start, end+1) for frag, start, end in data]
-                             for data in data)
+                a_frags, b_frags = tuple([(frag, start, end+1) for frag, start, end in frags]
+                                         for frags in (a_frags, b_frags))
                 changed = True
+
+            # if maximally expanded, move to next set of fragments
             if not changed:
                 break
-        return data
 
-    a_expanded = []
-    b_expanded = []
-    for h in set(a_by_hash) | set(b_by_hash):
-        a, b = expand_frags(a_by_hash[h], b_by_hash[h])
-        a_expanded.extend(a)
-        b_expanded.extend(b)
+        a_expanded.extend(a_frags)
+        b_expanded.extend(b_frags)
 
-    a_by_file = {f: [] for f in sub_a.files}
-    b_by_file = {f: [] for f in sub_b.files}
-    for dest, src in ((a_by_file, a_expanded), (b_by_file, b_expanded)):
-        for frag, start, end in src:
-            dest[frag.file].append((frag, start, end))
+    return a_expanded, b_expanded
 
-    def flatten_frags(file, frags):
-        """Return list of (text, hash ids) pairs"""
-        def get_hash(f):
-            return f[0].hash_id
 
-        def get_start(f):
-            return f[1]
+def flatten_frags(file, frags):
+    """Takes File object and list of (Fragment, start, end) tuples.
+    Returns list of (text, hash ids) pairs.
+    """
+    def get_hash(f):
+        return f[0].hash_id
 
-        def get_end(f):
-            return f[2]
+    def get_start(f):
+        return f[1]
 
-        path = os.path.join(gettempdir(),
-                            file.submission.upload.uuid,
-                            file.submission.path,
-                            file.path)
-        with open(path, "r") as file:
-            text = file.read()
-        frags = sorted(frags, key=get_start)
-        result = []
-        cur_frags = []
-        cur_text = []
+    def get_end(f):
+        return f[2]
 
-        def make_output():
-            return ("".join(cur_text),
-                    " ".join(str(get_hash(f)) for f in cur_frags))
+    path = os.path.join(gettempdir(),
+                        file.submission.upload.uuid,
+                        file.submission.path,
+                        file.path)
+    with open(path, "r") as file:
+        text = file.read()
+    frags = sorted(frags, key=get_start)
+    result = []
+    cur_frags = []
+    cur_text = []
 
-        for i, c in enumerate(text):
-            new_frags = [f for f in cur_frags if get_end(f) > i]
-            while frags and get_start(frags[0]) == i:
-                new_frags.append(frags.pop(0))
-            if new_frags != cur_frags and cur_text:
-                result.append(make_output())
-                cur_text = []
-            cur_frags = new_frags
-            cur_text.append(c)
-        result.append(make_output())
-        return result
+    def make_output():
+        return "".join(cur_text), [get_hash(f) for f in cur_frags]
 
-    a_files = [(f.path, flatten_frags(f, a_by_file[f])) for f in sub_a.files]
-    b_files = [(f.path, flatten_frags(f, b_by_file[f])) for f in sub_b.files]
-    return render_template("compare.html", a_files=a_files, b_files=b_files)
+    for i, c in enumerate(text):
+        new_frags = [f for f in cur_frags if get_end(f) > i]
+        while frags and get_start(frags[0]) == i:
+            new_frags.append(frags.pop(0))
+        if new_frags != cur_frags and cur_text:
+            result.append(make_output())
+            cur_text = []
+        cur_frags = new_frags
+        cur_text.append(c)
+    result.append(make_output())
+    return result
 
 
 @celery.task(bind=True)

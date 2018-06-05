@@ -6,8 +6,10 @@ from werkzeug.utils import secure_filename
 
 import patoolib
 
+
 # Supported archives, per https://github.com/wummel/patool
 ARCHIVES = [".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz"]
+
 
 # Supported helper applications
 HELPERS = {
@@ -16,9 +18,22 @@ HELPERS = {
     "unrar": [".rar"],
     "xz": [".xz"]
 }
+
+
 for progname, extensions in HELPERS.items():
     if which(progname):
         ARCHIVES.extend(extensions)
+
+
+class NotFinishedException(Exception):
+    """Raised when a valid request is made for results that are not yet ready"""
+    pass
+
+
+class InvalidRequestException(Exception):
+    """Raised when request arguments are missing or invalid"""
+    pass
+
 
 def save(file, dirpath):
     """Saves file at dirpath, extracting to identically named folder if archive."""

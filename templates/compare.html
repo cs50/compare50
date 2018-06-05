@@ -26,12 +26,16 @@
           $(document).ready(function() {
               $('.match').hover(function() {
                   $(this).data('fids').toString().split(' ').forEach(function(fid) {
-                      $(`.match[data-fids~=${fid}]`).addClass('highlight');
+                      if (!!fid) {
+                          $(`.match[data-fids~=${fid}]`).addClass('highlight');
+                      }
                   });
               },
               function() {
                   $(this).data('fids').toString().split(' ').forEach(function(fid) {
-                      $(`.match[data-fids~=${fid}]`).removeClass('highlight');
+                      if (!!fid) {
+                          $(`.match[data-fids~=${fid}]`).removeClass('highlight');
+                      }
                   });
               });
           });
@@ -49,20 +53,35 @@
 
           <div class="split left">
             {% for title, fragments in a_files %}
-            <div class="submission-file">
-              <h4>{{title}}</h4>
-              <pre>{% for text, fids in fragments %}<code{% if fids %} class="match"{% endif %} data-fids="{{fids}}">{{text}}</code>{% endfor %}</pre>
-            </div>
+              <div class="submission-file">
+                <h4>{{title}}</h4>
+                <pre>
+                  {%- for text, fids in fragments -%}
+                    <code {% if fids %}class="match" {% endif -%}
+                      data-fids="{% for fid in fids -%}
+                                   {{fid}}{% if not loop.last %} {% endif -%}
+                                 {%- endfor -%}
+                      ">{{text}}</code>
+                  {%- endfor -%}
+                </pre>
+              </div>
             {% endfor %}
           </div>
 
           <div class="split right">
             {% for title, fragments in b_files %}
-            <div class="submission-file">
-              <h4>{{title}}</h4>
-              <pre>{% for text, fids in fragments %}<code{% if fids %} class="match"{% endif %} data-fids="{{fids}}">{{text}}</code>{% endfor %}</pre>
-              <pre><code>{{text}}</pre></code>
-            </div>
+              <div class="submission-file">
+                <h4>{{title}}</h4>
+                <pre>
+                  {%- for text, fids in fragments -%}
+                    <code {% if fids %}class="match" {% endif -%}
+                      data-fids="{% for fid in fids -%}
+                                   {{fid}}{% if not loop.last %} {% endif -%}
+                                 {%- endfor -%}
+                      ">{{text}}</code>
+                  {%- endfor -%}
+                </pre>
+              </div>
             {% endfor %}
           </div>
 
