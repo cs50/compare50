@@ -16,7 +16,7 @@ from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
 from compare import compare as compare50
-from util import save, walk, walk_submissions, NotFinishedException, InvalidRequestException
+from util import save, walk, walk_submissions, submission_path, NotFinishedException, InvalidRequestException
 
 db_uri = "mysql://{}:{}@{}/{}".format(
     os.environ["MYSQL_USERNAME"],
@@ -101,11 +101,7 @@ class Pass(db.Model):
     # TODO: make config rich enough to re-run pass
     config = db.Column(db.VARCHAR(255), nullable=False)
     upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
-    hashes = db.relationship("Hash", backref="processor")
     matches = db.relationship("Match", backref="processor")
-
-    def __init__(self, config):
-        self.config = config
 
 
 class Submission(db.Model):
@@ -121,23 +117,6 @@ class File(db.Model):
     id = db.Column(db.INT, primary_key=True)
     submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
     path = db.Column(db.VARCHAR(255), nullable=False)
-    fragments = db.relationship("Fragment", backref="file")
-
-
-class Hash(db.Model):
-    """Represents a chunk of code that may be contained within multiple files"""
-    id = db.Column(db.INT, primary_key=True)
-    pass_id = db.Column(db.INT, db.ForeignKey("pass.id", ondelete="CASCADE"), nullable=False)
-    fragments = db.relationship("Fragment", backref="hash")
-
-
-class Fragment(db.Model):
-    """Represents a particular section of text in a file"""
-    id = db.Column(db.INT, primary_key=True)
-    hash_id = db.Column(db.INT, db.ForeignKey("hash.id", ondelete="CASCADE"), nullable=False)
-    file_id = db.Column(db.INT, db.ForeignKey("file.id", ondelete="CASCADE"), nullable=False)
-    start = db.Column(db.INT, nullable=False)
-    end = db.Column(db.INT, nullable=False)
 
 
 class Match(db.Model):
@@ -149,7 +128,6 @@ class Match(db.Model):
     score = db.Column(db.INT, nullable=False)
 
 
-@app.before_first_request
 def before_first_request():
 
     # Perform any migrates
@@ -180,32 +158,58 @@ def post():
         abort(500)
 
     # Save submissions
-    submissions = os.path.join(parent, "submissions")
-    os.mkdir(submissions)
+    submission_dir = os.path.join(parent, "submissions")
+    os.mkdir(submission_dir)
     for file in request.files.getlist("submissions"):
         print(file)
         print(file.headers)
         print(file.filename)
-        save(file, submissions)
+        save(file, submission_dir)
 
     # Save distros, if any
     if request.files.getlist("distros"):
-        distros = os.path.join(parent, "distros")
-        os.mkdir(distros)
+        distros_dir = os.path.join(parent, "distros")
+        os.mkdir(distros_dir)
         for file in request.files.getlist("distros"):
-            save(file, distros)
+            save(file, distros_dir)
     else:
-        distros = None
+        distros_dir = None
 
     # Save archives, if any
     if request.files.getlist("archives"):
-        archives = os.path.join(parent, "archives")
-        os.mkdir(archives)
+        archives_dir = os.path.join(parent, "archives")
+        os.mkdir(archives_dir)
         for file in request.files.getlist("archives"):
-            save(file, archives)
+            save(file, archives_dir)
     else:
-        archives = None
+        archives_dir = None
 
+    # create upload, submissions, and files in database
+    upload = Upload()
+    upload.uuid = id
+
+    submissions = walk_submissions(submission_dir)
+    distros = walk(distros_dir) if distros_dir else []
+    archives = walk_submissions(archives_dir) if archives_dir else []
+
+    for sub in [distros] + submissions + archives:
+        if len(sub) == 0:
+            continue
+        s = Submission()
+        sub_path = submission_path(sub)
+        s.path = os.path.relpath(sub_path, parent)
+        upload.submissions.append(s)
+
+        # add files
+        for file in sub:
+            f = File()
+            s.files.append(f)
+            f.path = os.path.relpath(file, sub_path)
+
+    db.session.add(upload)
+    db.session.commit()
+
+    # TODO: remove and replace with dynamic pass runner
     compare_task.apply_async(task_id=id)
 
     # Redirect to results
@@ -281,126 +285,17 @@ def compare(id, a, b):
     if match is None or match.processor.upload.uuid != str(id):
         raise InvalidRequestException()
 
-    # get fragments from the two submissions
-    a_frags = Fragment.query.join(File.fragments).\
-              filter(File.submission_id == match.sub_a)
-    b_frags = Fragment.query.join(File.fragments).\
-              filter(File.submission_id == match.sub_b)
-
-    # reduce to only shared fragments
-    a_shared = a_frags.filter(
-        Fragment.hash_id.in_(b_frags.with_entities(Fragment.hash_id))).all()
-    b_shared = b_frags.filter(
-        Fragment.hash_id.in_(a_frags.with_entities(Fragment.hash_id))).all()
-
-    # maximally expand frags for better presentation
-    a_expanded, b_expanded = expand_frags(a_shared, b_shared)
-
-    a_files = Submission.query.get(a).files
-    b_files = Submission.query.get(b).files
-    a_by_file, b_by_file = {f: [] for f in a_files}, {f: [] for f in b_files}
-    for dest, src in ((a_by_file, a_expanded), (b_by_file, b_expanded)):
-        for frag, start, end in src:
-            dest[frag.file].append((frag, start, end))
-
-    a_result = [(f.path, flatten_frags(f, a_by_file[f])) for f in a_files]
-    b_result = [(f.path, flatten_frags(f, b_by_file[f])) for f in b_files]
-    return a_result, b_result
-
-
-def expand_frags(a_frags, b_frags):
-    """Take lists of Fragment for two submissions and return a list of
-    (Fragment, start, end) for each submission
-    """
-    # map hash ids to fragments
-    a_by_hash, b_by_hash = {}, {}
-    for dest, src in ((a_by_hash, a_frags), (b_by_hash, b_frags)):
-        for frag in src:
-            dest.setdefault(frag.hash_id, []).append((frag, frag.start, frag.end))
-
-    # expand each set of matching fragments individually
-    a_expanded, b_expanded = [], []
-    for h in a_by_hash.keys():
-        a_frags, b_frags = a_by_hash[h], b_by_hash[h]
-
-        # while previous or next characters match, expand all frags
-        while True:
-            changed = False
-
-            # find sets of previous and next characters
-            prevs = set()
-            nexts = set()
-            for frags in a_frags, b_frags:
-                for frag, start, end in frags:
-                    path = os.path.join(gettempdir(),
-                                        frag.file.submission.upload.uuid,
-                                        frag.file.submission.path,
-                                        frag.file.path)
-                    with open(path, "r") as f:
-                        text = f.read()
-                        prevs.add(text[start-1] if start > 0 else None)
-                        nexts.add(text[end] if end < len(text) else None)
-
-            # expand start if possible and all characters match
-            if len(prevs) == 1 and prevs.pop() is not None:
-                a_frags, b_frags = tuple([(frag, start-1, end) for frag, start, end in frags]
-                                         for frags in (a_frags, b_frags))
-                changed = True
-
-            # expand end if possible and all characters match
-            if len(nexts) == 1 and nexts.pop() is not None:
-                a_frags, b_frags = tuple([(frag, start, end+1) for frag, start, end in frags]
-                                         for frags in (a_frags, b_frags))
-                changed = True
-
-            # if maximally expanded, move to next set of fragments
-            if not changed:
-                break
-
-        a_expanded.extend(a_frags)
-        b_expanded.extend(b_frags)
-
-    return a_expanded, b_expanded
-
-
-def flatten_frags(file, frags):
-    """Takes File object and list of (Fragment, start, end) tuples.
-    Returns list of (text, hash ids) pairs.
-    """
-    def get_hash(f):
-        return f[0].hash_id
-
-    def get_start(f):
-        return f[1]
-
-    def get_end(f):
-        return f[2]
-
-    path = os.path.join(gettempdir(),
-                        file.submission.upload.uuid,
-                        file.submission.path,
-                        file.path)
-    with open(path, "r") as file:
-        text = file.read()
-    frags = sorted(frags, key=get_start)
-    result = []
-    cur_frags = []
-    cur_text = []
-
-    def make_output():
-        return "".join(cur_text), [get_hash(f) for f in cur_frags]
-
-    for i, c in enumerate(text):
-        new_frags = [f for f in cur_frags if get_end(f) > i]
-        while frags and get_start(frags[0]) == i:
-            new_frags.append(frags.pop(0))
-        if new_frags != cur_frags and cur_text:
-            result.append(make_output())
-            cur_text = []
-        cur_frags = new_frags
-        cur_text.append(c)
-    result.append(make_output())
-    return result
+    # TODO: proper pairwise comparison here
+    a_texts, b_texts = [], []
+    for dest, src in ((a_texts, a), (b_texts, b)):
+        sub = Submission.query.get(src)
+        for file in sub.files:
+            with open(os.path.join(gettempdir(),
+                                   str(id),
+                                   sub.path,
+                                   file.path)) as f:
+                dest.append((file.path, [(f.read(), [])]))
+    return a_texts, b_texts
 
 
 @celery.task(bind=True)
@@ -417,71 +312,25 @@ def compare_task(self):
     distros = walk(distro_dir) if os.path.exists(distro_dir) else []
     archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
 
-    print("Running comparison")
-    passes, files, subs, spans, results = compare50.compare(submissions, distros, archives)
+    upload = Upload.query.filter_by(uuid=self.request.id).first()
 
-    print("Storing data")
+    for pass_name, (preprocessor, comparator) in compare50.DEFAULT_CONFIG.items():
+        scores = compare50.compare(preprocessor, comparator,
+                                          submissions, distros, archives)
+        # create pass
+        p = Pass()
+        p.config = pass_name
+        upload.passes.append(p)
 
-    # create upload
-    upload = Upload()
-    upload.uuid = self.request.id
-
-    # create passes
-    db_passes = {pass_name: Pass(pass_name) for pass_name in passes}
-    upload.passes = list(db_passes.values())
-
-    # create submissions and files
-    db_submissions = [None] * len(subs)
-    db_files = {}
-    for i, sub in enumerate(subs):
-        if len(sub) == 0:
-            continue
-
-        s = db_submissions[i] = Submission()
-        upload.submissions.append(s)
-
-        # path of submission
-        if len(sub) == 1:
-            sub_root = os.path.dirname(files[sub[0]])
-        else:
-            sub_root = os.path.commonpath([files[f] for f in sub])
-        s.path = os.path.relpath(sub_root, parent)
-
-        # add files to submission
-        for i in sub:
-            f = db_files[i] = File()
-            s.files.append(f)
-            f.path = os.path.relpath(files[i], sub_root)
-
-    for pass_name, spans in spans.items():
-        # map hashes to spans
-        hashes = {}
-        for span in spans:
-            hashes.setdefault(span.hash, set()).add(span)
-
-        # create hashes and fragments
-        for hash, spans in hashes.items():
-            h = Hash()
-            db_passes[pass_name].hashes.append(h)
-            for span in spans:
-                s = Fragment()
-                s.start = span.start
-                s.end = span.stop
-                db_files[span.file].fragments.append(s)
-                h.fragments.append(s)
-
-    # commit so we can access submission IDs below
-    db.session.add(upload)
-    db.session.commit()
-
-    # create scored matches
-    for pass_name, scores in results.items():
         for (sub_a, sub_b), score in scores.items():
+            path_a = os.path.relpath(submission_path(sub_a), parent)
+            path_b = os.path.relpath(submission_path(sub_b), parent)
+            sub_a = Submission.query.filter_by(path=path_a, upload_id=upload.id).first()
+            sub_b = Submission.query.filter_by(path=path_b, upload_id=upload.id).first()
             m = Match()
-            m.sub_a = db_submissions[sub_a].id
-            m.sub_b = db_submissions[sub_b].id
+            m.sub_a = sub_a.id
+            m.sub_b = sub_b.id
             m.score = score
-            db_passes[pass_name].matches.append(m)
+            p.matches.append(m)
 
-    db.session.add(upload)
     db.session.commit()

@@ -17,15 +17,17 @@ DEFAULT_CONFIG = {
 }
 
 
-def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
+def compare(preprocessor, comparator, submissions, distro=[], corpus=[]):
     """Compares a group of submissions to each other and to an optional
-    other corpus."""
+    other corpus using the provided preprocessor and
+    processor. Returns a dict mapping pairs of submissions to scores
+    """
 
     files = [] # list of all files
-    groups = [] # lists of file ids
-    group_of_file = [] # list of group ids
-    sub_groups = [] # list of group ids
-    corpus_groups = [] # list of group ids
+    groups = [] # list of lists of file ids
+    group_of_file = [] # map file index to group index
+    sub_groups = [] # map submission index to group index
+    corpus_groups = [] # map corpus submission index to group index
 
     for f in distro:
         distro_ids.append(len(files))
@@ -59,11 +61,15 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
         (file, submission id, lexer) tuples"""
         results = {}
         for f in file_ids:
-            # get lexer by filename, fallback to text lexer
+            # get lexer by filename, fallback to guessing then using text lexer
             try:
                 lexer = pygments.lexers.get_lexer_for_filename(files[f])
             except pygments.util.ClassNotFound:
-                lexer = text_lexer
+                try:
+                    with open(files[f], "r") as file:
+                        lexer = pygments.lexers.guess_lexer(file.read())
+                except pygments.util.ClassNotFound:
+                    lexer = text_lexer
             # use lexer name as proxy for file type
             results.setdefault(lexer.name, []).append((f, lexer))
         return results
@@ -78,42 +84,40 @@ def compare(submissions, distro=[], corpus=[], config=DEFAULT_CONFIG):
                       set(sub_files.keys()) |
                       set(corpus_files.keys()))
 
-    # map pass then submission pair to score
-    results = {}
+    # map submission pairs to score
+    scores = {}
 
-    # map pass to spans
-    all_spans = {}
-
-    # process one file type and pass at a time to keep memory usage down
+    # process one file type at a time
     for ftype in file_types:
-        for pass_name, (preprocessor, comparator) in config.items():
 
-            def make_index(typed_files):
-                index = comparator.empty_index()
-                for f, lexer in (typed_files.get(ftype) or []):
-                    text = preprocessor.process(f, files[f], lexer)
-                    index += comparator.create_index(f, text, group_of_file[f])
-                return index
+        def make_index(typed_files):
+            index = comparator.empty_index()
+            for f, lexer in (typed_files.get(ftype) or []):
+                text = preprocessor.process(f, files[f], lexer)
+                index += comparator.create_index(f, text, group_of_file[f])
+            return index
 
-            distro_index = make_index(distro_files)
-            sub_index = make_index(sub_files)
-            corpus_index = make_index(corpus_files)
+        distro_index = make_index(distro_files)
+        sub_index = make_index(sub_files)
+        corpus_index = make_index(corpus_files)
 
-            # remove distro from indices and add submissions to corpus
-            sub_index -= distro_index
-            corpus_index -= distro_index
-            corpus_index += sub_index
+        # remove distro from indices and add submissions to corpus
+        sub_index -= distro_index
+        corpus_index -= distro_index
+        corpus_index += sub_index
 
-            scores, spans = sub_index.compare(corpus_index, 50)
-            for sub_pair, score in scores:
-                # get previous score and spans for these submissions and pass
-                entry = results.setdefault(pass_name, {})
-                old_score, old_span_pairs = entry.setdefault(sub_pair, (0, []))
-                # TODO: do we need a more sophisticated way of combining scores
-                # from different file types in for a single pass?
-                results[pass_name][sub_pair] = old_score + score
+        # do comparison on indices
+        ftype_scores, _ = sub_index.compare(corpus_index, 50)
 
-            pass_spans = all_spans.setdefault(pass_name, set())
-            pass_spans |= spans
+        # update scores
+        for sub_pair, score in ftype_scores:
+            # TODO: do we need a more sophisticated way of combining scores
+            # from different file types in for a single pass?
+            scores.setdefault(sub_pair, 0)
+            scores[sub_pair] += score
 
-    return list(config.keys()), files, groups, all_spans, results
+    # replace group IDs with tuples of files
+    scores = {tuple(tuple(files[f] for f in groups[sub]) for sub in pair): score
+              for pair, score in scores.items()}
+
+    return scores

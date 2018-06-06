@@ -91,3 +91,10 @@ def walk_submissions(directory):
         if len(dirnames) > 1:
             # multiple submissions, each in own subdirectory
             return [tuple(walk(os.path.join(dirpath, d))) for d in dirnames]
+
+def submission_path(files):
+    """Given a list of files in a submission, return the submission's path"""
+    if len(files) == 1:
+        return os.path.dirname(files[0])
+    else:
+        return os.path.commonpath(files)
