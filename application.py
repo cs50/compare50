@@ -16,7 +16,7 @@ from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
 from compare import compare as compare50
-from util import save, walk, walk_submissions, submission_path, NotFinishedException, InvalidRequestException
+from util import save, walk, walk_submissions, submission_path, NotFinishedException
 
 db_uri = "mysql://{}:{}@{}/{}".format(
     os.environ["MYSQL_USERNAME"],
@@ -129,7 +129,6 @@ class Match(db.Model):
 
 
 def before_first_request():
-
     # Perform any migrates
     flask_migrate.upgrade()
 
@@ -137,14 +136,107 @@ def before_first_request():
     db.engine.execute("CREATE DATABASE IF NOT EXISTS celerydb;")
 
 
-@app.route("/", methods=["GET"])
-def get():
-    return render_template("index.html")
+@app.route("/api/", methods=["POST"])
+def upload_api():
+    id = upload()
+    return jsonify(id)
 
 
-@app.route("/", methods=["POST"])
-def post():
+@app.route("/api/<uuid:id>/delete", methods=["POST"])
+def delete_files_api():
+    # TODO: only let original uploader delete upload
+    abort(501) # not implemented
 
+
+@app.route("/api/<uuid:id>/submissions", methods=["GET"])
+def get_submissions_api(id):
+    upload = Upload.query.filter_by(uuid=id).first_or_404()
+    return jsonify({f"{s.id}": s.path for s in upload.submissions})
+
+
+@app.route("/api/<uuid:id>/pass", methods=["POST"])
+def create_pass_api(id):
+    pass_id = create_pass(id)
+    return jsonify(pass_id)
+
+
+@app.route("/api/<uuid:id>/pass", methods=["GET"])
+def get_pass_api(id):
+    pass_id = request.args.get("id")
+    if pass_id is None:
+        abort(400) # bad request
+
+    p = Pass.query.get(pass_id)
+    if p is None or p.upload.uuid != str(id):
+        abort(400) # bad request
+
+    task = AsyncResult(str(p.id))
+    print(task.status)
+    if task.failed():
+        abort(500) # server error
+    elif not task.ready():
+        return ('"pending"', 202) # accepted
+
+    # task ready, get results
+    return jsonify([
+        {"a": m.sub_a, "b": m.sub_b, "score": m.score} for m in p.matches
+    ])
+
+
+@app.route("/api/<uuid:id>/compare", methods=["GET"])
+def compare_api(id):
+    files_a, files_b = compare(id)
+    res_a, res_b = tuple(
+        [
+            {
+                "file": file,
+                "fragments": [
+                    {"text": text, "ids": ids} for text, ids in fragments
+                ]
+            }
+            for file, fragments in src
+        ]
+        for src in (files_a, files_b)
+    )
+    result = {"a": res_a, "b": res_b}
+    # TODO: also send list of fragment ids associated with each match
+    return jsonify(result)
+
+
+@app.route("/", methods=["GET", "POST"])
+def upload_ui():
+    if request.method == "GET":
+        return render_template("index.html")
+    elif request.method == "POST":
+        id = upload()
+        return redirect(url_for("results_ui", id=id))
+
+
+@app.route("/<uuid:id>")
+def results_ui(id):
+    upload = Upload.query.filter_by(uuid=id).first_or_404()
+    passes = [{"id": p.id, "name": p.config} for p in upload.passes]
+    subs = {f"{s.id}": s.path for s in upload.submissions}
+    return render_template("results.html", id=id, subs=subs, passes=passes)
+
+
+@app.route("/<uuid:id>/pass", methods=["GET", "POST"])
+def pass_ui(id):
+    if request.method == "GET":
+        return render_template("add_pass.html", id=id)
+    elif request.method == "POST":
+        create_pass(id)
+        return redirect(f"/{id}")
+        pass
+
+@app.route("/<uuid:id>/compare", methods=["GET"])
+def compare_ui(id):
+    a, b = request.args.get("a"), request.args.get("b")
+    a_files, b_files = compare(id)
+    return render_template("compare.html", a_files=a_files, b_files=b_files)
+
+
+def upload():
     # Check for files
     if not request.files.getlist("submissions"):
         abort(make_response(jsonify(error="missing submissions"), 400))
@@ -209,81 +301,78 @@ def post():
     db.session.add(upload)
     db.session.commit()
 
-    # TODO: remove and replace with dynamic pass runner
-    compare_task.apply_async(task_id=id)
-
-    # Redirect to results
-    return redirect(url_for("results", id=id))
+    return id
 
 
-@app.route("/<uuid:id>")
-def results(id):
-    result = AsyncResult(id)
-    print(f"Task status: {result.state}")
-    if result.state == "FAILURE":
-        print(result.result)
-        # TODO: return error page to user
-    elif result.state == "SUCCESS":
-        upload = Upload.query.filter_by(uuid=id).first_or_404()
-        passes = []
-        paths = {}
-        matches = {}
-        for p in upload.passes:
-            passes.append(p.config)
-            for match in p.matches:
-                paths[match.sub_a] = Submission.query.get(match.sub_a).path
-                paths[match.sub_b] = Submission.query.get(match.sub_b).path
-                matches.setdefault((match.sub_a, match.sub_b), {})[p.config] = match.score
-        return render_template("results.html", id=id, passes=passes, paths=paths, matches=matches)
-    # TODO: return loading message
-    return jsonify(walk(os.path.join(gettempdir(), str(id))))
+def create_pass(id):
+    upload = Upload.query.filter_by(uuid=id).first_or_404()
+    if request.form.get("config") is None:
+        abort(400)
+
+    # validate configuration
+    if request.form.get("config") not in ["strip_ws", "strip_all"]:
+        abort(400)
+
+    # create pass object
+    p = Pass()
+    p.config = request.form.get("config")
+    upload.passes.append(p)
+    db.session.commit()
+
+    # run pass asynchronously
+    run_pass.apply_async(task_id=str(p.id))
+    return p.id
 
 
-@app.route("/<uuid:id>/compare")
-def compare_view(id):
-    try:
-        a, b = request.args.get("a"), request.args.get("b")
-        a_files, b_files = compare(id, a, b)
-    except (NotFinishedException, InvalidRequestException) as e:
-        print(e)
-        return redirect(f"/{id}")
+@celery.task(bind=True)
+def run_pass(self):
+    p = Pass.query.get(int(self.request.id))
+    parent = os.path.join(gettempdir(), p.upload.uuid)
 
-    return render_template("compare.html", a_files=a_files, b_files=b_files)
+    # find directories where files were saved
+    submission_dir = os.path.join(parent, "submissions")
+    distro_dir = os.path.join(parent, "distros")
+    archive_dir = os.path.join(parent, "archives")
+
+    # get submission lists
+    submissions = walk_submissions(submission_dir)
+    distros = walk(distro_dir) if os.path.exists(distro_dir) else []
+    archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
+
+    # construct pass
+    preprocessor, comparator = compare50.DEFAULT_CONFIG[p.config]
+
+    results = compare50.compare(preprocessor, comparator,
+                                submissions, distros, archives)
+    for (sub_a, sub_b), score in results.items():
+        path_a = os.path.relpath(submission_path(sub_a), parent)
+        path_b = os.path.relpath(submission_path(sub_b), parent)
+        sub_a = Submission.query.filter_by(path=path_a, upload_id=p.upload.id).first()
+        sub_b = Submission.query.filter_by(path=path_b, upload_id=p.upload.id).first()
+        m = Match()
+        m.sub_a = sub_a.id
+        m.sub_b = sub_b.id
+        m.score = score
+        p.matches.append(m)
+
+    db.session.commit()
 
 
-@app.route("/api/<uuid:id>/compare")
-def compare_api(id):
-    try:
-        a, b = request.args.get("a"), request.args.get("b")
-        result = compare(id, a, b)
-    except (NotFinishedException, InvalidRequestException):
-        abort(status.HTTP_400_BAD_REQUEST)
-
-    # TODO: add keys to JSON instead of just having a ton of nested lists
-    return jsonify(result)
-
-
-def compare(id, a, b):
+def compare(id):
     """Takes a job ID and two unvalidated submission IDs and returns two
     lists of (path, flattened fragments) pairs, where each flattened fragment
     is a (text, fragment IDs) pair
     """
-    # check the worker has finished
-    result = AsyncResult(id)
-    if result.state != "SUCCESS":
-        # TODO: differentiate between pending and failure
-        raise NotFinishedException()
-
     # validate args
     a = request.args.get("a")
     b = request.args.get("b")
     if a is None or b is None or not a.isdigit() or not b.isdigit():
-        raise InvalidRequestException()
+        abort(status.HTTP_400_BAD_REQUEST)
 
     # check that comparison exists and has correct upload id
     match = Match.query.filter_by(sub_a=a, sub_b=b).first()
     if match is None or match.processor.upload.uuid != str(id):
-        raise InvalidRequestException()
+        abort(status.HTTP_400_BAD_REQUEST)
 
     # TODO: proper pairwise comparison here
     a_texts, b_texts = [], []
@@ -296,41 +385,3 @@ def compare(id, a, b):
                                    file.path)) as f:
                 dest.append((file.path, [(f.read(), [])]))
     return a_texts, b_texts
-
-
-@celery.task(bind=True)
-def compare_task(self):
-    parent = os.path.join(gettempdir(), self.request.id)
-
-    # find directories where files were saved
-    submission_dir = os.path.join(parent, "submissions")
-    distro_dir = os.path.join(parent, "distros")
-    archive_dir = os.path.join(parent, "archives")
-
-    # get submission lists
-    submissions = walk_submissions(submission_dir)
-    distros = walk(distro_dir) if os.path.exists(distro_dir) else []
-    archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
-
-    upload = Upload.query.filter_by(uuid=self.request.id).first()
-
-    for pass_name, (preprocessor, comparator) in compare50.DEFAULT_CONFIG.items():
-        scores = compare50.compare(preprocessor, comparator,
-                                          submissions, distros, archives)
-        # create pass
-        p = Pass()
-        p.config = pass_name
-        upload.passes.append(p)
-
-        for (sub_a, sub_b), score in scores.items():
-            path_a = os.path.relpath(submission_path(sub_a), parent)
-            path_b = os.path.relpath(submission_path(sub_b), parent)
-            sub_a = Submission.query.filter_by(path=path_a, upload_id=upload.id).first()
-            sub_b = Submission.query.filter_by(path=path_b, upload_id=upload.id).first()
-            m = Match()
-            m.sub_a = sub_a.id
-            m.sub_b = sub_b.id
-            m.score = score
-            p.matches.append(m)
-
-    db.session.commit()

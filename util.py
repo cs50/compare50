@@ -30,11 +30,6 @@ class NotFinishedException(Exception):
     pass
 
 
-class InvalidRequestException(Exception):
-    """Raised when request arguments are missing or invalid"""
-    pass
-
-
 def save(file, dirpath):
     """Saves file at dirpath, extracting to identically named folder if archive."""
     filename = secure_filename(file.filename)
@@ -91,6 +86,7 @@ def walk_submissions(directory):
         if len(dirnames) > 1:
             # multiple submissions, each in own subdirectory
             return [tuple(walk(os.path.join(dirpath, d))) for d in dirnames]
+
 
 def submission_path(files):
     """Given a list of files in a submission, return the submission's path"""

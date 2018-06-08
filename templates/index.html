@@ -26,13 +26,13 @@
     <body>
         <div class="container p-3">
             <div class="block text-left">
-                <h1 class="block-title mb-0"><a href="{{ url_for('get') }}">CS50 Compare</a></h1>
+                <h1 class="block-title mb-0"><a href="{{ url_for('upload_ui') }}">CS50 Compare</a></h1>
                 <h4 class="mb-0">Compare files for similarities.</h4>
                 <h5 class="mb-3">
                     <small>Email <a href="mailto:sysadmins@cs50.harvard.edu">sysadmins@cs50.harvard.edu</a> about bugs (or lack of features).</small>
                 </h5>
 
-                <form action="{{ url_for("post") }}" enctype="multipart/form-data" method="post">
+                <form action="{{ url_for("upload_ui") }}" enctype="multipart/form-data" method="post">
                     <div class="form-group">
                         Submissions
                         <div class="fallback">
