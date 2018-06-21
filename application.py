@@ -4,7 +4,6 @@ import os
 import tarfile
 import uuid
 
-from celery import Celery
 from flask import (
     Flask,
     Response,
@@ -15,7 +14,6 @@ from flask import (
     render_template,
     request,
     url_for,
-    has_app_context
 )
 from flask_migrate import Migrate
 from flask_session import Session
@@ -32,64 +30,36 @@ import pygments.lexers.special
 
 from config import DEFAULT_CONFIG
 from data import Fragment, MatchResult, Token, Span
-from util import save, walk, walk_submissions, submission_path
+from util import FlaskCelery, save, walk, walk_submissions, submission_path
 
-db_uri = "mysql://{}:{}@{}/{}".format(
-    os.environ["MYSQL_USERNAME"],
-    os.environ["MYSQL_PASSWORD"],
-    os.environ["MYSQL_HOST"],
-    os.environ["MYSQL_DATABASE"])
 
 # Application
 app = Flask(__name__)
 
+
 # Monitoring
 Sentry(app)
 
+
 # Database
-app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
+app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://{}:{}@{}/{}".format(
+    os.environ["MYSQL_USERNAME"],
+    os.environ["MYSQL_PASSWORD"],
+    os.environ["MYSQL_HOST"],
+    os.environ["MYSQL_DATABASE"])
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 Migrate(app, db)
 
+
 # Enable UUID-based routes
 FlaskUUID(app)
+
 
 # Configure session to use filesystem (instead of signed cookies)
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
-
-# Run celery tasks in Flask context
-# https://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
-class FlaskCelery(Celery):
-    def __init__(self, *args, **kwargs):
-
-        super(FlaskCelery, self).__init__(*args, **kwargs)
-        self.patch_task()
-
-        if 'app' in kwargs:
-            self.init_app(kwargs['app'])
-
-    def patch_task(self):
-        TaskBase = self.Task
-        _celery = self
-
-        class ContextTask(TaskBase):
-            abstract = True
-
-            def __call__(self, *args, **kwargs):
-                if has_app_context():
-                    return TaskBase.__call__(self, *args, **kwargs)
-                else:
-                    with _celery.app.app_context():
-                        return TaskBase.__call__(self, *args, **kwargs)
-
-        self.Task = ContextTask
-
-    def init_app(self, app):
-        self.app = app
-        self.config_from_object(app.config)
 
 
 celery = FlaskCelery("compare50",

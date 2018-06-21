@@ -7,3 +7,4 @@ raven[flask]
 validators
 uuid
 celery
+pygments

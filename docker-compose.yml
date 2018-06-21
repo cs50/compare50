@@ -19,7 +19,7 @@ services:
     volumes:
       - .:/var/www
   mysql:
-    image: mysql
+    image: mysql:5.7
     environment:
       MYSQL_DATABASE: compare50
       MYSQL_ROOT_PASSWORD: crimson
