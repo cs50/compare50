@@ -3,8 +3,7 @@ services:
     build: .
     container_name: compare50_web
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
     environment:
       APPLICATION_ENV: dev
       MYSQL_DATABASE: compare50
@@ -19,12 +18,10 @@ services:
     volumes:
       - .:/var/www
   mysql:
-    image: mysql:5.7
+    image: cs50/mysql
     environment:
       MYSQL_DATABASE: compare50
       MYSQL_ROOT_PASSWORD: crimson
     healthcheck: # https://github.com/docker/compose/issues/374#issuecomment-284695410
-      interval: 1s
-      retries: 30
-      test: mysqladmin -uroot -pcrimson ping
-version: "2.1"
+      test: ["CMD", "mysqladmin", "-uroot", "-pcrimson", "ping"]
+version: "3.6"
