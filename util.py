@@ -25,11 +25,6 @@ for progname, extensions in HELPERS.items():
         ARCHIVES.extend(extensions)
 
 
-class NotFinishedException(Exception):
-    """Raised when a valid request is made for results that are not yet ready"""
-    pass
-
-
 def save(file, dirpath):
     """Saves file at dirpath, extracting to identically named folder if archive."""
     filename = secure_filename(file.filename)
@@ -77,8 +72,9 @@ def walk_submissions(directory):
     for (dirpath, dirnames, filenames) in os.walk(directory):
         if ignored(dirpath):
             continue
-        dirnames = list(filter(lambda d: not ignored(d), dirnames))
-        filenames = list(filter(lambda f: not ignored(f), filenames))
+        dirnames = [d for d in dirnames if not ignored(d)]
+        filenames = [f for f in filenames if not ignored(f)]
+        print(f"Walking {dirpath}, dirs={dirnames}, files={filenames}")
         if len(filenames) > 0:
             # single submission
             return [tuple(sorted([os.path.join(dirpath, f)

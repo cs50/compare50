@@ -41,13 +41,13 @@ body, h1, h4, h5 {
 }
 
 /* highlighted code fragments */
-.distro {
-    color: silver;
-}
-
 .match {
     color: crimson;
     font-weight: bold;
+}
+
+.distro {
+    color: silver;
 }
 
 .highlight {

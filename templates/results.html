@@ -36,15 +36,18 @@
                   table = $('#results').DataTable();
                   if (this.value === '') {
                       // no pass selected
-                      table.clear();
+                      table.clear().draw();
                   } else {
+                      console.log('thinking');
                       $.getJSON(`/api/{{id}}/pass?id=${this.value}`, (results, _, jqXHR) => {
                           table.clear();
                           if (jqXHR.status === 202) {
                               // still running pass
+                              console.log('working');
                               table.row.add(['', 'working', '']);
                           } else {
-                              // populate with results
+                              // populate with result
+                              console.log('showing results', results);
                               results.forEach(row => {
                                   const link = `/{{id}}/compare?a=${row.a}&b=${row.b}`;
                                   const a = `<a href=${link}>${submissions[row.a]}</a>`;

@@ -23,21 +23,41 @@
         <script src="/static/dropzone.js"></script>
 
         <script>
-          $(document).ready(function() {
+          function select_pass(pass_id) {
+              console.log(`selecting pass ${pass_id}`);
+
+              // remove old listeners and highlights
+              $('.frag').off();
+              $('.highlight').removeClass('highlight');
+
+              // recalculate match fragments
+              $('.match').removeClass('match');
+              $(`.frag[data-pass-${pass_id}]`).addClass('match');
+
+              // remove distro matches
+              $('.distro').removeClass('distro');
+              $(`.match[data-pass-${pass_id}~="distro"]`)
+                  .removeClass('match')
+                  .addClass('distro');
+
+              // set up highlight on hover for matches
               $('.match').hover(function() {
-                  $(this).data('fids').toString().split(' ').forEach(function(fid) {
-                      if (!!fid) {
-                          $(`.match[data-fids~=${fid}]`).addClass('highlight');
-                      }
-                  });
+                  $(this).data(`pass-${pass_id}`).toString().split(' ')
+                      .forEach(function(group) {
+                          $(`.match[data-pass-${pass_id}~=${group}]`)
+                              .addClass('highlight');
+                      });
               },
               function() {
-                  $(this).data('fids').toString().split(' ').forEach(function(fid) {
-                      if (!!fid) {
-                          $(`.match[data-fids~=${fid}]`).removeClass('highlight');
-                      }
-                  });
+                  $('.highlight').removeClass('highlight');
               });
+          }
+
+          $(document).ready(function() {
+              $('.pass_selector').change(function() {
+                  select_pass(this.value);
+              });
+              select_pass({{passes[0].id}});
           });
         </script>
 
@@ -49,41 +69,32 @@
 
       <div class="container">
         <h1>Compare50 Results</h1>
+        {% for p in passes %}
+          <input type="radio" class="pass_selector" name="pass" value="{{p.id}}" {% if loop.first %} checked{% endif %}>
+          <label>{{p.config}}</label>
+        {% endfor %}
         <div class="container">
-
-          <div class="split left">
-            {% for title, fragments in a_files %}
-              <div class="submission-file">
-                <h4>{{title}}</h4>
-                <pre>
-                  {%- for text, fids in fragments -%}
-                    <code {% if fids %}class="match" {% endif -%}
-                      data-fids="{% for fid in fids -%}
-                                   {{fid}}{% if not loop.last %} {% endif -%}
-                                 {%- endfor -%}
-                      ">{{text}}</code>
-                  {%- endfor -%}
-                </pre>
-              </div>
-            {% endfor %}
-          </div>
-
-          <div class="split right">
-            {% for title, fragments in b_files %}
-              <div class="submission-file">
-                <h4>{{title}}</h4>
-                <pre>
-                  {%- for text, fids in fragments -%}
-                    <code {% if fids %}class="match" {% endif -%}
-                      data-fids="{% for fid in fids -%}
-                                   {{fid}}{% if not loop.last %} {% endif -%}
-                                 {%- endfor -%}
-                      ">{{text}}</code>
-                  {%- endfor -%}
-                </pre>
-              </div>
-            {% endfor %}
-          </div>
+          {% for files, side in (files[0], "left"), (files[1], "right") %}
+            <div class="split {{side}}">
+              {% for file, fragments in files.items() %}
+                <div class="submission-file">
+                  <h4>{{file.path}}</h4>
+                  <pre>
+                    {%- for frag in fragments -%}
+                      <code class="frag"
+                        {%- for pass_id, groups in frag.groups.items() -%}
+                          data-pass-{{pass_id}}="{% for group in groups -%}
+                                                 {{group}}{% if not loop.last %} {% endif -%}
+                                                 {%- endfor -%}"
+                          {%- if not loop.last %} {% endif -%}
+                        {%- endfor -%}
+                      >{{frag.text}}</code>
+                    {%- endfor -%}
+                  </pre>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
 
         </div>
       </div>

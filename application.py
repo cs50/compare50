@@ -1,11 +1,22 @@
+import bisect
 import flask_migrate
-# import json
 import os
 import tarfile
 import uuid
 
 from celery import Celery
-from flask import Flask, Response, abort, jsonify, make_response, redirect, render_template, request, url_for, has_app_context
+from flask import (
+    Flask,
+    Response,
+    abort,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    has_app_context
+)
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
@@ -15,8 +26,13 @@ from sqlalchemy.sql import func
 from tempfile import gettempdir, mkstemp
 from celery.result import AsyncResult
 
-from compare import compare as compare50
-from util import save, walk, walk_submissions, submission_path, NotFinishedException
+import pygments
+import pygments.lexers
+import pygments.lexers.special
+
+from config import DEFAULT_CONFIG
+from data import Fragment, MatchResult, Token, Span
+from util import save, walk, walk_submissions, submission_path
 
 db_uri = "mysql://{}:{}@{}/{}".format(
     os.environ["MYSQL_USERNAME"],
@@ -91,7 +107,118 @@ class Upload(db.Model):
     uuid = db.Column(db.CHAR(36), nullable=False, unique=True)
     created = db.Column(db.TIMESTAMP, nullable=False, default=func.now())
     passes = db.relationship("Pass", backref="upload")
-    submissions = db.relationship("Submission", backref="upload")
+    all_submissions = db.relationship("Submission", backref="upload")
+
+    # TODO: can these associations be expressed as relationships in SQLAlchemy?
+    @property
+    def submissions(self):
+        res = Submission.query.filter_by(upload_id=self.id).join(Submissions).all()
+        return res if res is not None else []
+
+    @property
+    def archives(self):
+        res = Submission.query.filter_by(upload_id=self.id).join(Archives).all()
+        return res if res is not None else []
+
+    @property
+    def distro(self):
+        res = Submission.query.filter_by(upload_id=self.id).join(Distros).first()
+        return res if res is not None else []
+
+    @property
+    def full_path(self):
+        return os.path.join(gettempdir(), str(self.uuid))
+
+    @property
+    def submission_dir(self):
+        return os.path.join(self.full_path, "submissions")
+
+    @property
+    def archive_dir(self):
+        return os.path.join(self.full_path, "archives")
+
+    @property
+    def distro_dir(self):
+        return os.path.join(self.full_path, "distros")
+
+
+class Submission(db.Model):
+    """Represents a student's submission comprised of some number of files"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    path = db.Column(db.VARCHAR(255), nullable=False)
+    files = db.relationship("File", backref="submission")
+
+    @property
+    def full_path(self):
+        return os.path.join(self.upload.full_path, self.path)
+
+
+class Submissions(db.Model):
+    """Maps uploads to their submissions"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+
+
+class Archives(db.Model):
+    """Maps uploads to their archives"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+
+
+class Distros(db.Model):
+    """Maps uploads to their distros"""
+    id = db.Column(db.INT, primary_key=True)
+    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
+    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+
+
+class File(db.Model):
+    """Represents a single uploaded file"""
+    id = db.Column(db.INT, primary_key=True)
+    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
+    path = db.Column(db.VARCHAR(255), nullable=False)
+
+    @property
+    def full_path(self):
+        return os.path.join(self.submission.full_path, self.path)
+
+    def preprocess(self, preprocessors):
+        """Returns a list of (file, start, end, type, value) tuples created
+        using a.  pygments lexer. The lexer is determined by looking
+        first at file name then at file contents. If neither
+        determines a lexer, a plain text lexer is used. The `type` in
+        the output tuple is a pygments Token type.
+        """
+        file_path = self.full_path
+        with open(file_path, "r")  as file:
+            text = file.read()
+
+        # get lexer for this file type
+        try:
+            lexer = pygments.lexers.get_lexer_for_filename(file_path)
+        except pygments.util.ClassNotFound:
+            try:
+                lexer = pygments.lexers.guess_lexer(text)
+            except pygments.util.ClassNotFound:
+                lexer = pygments.lexers.special.TextLexer()
+
+        # tokenize file into (start, type, value) tuples
+        tokens = list(lexer.get_tokens_unprocessed(text))
+
+        # add file and end index to create Tokens
+        tokens.append((len(text),))
+        tokens = [Token(start=tokens[i][0], stop=tokens[i+1][0],
+                        type=tokens[i][1], val=tokens[i][2])
+                  for i in range(len(tokens) - 1)]
+
+        # run preprocessors
+        for pp in preprocessors:
+            tokens = pp(tokens)
+        return list(tokens)
+
 
 
 class Pass(db.Model):
@@ -103,20 +230,13 @@ class Pass(db.Model):
     upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
     matches = db.relationship("Match", backref="processor")
 
+    @property
+    def failed(self):
+        return AsyncResult(str(self.id)).failed()
 
-class Submission(db.Model):
-    """Represents a student's submission comprised of some number of files"""
-    id = db.Column(db.INT, primary_key=True)
-    upload_id = db.Column(db.INT, db.ForeignKey("upload.id", ondelete="CASCADE"), nullable=False)
-    path = db.Column(db.VARCHAR(255), nullable=False)
-    files = db.relationship("File", backref="submission")
-
-
-class File(db.Model):
-    """Represents a single uploaded file"""
-    id = db.Column(db.INT, primary_key=True)
-    submission_id = db.Column(db.INT, db.ForeignKey("submission.id", ondelete="CASCADE"), nullable=False)
-    path = db.Column(db.VARCHAR(255), nullable=False)
+    @property
+    def ready(self):
+        return AsyncResult(str(self.id)).ready()
 
 
 class Match(db.Model):
@@ -170,11 +290,9 @@ def get_pass_api(id):
     if p is None or p.upload.uuid != str(id):
         abort(400) # bad request
 
-    task = AsyncResult(str(p.id))
-    print(task.status)
-    if task.failed():
+    if p.failed:
         abort(500) # server error
-    elif not task.ready():
+    elif not p.ready:
         return ('"pending"', 202) # accepted
 
     # task ready, get results
@@ -185,22 +303,22 @@ def get_pass_api(id):
 
 @app.route("/api/<uuid:id>/compare", methods=["GET"])
 def compare_api(id):
-    files_a, files_b = compare(id)
-    res_a, res_b = tuple(
+    submissions = validate_submission_args(id)
+    files = compare(*submissions)
+    data = tuple(
         [
             {
-                "file": file,
+                "file": file.path,
                 "fragments": [
-                    {"text": text, "ids": ids} for text, ids in fragments
+                    {"text": frag.text, "groups": frag.groups}
+                    for frag in fragments
                 ]
             }
-            for file, fragments in src
+            for file, fragments in sub.items()
         ]
-        for src in (files_a, files_b)
+        for sub in files
     )
-    result = {"a": res_a, "b": res_b}
-    # TODO: also send list of fragment ids associated with each match
-    return jsonify(result)
+    return jsonify(data)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -216,7 +334,7 @@ def upload_ui():
 def results_ui(id):
     upload = Upload.query.filter_by(uuid=id).first_or_404()
     passes = [{"id": p.id, "name": p.config} for p in upload.passes]
-    subs = {f"{s.id}": s.path for s in upload.submissions}
+    subs = {f"{s.id}": s.path for s in upload.all_submissions}
     return render_template("results.html", id=id, subs=subs, passes=passes)
 
 
@@ -229,11 +347,16 @@ def pass_ui(id):
         return redirect(f"/{id}")
         pass
 
+
 @app.route("/<uuid:id>/compare", methods=["GET"])
 def compare_ui(id):
-    a, b = request.args.get("a"), request.args.get("b")
-    a_files, b_files = compare(id)
-    return render_template("compare.html", a_files=a_files, b_files=b_files)
+    submissions = validate_submission_args(id)
+    files = compare(*submissions)
+    passes = Upload.query.filter_by(uuid=str(id)).first().passes
+    return render_template("compare.html",
+                           sumissions=submissions,
+                           files=files,
+                           passes=passes)
 
 
 def upload():
@@ -242,61 +365,69 @@ def upload():
         abort(make_response(jsonify(error="missing submissions"), 400))
 
     # Unique parent
-    id = str(uuid.uuid4())
-    parent = os.path.join(gettempdir(), id)
+    upload = Upload()
+    upload.uuid = id = str(uuid.uuid4())
+    parent = upload.full_path
     try:
         os.mkdir(parent)
     except FileExistsError:
         abort(500)
 
     # Save submissions
-    submission_dir = os.path.join(parent, "submissions")
+    submission_dir = upload.submission_dir
     os.mkdir(submission_dir)
     for file in request.files.getlist("submissions"):
-        print(file)
-        print(file.headers)
-        print(file.filename)
         save(file, submission_dir)
 
     # Save distros, if any
     if request.files.getlist("distros"):
-        distros_dir = os.path.join(parent, "distros")
-        os.mkdir(distros_dir)
+        distro_dir = upload.distro_dir
+        os.mkdir(distro_dir)
         for file in request.files.getlist("distros"):
-            save(file, distros_dir)
+            save(file, distro_dir)
     else:
-        distros_dir = None
+        distro_dir = None
 
     # Save archives, if any
     if request.files.getlist("archives"):
-        archives_dir = os.path.join(parent, "archives")
-        os.mkdir(archives_dir)
+        archive_dir = upload.archive_dir
+        os.mkdir(archive_dir)
         for file in request.files.getlist("archives"):
             save(file, archives_dir)
     else:
-        archives_dir = None
+        archive_dir = None
 
-    # create upload, submissions, and files in database
-    upload = Upload()
-    upload.uuid = id
-
+    distro = walk(distro_dir) if distro_dir else []
     submissions = walk_submissions(submission_dir)
-    distros = walk(distros_dir) if distros_dir else []
-    archives = walk_submissions(archives_dir) if archives_dir else []
+    archives = walk_submissions(archive_dir) if archive_dir else []
 
-    for sub in [distros] + submissions + archives:
+    # (submission, association table) pairs
+    subs = [(distro, Distros)] + \
+        [(s, Submissions) for s in submissions] + \
+        [(a, Archives) for a in archives]
+
+    # create submission, file db objects
+    for sub, Assoc in subs:
         if len(sub) == 0:
             continue
+
         s = Submission()
         sub_path = submission_path(sub)
         s.path = os.path.relpath(sub_path, parent)
-        upload.submissions.append(s)
+        upload.all_submissions.append(s)
 
-        # add files
         for file in sub:
             f = File()
-            s.files.append(f)
             f.path = os.path.relpath(file, sub_path)
+            s.files.append(f)
+
+        db.session.add(s)
+        db.session.commit()
+
+        a = Assoc()
+        a.upload_id = upload.id
+        a.submission_id = s.id
+        db.session.add(a)
 
     db.session.add(upload)
     db.session.commit()
@@ -327,61 +458,257 @@ def create_pass(id):
 @celery.task(bind=True)
 def run_pass(self):
     p = Pass.query.get(int(self.request.id))
-    parent = os.path.join(gettempdir(), p.upload.uuid)
 
     # find directories where files were saved
-    submission_dir = os.path.join(parent, "submissions")
-    distro_dir = os.path.join(parent, "distros")
-    archive_dir = os.path.join(parent, "archives")
+    submission_dir = p.upload.submission_dir
+    archive_dir = p.upload.archive_dir
+    distro_dir = p.upload.distro_dir
 
     # get submission lists
     submissions = walk_submissions(submission_dir)
     distros = walk(distro_dir) if os.path.exists(distro_dir) else []
     archives = walk_submissions(archive_dir) if os.path.exists(archive_dir) else []
 
-    # construct pass
-    preprocessor, comparator = compare50.DEFAULT_CONFIG[p.config]
+    # get pass components
+    # TODO: make this user-configurable
+    preprocessors, comparator = DEFAULT_CONFIG[p.config]
 
-    results = compare50.compare(preprocessor, comparator,
-                                submissions, distros, archives)
-    for (sub_a, sub_b), score in results.items():
-        path_a = os.path.relpath(submission_path(sub_a), parent)
-        path_b = os.path.relpath(submission_path(sub_b), parent)
-        sub_a = Submission.query.filter_by(path=path_a, upload_id=p.upload.id).first()
-        sub_b = Submission.query.filter_by(path=path_b, upload_id=p.upload.id).first()
+    sub_index = comparator.empty_index()
+    archive_index = comparator.empty_index()
+
+    # add submissions to left and right side
+    for sub in p.upload.submissions:
+        for f in sub.files:
+            file_index = comparator.index(f, f.preprocess(preprocessors))
+            sub_index += file_index
+            archive_index += file_index
+
+    # add archives to right side only
+    for sub in p.upload.archives:
+        for f in sub.files:
+            archive_index += comparator.index(f, f.preprocess(preprocessors))
+
+    # remove distro from both sides
+    if p.upload.distro:
+        for f in p.upload.distro.files:
+            file_index = comparator.index(f, f.preprocess(preprocessors))
+            sub_index -= file_index
+            archive_index -= file_index
+
+    # store results in db
+    for match in sub_index.compare(archive_index):
         m = Match()
-        m.sub_a = sub_a.id
-        m.sub_b = sub_b.id
-        m.score = score
+        m.sub_a = match.a
+        m.sub_b = match.b
+        m.score = match.score
         p.matches.append(m)
 
+    db.session.add(p)
     db.session.commit()
 
 
-def compare(id):
-    """Takes a job ID and two unvalidated submission IDs and returns two
-    lists of (path, flattened fragments) pairs, where each flattened fragment
-    is a (text, fragment IDs) pair
+def validate_submission_args(id):
+    """Validate `a` and `b` request args with given upload id. Return
+    submissions or abort.
     """
-    # validate args
     a = request.args.get("a")
     b = request.args.get("b")
-    if a is None or b is None or not a.isdigit() or not b.isdigit():
-        abort(status.HTTP_400_BAD_REQUEST)
+    if a is None or b is None or not a.isdigit() or not b.isdigit() or \
+       int(a) >= int(b):
+        abort(400)
 
-    # check that comparison exists and has correct upload id
-    match = Match.query.filter_by(sub_a=a, sub_b=b).first()
-    if match is None or match.processor.upload.uuid != str(id):
-        abort(status.HTTP_400_BAD_REQUEST)
+    # check that submissions are from this upload
+    sub_a = Submission.query.get(a)
+    sub_b = Submission.query.get(b)
+    if sub_a is None or sub_b is None or \
+       sub_a.upload.uuid != str(id) or sub_b.upload.uuid != str(id):
+        abort(400)
 
-    # TODO: proper pairwise comparison here
-    a_texts, b_texts = [], []
-    for dest, src in ((a_texts, a), (b_texts, b)):
-        sub = Submission.query.get(src)
-        for file in sub.files:
-            with open(os.path.join(gettempdir(),
-                                   str(id),
-                                   sub.path,
-                                   file.path)) as f:
-                dest.append((file.path, [(f.read(), [])]))
-    return a_texts, b_texts
+    return sub_a, sub_b
+
+
+def compare(sub_a, sub_b):
+    """Take two submissions and return a tuple of dicts mapping files to
+    lists of Fragments.  The id of `sub_a` must be less than that of
+    `sub_b`.
+    """
+    distro = sub_a.upload.distro
+
+    # map pass ids to MatchResults
+    results = {}
+
+    for p in sub_a.upload.passes:
+        preprocessors, comparator = DEFAULT_CONFIG[p.config]
+
+        distro_files = p.upload.distro.files if distro else []
+
+        # keep tokens around for expanding fragments
+        tokens = {f: f.preprocess(preprocessors)
+                  for f in sub_a.files + sub_b.files + distro_files}
+
+        # process files
+        a_index = comparator.empty_index()
+        b_index = comparator.empty_index()
+        distro_index = comparator.empty_index()
+        for files, index in [(sub_a.files, a_index),
+                             (sub_b.files, b_index),
+                             (distro_files, distro_index)]:
+            for f in files:
+                index += comparator.index(f, tokens[f], complete=True)
+
+        # perform comparisons
+        matches = a_index.compare(b_index)
+        if matches:
+            matches = expand_fragments(matches[0], tokens)
+        else:
+            # no matches, create empty MatchResult to hold distro code
+            matches = MatchResult(sub_a.id, sub_b.id, {})
+        if distro:
+            # add expanded distro fragments to match as group "distro"
+            for index in a_index, b_index:
+                distro_match = distro_index.compare(index)
+                if distro_match:
+                    distro_match = expand_fragments(distro_match[0], tokens)
+                    distro_frags = [frag
+                                    for frags in distro_match.fragments.values()
+                                    for frag in frags
+                                    if frag.file.submission_id != distro.id]
+                    matches.fragments.setdefault("distro", []).extend(distro_frags)
+
+        results[p.id] = matches
+
+    return flatten_fragments(results)
+
+
+def expand_fragments(match, tokens):
+    """Returns a new MatchResult with maximally expanded fragments
+    match - the MatchResult containing fragments to expand
+    tokens - a dict mapping files to lists of their tokens
+    """
+    # lazily map files to lists of token start indices
+    start_cache = {}
+
+    # binary search to find index of token with given start
+    def get_index(file, start):
+        starts = start_cache.get(file)
+        if starts is None:
+            starts = [t.start for t in tokens[file]]
+            start_cache[file] = starts
+        return bisect.bisect_left(starts, start)
+
+    new_fragments = {}
+    for group_id, fragments in match.fragments.items():
+        # if there exists an expanded group
+        # for which all current frags are contained
+        # in some expanded frag, then skip this group
+        if any(all(any(frag.file == other.file and \
+                       frag.start >= other.start and \
+                       frag.stop <= other.stop
+                       for other in expanded)
+                   for frag in fragments)
+               for expanded in new_fragments.values()):
+            continue
+        # first, last index into file's tokens for each frag
+        indices = {frag: (get_index(frag.file, frag.start),
+                          get_index(frag.file, frag.stop) - 1)
+                   for frag in fragments}
+
+        while True:
+            changed = False
+            # find previous and next tokens for each fragment
+            prevs = set(tokens[frag.file][first - 1].val if first > 0 else None
+                        for frag, (first, last) in indices.items())
+            nexts = set((tokens[frag.file][last + 1].val
+                         if last + 1 < len(tokens[frag.file]) else None)
+                        for frag, (first, last) in indices.items())
+
+            # expand front of fragments
+            if len(prevs) == 1 and prevs.pop() is not None:
+                changed = True
+                indices = {frag: (first - 1, last)
+                           for frag, (first, last) in indices.items()}
+            # expand back of fragments
+            if len(nexts) == 1 and nexts.pop() is not None:
+                changed = True
+                indices = {frag: (start, stop + 1)
+                           for frag, (start, stop) in indices.items()}
+            if not changed:
+                break
+
+        new_fragments[group_id] = [Span(tokens[frag.file][first].start,
+                                        tokens[frag.file][last].stop,
+                                        frag.file,
+                                        frag.hash)
+                                   for frag, (first, last) in indices.items()]
+    return MatchResult(match.a, match.b, match.score, new_fragments)
+
+
+def flatten_fragments(matches):
+    """Return a tuple of dicts mapping files to lists of Fragments.
+
+    match - a dict mapping pass ids to MatchResults
+    """
+    # separate spans by submission
+    a_spans = {}
+    b_spans = {}
+    for pass_id, match in matches.items():
+        for group, spans in match.fragments.items():
+            for span in spans:
+                if span.file.submission_id == match.a:
+                    spans = a_spans
+                elif span.file.submission_id == match.b:
+                    spans = b_spans
+                else:
+                    assert false, "Fragment from unknown submission in match"
+                spans.setdefault(pass_id, {}) \
+                    .setdefault(group, []) \
+                    .append(span)
+
+    a_results = {}
+    b_results = {}
+    for spans, results in (a_spans, a_results), (b_spans, b_results):
+        # separate by file, move pass_id and group into tuple
+        by_file = {}
+        for pass_id, spans in spans.items():
+            for group, spans in spans.items():
+                for span in spans:
+                    entry = by_file.setdefault(span.file, [])
+                    entry.append((span, pass_id, group))
+
+        for file, span_data in by_file.items():
+            # iterate through text, creating list of Fragments
+            file_results = []
+            span_data.sort(key=lambda s: s[0].start)
+            with open(file.full_path, "r") as f:
+                text = f.read()
+            current_spans = []
+            current_text = []
+
+            def create_frag():
+                groups = {}
+                for span, pass_id, group in current_spans:
+                    groups.setdefault(pass_id, []).append(group)
+                    if "distro" in groups[pass_id]:
+                        groups[pass_id] = ["distro"]
+                file_results.append(Fragment(groups, "".join(current_text)))
+
+            for i, c in enumerate(text):
+                # calculate new current groups
+                new_spans = [(span, pass_id, group)
+                             for span, pass_id, group in current_spans
+                             if span.stop > i]
+                while span_data and span_data[0][0].start == i:
+                    new_spans.append(span_data.pop(0))
+
+                # emit fragment if span would end or start
+                if new_spans != current_spans:
+                    create_frag()
+                    current_text = []
+                current_spans = new_spans
+                current_text.append(c)
+
+            # final fragment, possibly empty
+            create_frag()
+            results[file] = file_results
+
+    return a_results, b_results
