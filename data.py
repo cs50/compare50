@@ -1,5 +1,14 @@
 class Token:
+    """A result of the lexical analysis of a file. Preprocessors operate
+    on Token streams.
+
+    start - the character index of the beginning of the token
+    stop - the character index one past the end of the token
+    type - the Pygments token type
+    val - the string contents of the token
+    """
     __slots__ = ["_start", "_stop", "_type", "_val"]
+
     def __init__(self, other=None, file=None, start=None, stop=None,
                  type=None, val=None):
         self._start = start if start is not None else other.start
@@ -29,12 +38,22 @@ class Token:
 
 
 class MatchResult:
-    __slots__ = ["_a", "_b", "_score", "_fragments"]
-    def __init__(self, a, b, score, fragments):
+    """The result of a comparison between two submissions.
+
+    a - the ID of the first compared submission
+    b - the ID of the second compared submission. Must be greater than `a`.
+    score - bigger means more similar. The exact meaning depends on
+        the comparator used.
+    spans - a list of spans representing fragments that are shared
+        between `a` and `b`.
+    """
+    __slots__ = ["_a", "_b", "_score", "_spans"]
+
+    def __init__(self, a, b, score, spans):
         self._a = a
         self._b = b
         self._score = score
-        self._fragments = fragments
+        self._spans = spans
 
     @property
     def a(self):
@@ -49,17 +68,23 @@ class MatchResult:
         return self._score
 
     @property
-    def fragments(self):
-        return self._fragments
+    def spans(self):
+        return self._spans
 
 
 class Span:
-    __slots__ = ["_start", "_stop", "_file", "_hash"]
-    def __init__(self, start, stop, file, hash):
+    """Represents a range of characters in a particular file.
+
+    file - the File containing the span
+    start - the character index of the first character in the span
+    stop - the character index one past the end of the span
+    """
+    __slots__ = ["_file", "_start", "_stop"]
+
+    def __init__(self, file, start, stop):
+        self._file = file
         self._start = start
         self._stop = stop
-        self._file = file
-        self._hash = hash
 
     @property
     def start(self):
@@ -73,17 +98,19 @@ class Span:
     def file(self):
         return self._file
 
-    @property
-    def hash(self):
-        return self._hash
-
     def __repr__(self):
         return f"Span({self.file}:{self.start}:{self.stop})"
+
 
 class Fragment:
     """A fragment of text with a collection of group ids identifying which
     match groups it belongs to for which passes.
+
+    groups - a dict mapping pass ids to lists of group ids
+    text - a string, the contents of this fragment
     """
+    __slots__ = ["_groups", "_text"]
+
     def __init__(self, groups, text):
         self._groups = groups
         self._text = text

@@ -7,8 +7,8 @@ class Index:
     def __init__(self, k, fingerprints, sub_id):
         self.k = k
         self.index = dict()
-        for span in fingerprints:
-            self._insert(span.hash, sub_id, span)
+        for span, hash in fingerprints:
+            self._insert(hash, sub_id, span)
 
     def _insert(self, h, sub_id, span):
         self.index.setdefault(h, set()).add((sub_id, span))
@@ -45,13 +45,7 @@ class Index:
         if self.k != other.k:
             raise Exception("comparison with different n-gram lengths")
 
-        # # map id pairs to sets of spans
-        # matches = {}
-        # # map id pairs to the number of distinct shared hashes
-        # # TODO: weight by min file length
-        # scores = {}
-
-        # map submission pairs to maps of hashes to list of fragments
+        # map submission pairs to maps of hashes to list of spans
         results = {}
 
         common_hashes = set(self.index.keys()) & set(other.index.keys())
@@ -69,7 +63,7 @@ class Index:
                 for sub_id2, spans2 in other_spans.items():
                     # XXX: depends on "submission" being local and
                     # "archive" being other, and also on all
-                    # "submission" ids being less than all "archive"
+                    # "submission" IDs being less than all "archive"
                     # ids. The non-hack way is to normalize order of
                     # the sub_id pair (into fresh variables) and
                     # continue only if they are equal or already
@@ -84,12 +78,12 @@ class Index:
                     entry = entry.setdefault(hash, set())
                     entry |= spans1 | spans2
 
-        def score(fragments):
-            return sum(len(frags) for frags in fragments.values())
+        def score(hashes):
+            return sum(len(spans) for spans in hashes.values())
 
         top_matches = heapq.nlargest(n, results.items(), lambda x: score(x[1]))
-        returned = [MatchResult(a, b, score(fragments), fragments)
-                    for (a, b), fragments in top_matches]
+        returned = [MatchResult(a, b, score(hashes), hashes)
+                    for (a, b), hashes in top_matches]
         return returned
 
     @staticmethod
@@ -119,28 +113,29 @@ class Winnowing:
 
         if complete:
             # use all fingerprints instead of sampling
-            fingerprints = [Span(indices[i], indices[i+self.k], file, hashes[i])
+            fingerprints = [(Span(file, indices[i], indices[i+self.k]),
+                             hashes[i])
                             for i in range(len(hashes))]
         else:
             # circular buffer holding window
-            buf = [Span(0, 0, None, math.inf)] * self.w
+            buf = [(Span(None, 0, 0), math.inf)] * self.w
             # index of minimum hash in buffer
             min_idx = 0
             fingerprints = []
             for i in range(len(hashes)):
                 # index in buffer
                 idx = i % self.w
-                buf[idx] = Span(indices[i], indices[i+self.k], file, hashes[i])
+                buf[idx] = (Span(file, indices[i], indices[i+self.k]), hashes[i])
                 if min_idx == idx:
                     # old min not in window, search left for new min
                     for j in range(1, self.w):
                         search_idx = (idx - j) % self.w
-                        if buf[search_idx].hash < buf[min_idx].hash:
+                        if buf[search_idx][1] < buf[min_idx][1]:
                             min_idx = search_idx
                     fingerprints.append(buf[min_idx])
                 else:
                     # compare new hash to old min (robust winnowing)
-                    if buf[idx].hash < buf[min_idx].hash:
+                    if buf[idx][1] < buf[min_idx][1]:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
 

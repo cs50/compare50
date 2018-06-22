@@ -511,7 +511,7 @@ def compare(sub_a, sub_b):
 
         distro_files = p.upload.distro.files if distro else []
 
-        # keep tokens around for expanding fragments
+        # keep tokens around for expanding spans
         tokens = {f: f.preprocess(preprocessors)
                   for f in sub_a.files + sub_b.files + distro_files}
 
@@ -528,30 +528,31 @@ def compare(sub_a, sub_b):
         # perform comparisons
         matches = a_index.compare(b_index)
         if matches:
-            matches = expand_fragments(matches[0], tokens)
+            matches = expand_spans(matches[0], tokens)
         else:
             # no matches, create empty MatchResult to hold distro code
             matches = MatchResult(sub_a.id, sub_b.id, {})
         if distro:
-            # add expanded distro fragments to match as group "distro"
+            # add expanded distro spans to match as group "distro"
             for index in a_index, b_index:
                 distro_match = distro_index.compare(index)
                 if distro_match:
-                    distro_match = expand_fragments(distro_match[0], tokens)
-                    distro_frags = [frag
-                                    for frags in distro_match.fragments.values()
-                                    for frag in frags
-                                    if frag.file.submission_id != distro.id]
-                    matches.fragments.setdefault("distro", []).extend(distro_frags)
+                    distro_match = expand_spans(distro_match[0], tokens)
+                    distro_spans = [span
+                                    for spans in distro_match.spans.values()
+                                    for span in spans
+                                    if span.file.submission_id != distro.id]
+                    matches.spans.setdefault("distro", []).extend(distro_spans)
 
         results[p.id] = matches
 
-    return flatten_fragments(results)
+    return flatten_spans(results)
 
 
-def expand_fragments(match, tokens):
-    """Returns a new MatchResult with maximally expanded fragments
-    match - the MatchResult containing fragments to expand
+def expand_spans(match, tokens):
+    """Returns a new MatchResult with maximally expanded spans.
+
+    match - the MatchResult containing spans to expand
     tokens - a dict mapping files to lists of their tokens
     """
     # lazily map files to lists of token start indices
@@ -565,70 +566,71 @@ def expand_fragments(match, tokens):
             start_cache[file] = starts
         return bisect.bisect_left(starts, start)
 
-    new_fragments = {}
-    for group_id, fragments in match.fragments.items():
+    new_spans = {}
+    for group_id, spans in match.spans.items():
         # if there exists an expanded group
-        # for which all current frags are contained
-        # in some expanded frag, then skip this group
-        if any(all(any(frag.file == other.file and \
-                       frag.start >= other.start and \
-                       frag.stop <= other.stop
+        # for which all current spans are contained
+        # in some expanded span, then skip this group
+        if any(all(any(span.file == other.file and \
+                       span.start >= other.start and \
+                       span.stop <= other.stop
                        for other in expanded)
-                   for frag in fragments)
-               for expanded in new_fragments.values()):
+                   for span in spans)
+               for expanded in new_spans.values()):
             continue
-        # first, last index into file's tokens for each frag
-        indices = {frag: (get_index(frag.file, frag.start),
-                          get_index(frag.file, frag.stop) - 1)
-                   for frag in fragments}
+        # first, last index into file's tokens for each span
+        print(spans)
+        indices = {span: (get_index(span.file, span.start),
+                          get_index(span.file, span.stop) - 1)
+                   for span in spans}
 
         while True:
             changed = False
-            # find previous and next tokens for each fragment
-            prevs = set(tokens[frag.file][first - 1].val if first > 0 else None
-                        for frag, (first, last) in indices.items())
-            nexts = set((tokens[frag.file][last + 1].val
-                         if last + 1 < len(tokens[frag.file]) else None)
-                        for frag, (first, last) in indices.items())
+            # find previous and next tokens for each span
+            prevs = set(tokens[span.file][first - 1].val if first > 0 else None
+                        for span, (first, last) in indices.items())
+            nexts = set((tokens[span.file][last + 1].val
+                         if last + 1 < len(tokens[span.file]) else None)
+                        for span, (first, last) in indices.items())
 
-            # expand front of fragments
+            # expand front of spans
             if len(prevs) == 1 and prevs.pop() is not None:
                 changed = True
-                indices = {frag: (first - 1, last)
-                           for frag, (first, last) in indices.items()}
-            # expand back of fragments
+                indices = {span: (first - 1, last)
+                           for span, (first, last) in indices.items()}
+                # expand back of spans
             if len(nexts) == 1 and nexts.pop() is not None:
                 changed = True
-                indices = {frag: (start, stop + 1)
-                           for frag, (start, stop) in indices.items()}
+                indices = {span: (start, stop + 1)
+                           for span, (start, stop) in indices.items()}
             if not changed:
                 break
 
-        new_fragments[group_id] = [Span(tokens[frag.file][first].start,
-                                        tokens[frag.file][last].stop,
-                                        frag.file,
-                                        frag.hash)
-                                   for frag, (first, last) in indices.items()]
-    return MatchResult(match.a, match.b, match.score, new_fragments)
+        new_spans[group_id] = [Span(span.file,
+                                    tokens[span.file][first].start,
+                                    tokens[span.file][last].stop)
+                               for span, (first, last) in indices.items()]
+    return MatchResult(match.a, match.b, match.score, new_spans)
 
 
-def flatten_fragments(matches):
-    """Return a tuple of dicts mapping files to lists of Fragments.
+def flatten_spans(matches):
+    """Return a pair of dicts mapping Files to lists of Fragments. Each
+    list of Fragments is the fragmented contents of an entire file.
 
-    match - a dict mapping pass ids to MatchResults
+    match - a dict mapping pass IDs to MatchResults
     """
     # separate spans by submission
     a_spans = {}
     b_spans = {}
     for pass_id, match in matches.items():
-        for group, spans in match.fragments.items():
+        for group, spans in match.spans.items():
             for span in spans:
                 if span.file.submission_id == match.a:
                     spans = a_spans
                 elif span.file.submission_id == match.b:
                     spans = b_spans
                 else:
-                    assert false, "Fragment from unknown submission in match"
+                    assert false, "Span from unknown submission in match"
                 spans.setdefault(pass_id, {}) \
                     .setdefault(group, []) \
                     .append(span)
