@@ -74,11 +74,14 @@
           <label>{{p.config}}</label>
         {% endfor %}
         <div class="container">
-          {% for files, side in (files[0], "left"), (files[1], "right") %}
+          {% for sub, files, side in (sub_a, files_a, "left"), (sub_b, files_b, "right") %}
             <div class="split {{side}}">
-              {% for file, fragments in files.items() %}
+              <div class="submission-file">
+                <h3>{{sub}}</h3>
+              </div>
+              {% for file, fragments in files %}
                 <div class="submission-file">
-                  <h4>{{file.path}}</h4>
+                  <h4>{{file}}</h4>
                   <pre>
                     {%- for frag in fragments -%}
                       <code class="frag"

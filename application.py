@@ -318,12 +318,20 @@ def pass_ui(id):
 
 @app.route("/<uuid:id>/compare", methods=["GET"])
 def compare_ui(id):
-    submissions = validate_submission_args(id)
-    files = compare(*submissions)
+    sub_a, sub_b = validate_submission_args(id)
+    files_a, files_b = compare(sub_a, sub_b)
     passes = Upload.query.filter_by(uuid=str(id)).first().passes
+
+    def make_sorted(files):
+        files = {File.query.get(file).path: frags
+                 for file, frags in files.items()}
+        return sorted(files.items(), key=lambda f: f[0])
+
     return render_template("compare.html",
-                           sumissions=submissions,
-                           files=files,
+                           sub_a=sub_a.path,
+                           sub_b=sub_b.path,
+                           files_a=make_sorted(files_a),
+                           files_b=make_sorted(files_b),
                            passes=passes)
 
 
