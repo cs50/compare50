@@ -276,7 +276,7 @@ def compare_api(id):
     data = tuple(
         [
             {
-                "file": file.path,
+                "file": File.query.get(file).path,
                 "fragments": [
                     {"text": frag.text, "groups": frag.groups}
                     for frag in fragments
