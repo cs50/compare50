@@ -24,6 +24,18 @@ Describe file format
 
 ## Notes
 
+### Submission format
+Separate submissions in *Submissions* and *Archives* must be in
+separate directories, even they consist of a single file. For each of
+these categories, all submissions must either share a parent directory
+or be submitted individually.
+
+### Building and Running
+```
+docker-compose build
+docker-compose up
+```
+
 ### Determinism
 Fingerprint hashing is currently done using Python's built in `hash`
 function. Python randomly salts this hash function on startup, so
@@ -35,17 +47,7 @@ always be salted the same way. A better solution would be to find a
 fast, deterministic hash function to use instead of `hash`.
 
 ## Web App Notes
-Separate submissions in *Submissions* and *Archives* must be in
-separate directories, even they consist of a single file. For each of
-these categories, all submissions must either share a parent directory
-or be submitted individually.
 
-```
-FLASK_APP=application.py flask db init
-vim migrations/alembic.ini 
-FLASK_APP=application.py flask db migrate
-FLASK_APP=application.py flask db upgrade
-```
 
 ## TODO
 

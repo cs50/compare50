@@ -6,7 +6,6 @@ import uuid
 
 from flask import (
     Flask,
-    Response,
     abort,
     jsonify,
     make_response,
@@ -217,7 +216,7 @@ class Match(db.Model):
     pass_id = db.Column(db.INT, db.ForeignKey("pass.id", ondelete="CASCADE"), nullable=False)
     score = db.Column(db.INT, nullable=False)
 
-
+@app.before_first_request
 def before_first_request():
     # Perform any migrates
     flask_migrate.upgrade()
