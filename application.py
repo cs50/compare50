@@ -220,7 +220,6 @@ class Match(db.Model):
 def before_first_request():
     # Perform any migrates
     flask_migrate.upgrade()
-
     # Create database for celery
     db.engine.execute("CREATE DATABASE IF NOT EXISTS celerydb;")
 
@@ -446,26 +445,30 @@ def run_pass(self):
     archive_index = comparator.empty_index()
 
     # add submissions to left and right side
+    print("processing submissions")
     for sub in p.upload.submissions:
         for f in sub.files:
-            file_index = comparator.index(f, f.preprocess(preprocessors))
+            file_index = comparator.index(f.id, f.submission_id, f.preprocess(preprocessors))
             sub_index += file_index
             archive_index += file_index
 
     # add archives to right side only
+    print("processing archives")
     for sub in p.upload.archives:
         for f in sub.files:
-            archive_index += comparator.index(f, f.preprocess(preprocessors))
+            archive_index += comparator.index(f.id, f.submission_id, f.preprocess(preprocessors))
 
     # remove distro from both sides
+    print("processing distro")
     if p.upload.distro:
         for f in p.upload.distro.files:
-            file_index = comparator.index(f, f.preprocess(preprocessors))
+            file_index = comparator.index(f.id, f.submission_id, f.preprocess(preprocessors))
             sub_index -= file_index
             archive_index -= file_index
 
-    # store results in db
-    for match in sub_index.compare(archive_index):
+    # Storen results in db
+    print("Performing comparison")
+    for match in sub_index.compare(archive_index, keep_spans=False):
         m = Match()
         m.sub_a = match.a
         m.sub_b = match.b
@@ -512,7 +515,7 @@ def compare(sub_a, sub_b):
         distro_files = p.upload.distro.files if distro else []
 
         # keep tokens around for expanding spans
-        tokens = {f: f.preprocess(preprocessors)
+        tokens = {f.id: f.preprocess(preprocessors)
                   for f in sub_a.files + sub_b.files + distro_files}
 
         # process files
@@ -523,7 +526,7 @@ def compare(sub_a, sub_b):
                              (sub_b.files, b_index),
                              (distro_files, distro_index)]:
             for f in files:
-                index += comparator.index(f, tokens[f], complete=True)
+                index += comparator.index(f.id, f.submission_id, tokens[f.id], complete=True)
 
         # perform comparisons
         matches = a_index.compare(b_index)
@@ -541,7 +544,7 @@ def compare(sub_a, sub_b):
                     distro_spans = [span
                                     for spans in distro_match.spans.values()
                                     for span in spans
-                                    if span.file.submission_id != distro.id]
+                                    if File.query.get(span.file).submission_id != distro.id]
                     matches.spans.setdefault("distro", []).extend(distro_spans)
 
         results[p.id] = matches
@@ -625,9 +628,9 @@ def flatten_spans(matches):
     for pass_id, match in matches.items():
         for group, spans in match.spans.items():
             for span in spans:
-                if span.file.submission_id == match.a:
+                if File.query.get(span.file).submission_id == match.a:
                     spans = a_spans
-                elif span.file.submission_id == match.b:
+                elif File.query.get(span.file).submission_id == match.b:
                     spans = b_spans
                 else:
                     assert false, "Span from unknown submission in match"
@@ -650,7 +653,7 @@ def flatten_spans(matches):
             # iterate through text, creating list of Fragments
             file_results = []
             span_data.sort(key=lambda s: s[0].start)
-            with open(file.full_path, "r") as f:
+            with open(File.query.get(file).full_path, "r") as f:
                 text = f.read()
             current_spans = []
             current_text = []

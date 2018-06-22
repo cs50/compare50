@@ -109,7 +109,6 @@ def walk_submissions(directory):
             continue
         dirnames = [d for d in dirnames if not ignored(d)]
         filenames = [f for f in filenames if not ignored(f)]
-        print(f"Walking {dirpath}, dirs={dirnames}, files={filenames}")
         if len(filenames) > 0:
             # single submission
             return [tuple(sorted([os.path.join(dirpath, f)

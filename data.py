@@ -75,7 +75,7 @@ class MatchResult:
 class Span:
     """Represents a range of characters in a particular file.
 
-    file - the File containing the span
+    file - the ID of the File containing the span
     start - the character index of the first character in the span
     stop - the character index one past the end of the span
     """

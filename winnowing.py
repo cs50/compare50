@@ -38,7 +38,7 @@ class Index:
         result -= other
         return result
 
-    def compare(self, other, n=50):
+    def compare(self, other, n=50, keep_spans=True):
         # validate other index
         if not isinstance(other, Index):
             raise Exception("comparison between different index types")
@@ -46,10 +46,14 @@ class Index:
             raise Exception("comparison with different n-gram lengths")
 
         # map submission pairs to maps of hashes to list of spans
-        results = {}
+        spans = {}
+
+        # map submission pairs to scores
+        scores = {}
 
         common_hashes = set(self.index.keys()) & set(other.index.keys())
-        for hash in common_hashes:
+        while common_hashes:
+            hash = common_hashes.pop()
             # map submissions to spans for both indices
             local_spans = {}
             for sub_id, span in self.index[hash]:
@@ -72,22 +76,22 @@ class Index:
                     if sub_id2 <= sub_id1:
                         continue
 
-                    # update results
+                    # update spans and scores
                     pair = (sub_id1, sub_id2)
-                    entry = results.setdefault(pair, dict())
-                    entry = entry.setdefault(hash, set())
-                    entry |= spans1 | spans2
+                    if keep_spans:
+                        entry = spans.setdefault(pair, dict())
+                        entry = entry.setdefault(hash, set())
+                        entry |= spans1 | spans2
+                    score = scores.setdefault(pair, 0)
+                    scores[pair] += 1
 
-        def score(hashes):
-            return sum(len(spans) for spans in hashes.values())
-
-        top_matches = heapq.nlargest(n, results.items(), lambda x: score(x[1]))
-        returned = [MatchResult(a, b, score(hashes), hashes)
-                    for (a, b), hashes in top_matches]
+        top_matches = heapq.nlargest(n, scores.items(), lambda x: x[1])
+        returned = [MatchResult(a, b, score, spans[(a,b)] if keep_spans else {})
+                    for (a, b), score in top_matches]
         return returned
 
     @staticmethod
-    def empty(k):
+    def _empty(k):
         return Index(k, [], None)
 
 
@@ -97,9 +101,9 @@ class Winnowing:
         self.w = t - k + 1
 
     def empty_index(self):
-        return Index.empty(self.k)
+        return Index._empty(self.k)
 
-    def index(self, file, tokens, complete=False):
+    def index(self, file, submission, tokens, complete=False):
         if not tokens:
             return self.empty_index()
 
@@ -139,7 +143,7 @@ class Winnowing:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
 
-        return Index(self.k, fingerprints, file.submission_id)
+        return Index(self.k, fingerprints, submission)
 
     def _hash(self, s):
         return hash("".join(s))
