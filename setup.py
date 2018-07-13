@@ -9,6 +9,7 @@ setup(
         "Topic :: Education",
         "Topic :: Utilities"
     ],
+    license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
     install_requires=["backports.shutil_get_terminal_size", "backports.shutil_which"],
     keywords=["compare", "compare50"],
