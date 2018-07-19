@@ -16,39 +16,41 @@ class File:
         self.id = id
         self.path = path
 
-    def preprocess(self, preprocessors):
-        """Returns a list of (file, start, end, type, value) tuples created
-        using a.  pygments lexer. The lexer is determined by looking
-        first at file name then at file contents. If neither
-        determines a lexer, a plain text lexer is used. The `type` in
-        the output tuple is a pygments Token type.
-        """
-        file_path = self.path
-        with open(file_path, "r")  as file:
-            text = file.read()
+def tokenize(file):
+    with open(file.path, "r")  as f:
+        text = f.read()
 
-        # get lexer for this file type
+    # get lexer for this file type
+    try:
+        lexer = pygments.lexers.get_lexer_for_filename(file.path)
+    except pygments.util.ClassNotFound:
         try:
-            lexer = pygments.lexers.get_lexer_for_filename(file_path)
+            lexer = pygments.lexers.guess_lexer(text)
         except pygments.util.ClassNotFound:
-            try:
-                lexer = pygments.lexers.guess_lexer(text)
-            except pygments.util.ClassNotFound:
-                lexer = pygments.lexers.special.TextLexer()
+            lexer = pygments.lexers.special.TextLexer()
 
-        # tokenize file into (start, type, value) tuples
-        tokens = list(lexer.get_tokens_unprocessed(text))
+    # tokenize file into (start, type, value) tuples
+    tokens = list(lexer.get_tokens_unprocessed(text))
 
-        # add file and end index to create Tokens
-        tokens.append((len(text),))
-        tokens = [Token(start=tokens[i][0], stop=tokens[i+1][0],
-                        type=tokens[i][1], val=tokens[i][2])
-                  for i in range(len(tokens) - 1)]
+    # add file and end index to create Tokens
+    tokens.append((len(text),))
+    tokens = [Token(start=tokens[i][0], stop=tokens[i+1][0],
+                    type=tokens[i][1], val=tokens[i][2])
+              for i in range(len(tokens) - 1)]
+    return tokens
 
-        # run preprocessors
-        for pp in preprocessors:
-            tokens = pp(tokens)
-        return list(tokens)
+def preprocess(tokens, *preprocessors):
+    """Returns a list of (file, start, end, type, value) tuples created
+    using a.  pygments lexer. The lexer is determined by looking
+    first at file name then at file contents. If neither
+    determines a lexer, a plain text lexer is used. The `type` in
+    the output tuple is a pygments Token type.
+    """
+
+    # run preprocessors
+    for pp in preprocessors:
+        tokens = pp(tokens)
+    return list(tokens)
 
 
 def compare(sub_a, sub_b):
@@ -70,8 +72,9 @@ def compare(sub_a, sub_b):
     comparator = winnowing.Winnowing(10, 20)
 
     # keep tokens around for expanding spans
-    tokens = {f.id: f.preprocess(preprocessors)
-              for f in sub_a.files + sub_b.files} # + distro_files}
+
+    tokens = {f.id: preprocess(tokenize(f), *preprocessors) for f in sub_a.files + sub_b.files} # + distro_files)
+
 
     # process files
     a_index = comparator.empty_index()
