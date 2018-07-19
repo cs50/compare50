@@ -1,3 +1,4 @@
+import attr
 @attr.s(slots=True, frozen=True)
 class Token:
     """A result of the lexical analysis of a file. Preprocessors operate
