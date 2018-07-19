@@ -11,7 +11,7 @@ setup(
     ],
     license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
-    install_requires=["backports.shutil_get_terminal_size", "backports.shutil_which"],
+    install_requires=["attrs"]
     keywords=["compare", "compare50"],
     name="compare50",
     python_requires=">=3.6",

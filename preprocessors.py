@@ -1,3 +1,4 @@
+import attr
 from pygments.token import Comment, Name, Number, String, Text
 from data import Token
 
@@ -7,7 +8,7 @@ def strip_whitespace(tokens):
         if tok.type in Text:
             val = "".join(tok.val.split())
         if val:
-            yield Token(tok, val=val)
+            yield attr.evolve(tok, val=val)
 
 
 def strip_comments(tokens):
@@ -18,14 +19,14 @@ def strip_comments(tokens):
 
 def normalize_case(tokens):
     for tok in tokens:
-        yield Token(tok, val=tok.val.lower())
+        yield attr.evolve(tok, tok.val.lower())
 
 
 def normalize_identifiers(tokens):
     """Replaces all identifiers with `v`"""
     for tok in tokens:
         if tok.type in Name:
-            yield Token(tok, val="v")
+            yield attr.evolve(tok, val="v")
         else:
             yield tok
 
@@ -37,11 +38,11 @@ def normalize_string_literals(tokens):
     for tok in tokens:
         if tok.type in String.Char:
             if not normed:
-                yield Token(tok, val="''")
+                yield attr.evolve(tok, val="''")
             normed = True
         elif tok.type in String:
             if not normed:
-                yield Token(tok, val='""')
+                yield attr.evolve(tok, val='""')
             normed = True
         else:
             yield tok
@@ -52,11 +53,11 @@ def normalize_numeric_literals(tokens):
     """Replaces numeric literals with their types"""
     for tok in tokens:
         if tok.type in Number.Integer:
-            yield Token(tok, val="INT")
+            yield attr.evolve(tok, val="INT")
         elif tok.type in Number.Float:
-            yield Token(tok, val="FLOAT")
+            yield attr.evolve(tok, val="FLOAT")
         elif tok.type in Number:
-            yield Token(tok, val="NUM")
+            yield attr.evolve(tok, val="NUM")
         else:
             yield tok
 
@@ -70,8 +71,7 @@ def extract_identifiers(tokens):
 def by_character(tokens):
     for tok in tokens:
         for i, c in enumerate(tok.val):
-            yield Token(tok,
-                        start=tok.start + i,
+            yield Token(start=tok.start + i,
                         stop=tok.start + i + 1,
                         type=Text,
                         val=c)

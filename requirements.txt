@@ -8,3 +8,4 @@ validators
 uuid
 celery
 pygments
+attrs
