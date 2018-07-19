@@ -1,4 +1,6 @@
 import attr
+
+
 @attr.s(slots=True, frozen=True)
 class Token:
     """A result of the lexical analysis of a file. Preprocessors operate
@@ -30,7 +32,7 @@ class MatchResult:
     a = attr.ib()
     b = attr.ib()
     score = attr.ib()
-    spans = attr.ib()
+    spans = attr.ib(repr=False)
 
 
 @attr.s(slots=True, frozen=True)
