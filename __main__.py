@@ -286,7 +286,7 @@ def create_spans(submission_matches, index):
 
         yield group(span_matches_list)
 
-def group(span_matches_list):
+def group_spans(span_matches_list):
     i = [-1]
     def content_factory():
         i[0] += 1
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     span_matches_3 = SpanMatches()
     span_matches_3._span_matches = [(5, 15)]
 
-    groups = group([span_matches_1, span_matches_2, span_matches_3])
+    groups = group_spans([span_matches_1, span_matches_2, span_matches_3])
     print(groups)
     #print(list(file_a.tokens()))
     #print(sub_a)
