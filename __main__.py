@@ -287,30 +287,54 @@ def create_spans(submission_matches, index):
         yield group(span_matches_list)
 
 def group_spans(span_matches_list):
+    """
+    Transforms a list of SpanMatches into a list of Groups.
+    Finds all spans that share the same content, and groups them in one Group.
+    returns a list of Groups.
+    """
+
+    # Generate fictive content by which we can identify spans
     i = [-1]
     def content_factory():
         i[0] += 1
         return i[0]
 
+    # Map a span to its content
     span_to_content = collections.defaultdict(content_factory)
+    # Group spans by content
     content_to_spans = collections.defaultdict(lambda : set())
 
     for span_matches in span_matches_list:
         for span_a, span_b in span_matches:
+            # Get contents of span_a
             content_a = span_to_content[span_a]
-            content_b = span_to_content[span_b]
 
+            # If span_b has no contents, give it span_a's contents
+            if span_b not in span_to_content:
+                content_b = span_to_content[span_a]
+                span_to_content[span_b] = content_b
+            # Otherwise, retrieve span_b's contents
+            else:
+                content_b = span_to_content[span_b]
+
+            # If content_a is higher (older) than content_b
             if content_a > content_b:
+                # Set all spans that share content_a to instead contain content_b
                 for span in content_to_spans[content_a]:
                     content_to_spans[content_b].add(span)
                     span_to_content[span] = content_b
+                # Delete content_a
                 del content_to_spans[content_a]
+            # Otherwise if content_b is higher (older) than content_a
             elif content_a < content_b:
+                # Set all spans that share content_b to instead contain content_a
                 for span in content_to_spans[content_b]:
                     content_to_spans[content_a].add(span)
                     span_to_content[span] = content_a
+                # Delete content_b
                 del content_to_spans[content_b]
 
+            # Add span_a and span_b to content maps
             content = min(content_a, content_b)
             span_to_content[span_a] = content
             span_to_content[span_b] = content
@@ -325,7 +349,7 @@ if __name__ == "__main__":
     sub_c = Submission("files/sub_c")
 
     # TODO index = config.parser.index
-    index = winnowing.Index
+    #index = winnowing.Index
 
     #submission_matches = rank_submissions([sub_a, sub_b, sub_c], [], [], index)
     #print(submission_matches)
@@ -339,7 +363,7 @@ if __name__ == "__main__":
     span_matches_2._span_matches = [(11 + i, 11 + i + 1) for i in range(10)]
 
     span_matches_3 = SpanMatches()
-    span_matches_3._span_matches = [(5, 15)]
+    span_matches_3._span_matches = [(12, 15)]
 
     groups = group_spans([span_matches_1, span_matches_2, span_matches_3])
     print(groups)
