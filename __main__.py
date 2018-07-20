@@ -192,13 +192,13 @@ def flatten_spans(matches):
 
     return a_results, b_results
 
-@attr.s
+@attr.s(slots=True, frozen=True)
 class FileMatch:
     file_a = attr.ib()
     file_b = attr.ib()
     score = attr.ib()
 
-@attr.s
+@attr.s(slots=True, frozen=True)
 class SubmissionMatch:
     sub_a = attr.ib()
     sub_b = attr.ib()
@@ -208,10 +208,23 @@ class SubmissionMatch:
     def score(self):
         return sum(file_match.score for file_match in self.file_matches)
 
-def rank_submissions(submissions, distro_files, archive_submissions, n=50):
+@attr.s(slots=True)
+class SpanMatches:
+    _span_matches = attr.ib(default=[])
+
+    def add(self, span_a, span_b):
+        if self._span_matches and span_a.file != self._span_matches[0].file:
+            span_match = (span_b, span_a)
+        else:
+            span_match = (span_b, span_a)
+        self._span_matches.append(span_match)
+
+    def expand(self):
+        return self
+
+
+def rank_submissions(submissions, distro_files, archive_submissions, index, n=50):
     """"""
-    # TODO index = config.parser.index
-    index = winnowing.Index
 
     submissions_index = index()
     archive_index = index()
@@ -238,7 +251,7 @@ def rank_submissions(submissions, distro_files, archive_submissions, n=50):
     results = [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
                 FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
 
-    # Link file matches to submission pairs
+    # Link submission pairs to file matches
     submissions_file_matches = {}
     for file_match in results:
         key = frozenset([file_match.file_a.submission, file_match.file_b.submission])
@@ -252,69 +265,32 @@ def rank_submissions(submissions, distro_files, archive_submissions, n=50):
         sub_a, sub_b = tuple(sub_pair)
         submission_matches.append(SubmissionMatch(sub_a, sub_b, file_matches))
 
-    # Filter out only top `n` matches
+    # Keep only top `n` submission matches
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
-    #distro = sub_a.upload.distro
+def create_spans(submission_matches, index):
+    for sub_match in submission_matches:
+        # Create `SpanMatches` for all `FileMatch`es
+        span_matches_list = []
+        for file_match in sub_match.file_matches:
+            span_matches = index.create_spans(file_match.file_a, file_match.file_b)
+            span_matches.flatten()
+            span_matches_list.append(span_matches)
 
-    # map pass ids to MatchResults
-    # results = {}
-    #
-    # #for p in sub_a.upload.passes:
-    #     #preprocessors, comparator = DEFAULT_CONFIG[p.config]
-    #
-    #     #distro_files = p.upload.distro.files if distro else []
-    #
-    # preprocessors = []
-    # comparator = winnowing.Winnowing(10, 20)
-    #
-    # # keep tokens around for expanding spans
-    #
-    # tokens = {f.id: preprocess(tokenize(f), *preprocessors) for f in files_a + files_b} # + distro_files)
-    #
-    #
-    # # process files
-    # a_index = comparator.empty_index()
-    # b_index = comparator.empty_index()
-    # distro_index = comparator.empty_index()
-    # for files, index in [(files_a, a_index),
-    #                      (files_b, b_index)]:
-    #                      #(distro_files, distro_index)]:
-    #     for f in files:
-    #         index += comparator.index(f.id, f.submission.id, tokens[f.id], complete=True)
-    #
-    # # perform comparisons
-    # matches = a_index.compare(b_index)
-    #
-    # return matches
-
-    #     if matches:
-    #         matches = expand_spans(matches[0], tokens)
-    #     else:
-    #         # no matches, create empty MatchResult to hold distro code
-    #         matches = MatchResult(sub_a.id, sub_b.id, {})
-    #     if distro:
-    #         # add expanded distro spans to match as group "distro"
-    #         for index in a_index, b_index:
-    #             distro_match = distro_index.compare(index)
-    #             if distro_match:
-    #                 distro_match = expand_spans(distro_match[0], tokens)
-    #                 distro_spans = [span
-    #                                 for spans in distro_match.spans.values()
-    #                                 for span in spans
-    #                                 if File.query.get(span.file).submission_id != distro.id]
-    #                 matches.spans.setdefault("distro", []).extend(distro_spans)
-    #
-    #     results[p.id] = matches
-    #
-    # return flatten_spans(results)
+        yield group(span_matches_list)
 
 if __name__ == "__main__":
     sub_a = Submission("files/sub_a")
     sub_b = Submission("files/sub_b")
     sub_c = Submission("files/sub_c")
 
-    print(list(rank_submissions([sub_a, sub_b, sub_c], [], [])))
+    # TODO index = config.parser.index
+    index = winnowing.Index
+
+    submission_matches = rank_submissions([sub_a, sub_b, sub_c], [], [], index)
+    print(submission_matches)
+    spans = create_spans(submission_matches)
+    print(spans)
     #print(list(file_a.tokens()))
     #print(sub_a)
     #print(list(sub_a.files()))
