@@ -47,29 +47,6 @@ class File:
                   for i in range(len(tokens) - 1)]
         return tokens
 
-def tokenize(file):
-    with open(file.path, "r")  as f:
-        text = f.read()
-
-    # get lexer for this file type
-    try:
-        lexer = pygments.lexers.get_lexer_for_filename(file.path)
-    except pygments.util.ClassNotFound:
-        try:
-            lexer = pygments.lexers.guess_lexer(text)
-        except pygments.util.ClassNotFound:
-            lexer = pygments.lexers.special.TextLexer()
-
-    # tokenize file into (start, type, value) tuples
-    tokens = list(lexer.get_tokens_unprocessed(text))
-
-    # add file and end index to create Tokens
-    tokens.append((len(text),))
-    tokens = [Token(start=tokens[i][0], stop=tokens[i+1][0],
-                    type=tokens[i][1], val=tokens[i][2])
-              for i in range(len(tokens) - 1)]
-    return tokens
-
 def preprocess(tokens, *preprocessors):
     """Returns a list of (file, start, end, type, value) tuples created
     using a.  pygments lexer. The lexer is determined by looking
