@@ -3,7 +3,7 @@ import heapq
 from data import Span, MatchResult
 
 class Index:
-    """A reverse index mapping hashes to (id, span) pairs"""
+    """A reverse index mapping hashes to (sub_id, span) pairs"""
     def __init__(self, k, fingerprints, sub_id):
         self.k = k
         self.index = dict()
