@@ -7,7 +7,7 @@ import heapq
 from data import *
 import pygments.lexers
 
-@attr.s(hash=True)
+@attr.s(slots=True, hash=True)
 class Submission:
     path = attr.ib(converter=pathlib.Path)
     preprocessor = attr.ib(default=lambda tokens: tokens)
@@ -17,7 +17,7 @@ class Submission:
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
 
-@attr.s
+@attr.s(slots=True, hash=True)
 class File:
     name = attr.ib()
     submission = attr.ib()
@@ -278,6 +278,10 @@ def create_spans(submission_matches, index):
             span_matches_list.append(span_matches)
 
         yield group(span_matches_list)
+
+def group(span_matches_list):
+    for span_matches in span_matches_list:
+
 
 if __name__ == "__main__":
     sub_a = Submission("files/sub_a")
