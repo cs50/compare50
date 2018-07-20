@@ -4,13 +4,14 @@ import os
 import pathlib
 import bisect
 import heapq
+import collections
 from data import *
 import pygments.lexers
 
 @attr.s(slots=True, hash=True)
 class Submission:
     path = attr.ib(converter=pathlib.Path)
-    preprocessor = attr.ib(default=lambda tokens: tokens)
+    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False)
 
     def files(self):
         for root, dirs, files in os.walk(self.path):
@@ -20,7 +21,7 @@ class Submission:
 @attr.s(slots=True, hash=True)
 class File:
     name = attr.ib()
-    submission = attr.ib()
+    submission = attr.ib(hash=False)
 
     @property
     def path(self):
@@ -222,6 +223,12 @@ class SpanMatches:
     def expand(self):
         return self
 
+    def __iter__(self):
+        return iter(self._span_matches)
+
+@attr.s(slots=True)
+class Group:
+    spans = attr.ib(default=[])
 
 def rank_submissions(submissions, distro_files, archive_submissions, index, n=50):
     """"""
@@ -280,8 +287,37 @@ def create_spans(submission_matches, index):
         yield group(span_matches_list)
 
 def group(span_matches_list):
-    for span_matches in span_matches_list:
+    i = [-1]
+    def content_factory():
+        i[0] += 1
+        return i[0]
 
+    span_to_content = collections.defaultdict(content_factory)
+    content_to_spans = collections.defaultdict(lambda : set())
+
+    for span_matches in span_matches_list:
+        for span_a, span_b in span_matches:
+            content_a = span_to_content[span_a]
+            content_b = span_to_content[span_b]
+
+            if content_a > content_b:
+                for span in content_to_spans[content_a]:
+                    content_to_spans[content_b].add(span)
+                    span_to_content[span] = content_b
+                del content_to_spans[content_a]
+            elif content_a < content_b:
+                for span in content_to_spans[content_b]:
+                    content_to_spans[content_a].add(span)
+                    span_to_content[span] = content_a
+                del content_to_spans[content_b]
+
+            content = min(content_a, content_b)
+            span_to_content[span_a] = content
+            span_to_content[span_b] = content
+            content_to_spans[content].add(span_a)
+            content_to_spans[content].add(span_b)
+
+    return [Group(spans) for spans in content_to_spans.values()]
 
 if __name__ == "__main__":
     sub_a = Submission("files/sub_a")
@@ -291,10 +327,22 @@ if __name__ == "__main__":
     # TODO index = config.parser.index
     index = winnowing.Index
 
-    submission_matches = rank_submissions([sub_a, sub_b, sub_c], [], [], index)
-    print(submission_matches)
-    spans = create_spans(submission_matches)
-    print(spans)
+    #submission_matches = rank_submissions([sub_a, sub_b, sub_c], [], [], index)
+    #print(submission_matches)
+    #spans = create_spans(submission_matches)
+    #print(spans)
+
+    span_matches_1 = SpanMatches()
+    span_matches_1._span_matches = [(i, i + 1) for i in range(10)]
+
+    span_matches_2 = SpanMatches()
+    span_matches_2._span_matches = [(11 + i, 11 + i + 1) for i in range(10)]
+
+    span_matches_3 = SpanMatches()
+    span_matches_3._span_matches = [(5, 15)]
+
+    groups = group([span_matches_1, span_matches_2, span_matches_3])
+    print(groups)
     #print(list(file_a.tokens()))
     #print(sub_a)
     #print(list(sub_a.files()))
