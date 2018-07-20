@@ -3,10 +3,11 @@ import pygments
 import os
 import pathlib
 import bisect
+import heapq
 from data import *
 import pygments.lexers
 
-@attr.s
+@attr.s(hash=True)
 class Submission:
     path = attr.ib(converter=pathlib.Path)
     preprocessor = attr.ib(default=lambda tokens: tokens)
@@ -43,9 +44,6 @@ class File:
 
         # tokenize file into (start, type, value) tuples
         tokens = lexer.get_tokens_unprocessed(text)
-
-        # add file and end index to create Tokens
-        #tokens.append((len(text),))
 
         prevToken = None
 
@@ -194,54 +192,102 @@ def flatten_spans(matches):
 
     return a_results, b_results
 
+@attr.s
+class FileMatch:
+    file_a = attr.ib()
+    file_b = attr.ib()
+    score = attr.ib()
 
-def coarse_compare(submissions, distro_files, archive_submissions):
-    """
-    Take two submissions and return a tuple of dicts mapping files to
-    lists of Fragments.  The id of `sub_a` must be less than that of
-    `sub_b`.
-    """
-    submissions_index = winnowing.Index()
-    archive_index = winnowing.Index()
+@attr.s
+class SubmissionMatch:
+    sub_a = attr.ib()
+    sub_b = attr.ib()
+    file_matches = attr.ib()
 
+    @property
+    def score(self):
+        return sum(file_match.score for file_match in self.file_matches)
+
+def rank_submissions(submissions, distro_files, archive_submissions, n=50):
+    """"""
+    # TODO index = config.parser.index
+    index = winnowing.Index
+
+    submissions_index = index()
+    archive_index = index()
+
+    # Index all submissions
     for sub in submissions:
+        for file in sub.files():
+            submissions_index.union(index(file=file))
 
-        submissions_index.include()
+    # Index all archived submissions
+    for sub in archive_submissions:
+        for file in sub.files():
+            archive_index.union(index(file=file))
+
+    # Ignore all files from distro
+    for file in distro_files:
+        submissions_index.ignore(file)
+        archive_index.ignore(file)
+
+    # Add submissions to archive (the Index we're going to compare against)
+    archive_index.union(submissions_index)
+
+    # TODO results = submissions_index.cross_compare(archive_index)
+    results = [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
+                FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
+
+    # Link file matches to submission pairs
+    submissions_file_matches = {}
+    for file_match in results:
+        key = frozenset([file_match.file_a.submission, file_match.file_b.submission])
+        val = submissions_file_matches.get(key, [])
+        val.append(file_match)
+        submissions_file_matches[key] = val
+
+    # Create submission matches
+    submission_matches = []
+    for sub_pair, file_matches in submissions_file_matches.items():
+        sub_a, sub_b = tuple(sub_pair)
+        submission_matches.append(SubmissionMatch(sub_a, sub_b, file_matches))
+
+    # Filter out only top `n` matches
+    return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
     #distro = sub_a.upload.distro
 
     # map pass ids to MatchResults
-    results = {}
+    # results = {}
+    #
+    # #for p in sub_a.upload.passes:
+    #     #preprocessors, comparator = DEFAULT_CONFIG[p.config]
+    #
+    #     #distro_files = p.upload.distro.files if distro else []
+    #
+    # preprocessors = []
+    # comparator = winnowing.Winnowing(10, 20)
+    #
+    # # keep tokens around for expanding spans
+    #
+    # tokens = {f.id: preprocess(tokenize(f), *preprocessors) for f in files_a + files_b} # + distro_files)
+    #
+    #
+    # # process files
+    # a_index = comparator.empty_index()
+    # b_index = comparator.empty_index()
+    # distro_index = comparator.empty_index()
+    # for files, index in [(files_a, a_index),
+    #                      (files_b, b_index)]:
+    #                      #(distro_files, distro_index)]:
+    #     for f in files:
+    #         index += comparator.index(f.id, f.submission.id, tokens[f.id], complete=True)
+    #
+    # # perform comparisons
+    # matches = a_index.compare(b_index)
+    #
+    # return matches
 
-    #for p in sub_a.upload.passes:
-        #preprocessors, comparator = DEFAULT_CONFIG[p.config]
-
-        #distro_files = p.upload.distro.files if distro else []
-
-    preprocessors = []
-    comparator = winnowing.Winnowing(10, 20)
-
-    # keep tokens around for expanding spans
-
-    tokens = {f.id: preprocess(tokenize(f), *preprocessors) for f in files_a + files_b} # + distro_files)
-
-
-    # process files
-    a_index = comparator.empty_index()
-    b_index = comparator.empty_index()
-    distro_index = comparator.empty_index()
-    for files, index in [(files_a, a_index),
-                         (files_b, b_index)]:
-                         #(distro_files, distro_index)]:
-        for f in files:
-            index += comparator.index(f.id, f.submission.id, tokens[f.id], complete=True)
-
-    # perform comparisons
-    matches = a_index.compare(b_index)
-
-    return matches
-
-    #     # TODO
     #     if matches:
     #         matches = expand_spans(matches[0], tokens)
     #     else:
@@ -264,11 +310,14 @@ def coarse_compare(submissions, distro_files, archive_submissions):
     # return flatten_spans(results)
 
 if __name__ == "__main__":
-    sub_a = Submission("files/")
-    file_a = File("foo.py", sub_a)
+    sub_a = Submission("files/sub_a")
+    sub_b = Submission("files/sub_b")
+    sub_c = Submission("files/sub_c")
+
+    print(list(rank_submissions([sub_a, sub_b, sub_c], [], [])))
     #print(list(file_a.tokens()))
     #print(sub_a)
-    print(list(sub_a.files()))
+    #print(list(sub_a.files()))
 
 
 # sub_1 = Submission(1)
