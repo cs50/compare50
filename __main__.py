@@ -294,10 +294,10 @@ def group_spans(span_matches_list):
     """
 
     # Generate fictive content by which we can identify spans
-    i = [-1]
     def content_factory():
-        i[0] += 1
-        return i[0]
+        content_factory.i += 1
+        return content_factory.i
+    content_factory.i = -1
 
     # Map a span to its content
     span_to_content = collections.defaultdict(content_factory)
