@@ -6,23 +6,27 @@ import bisect
 from data import *
 import pygments.lexers
 
+@attr.s
 class Submission:
-    def __init__(self, path):
-        self.path = pathlib.Path(path)
+    path = attr.ib(converter=pathlib.Path)
+    preprocessor = attr.ib(default=lambda tokens: tokens)
 
+    def files(self):
+        for root, dirs, files in os.walk(self.path):
+            for f in files:
+                yield File((pathlib.Path(root) / f).relative_to(self.path), self)
+
+@attr.s
 class File:
-    def __init__(self, filename, submission, preprocess = lambda tokens : tokens):
-        self.name = filename
-        self.submission = submission
-        self.preprocess = preprocess
+    name = attr.ib()
+    submission = attr.ib()
 
     @property
     def path(self):
         return self.submission.path / self.name
 
-    @property
     def tokens(self):
-        return self.preprocess(self._tokenize())
+        return self.submission.preprocessor(self._tokenize())
 
     def _tokenize(self):
         with open(self.path, "r")  as f:
@@ -38,28 +42,23 @@ class File:
                 lexer = pygments.lexers.special.TextLexer()
 
         # tokenize file into (start, type, value) tuples
-        tokens = list(lexer.get_tokens_unprocessed(text))
+        tokens = lexer.get_tokens_unprocessed(text)
 
         # add file and end index to create Tokens
-        tokens.append((len(text),))
-        tokens = [Token(start=tokens[i][0], stop=tokens[i+1][0],
-                        type=tokens[i][1], val=tokens[i][2])
-                  for i in range(len(tokens) - 1)]
-        return tokens
+        #tokens.append((len(text),))
 
-def preprocess(tokens, *preprocessors):
-    """Returns a list of (file, start, end, type, value) tuples created
-    using a.  pygments lexer. The lexer is determined by looking
-    first at file name then at file contents. If neither
-    determines a lexer, a plain text lexer is used. The `type` in
-    the output tuple is a pygments Token type.
-    """
+        prevToken = None
 
-    # run preprocessors
-    for pp in preprocessors:
-        tokens = pp(tokens)
-    return list(tokens)
+        for token in tokens:
+            if prevToken:
+                yield Token(start=prevToken[0], stop=token[0],
+                            type=prevToken[1], val=prevToken[2])
 
+            prevToken = token
+
+        if prevToken:
+            yield Token(start=prevToken[0], stop=len(text),
+                        type=prevToken[1], val=prevToken[2])
 
 def expand_spans(match, tokens):
     """Returns a new MatchResult with maximally expanded spans.
@@ -196,11 +195,19 @@ def flatten_spans(matches):
     return a_results, b_results
 
 
-def compare(files_a, files_b):
-    """Take two submissions and return a tuple of dicts mapping files to
+def coarse_compare(submissions, distro_files, archive_submissions):
+    """
+    Take two submissions and return a tuple of dicts mapping files to
     lists of Fragments.  The id of `sub_a` must be less than that of
     `sub_b`.
     """
+    submissions_index = winnowing.Index()
+    archive_index = winnowing.Index()
+
+    for sub in submissions:
+
+        submissions_index.include()
+
     #distro = sub_a.upload.distro
 
     # map pass ids to MatchResults
@@ -258,9 +265,10 @@ def compare(files_a, files_b):
 
 if __name__ == "__main__":
     sub_a = Submission("files/")
-    file_a = File("foo.py", sub_a, preprocess = lambda tokens : tokens)
-    print(file_a.tokens)
-
+    file_a = File("foo.py", sub_a)
+    #print(list(file_a.tokens()))
+    #print(sub_a)
+    print(list(sub_a.files()))
 
 
 # sub_1 = Submission(1)
