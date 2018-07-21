@@ -1,37 +1,78 @@
-import abc
 import collections
 import math
 import itertools
-from data import Span, MatchResult
+import compare50.config as config
+import compare50.preprocessors as preprocessors
+from compare50.data import Compare50Comparator, FileMatch, SpanMatches
 
-class FileIndex(metaclass=abc.ABCMeta):
-    @abc.abstractmethod
-    def __init__(self, file=None, **kwargs):
+
+class StripWhitespace(config.Compare50Config):
+    def name(self):
+        return "Winnowing: strip whitespace"
+
+    def preprocessors(self):
+        return [preprocessors.strip_whitespace, preprocessors.by_character]
+
+    def comparator(self):
+        return Comparator(k=16, t=32)
+config.register(StripWhitespace)
+
+
+class StripAll(config.Compare50Config):
+    def name(self):
+        return "Winnowing: strip all"
+
+    def preprocessors(self):
+        return [preprocessors.strip_whitespace,
+                preprocessors.strip_comments,
+                preprocessors.normalize_identifiers,
+                preprocessors.normalize_string_literals]
+
+    def comparator(self):
+        return Comparator(k=10, t=20)
+config.register(StripAll)
+
+
+class Comparator(Compare50Comparator):
+    def cross_compare(submissions, archive_submissions, ignored_files):
+        """"""
+        submissions_index = Index()
+        archive_index = Index()
+
+        # Index all submissions
+        for sub in submissions:
+            for file in sub.files():
+                submissions_index.union(Index(file=file))
+
+        # Index all archived submissions
+        for sub in archive_submissions:
+            for file in sub.files():
+                archive_index.union(Index(file=file))
+
+        # Ignore all files from distro
+        for file in distro_files:
+            submissions_index.ignore(file)
+            archive_index.ignore(file)
+
+        # Add submissions to archive (the Index we're going to compare against)
+        archive_index.union(submissions_index)
+
+        # TODO return submissions_index.cross_compare(archive_index)
+        return [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
+                    FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
+
+    def create_spans(file_a, file_b, ignored_files):
+        # TODO
         pass
 
-    @abc.abstractmethod
-    def include(self, other):
-        pass
 
-    @abc.abstractmethod
-    def ignore(self, file):
-        pass
-
-    @abc.abstractmethod
-    def cross_compare(self, other):
-        pass
-
-    @staticmethod
-    @abc.abstractmethod
-    def create_spans(file1, file2):
-        pass
-
-
-class WinnowingIndex(FileIndex):
-    def __init__(self, k, w, file=None):
+class Index:
+    def __init__(self, k, t, file=None):
         self.k = k
         self.w = t - k + 1
-        self._index = collections.defaultdict(set, self._fingerprint(file))
+        self._index = collections.defaultdict(set)
+        if file is not None:
+            self._index.update(self._fingerprint(file))
 
     def include(self, other):
         for hash, spans in other._index.items():
