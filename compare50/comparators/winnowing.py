@@ -15,7 +15,7 @@ class StripWhitespace(config.Compare50Config):
 
     def comparator(self):
         return Comparator(k=16, t=32)
-config.register(StripWhitespace)
+config.register(StripWhitespace())
 
 
 class StripAll(config.Compare50Config):
@@ -30,7 +30,7 @@ class StripAll(config.Compare50Config):
 
     def comparator(self):
         return Comparator(k=10, t=20)
-config.register(StripAll)
+config.register(StripAll())
 
 
 class Comparator(Compare50Comparator):

@@ -7,9 +7,9 @@ _default = None
 def register(config):
     global _default
     if not _default:
-        _default = config.name
+        _default = config.name()
 
-    _configs[config.name] = config
+    _configs[config.name()] = config
 
 
 def get(name=None):
