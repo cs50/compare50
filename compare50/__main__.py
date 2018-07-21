@@ -2,7 +2,9 @@ from . import config
 from . import api
 
 if __name__ == "__main__":
-    comparator = config.get()
+    c = config.get()
+    comparator = c.comparator()
+    preprocessors = c.preprocessors()
 
     # TODO argparse for subs / archive / distro
     # TODO argparse for comparator
@@ -14,7 +16,7 @@ if __name__ == "__main__":
     # submission_matches = api.rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50)
 
     # TODO create spans, group spans per sub_match
-    # groups = api.create_groups(submission_matches)
+    # groups = api.create_groups(submission_matches, comparator)
 
     # TODO
     # html = api.render(groups)

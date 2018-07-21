@@ -34,6 +34,10 @@ config.register(StripAll())
 
 
 class Comparator(Compare50Comparator):
+    def __init__(self, k, t):
+        self.k = k
+        self.w = t - k + 1
+
     def cross_compare(submissions, archive_submissions, ignored_files):
         """"""
         submissions_index = Index()
