@@ -8,19 +8,48 @@ from .data import Submission
 import patoolib
 import pathlib
 import os
-from tempfile import TemporaryDirectory as temp_dir
+import contextlib
+from tempfile import TemporaryDirectory
+
+@contextlib.contextmanager
+def submissions(path, preprocessors):
+    if not path:
+        yield []
+        return
+
+    path = pathlib.Path(path)
+    if not path.is_dir():
+        with TemporaryDirectory() as dir:
+            yield _submissions_from_dir(unpack(path, dir), preprocessors)
+    else:
+        yield _submissions_from_dir(path, preprocessors)
 
 
-def get_submissions(path, preprocessors):
+@contextlib.contextmanager
+def files(path, preprocessors):
+    if not path:
+        yield []
+        return
+
+    path = pathlib.Path(path)
+    if not path.is_dir():
+        with TemporaryDirectory() as dir:
+            yield _files_from_dir(unpack(path, dir), preprocessors)
+    else:
+        yield _files_from_dir(path, preprocessors)
+
+
+def _submissions_from_dir(dir, preprocessors):
+    path = pathlib.Path(dir).absolute()
     result = []
     for item in os.listdir(path):
-        item = pathlib.Path(item)
+        item = path / item
         if item.is_dir():
             result.append(data.Submission(item))
     return result
 
 
-def get_files(path, preprocessors):
+def _files_from_dir(path, preprocessors):
     return list(data.Submission(path, preprocessors).files())
 
 
@@ -33,6 +62,7 @@ def unpack(path, dest):
     if str(path).lower().endswith(ARCHIVES):
         try:
             patoolib.extract_archive(path, outdir=dest)
+            return dest
         except patoolib.util.PatoolError:
             raise errors.Error(f"Failed to extract: {path}")
     else:
@@ -83,38 +113,26 @@ if __name__ == "__main__":
     comparator = c.comparator()
     preprocessors = c.preprocessors()
 
-    with temp_dir() as sub_dir, temp_dir() as archive_dir, temp_dir() as distro_dir:
-        if pathlib.Path(args.submissions).is_dir():
-            submissions = get_submissions(args.submissions, preprocessors)
-        else:
-            submissions = get_submissions(unpack(args.submissions, sub_dir), preprocessors)
+    # Validate args.submissions exists
+    if not pathlib.Path(args.submissions).exists():
+        raise errors.Error("Path {args.submissions} does not exist.")
 
-        if args.archive:
-            if pathlib.Path(args.archive).is_dir():
-                submissions = get_submissions(args.archive, preprocessors)
-            else:
-                submissions = get_submissions(unpack(args.archive, sub_dir), preprocessors)
+    # Validate args.archive and args.distro exist if specified
+    for optional_item in [args.archive, args.distro]:
+        if optional_item and not pathlib.Path(optional_item).exists():
+            raise errors.Error("Path {optional_item} does not exist.")
 
-        if args.distro:
-            if pathlib.Path(args.distro).is_dir():
-                submissions = get_files(args.distro, preprocessors)
-            else:
-                submissions = get_files(unpack(args.distro, sub_dir), preprocessors)
+    with submissions(args.submissions, preprocessors) as subs,\
+         submissions(args.archive, preprocessors) as archive_subs,\
+         files(args.distro, preprocessors) as ignored_files:
 
-    #submissions = unpack(args.submissions)
-    #archive_submissions = unpack(args.archive)
-    #distr_files = unpack(args.distro)
+        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
+        for sm in submission_matches:
+            print(sm.sub_a)
+            print(sm.sub_b)
 
-    # TODO cross_compare, group by sub, rank, filter top n
-    submissions = [Submission("tests/files/sub_a"), Submission("tests/files/sub_b"), Submission("tests/files/sub_c")]
-    archive_submissions = []
-    ignored_files = []
-    submission_matches = api.rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50)
-    for sm in submission_matches:
-        print(sm.sub_a)
-        print(sm.sub_b)
-    # TODO create spans, group spans per sub_match
-    # groups = api.create_groups(submission_matches, comparator)
+        # TODO create spans, group spans per sub_match
+        # groups = api.create_groups(submission_matches, comparator)
 
-    # TODO
-    # html = api.render(groups)
+        # TODO
+        # html = api.render(groups)
