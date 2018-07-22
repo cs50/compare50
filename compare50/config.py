@@ -7,24 +7,28 @@ _default = None
 def register(config):
     global _default
     if not _default:
-        _default = config.name()
+        _default = config.id()
 
-    _configs[config.name()] = config
-
-
-def get(name=None):
-    if name is None:
-        name = _default
-    return _configs[name]
+    _configs[config.id()] = config
 
 
-def list():
-    return list(_configs.keys())
+def get(id=None):
+    if id is None:
+        id = _default
+    return _configs[id]
+
+
+def all():
+    return list(_configs.values())
 
 
 class Compare50Config(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def name(self):
+    def id(self):
+        pass
+
+    @abc.abstractmethod
+    def description(self):
         pass
 
     @abc.abstractmethod

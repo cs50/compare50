@@ -7,8 +7,11 @@ from compare50.data import Compare50Comparator, FileMatch, SpanMatches, Span
 
 
 class StripWhitespace(config.Compare50Config):
-    def name(self):
-        return "Winnowing: strip whitespace"
+    def id(self):
+        return "win_strip_ws"
+
+    def description(self):
+        return "Remove all whitespace, then run Winnowing with k=16, t=32."
 
     def preprocessors(self):
         return [preprocessors.strip_whitespace, preprocessors.by_character]
@@ -19,8 +22,11 @@ config.register(StripWhitespace())
 
 
 class StripAll(config.Compare50Config):
-    def name(self):
-        return "Winnowing: strip all"
+    def id(self):
+        return "win_strip_all"
+
+    def description(self):
+        return "Remove all whitespace, norm all comments/ids/strings, then run Winnowing with k=10, t=20."
 
     def preprocessors(self):
         return [preprocessors.strip_whitespace,
