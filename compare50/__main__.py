@@ -12,7 +12,7 @@ import contextlib
 from tempfile import TemporaryDirectory
 
 @contextlib.contextmanager
-def submissions(path, preprocessors):
+def submissions(path, preprocessor):
     """
     Creates a data.Submission instance for every top level dir in path.
     If path is a compressed file, first unpacks it into a temporary dir.
@@ -24,13 +24,13 @@ def submissions(path, preprocessors):
     path = pathlib.Path(path)
     if not path.is_dir():
         with TemporaryDirectory() as dir:
-            yield _submissions_from_dir(unpack(path, dir), preprocessors)
+            yield _submissions_from_dir(unpack(path, dir), preprocessor)
     else:
-        yield _submissions_from_dir(path, preprocessors)
+        yield _submissions_from_dir(path, preprocessor)
 
 
 @contextlib.contextmanager
-def files(path, preprocessors):
+def files(path, preprocessor):
     """
     Creates a data.File instance for every file in path.
     If path is a compressed file, first unpacks it into a temporary dir.
@@ -42,39 +42,44 @@ def files(path, preprocessors):
     path = pathlib.Path(path)
     if not path.is_dir():
         with TemporaryDirectory() as dir:
-            yield _files_from_dir(unpack(path, dir), preprocessors)
+            yield _files_from_dir(unpack(path, dir), preprocessor)
     else:
-        yield _files_from_dir(path, preprocessors)
-
-
-def _submissions_from_dir(dir, preprocessors):
-    path = pathlib.Path(dir).absolute()
-    result = []
-    for item in os.listdir(path):
-        item = path / item
-        if item.is_dir():
-            result.append(data.Submission(item))
-    return result
-
-
-def _files_from_dir(path, preprocessors):
-    return list(data.Submission(path, preprocessors).files())
+        yield _files_from_dir(path, preprocessor)
 
 
 def unpack(path, dest):
+    """Unpacks compressed file in path to dest."""
     # Supported archives, per https://github.com/wummel/patool
     path = pathlib.Path(path)
+    dest = pathlib.Path(dest)
+
+    if not dest.exists():
+        raise errors.Error(f"Unpacking destination: {dest} does not exist.")
 
     ARCHIVES = (".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz")
 
     if str(path).lower().endswith(ARCHIVES):
         try:
-            patoolib.extract_archive(path, outdir=dest)
+            patoolib.extract_archive(path, outdir=dest, verbosity=-1)
             return dest
         except patoolib.util.PatoolError:
             raise errors.Error(f"Failed to extract: {path}")
     else:
         raise errors.Error(f"Unsupported archive, try one of these: {ARCHIVES}")
+
+
+def _submissions_from_dir(dir, preprocessor):
+    path = pathlib.Path(dir).absolute()
+    result = []
+    for item in os.listdir(path):
+        item = path / item
+        if item.is_dir():
+            result.append(data.Submission(item, preprocessor))
+    return result
+
+
+def _files_from_dir(path, preprocessor):
+    return list(data.Submission(path, preprocessor).files())
 
 
 class ListAction(argparse.Action):
@@ -130,11 +135,15 @@ if __name__ == "__main__":
 
     comparator = pass_.comparator
     preprocessors = pass_.preprocessors
-
+    def preprocessor(tokens):
+        for pp in preprocessors:
+            tokens = pp(tokens)
+        return tokens
+    
     # Collect all submissions, archive submissions and distro files
-    with submissions(args.submissions, preprocessors) as subs,\
-         submissions(args.archive, preprocessors) as archive_subs,\
-         files(args.distro, preprocessors) as ignored_files:
+    with submissions(args.submissions, preprocessor) as subs,\
+         submissions(args.archive, preprocessor) as archive_subs,\
+         files(args.distro, preprocessor) as ignored_files:
 
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
