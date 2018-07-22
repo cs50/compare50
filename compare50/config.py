@@ -1,7 +1,7 @@
 import abc
 
 _configs = {}
-_default = None
+_default = "win_strip_all"
 
 
 def register(config):

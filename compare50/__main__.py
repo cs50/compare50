@@ -3,7 +3,41 @@ import textwrap
 from . import config
 from . import api
 from . import errors
+from . import data
 from .data import Submission
+import patoolib
+import pathlib
+import os
+from tempfile import TemporaryDirectory as temp_dir
+
+
+def get_submissions(path, preprocessors):
+    result = []
+    for item in os.listdir(path):
+        item = pathlib.Path(item)
+        if item.is_dir():
+            result.append(data.Submission(item))
+    return result
+
+
+def get_files(path, preprocessors):
+    return list(data.Submission(path, preprocessors).files())
+
+
+def unpack(path, dest):
+    # Supported archives, per https://github.com/wummel/patool
+    path = pathlib.Path(path)
+
+    ARCHIVES = (".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz")
+
+    if str(path).lower().endswith(ARCHIVES):
+        try:
+            patoolib.extract_archive(pathname, outdir=dest)
+        except patoolib.util.PatoolError:
+            raise errors.Error(f"Failed to extract: {path}")
+    else:
+        raise errors.Error(f"Unsupported archive, try one of these: {ARCHIVES}")
+
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag"""
@@ -49,9 +83,27 @@ if __name__ == "__main__":
     comparator = c.comparator()
     preprocessors = c.preprocessors()
 
-    # TODO argparse for subs / archive / distro
+    with temp_dir() as sub_dir, temp_dir() as archive_dir, temp_dir() as distro_dir:
+        if pathlib.Path(args.submissions).is_dir():
+            submissions = get_submissions(args.submissions, preprocessors)
+        else:
+            submissions = get_submissions(unpack(args.submissions, sub_dir), preprocessors)
 
-    # TODO unzip subs/archive/distro if zip
+        if args.archive:
+            if pathlib.Path(args.archive).is_dir():
+                submissions = get_submissions(args.archive, preprocessors)
+            else:
+                submissions = get_submissions(unpack(args.archive, sub_dir), preprocessors)
+
+        if args.distro:
+            if pathlib.Path(args.distro).is_dir():
+                submissions = get_files(args.distro, preprocessors)
+            else:
+                submissions = get_files(unpack(args.distro, sub_dir), preprocessors)
+
+    #submissions = unpack(args.submissions)
+    #archive_submissions = unpack(args.archive)
+    #distr_files = unpack(args.distro)
 
     # TODO cross_compare, group by sub, rank, filter top n
     submissions = [Submission("tests/files/sub_a"), Submission("tests/files/sub_b"), Submission("tests/files/sub_c")]
@@ -61,7 +113,6 @@ if __name__ == "__main__":
     for sm in submission_matches:
         print(sm.sub_a)
         print(sm.sub_b)
-
     # TODO create spans, group spans per sub_match
     # groups = api.create_groups(submission_matches, comparator)
 
