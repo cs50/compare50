@@ -13,6 +13,10 @@ from tempfile import TemporaryDirectory
 
 @contextlib.contextmanager
 def submissions(path, preprocessors):
+    """
+    Creates a data.Submission instance for every top level dir in path.
+    If path is a compressed file, first unpacks it into a temporary dir.
+    """
     if not path:
         yield []
         return
@@ -27,6 +31,10 @@ def submissions(path, preprocessors):
 
 @contextlib.contextmanager
 def files(path, preprocessors):
+    """
+    Creates a data.File instance for every file in path.
+    If path is a compressed file, first unpacks it into a temporary dir.
+    """
     if not path:
         yield []
         return
@@ -105,14 +113,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    try:
-        c = config.get(args.comparator) if args.comparator else config.get()
-    except KeyError:
-        raise errors.Error(f"{args.comparator} is not a comparator, try one of these: {[c.id() for c in config.all()]}")
-
-    comparator = c.comparator()
-    preprocessors = c.preprocessors()
-
     # Validate args.submissions exists
     if not pathlib.Path(args.submissions).exists():
         raise errors.Error("Path {args.submissions} does not exist.")
@@ -122,11 +122,22 @@ if __name__ == "__main__":
         if optional_item and not pathlib.Path(optional_item).exists():
             raise errors.Error("Path {optional_item} does not exist.")
 
+    # Extract comparator and preprocessors from pass
+    try:
+        c = config.get(args.comparator) if args.comparator else config.get()
+    except KeyError:
+        raise errors.Error(f"{args.comparator} is not a comparator, try one of these: {[c.id() for c in config.all()]}")
+    comparator = c.comparator()
+    preprocessors = c.preprocessors()
+
+    # Collect all submissions, archive submissions and distro files
     with submissions(args.submissions, preprocessors) as subs,\
          submissions(args.archive, preprocessors) as archive_subs,\
          files(args.distro, preprocessors) as ignored_files:
 
+        # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
+
         for sm in submission_matches:
             print(sm.sub_a)
             print(sm.sub_b)
