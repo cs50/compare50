@@ -5,7 +5,7 @@ import pygments.lexers
 import abc
 import pathlib
 
-class Compare50Comparator(metaclass=abc.ABCMeta):
+class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def cross_compare(self, submissions, archive_submissions, ignored_files):
         pass

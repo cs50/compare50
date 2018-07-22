@@ -1,6 +1,6 @@
 import argparse
 import textwrap
-from . import config
+from . import passes
 from . import api
 from . import errors
 from . import data
@@ -85,7 +85,7 @@ class ListAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = "    "
-        for cfg in config.all():
+        for cfg in passes.get_all():
             print(f"{cfg.id()}")
             for line in textwrap.wrap(cfg.description(), 80 - len(indentation)):
                 print(f"{indentation}{line}")
@@ -124,11 +124,12 @@ if __name__ == "__main__":
 
     # Extract comparator and preprocessors from pass
     try:
-        c = config.get(args.comparator) if args.comparator else config.get()
+        pass_ = passes.get(args.comparator)()
     except KeyError:
-        raise errors.Error(f"{args.comparator} is not a comparator, try one of these: {[c.id() for c in config.all()]}")
-    comparator = c.comparator()
-    preprocessors = c.preprocessors()
+        raise errors.Error(f"{args.comparator} is not a comparator, try one of these: {[c.__name__ for c in passes.get_all()]}")
+
+    comparator = pass_.comparator
+    preprocessors = pass_.preprocessors
 
     # Collect all submissions, archive submissions and distro files
     with submissions(args.submissions, preprocessors) as subs,\

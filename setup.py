@@ -11,11 +11,11 @@ setup(
     ],
     license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
-    install_requires=["attrs"]
+    install_requires=["attrs"],
     keywords=["compare", "compare50"],
     name="compare50",
     python_requires=">=3.6",
-    scripts=["compare50"],
+    packages=["compare50"],
     url="https://github.com/cs50/compare50",
     version="1.0.0"
 )
