@@ -157,15 +157,3 @@ class Span:
 
     def __repr__(self):
         return f"Span({self.file.name} {self.start}:{self.stop})"
-
-
-@attr.s(slots=True, frozen=True)
-class Fragment:
-    """A fragment of text with a collection of group ids identifying which
-    match groups it belongs to for which passes.
-
-    groups - a dict mapping pass ids to lists of group ids
-    text - a string, the contents of this fragment
-    """
-    groups = attr.ib()
-    text = attr.ib()
