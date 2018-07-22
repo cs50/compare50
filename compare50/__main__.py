@@ -139,7 +139,7 @@ if __name__ == "__main__":
         for pp in preprocessors:
             tokens = pp(tokens)
         return tokens
-    
+
     # Collect all submissions, archive submissions and distro files
     with submissions(args.submissions, preprocessor) as subs,\
          submissions(args.archive, preprocessor) as archive_subs,\
@@ -152,8 +152,8 @@ if __name__ == "__main__":
             print(sm.sub_a)
             print(sm.sub_b)
 
-        # TODO create spans, group spans per sub_match
-        # groups = api.create_groups(submission_matches, comparator)
+        groups = api.create_groups(submission_matches, comparator, ignored_files)
+        #print(groups)
 
         # TODO
         # html = api.render(groups)

@@ -39,8 +39,19 @@ class Winnowing(compare50.Comparator):
         return submissions_index.compare(archive_index)
 
     def create_spans(self, file_a, file_b, ignored_files):
+        a_index = Index(self.k, self.t, complete=True)
+        b_index = Index(self.k, self.t, complete=True)
+
+        a_index.add(file_a)
+        b_index.add(file_b)
+
+        for file in ignored_files:
+            a_index.remove(file)
+            b_index.remove(file)
+
+        return SpanMatches()
         # TODO
-        pass
+        #return submissions_index.compare(archive_index)
 
 
 class StripWhitespace(compare50.Pass):
@@ -59,19 +70,18 @@ class StripAll(compare50.Pass):
 
 
 class Index:
-    def __init__(self, k, t, *files):
+    def __init__(self, k, t, complete=False):
         self.k = k
         self.w = t - k + 1
+        self._complete = complete
         self._index = collections.defaultdict(set)
-        for file in files:
-            self.indclude_file(file)
 
     def add(self, file):
-        for hash, span in self._fingerprint(file):
+        for hash, span in self._fingerprint(file, complete=self._complete):
             self._index[hash].add(span)
 
     def remove(self, other):
-        for hash, _ in self._fingerprint(file):
+        for hash, _ in self._fingerprint(file, complete=self._complete):
             self._index.pop(hash, None)
 
     def __ior__(self, other):
@@ -99,12 +109,10 @@ class Index:
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
 
-        # map submission pairs to scores
         scores = collections.Counter()
 
         common_hashes = set(self._index.keys()) & set(other._index.keys())
         for hash in common_hashes:
-            # map submissions to spans for both indices
             for span1, span2 in itertools.product(self._index[hash], other._index[hash]):
                 if span1.file == span2.file:
                     continue
@@ -146,5 +154,3 @@ class Index:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
         return fingerprints
-
-

@@ -27,19 +27,20 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 
-def create_groups(submission_matches, index):
+def create_groups(submission_matches, comparator, ignored_files):
     groups = []
 
     for sub_match in submission_matches:
         # Create `SpanMatches` for all `FileMatch`es
         span_matches_list = []
         for file_match in sub_match.file_matches:
-            span_matches = index.create_spans(file_match.file_a, file_match.file_b)
-            span_matches.flatten()
+            span_matches = comparator.create_spans(file_match.file_a, file_match.file_b, ignored_files)
+            span_matches.expand()
             span_matches_list.append(span_matches)
-        groups.append(group_spans)
+        groups.append(group_spans(span_matches_list))
 
     return groups
+
 
 def group_spans(span_matches_list):
     """
