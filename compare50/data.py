@@ -1,5 +1,7 @@
 import attr
 import os
+import pygments
+import pygments.lexers
 import abc
 import pathlib
 
@@ -56,13 +58,13 @@ class File:
 
         for token in tokens:
             if prevToken:
-                yield Token(start=prevToken[0], stop=token[0],
+                yield Token(start=prevToken[0], end=token[0],
                             type=prevToken[1], val=prevToken[2])
 
             prevToken = token
 
         if prevToken:
-            yield Token(start=prevToken[0], stop=len(text),
+            yield Token(start=prevToken[0], end=len(text),
                         type=prevToken[1], val=prevToken[2])
 
 
@@ -118,7 +120,7 @@ class Token:
     val - the string contents of the token
     """
     start = attr.ib()
-    stop = attr.ib()
+    end = attr.ib()
     type = attr.ib()
     val = attr.ib()
 

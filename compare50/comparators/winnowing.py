@@ -3,7 +3,7 @@ import math
 import itertools
 import compare50.config as config
 import compare50.preprocessors as preprocessors
-from compare50.data import Compare50Comparator, FileMatch, SpanMatches
+from compare50.data import Compare50Comparator, FileMatch, SpanMatches, Span
 
 
 class StripWhitespace(config.Compare50Config):
@@ -46,12 +46,12 @@ class Comparator(Compare50Comparator):
         # Index all submissions
         for sub in submissions:
             for file in sub.files():
-                submissions_index.union(Index(self.k, self.t, file=file))
+                submissions_index.include(Index(self.k, self.t, file=file))
 
         # Index all archived submissions
         for sub in archive_submissions:
             for file in sub.files():
-                archive_index.union(Index(self.k, self.t, file=file))
+                archive_index.include(Index(self.k, self.t, file=file))
 
         # Ignore all files from distro
         for file in ignored_files:
@@ -76,7 +76,8 @@ class Index:
         self.w = t - k + 1
         self._index = collections.defaultdict(set)
         if file is not None:
-            self._index.update(self._fingerprint(file))
+            for hash, span in self._fingerprint(file):
+                self._index[hash].add(span)
 
     def include(self, other):
         for hash, spans in other._index.items():
@@ -101,7 +102,7 @@ class Index:
                 if span1.file == span2.file:
                     continue
                 # Normalize tuple order
-                scores[tuple(sorted(span1.file, span2.file))] += 1
+                scores[tuple(sorted([span1.file, span2.file]))] += 1
         return [FileMatch(file1, file2, score) for (file1, file2), score in scores.items()]
 
     @staticmethod
@@ -110,7 +111,7 @@ class Index:
 
 
     def _fingerprint(self, file, complete=False):
-        tokens = list(file.tokens)
+        tokens = list(file.tokens())
 
         kgrams = zip(*((tok.val for tok in tokens[i:]) for i in range(self.k)))
         hashes = (hash("".join(kgram)) for kgram in kgrams)
@@ -119,16 +120,21 @@ class Index:
             starts = (tok.start for tok in tokens[self.k:])
             ends = itertools.chain((tok.start for tok in tokens[self.k:]), (tokens[-1].end,))
             # use all fingerprints instead of sampling
-            for start, end, hash in zip(starts, ends, hashes):
-                yield hash, Span(file, start, end)
+            for start, end, hash_ in zip(starts, ends, hashes):
+                yield hash_, Span(file, start, end)
         else:
             # circular buffer holding window
-            buf = [(Span(None, 0, 0), math.inf)] * self.w
+            buf = [(math.inf, Span(None, 0, 0))] * self.w
             # index of minimum hash in buffer
+            indices = [tok.start for tok in tokens]
+            indices.append(tokens[-1].end)
 
             min_idx = 0
-            for (start, end, hash, idx) in zip(starts, ends, hashes, itertools.cycle(range(self.w))):
-                buf[idx] = hashes[i], Span(file, indices[i], indices[i+self.k])
+            for (hash_, idx) in zip(hashes, itertools.cycle(range(self.w))):
+                start = indices[idx]
+                end = indices[idx + self.k]
+
+                buf[idx] = hash_, Span(file, start, end)
                 if min_idx == idx:
                     # old min not in window, search left for new min
                     for j in range(1, self.w):
