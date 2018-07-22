@@ -36,36 +36,36 @@ config.register(StripAll())
 class Comparator(Compare50Comparator):
     def __init__(self, k, t):
         self.k = k
-        self.w = t - k + 1
+        self.t = t
 
-    def cross_compare(submissions, archive_submissions, ignored_files):
+    def cross_compare(self, submissions, archive_submissions, ignored_files):
         """"""
-        submissions_index = Index()
-        archive_index = Index()
+        submissions_index = Index(self.k, self.t)
+        archive_index = Index(self.k, self.t)
 
         # Index all submissions
         for sub in submissions:
             for file in sub.files():
-                submissions_index.union(Index(file=file))
+                submissions_index.union(Index(self.k, self.t, file=file))
 
         # Index all archived submissions
         for sub in archive_submissions:
             for file in sub.files():
-                archive_index.union(Index(file=file))
+                archive_index.union(Index(self.k, self.t, file=file))
 
         # Ignore all files from distro
-        for file in distro_files:
+        for file in ignored_files:
             submissions_index.ignore(file)
             archive_index.ignore(file)
 
         # Add submissions to archive (the Index we're going to compare against)
-        archive_index.union(submissions_index)
+        archive_index.include(submissions_index)
 
-        # TODO return submissions_index.cross_compare(archive_index)
-        return [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
-                    FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
+        return submissions_index.cross_compare(archive_index)
+        #return [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
+                    #FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
 
-    def create_spans(file_a, file_b, ignored_files):
+    def create_spans(self, file_a, file_b, ignored_files):
         # TODO
         pass
 
@@ -94,10 +94,10 @@ class Index:
         # map submission pairs to scores
         scores = collections.Counter()
 
-        common_hashes = set(self.index.keys()) & set(other.index.keys())
+        common_hashes = set(self._index.keys()) & set(other._index.keys())
         for hash in common_hashes:
             # map submissions to spans for both indices
-            for span1, span2 in itertools.product(self.index[hash], other.index[hash]):
+            for span1, span2 in itertools.product(self._index[hash], other._index[hash]):
                 if span1.file == span2.file:
                     continue
                 # Normalize tuple order

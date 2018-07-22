@@ -1,11 +1,13 @@
 import collections
+import os
+import heapq
 from compare50.data import *
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
-    # TODO results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
-    results = [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
-                FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
+    results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
+    #results = [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
+    #            FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
 
     # Link submission pairs to file matches
     submissions_file_matches = {}
