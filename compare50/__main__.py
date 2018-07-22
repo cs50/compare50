@@ -32,7 +32,7 @@ def unpack(path, dest):
 
     if str(path).lower().endswith(ARCHIVES):
         try:
-            patoolib.extract_archive(pathname, outdir=dest)
+            patoolib.extract_archive(path, outdir=dest)
         except patoolib.util.PatoolError:
             raise errors.Error(f"Failed to extract: {path}")
     else:
