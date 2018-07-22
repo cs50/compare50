@@ -97,7 +97,7 @@ class TestSubmissions(TestCase):
             self.assertEqual(len(subs), 1)
             self.assertEqual(subs[0].path.name, "bar")
 
-    def test_preprocessor_are_passed(self):
+    def test_preprocessor_is_passed(self):
         preprocessor = lambda tokens: list(tokens) + ["foo"]
         os.mkdir("foo")
         os.mkdir("foo/bar")
@@ -115,7 +115,7 @@ class TestSubmissions(TestCase):
             pass
 
         with open("foo/qux.txt", "w") as f:
-            pass 
+            pass
 
         with main.submissions("foo", preprocessor) as subs:
             self.assertEqual(len(subs), 1)
