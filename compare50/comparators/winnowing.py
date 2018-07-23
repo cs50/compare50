@@ -104,16 +104,6 @@ class Index:
         self._max_id = max(self._max_id, other._max_id)
         return result
 
-    def __sub__(self, other):
-        result = copy.deepcopy(self)
-        result -= other
-        return result
-
-    def __isub__(self, other):
-        for hash, spans in other._index.items():
-            self._index[hash] -= spans
-        return self
-
     def compare(self, other):
         # Validate other index
         if self.k != other.k:
@@ -133,13 +123,18 @@ class Index:
                 # Create the product of all file_ids from self and other
                 # https://stackoverflow.com/questions/28684492/numpy-equivalent-of-itertools-product
                 index = np.array(np.meshgrid(list(index_1), list(index_2))).T.reshape(-1, 2)
+                # index = index[index[:,0] < index[:,1]]
 
                 # Add 1 to all combo's (the product) of file_ids from self and other
                 scores[index[:,0], index[:,1]] += 1
 
         # Return only those FileMatches with a score > 0
-        return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])\
-                for id1, id2 in zip(*np.where(scores > 0)) if id1 < id2]
+        matches = []
+        for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0)):
+            file1, file2 = File.get(id1), File.get(id2)
+            if file1.submission != file2.submission:
+                matches.append(FileMatch(file1, file2, scores[id1][id2]))
+        return matches
 
     def _fingerprint(self, file, complete=False):
         tokens = list(file.tokens())

@@ -14,60 +14,48 @@ class Comparator(metaclass=abc.ABCMeta):
     def create_spans(self, file1, file2, ignored_files):
         pass
 
-class _SubmissionStore:
-    def __init__(self):
+
+class _IdStore:
+    def __init__(self, key=lambda obj: obj):
         self.ids = {}
         self.id = 0
-        self.subs = {}
+        self.objs = {}
+        self.key = key
 
-    def factory(self, sub):
-        key = sub.path
+    def factory(self, obj):
+        key = self.key(obj)
         if key not in self.ids:
             self.ids[key] = self.id
-            self.subs[self.id] = sub
+            self.objs[self.id] = obj
             self.id += 1
         return self.ids[key]
-_sub_store = _SubmissionStore()
-
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
+    _store = _IdStore(key=lambda sub: sub.path)
+
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(_sub_store.factory, takes_self=True))
+    id = attr.ib(default=attr.Factory(lambda self: self._store.factory(self), takes_self=True))
 
     def files(self):
         for root, dirs, files in os.walk(str(self.path)):
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
 
-    @staticmethod
-    def get(id):
-        return _sub_store.subs[id]
-
-
-class _FileStore:
-    def __init__(self):
-        self.ids = {}
-        self.id = 0
-        self.files = {}
-
-    def factory(self, file):
-        key = file.path
-        if key not in self.ids:
-            self.ids[key] = self.id
-            self.files[self.id] = file
-            self.id += 1
-        return self.ids[key]
-_file_store = _FileStore()
+    @classmethod
+    def get(cls, id):
+        return cls._store.objs[id]
 
 
 _lexer_cache = {}
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
+    _store = _IdStore(key=lambda file: file.path)
+
     name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
     submission = attr.ib(cmp=False, hash=False)
-    id = attr.ib(default=attr.Factory(_file_store.factory, takes_self=True))
+    id = attr.ib(default=attr.Factory(lambda self: self._store.factory(self), takes_self=True))
 
     @property
     def path(self):
@@ -76,9 +64,9 @@ class File:
     def tokens(self):
         return self.submission.preprocessor(self._tokenize())
 
-    @staticmethod
-    def get(id):
-        return _file_store.files[id]
+    @classmethod
+    def get(cls, id):
+        return cls._store.objs[id]
 
     def _tokenize(self):
         with open(str(self.path), "r")  as f:
