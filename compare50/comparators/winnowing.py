@@ -22,6 +22,13 @@ from compare50.data import FileMatch, SpanMatches, Span, File
         # return index
 
 class Winnowing(compare50.Comparator):
+    """ Comparator utilizing the Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
+
+    :param t: the guarantee threshold; any matching sequence of tokens of length at least t is guaranteed to be matched
+    :type t: int
+    :parma k: the noise threshold; any matching sequence of tokens shorter than this will be ignored
+    :type k: int
+    """
     def __init__(self, k, t):
         self.k = k
         self.t = t
@@ -118,6 +125,7 @@ class StripAll(compare50.Pass):
 
 
 class Index:
+    __slots__ = ["k", "w", "_complete", "_index", "_max_id"]
     def __init__(self, k, t, complete=False):
         self.k = k
         self.w = t - k + 1
