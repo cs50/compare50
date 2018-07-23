@@ -128,11 +128,11 @@ class Index:
                 # Add 1 to all combo's (the product) of file_ids from self and other
                 scores[index[:,0], index[:,1]] += 1
 
-        # Return only those FileMatches with a score > 0
+        # Return only those FileMatches with a score > 0 from different submissions
         matches = []
         for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0)):
             file1, file2 = File.get(id1), File.get(id2)
-            if file1.submission != file2.submission:
+            if file1.submission.id != file2.submission.id:
                 matches.append(FileMatch(file1, file2, scores[id1][id2]))
         return matches
 
