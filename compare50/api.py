@@ -1,6 +1,7 @@
 import collections
 import os
 import heapq
+import concurrent.futures as futures
 from compare50.data import *
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
@@ -30,19 +31,27 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
 
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
+def _expand(span_matches):
+    return span_matches.expand()
 
 def create_groups(submission_matches, comparator, ignored_files):
     file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
 
     sub_match_to_span_matches = collections.defaultdict(list)
+    span_matches_list = list(comparator.create_spans(file_matches, ignored_files))
 
-    for span_matches in comparator.create_spans(file_matches, ignored_files):
-        # span_matches.expand()
-        sub_match_to_span_matches[(span_matches.file_a.submission, span_matches.file_b.submission)].append(span_matches)
+    with futures.ProcessPoolExecutor() as executor:
+        for span_matches in executor.map(_expand, span_matches_list):
+            sub_match_to_span_matches[(span_matches.file_a.submission.id, span_matches.file_b.submission.id)].append(span_matches)
 
     groups = []
-    for span_matches_list in sub_match_to_span_matches.values():
-        groups.extend(group_spans(span_matches_list))
+    with futures.ProcessPoolExecutor() as executor:
+        for gs in executor.map(group_spans, sub_match_to_span_matches.values()):
+            groups.extend(gs)
+
+    #groups = []
+    #for span_matches_list in sub_match_to_span_matches.values():
+    #    groups.extend(group_spans(span_matches_list))
 
     return groups
 

@@ -196,8 +196,8 @@ class SpanMatches:
 
             # Add new spans
             expanded_span_pairs.add(
-                (Span(span_a.file, tokens[index_a - left_diff].start, tokens[index_a + right_diff].end),
-                Span(span_b.file, tokens[index_b - left_diff].start, tokens[index_b + right_diff].end))
+                (Span(span_a.file, tokens_a[index_a - left_diff].start, tokens_a[index_a + right_diff].end),
+                Span(span_b.file, tokens_b[index_b - left_diff].start, tokens_b[index_b + right_diff].end))
             )
 
         return SpanMatches(expanded_span_pairs)
