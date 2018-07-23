@@ -3,6 +3,7 @@ import collections
 import math
 import numpy as np
 import itertools
+import attr
 
 import concurrent.futures as futures
 
@@ -20,17 +21,6 @@ from compare50.data import FileMatch, SpanMatches, Span, File
             # index.include(file)
         # return index
 
-class index_file:
-    """ "Function" that indexes a file and returns the index.
-    In the form of a class so that pickle can serialize it. """
-    def __init__(self, k, t):
-        self.k = k
-        self.t = t
-    def __call__(self, file):
-        index = Index(self.k, self.t)
-        index.include(file)
-        return index
-
 class Winnowing(compare50.Comparator):
     def __init__(self, k, t):
         self.k = k
@@ -38,22 +28,22 @@ class Winnowing(compare50.Comparator):
 
     def cross_compare(self, submissions, archive_submissions, ignored_files):
         """"""
-        submissions_index = Index(self.k, self.t)
-        archive_index = Index(self.k, self.t)
-
         def iter_files(subs):
             for sub in subs:
                 for file in sub.files():
                     yield file
 
+        submissions_index = Index(self.k, self.t)
+        archive_index = Index(self.k, self.t)
+
         with futures.ProcessPoolExecutor() as executor:
-            for index in executor.map(index_file(self.k, self.t), iter_files(submissions)):
+            for index in executor.map(self._index_file(self.k, self.t), iter_files(submissions)):
                 submissions_index.include_all(index)
 
-            for index in executor.map(index_file(self.k, self.t), iter_files(archive_submissions)):
+            for index in executor.map(self._index_file(self.k, self.t), iter_files(archive_submissions)):
                 archive_index.include_all(index)
 
-            for index in executor.map(index_file(self.k, self.t), ignored_files):
+            for index in executor.map(self._index_file(self.k, self.t), ignored_files):
                 submissions_index.ignore_all(index)
                 archive_index.ignore_all(index)
 
@@ -64,18 +54,52 @@ class Winnowing(compare50.Comparator):
         return submissions_index.compare(archive_index)
 
     def create_spans(self, file_matches, ignored_files):
-        for fm in file_matches:
+        # for file_match in file_matches:
+            # a_index = Index(self.k, self.t, complete=True)
+            # b_index = Index(self.k, self.t, complete=True)
+
+            # a_index.include(file_match.file_a)
+            # b_index.include(file_match.file_b)
+
+            # for file in ignored_files:
+                # a_index.ignore(file)
+                # b_index.ignore(file)
+
+            # yield a_index.create_spans(b_index)
+
+        with futures.ProcessPoolExecutor() as executor:
+            return executor.map(self._create_spans(self.k, self.t, ignored_files), file_matches)
+
+    @attr.s(slots=True)
+    class _create_spans:
+        k = attr.ib()
+        t = attr.ib()
+        ignored_files = attr.ib()
+
+        def __call__(self, file_match):
             a_index = Index(self.k, self.t, complete=True)
             b_index = Index(self.k, self.t, complete=True)
 
-            a_index.include(fm.file_a)
-            b_index.include(fm.file_b)
+            a_index.include(file_match.file_a)
+            b_index.include(file_match.file_b)
 
-            for file in ignored_files:
+            for file in self.ignored_files:
                 a_index.ignore(file)
                 b_index.ignore(file)
 
-            yield a_index.create_spans(b_index)
+            return a_index.create_spans(b_index)
+
+    @attr.s(slots=True)
+    class _index_file:
+        """ "Function" that indexes a file and returns the index.
+        In the form of a class so that pickle can serialize it. """
+        k = attr.ib()
+        t = attr.ib()
+
+        def __call__(self, file):
+            index = Index(self.k, self.t)
+            index.include(file)
+            return index
 
 
 class StripWhitespace(compare50.Pass):
@@ -168,7 +192,7 @@ class Index:
             # All spans associated with fingerprint in other
             spans_2 = other._index[hash_]
 
-            return SpanMatches(list(itertools.product(spans_1, spans_2)))
+            return SpanMatches(itertools.product(spans_1, spans_2))
 
 
     def _fingerprint(self, file):
@@ -208,3 +232,5 @@ class Index:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
         return fingerprints
+
+
