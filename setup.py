@@ -14,8 +14,9 @@ setup(
     install_requires=["attrs"],
     keywords=["compare", "compare50"],
     name="compare50",
-    python_requires=">=3.6",
+    python_requires=">=3.5",
     packages=["compare50"],
+    scripts=["bin/compare50"],
     url="https://github.com/cs50/compare50",
     version="1.0.0"
 )

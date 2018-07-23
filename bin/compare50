@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# set python hash seed to a deterministic value to ensure identical results across independent runs
+export PYTHONHASHSEED=50
+
+python -m compare50 $@
