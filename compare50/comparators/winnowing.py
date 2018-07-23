@@ -10,17 +10,19 @@ import compare50
 import compare50.preprocessors as preprocessors
 from compare50.data import FileMatch, SpanMatches, Span, File
 
-class index_submission:
-    def __init__(self, k, t):
-        self.k = k
-        self.t = t
-    def __call__(self, submission):
-        index = Index(self.k, self.t)
-        for file in submission.files():
-            index.include(file)
-        return index
+# class index_submission:
+    # def __init__(self, k, t):
+        # self.k = k
+        # self.t = t
+    # def __call__(self, submission):
+        # index = Index(self.k, self.t)
+        # for file in submission.files():
+            # index.include(file)
+        # return index
 
 class index_file:
+    """ "Function" that indexes a file and returns the index.
+    In the form of a class so that pickle can serialize it. """
     def __init__(self, k, t):
         self.k = k
         self.t = t
@@ -55,17 +57,6 @@ class Winnowing(compare50.Comparator):
                 submissions_index.ignore_all(index)
                 archive_index.ignore_all(index)
 
-
-
-        # # Index all archived submissions
-        # for sub in archive_submissions:
-            # for file in sub.files():
-                # archive_index.add(file)
-
-        # Ignore all files from distro
-        # for file in ignored_files:
-            # submissions_index.remove(file)
-            # archive_index.remove(file)
 
         # Add submissions to archive (the Index we're going to compare against)
         archive_index.include_all(submissions_index)

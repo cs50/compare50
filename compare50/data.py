@@ -30,6 +30,7 @@ class _IdStore:
             self.id += 1
         return self.ids[key]
 
+
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
     _store = _IdStore(key=lambda sub: sub.path)

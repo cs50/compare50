@@ -6,6 +6,8 @@ from . import errors
 from . import data
 from . import comparators
 from .data import Submission
+
+import attr
 import patoolib
 import pathlib
 import os
@@ -108,9 +110,11 @@ class ListAction(argparse.Action):
                 print("{}{}".format(indentation, line))
         parser.exit()
 
+@attr.s(slots=True)
 class Preprocessor:
-    def __init__(self, preprocessors):
-        self.preprocessors = preprocessors
+    """Hack to ensure that composed preprocessor is serializable by Pickle."""
+    preprocessors = attr.ib()
+
     def __call__(self, tokens):
         for preprocessor in self.preprocessors:
             tokens = preprocessor(tokens)
