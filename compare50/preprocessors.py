@@ -8,7 +8,9 @@ def strip_whitespace(tokens):
         if tok.type in Text:
             val = "".join(tok.val.split())
         if val:
-            yield attr.evolve(tok, val=val)
+            tok.val = val
+            yield tok
+            #yield attr.evolve(tok, val=val)
 
 
 def strip_comments(tokens):
@@ -19,14 +21,18 @@ def strip_comments(tokens):
 
 def normalize_case(tokens):
     for tok in tokens:
-        yield attr.evolve(tok, tok.val.lower())
+        tok.val = tok.val.lower()
+        yield tok
+        #yield attr.evolve(tok, tok.val.lower())
 
 
 def normalize_identifiers(tokens):
     """Replaces all identifiers with `v`"""
     for tok in tokens:
         if tok.type in Name:
-            yield attr.evolve(tok, val="v")
+            tok.val = "v"
+            yield tok
+            #yield attr.evolve(tok, val="v")
         else:
             yield tok
 
@@ -38,11 +44,15 @@ def normalize_string_literals(tokens):
     for tok in tokens:
         if tok.type in String.Char:
             if not normed:
-                yield attr.evolve(tok, val="''")
+                tok.val = "''"
+                yield tok
+                #yield attr.evolve(tok, val="''")
             normed = True
         elif tok.type in String:
             if not normed:
-                yield attr.evolve(tok, val='""')
+                tok.val = "''"
+                yield tok
+                #yield attr.evolve(tok, val='""')
             normed = True
         else:
             yield tok
@@ -53,11 +63,17 @@ def normalize_numeric_literals(tokens):
     """Replaces numeric literals with their types"""
     for tok in tokens:
         if tok.type in Number.Integer:
-            yield attr.evolve(tok, val="INT")
+            tok.val = "INT"
+            yield tok
+            #yield attr.evolve(tok, val="INT")
         elif tok.type in Number.Float:
-            yield attr.evolve(tok, val="FLOAT")
+            tok.val = "FLOAT"
+            yield tok
+            #yield attr.evolve(tok, val="FLOAT")
         elif tok.type in Number:
-            yield attr.evolve(tok, val="NUM")
+            tok.val = "NUM"
+            yield tok
+            #yield attr.evolve(tok, val="NUM")
         else:
             yield tok
 
@@ -72,7 +88,7 @@ def by_character(tokens):
     for tok in tokens:
         for i, c in enumerate(tok.val):
             yield Token(start=tok.start + i,
-                        stop=tok.start + i + 1,
+                        end=tok.start + i + 1,
                         type=Text,
                         val=c)
 

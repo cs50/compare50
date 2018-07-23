@@ -181,7 +181,7 @@ class Group:
     spans = attr.ib(converter=frozenset)
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True)
 class Token:
     """A result of the lexical analysis of a file. Preprocessors operate
     on Token streams.
