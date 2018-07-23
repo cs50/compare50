@@ -37,7 +37,7 @@ class Submission:
     id = attr.ib(default=attr.Factory(_sub_store.factory, takes_self=True))
 
     def files(self):
-        for root, dirs, files in os.walk(self.path):
+        for root, dirs, files in os.walk(str(self.path)):
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
 
@@ -81,7 +81,7 @@ class File:
         return _file_store.files[id]
 
     def _tokenize(self):
-        with open(self.path, "r")  as f:
+        with open(str(self.path), "r")  as f:
             text = f.read()
 
         ext = self.name.suffix
@@ -113,6 +113,21 @@ class File:
         if prevToken:
             yield Token(start=prevToken[0], end=len(text),
                         type=prevToken[1], val=prevToken[2])
+
+        #
+        # prevToken = None
+        # result = []
+        # for token in tokens:
+        #     if prevToken:
+        #         result.append(Token(start=prevToken[0], end=token[0],
+        #                     type=prevToken[1], val=prevToken[2]))
+        #
+        #     prevToken = token
+        #
+        # if prevToken:
+        #     result.append(Token(start=prevToken[0], end=len(text),
+        #                 type=prevToken[1], val=prevToken[2]))
+        # return result
 
 
 @attr.s(slots=True, frozen=True)
@@ -250,4 +265,4 @@ class Span:
     stop = attr.ib()
 
     def __repr__(self):
-        return f"Span({self.file.name} {self.start}:{self.stop})"
+        return "Span({} {}:{})".format(self.file.name, self.start, self.stop)

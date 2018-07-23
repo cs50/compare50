@@ -61,24 +61,24 @@ def unpack(path, dest):
     dest = pathlib.Path(dest)
 
     if not dest.exists():
-        raise errors.Error(f"Unpacking destination: {dest} does not exist.")
+        raise errors.Error("Unpacking destination: {} does not exist.".format(dest))
 
     ARCHIVES = (".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz")
 
     if str(path).lower().endswith(ARCHIVES):
         try:
-            patoolib.extract_archive(path, outdir=dest, verbosity=-1)
+            patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
             return dest
         except patoolib.util.PatoolError:
-            raise errors.Error(f"Failed to extract: {path}")
+            raise errors.Error("Failed to extract: {}".format(path))
     else:
-        raise errors.Error(f"Unsupported archive, try one of these: {ARCHIVES}")
+        raise errors.Error("Unsupported archive, try one of these: {}".format(ARCHIVES))
 
 
 def _submissions_from_dir(dir, preprocessor):
     path = pathlib.Path(dir).absolute()
     result = []
-    for item in os.listdir(path):
+    for item in os.listdir(str(path)):
         item = path / item
         if item.is_dir():
             result.append(data.Submission(item, preprocessor))
@@ -98,9 +98,9 @@ class ListAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = "    "
         for cfg in passes.get_all():
-            print(f"{cfg.id()}")
+            print(str(cfg.id()))
             for line in textwrap.wrap(cfg.description(), 80 - len(indentation)):
-                print(f"{indentation}{line}")
+                print("{}{}".format(indentation, line))
         parser.exit()
 
 
@@ -138,7 +138,8 @@ def main():
     try:
         pass_ = passes.get(args.comparator)()
     except KeyError:
-        raise errors.Error(f"{args.comparator} is not a comparator, try one of these: {[c.__name__ for c in passes.get_all()]}")
+        raise errors.Error("{} is not a comparator, try one of these: {}"\
+                            .format(args.comparator, [c.__name__ for c in passes.get_all()]))
 
     comparator = pass_.comparator
     preprocessors = pass_.preprocessors
@@ -146,7 +147,6 @@ def main():
         for pp in preprocessors:
             tokens = pp(tokens)
         return tokens
-
     # Collect all submissions, archive submissions and distro files
     with submissions(args.submissions, preprocessor) as subs,\
          submissions(args.archive, preprocessor) as archive_subs,\
@@ -155,14 +155,14 @@ def main():
         # for s in subs:
         #     for fn in s.files():
         #         #with open(fn.path) as f:
-        #         list(fn._tokenize())
+        #         list(fn.tokens())
         #
         # for s in archive_subs:
         #     for fn in s.files():
         #         #with open(fn.path) as f:
-        #         list(fn._tokenize())
+        #         list(fn.tokens())
         # return
-        #
+
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
@@ -178,16 +178,16 @@ def main():
         # TODO
         # html = api.render(groups)
 
-PROFILE = [ main
-          , api.rank_submissions
-          , comparators.winnowing.Winnowing.cross_compare
-          , comparators.winnowing.Index.compare
-          , comparators.winnowing.Index.add
-          , comparators.winnowing.Index._fingerprint
-          , data.File._tokenize
-          ]
+#PROFILE = [ main
+          # , api.rank_submissions
+          # , comparators.winnowing.Winnowing.cross_compare
+          # , comparators.winnowing.Index.compare
+          # , comparators.winnowing.Index.add
+          # , comparators.winnowing.Index._fingerprint
+          # , data.File._tokenize
+          # ]
 
-#PROFILE = []
+PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler

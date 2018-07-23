@@ -16,7 +16,7 @@ class PassRegistry(abc.ABCMeta):
     def __new__(mcls, name, bases, attrs):
         cls = abc.ABCMeta.__new__(mcls, name, bases, attrs)
 
-        if attrs.get(f"_{name}__register", True):
+        if attrs.get("_{}__register".format(name), True):
             if not PassRegistry.default:
                 PassRegistry.default = cls
             PassRegistry.passes[name] = cls
