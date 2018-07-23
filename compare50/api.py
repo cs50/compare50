@@ -11,7 +11,8 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     submissions_file_matches = collections.defaultdict(list)
     for file_match in results:
         key = tuple(sorted([file_match.file_a.submission, file_match.file_b.submission]))
-        assert key[0] != key[1]
+        if key[0] == key[1]:
+            continue
         submissions_file_matches[key].append(file_match)
 
     # Create submission matches

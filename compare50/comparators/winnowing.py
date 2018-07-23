@@ -1,11 +1,12 @@
 import copy
 import collections
 import math
+import numpy as np
 import itertools
 
 import compare50
 import compare50.preprocessors as preprocessors
-from compare50.data import FileMatch, SpanMatches, Span
+from compare50.data import FileMatch, SpanMatches, Span, _file_id_factory
 
 
 class Winnowing(compare50.Comparator):
@@ -75,10 +76,19 @@ class Index:
         self.w = t - k + 1
         self._complete = complete
         self._index = collections.defaultdict(set)
+        self._id_to_file = {}
+        self._max_id = 0
 
     def add(self, file):
+        self._id_to_file[file.id] = file
+        if file.id > self._max_id:
+            self._max_id = file.id
+
         for hash, span in self._fingerprint(file, complete=self._complete):
-            self._index[hash].add(span)
+            if self._complete:
+                self._index[hash].add(span)
+            else:
+                self._index[hash].add(file.id)
 
     def remove(self, other):
         for hash, _ in self._fingerprint(file, complete=self._complete):
@@ -87,11 +97,13 @@ class Index:
     def __ior__(self, other):
         for hash, spans in other._index.items():
             self._index[hash] |= spans
+        self._max_id = max(self._max_id, other._max_id)
         return self
 
     def __or__(self, other):
         result = copy.deepcopy(self)
         result |= other
+        self._max_id = max(self._max_id, other._max_id)
         return result
 
     def __sub__(self, other):
@@ -109,16 +121,18 @@ class Index:
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
 
-        scores = collections.Counter()
+        scores = np.zeros((self._max_id + 1, other._max_id + 1))
 
         common_hashes = set(self._index.keys()) & set(other._index.keys())
-        for hash in common_hashes:
-            for span1, span2 in itertools.product(self._index[hash], other._index[hash]):
-                if span1.file.submission == span2.file.submission:
-                    continue
-                # Normalize tuple order
-                scores[tuple(sorted([span1.file, span2.file]))] += 1
-        return [FileMatch(file1, file2, score) for (file1, file2), score in scores.items()]
+        for hash_ in common_hashes:
+            index_1 = self._index[hash_]
+            index_2 = other._index[hash_]
+            if index_1 and index_2:
+                index = np.array(np.meshgrid(list(index_1), list(index_2))).T.reshape(-1, 2)
+                scores[index[:,0], index[:,1]] += 1
+
+        return [FileMatch(self._id_to_file[id1], self._id_to_file[id2], scores[id1][id2])\
+                for id1, id2 in zip(*np.where(scores > 0)) if id1 < id2]
 
     def _fingerprint(self, file, complete=False):
         tokens = list(file.tokens())

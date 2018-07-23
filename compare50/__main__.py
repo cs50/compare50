@@ -155,27 +155,32 @@ def main():
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
+        #for sm in submission_matches:
+        #    print(sm.sub_a)
+        #    print(sm.sub_b)
+        #    print(sm.score)
+
         def fmt_match(sm):
             return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
 
         data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
         ascii.write(data, sys.stdout, format="fixed_width")
 
-        groups = api.create_groups(submission_matches, comparator, ignored_files)
+        #groups = api.create_groups(submission_matches, comparator, ignored_files)
         #print(groups)
 
         # TODO
         # html = api.render(groups)
 
-# PROFILE = [ main
-          # , api.rank_submissions
-          # , comparators.winnowing.Winnowing.cross_compare
-          # , comparators.winnowing.Index.compare
-          # , comparators.winnowing.Index.add
-          # , comparators.winnowing.Index._fingerprint
-          # ]
+PROFILE = [ main
+          , api.rank_submissions
+          , comparators.winnowing.Winnowing.cross_compare
+          , comparators.winnowing.Index.compare
+          , comparators.winnowing.Index.add
+          , comparators.winnowing.Index._fingerprint
+          ]
 
-PROFILE = []
+#PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler

@@ -14,22 +14,44 @@ class Comparator(metaclass=abc.ABCMeta):
     def create_spans(self, file1, file2, ignored_files):
         pass
 
+def _sub_id_factory(sub):
+    key = sub._path
+    if key not in _sub_id_factory.ids:
+        _sub_id_factory.ids[key] = _sub_id_factory.id
+        _sub_id_factory.id += 1
+    return _sub_id_factory.ids[key]
+_sub_id_factory.ids = {}
+_sub_id_factory.id = 0
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
-    path = attr.ib(converter=pathlib.Path)
-    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False)
+    _path = attr.ib(converter=str, hash=False, cmp=False)
+    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
+    id = attr.ib(default=attr.Factory(_sub_id_factory, takes_self=True))
+
+    @property
+    def path(self):
+        return pathlib.Path(self._path)
 
     def files(self):
         for root, dirs, files in os.walk(self.path):
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
 
+def _file_id_factory(file):
+    key = (file.name, file.submission)
+    if key not in _file_id_factory.ids:
+        _file_id_factory.ids[key] = _file_id_factory.id
+        _file_id_factory.id += 1
+    return _file_id_factory.ids[key]
+_file_id_factory.ids = {}
+_file_id_factory.id = 0
 
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
-    name = attr.ib()
-    submission = attr.ib()
+    name = attr.ib(cmp=False, hash=False)
+    submission = attr.ib(cmp=False, hash=False)
+    id = attr.ib(default=attr.Factory(_file_id_factory, takes_self=True))
 
     @property
     def path(self):
