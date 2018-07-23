@@ -22,7 +22,7 @@ from compare50.data import FileMatch, SpanMatches, Span, File
         # return index
 
 class Winnowing(compare50.Comparator):
-    """ Comparator utilizing the Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
+    """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
 
     :param t: the guarantee threshold; any matching sequence of tokens of length at least t is guaranteed to be matched
     :type t: int
