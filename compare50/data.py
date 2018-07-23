@@ -22,7 +22,7 @@ class _IdStore:
         self.objs = {}
         self.key = key
 
-    def factory(self, obj):
+    def id(self, obj):
         key = self.key(obj)
         if key not in self.ids:
             self.ids[key] = self.id
@@ -37,7 +37,7 @@ class Submission:
 
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store.factory(self), takes_self=True))
+    id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
 
     def files(self):
         for root, dirs, files in os.walk(str(self.path)):
@@ -56,7 +56,7 @@ class File:
 
     name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
     submission = attr.ib(cmp=False, hash=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store.factory(self), takes_self=True))
+    id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
 
     @property
     def path(self):
