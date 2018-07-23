@@ -65,11 +65,11 @@ class Winnowing(compare50.Comparator):
 
     def create_spans(self, file_matches, ignored_files):
         for fm in file_matches:
-            a_index.include(file_a)
-            b_index.include(file_b)
-
             a_index = Index(self.k, self.t, complete=True)
             b_index = Index(self.k, self.t, complete=True)
+
+            a_index.include(fm.file_a)
+            b_index.include(fm.file_b)
 
             for file in ignored_files:
                 a_index.ignore(file)

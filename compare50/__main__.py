@@ -182,7 +182,7 @@ def main():
         # return
 
         # Cross compare and rank all submissions, keep only top `n`
-        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
+        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=5)
 
         def fmt_match(sm):
             return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
@@ -191,7 +191,8 @@ def main():
         ascii.write(data, sys.stdout, format="fixed_width")
 
         groups = api.create_groups(submission_matches, comparator, ignored_files)
-        #print(groups)
+
+        print(groups[0].spans)
 
         # TODO
         # html = api.render(groups)

@@ -132,11 +132,22 @@ class SpanMatches:
     _matches = attr.ib(default=attr.Factory(list), converter=list)
 
     def add(self, span_a, span_b):
-        if self._matches and span_a.file != self._matches[0][0].file:
-            span_match = (span_b, span_a)
-        else:
+        if span_a.file.id < span_b.file.id:
             span_match = (span_a, span_b)
+        else:
+            span_match = (span_b, span_a)
         self._matches.append(span_match)
+
+    @property
+    def file_a(self):
+        return self._matches[0][0].file
+
+    @property
+    def file_b(self):
+        return self._matches[0][1].file
+
+    def __iter__(self):
+        return iter(self._matches)
 
     def expand(self):
         """
