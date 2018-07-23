@@ -195,10 +195,7 @@ class SubmissionMatch:
     sub_a = attr.ib()
     sub_b = attr.ib()
     file_matches = attr.ib()
-
-    @property
-    def score(self):
-        return sum(file_match.score for file_match in self.file_matches)
+    score = attr.ib(init=False, default=attr.Factory(lambda self: sum(f.score for f in self.file_matches), takes_self=True))
 
 
 @attr.s(slots=True, hash=True, frozen=True)

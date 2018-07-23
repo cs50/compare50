@@ -11,13 +11,12 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     #submissions_file_matches = collections.defaultdict(list)
     sub_ids_to_file_matches = collections.defaultdict(list)
     for file_match in results:
-        id_a = file_match.file_a.submission.id
-        id_b = file_match.file_b.submission.id
-
-        if id_a == id_b:
+        if file_match.file_a.submission.id == file_match.file_b.submission.id:
             continue
 
-        key = (id_a, id_b) if id_a < id_b else (id_b, id_a)
+        key = (file_match.file_a.submission.id, file_match.file_b.submission.id) if\
+              file_match.file_a.submission.id < file_match.file_b.submission.id else\
+              (file_match.file_b.submission.id, file_match.file_a.submission.id)
 
         sub_ids_to_file_matches[key].append(file_match)
 
