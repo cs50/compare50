@@ -62,6 +62,7 @@ class File:
     def path(self):
         return self.submission.path / self.name
 
+
     def tokens(self):
         return self.submission.preprocessor(self._tokenize())
 
@@ -254,4 +255,4 @@ class Span:
     stop = attr.ib()
 
     def __repr__(self):
-        return "Span({} {}:{})".format(self.file.name, self.start, self.stop)
+        return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
