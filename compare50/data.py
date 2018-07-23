@@ -77,7 +77,7 @@ class FileMatch:
 
 @attr.s(slots=True)
 class SpanMatches:
-    _span_matches = attr.ib(default=attr.Factory(list))
+    _span_matches = attr.ib(default=attr.Factory(list), converter=list)
 
     def add(self, span_a, span_b):
         if self._span_matches and span_a.file != self._span_matches[0][0].file:
@@ -87,9 +87,9 @@ class SpanMatches:
         self._span_matches.append(span_match)
 
     def expand(self):
-        """Returns a new MatchResult with maximally expanded spans.
-        match - the MatchResult containing spans to expand
-        tokens - a dict mapping files to lists of their tokens
+        """
+        Expand all spans in this SpanMatches.
+        returns a new instance of SpanMatches with maximally extended spans.
         """
         if not self._span_matches:
             return self
@@ -97,72 +97,47 @@ class SpanMatches:
         tokens_a = list(self._span_matches[0][0].file.tokens())
         tokens_b = list(self._span_matches[0][1].file.tokens())
 
+        start_to_index_a = {t.start:i for i, t in enumerate(tokens_a)}
+        start_to_index_b = {t.start:i for i, t in enumerate(tokens_b)}
+
+        expanded_span_pairs = set()
+
         for span_a, span_b in self._span_matches:
+            index_a = start_to_index_a[span_a.start]
+            index_b = start_to_index_b[span_b.start]
+
+            # TODO decide if "optimisation" actually adds/optimizes anything
             # TODO check that both spans aren't already absorbed by another expanded span
             #     set other (if not absorbed) to match
-            # TODO expand left
-            # TODO expand right
-            pass
+            # for exp_span_a, exp_span_b in expanded_spans:
+            #    if absorbs(exp_span_a, span_a) and absorbs(exp_span_b, span_b):
+            #        pass
 
-        # start_cache = {}
-        #
-        # tokens = {self._span_matches[0][0].file : list(self._span_matches[0][0].file.tokens()),
-        #           self._span_matches[0][1].file : list(self._span_matches[0][1].file.tokens())}
-        #
-        # # binary search to find index of token with given start
-        # def get_index(file, start):
-        #     starts = start_cache.get(file)
-        #     if starts is None:
-        #         starts = [t.start for t in tokens[file]]
-        #         start_cache[file] = starts
-        #     return bisect.bisect_left(starts, start)
-        #
-        # new_spans = {}
-        # for spans in self._span_matches:
-        #     # if there exists an expanded group
-        #     # for which all current spans are contained
-        #     # in some expanded span, then skip this group
-        #
-        #     if any(all(any(span.file == other.file and \
-        #                    span.start >= other.start and \
-        #                    span.stop <= other.stop
-        #                    for other in expanded)
-        #                for span in spans)
-        #            for expanded in new_spans.values()):
-        #         continue
-        #
-        #     # first, last index into file's tokens for each span
-        #     indices = {span: (get_index(span.file, span.start),
-        #                       get_index(span.file, span.stop) - 1)
-        #                for span in spans}
-        #
-        #     while True:
-        #         changed = False
-        #         # find previous and next tokens for each span
-        #         prevs = set(tokens[span.file][first - 1].val if first > 0 else None
-        #                     for span, (first, last) in indices.items())
-        #         nexts = set((tokens[span.file][last + 1].val
-        #                      if last + 1 < len(tokens[span.file]) else None)
-        #                     for span, (first, last) in indices.items())
-        #
-        #         # expand front of spans
-        #         if len(prevs) == 1 and prevs.pop() is not None:
-        #             changed = True
-        #             indices = {span: (first - 1, last)
-        #                        for span, (first, last) in indices.items()}
-        #             # expand back of spans
-        #         if len(nexts) == 1 and nexts.pop() is not None:
-        #             changed = True
-        #             indices = {span: (start, stop + 1)
-        #                        for span, (start, stop) in indices.items()}
-        #         if not changed:
-        #             break
-        #
-        #     new_spans[group_id] = [Span(span.file,
-        #                                 tokens[span.file][first].start,
-        #                                 tokens[span.file][last].stop)
-        #                            for span, (first, last) in indices.items()]
-        # return MatchResult(match.a, match.b, match.score, new_spans)
+            # Expand left
+            left_diff = -1
+            try:
+                while tokens_a[index_a - left_diff] == tokens_b[index_b - left_diff]:
+                    left_diff -= 1
+            except IndexError:
+                pass
+            left_diff += 1
+
+            # Expand right
+            right_diff = 1
+            try:
+                while tokens_a[index_a + right_diff] == tokens_b[index_b + right_diff]:
+                    right_diff += 1
+            except IndexError:
+                pass
+            right_diff -= 1
+
+            # Add new spans
+            expanded_span_pairs.add(
+                (Span(span_a.file, tokens[index_a - left_diff].start, tokens[index_a + right_diff].end),
+                Span(span_b.file, tokens[index_b - left_diff].start, tokens[index_b + right_diff].end))
+            )
+
+        return SpanMatches(expanded_span_pairs)
 
     def __iter__(self):
         return iter(self._span_matches)
