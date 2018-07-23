@@ -82,14 +82,14 @@ class Index:
         if file.id > self._max_id:
             self._max_id = file.id
 
-        for hash, span in self._fingerprint(file, complete=self._complete):
+        for hash, span in self._fingerprint(file):
             if self._complete:
                 self._index[hash].add(span)
             else:
                 self._index[hash].add(file.id)
 
     def remove(self, other):
-        for hash, _ in self._fingerprint(file, complete=self._complete):
+        for hash, _ in self._fingerprint(file):
             self._index.pop(hash, None)
 
     def __ior__(self, other):
@@ -130,9 +130,10 @@ class Index:
 
         # Return only those FileMatches with a score > 0 from different submissions
 
-        return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2]) for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
+        return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
+                for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
-    def _fingerprint(self, file, complete=False):
+    def _fingerprint(self, file):
         tokens = list(file.tokens())
 
         if not tokens:
@@ -145,7 +146,7 @@ class Index:
         ends = itertools.chain((tok.start for tok in tokens[self.k:]), (tokens[-1].end,))
 
         fingerprints = []
-        if complete:
+        if self._complete:
             # use all fingerprints instead of sampling
             for start, end, hash_ in zip(starts, ends, hashes):
                 fingerprints.append((hash_, Span(file, start, end)))
