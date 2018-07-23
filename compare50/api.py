@@ -34,14 +34,22 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
 def create_groups(submission_matches, comparator, ignored_files):
     groups = []
 
+    for fm in 
+
+    file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
+    sub_ids_to_span_matches = collections.defaultdict([])
+
+    for span_matches in comparator.create_spans(file_matches, ignored_files):
+        span_matches.expand()
+        sub_id_to_span_matches[]
+        span_matches_list.append(span_matches)
+        groups.append(group_spans(span_matches_list))
+
     for sub_match in submission_matches:
         # Create `SpanMatches` for all `FileMatch`es
         span_matches_list = []
         for file_match in sub_match.file_matches:
             span_matches = comparator.create_spans(file_match.file_a, file_match.file_b, ignored_files)
-            span_matches.expand()
-            span_matches_list.append(span_matches)
-        groups.append(group_spans(span_matches_list))
 
     return groups
 

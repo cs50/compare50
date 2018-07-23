@@ -63,20 +63,19 @@ class Winnowing(compare50.Comparator):
 
         return submissions_index.compare(archive_index)
 
-    def create_spans(self, file_a, file_b, ignored_files):
-        a_index = Index(self.k, self.t, complete=True)
-        b_index = Index(self.k, self.t, complete=True)
+    def create_spans(self, file_matches, ignored_files):
+        for fm in file_matches:
+            a_index.include(file_a)
+            b_index.include(file_b)
 
-        a_index.add(file_a)
-        b_index.add(file_b)
+            a_index = Index(self.k, self.t, complete=True)
+            b_index = Index(self.k, self.t, complete=True)
 
-        for file in ignored_files:
-            a_index.remove(file)
-            b_index.remove(file)
+            for file in ignored_files:
+                a_index.ignore(file)
+                b_index.ignore(file)
 
-        return SpanMatches()
-        # TODO
-        #return submissions_index.compare(archive_index)
+            yield a_index.create_spans(b_index)
 
 
 class StripWhitespace(compare50.Pass):
@@ -155,6 +154,22 @@ class Index:
 
         return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
+
+    def create_spans(self, other):
+        # Validate other index
+        if self.k != other.k:
+            raise RuntimeError("comparison with different n-gram lengths")
+
+        # Find common fingerprints (hashes)
+        common_hashes = set(self._index.keys()) & set(other._index.keys())
+        for hash_ in common_hashes:
+            # All spans associated with fingerprint in self
+            spans_1 = self._index[hash_]
+            # All spans associated with fingerprint in other
+            spans_2 = other._index[hash_]
+
+            return SpanMatches(list(itertools.product(spans_1, spans_2)))
+
 
     def _fingerprint(self, file):
         tokens = list(file.tokens())

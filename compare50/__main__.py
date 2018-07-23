@@ -190,7 +190,7 @@ def main():
         data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
         ascii.write(data, sys.stdout, format="fixed_width")
 
-        #groups = api.create_groups(submission_matches, comparator, ignored_files)
+        groups = api.create_groups(submission_matches, comparator, ignored_files)
         #print(groups)
 
         # TODO
