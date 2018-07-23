@@ -167,14 +167,15 @@ def main():
         # TODO
         # html = api.render(groups)
 
-PROFILE = [ main
-          , api.rank_submissions
-          , comparators.winnowing.Winnowing.cross_compare
-          , comparators.winnowing.Index.compare
-          , comparators.winnowing.Index.add
-          , comparators.winnowing.Index._fingerprint
-          ]
+# PROFILE = [ main
+          # , api.rank_submissions
+          # , comparators.winnowing.Winnowing.cross_compare
+          # , comparators.winnowing.Index.compare
+          # , comparators.winnowing.Index.add
+          # , comparators.winnowing.Index._fingerprint
+          # ]
 
+PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler
