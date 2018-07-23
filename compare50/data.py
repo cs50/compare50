@@ -128,32 +128,32 @@ class FileMatch:
 
 @attr.s(slots=True)
 class SpanMatches:
-    _span_matches = attr.ib(default=attr.Factory(list), converter=list)
+    _matches = attr.ib(default=attr.Factory(list), converter=list)
 
     def add(self, span_a, span_b):
-        if self._span_matches and span_a.file != self._span_matches[0][0].file:
+        if self._matches and span_a.file != self._matches[0][0].file:
             span_match = (span_b, span_a)
         else:
             span_match = (span_a, span_b)
-        self._span_matches.append(span_match)
+        self._matches.append(span_match)
 
     def expand(self):
         """
         Expand all spans in this SpanMatches.
         returns a new instance of SpanMatches with maximally extended spans.
         """
-        if not self._span_matches:
+        if not self._matches:
             return self
 
-        tokens_a = list(self._span_matches[0][0].file.tokens())
-        tokens_b = list(self._span_matches[0][1].file.tokens())
+        tokens_a = list(self._matches[0][0].file.tokens())
+        tokens_b = list(self._matches[0][1].file.tokens())
 
         start_to_index_a = {t.start:i for i, t in enumerate(tokens_a)}
         start_to_index_b = {t.start:i for i, t in enumerate(tokens_b)}
 
         expanded_span_pairs = set()
 
-        for span_a, span_b in self._span_matches:
+        for span_a, span_b in self._matches:
             index_a = start_to_index_a[span_a.start]
             index_b = start_to_index_b[span_b.start]
 
@@ -191,7 +191,7 @@ class SpanMatches:
         return SpanMatches(expanded_span_pairs)
 
     def __iter__(self):
-        return iter(self._span_matches)
+        return iter(self._matches)
 
 
 @attr.s(slots=True, frozen=True)
