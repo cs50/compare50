@@ -8,17 +8,25 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
 
     # Link submission pairs to file matches
-    submissions_file_matches = collections.defaultdict(list)
+    #submissions_file_matches = collections.defaultdict(list)
+    sub_ids_to_file_matches = collections.defaultdict(list)
     for file_match in results:
-        key = tuple(sorted([file_match.file_a.submission, file_match.file_b.submission]))
-        if key[0] == key[1]:
+        id_a = file_match.file_a.submission.id
+        id_b = file_match.file_b.submission.id
+
+        if id_a == id_b:
             continue
-        submissions_file_matches[key].append(file_match)
+
+        key = (id_a, id_b) if id_a < id_b else (id_b, id_a)
+
+        sub_ids_to_file_matches[key].append(file_match)
 
     # Create submission matches
-    submission_matches = [SubmissionMatch(sub_a, sub_b, file_matches) for (sub_a, sub_b), file_matches in submissions_file_matches.items()]
+    submission_matches = [SubmissionMatch(Submission.get(sub_id_a), Submission.get(sub_id_b), file_matches) \
+                          for (sub_id_a, sub_id_b), file_matches in sub_ids_to_file_matches.items()]
 
     # Keep only top `n` submission matches
+
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 

@@ -14,46 +14,60 @@ class Comparator(metaclass=abc.ABCMeta):
     def create_spans(self, file1, file2, ignored_files):
         pass
 
-def _sub_id_factory(sub):
-    key = sub._path
-    if key not in _sub_id_factory.ids:
-        _sub_id_factory.ids[key] = _sub_id_factory.id
-        _sub_id_factory.id += 1
-    return _sub_id_factory.ids[key]
-_sub_id_factory.ids = {}
-_sub_id_factory.id = 0
+class _SubmissionStore:
+    def __init__(self):
+        self.ids = {}
+        self.id = 0
+        self.subs = {}
+
+    def factory(self, sub):
+        key = sub.path
+        if key not in self.ids:
+            self.ids[key] = self.id
+            self.subs[self.id] = sub
+            self.id += 1
+        return self.ids[key]
+_sub_store = _SubmissionStore()
+
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
-    _path = attr.ib(converter=str, hash=False, cmp=False)
+    path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(_sub_id_factory, takes_self=True))
-
-    @property
-    def path(self):
-        return pathlib.Path(self._path)
+    id = attr.ib(default=attr.Factory(_sub_store.factory, takes_self=True))
 
     def files(self):
         for root, dirs, files in os.walk(self.path):
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
 
-def _file_id_factory(file):
-    key = (file.name, file.submission)
-    if key not in _file_id_factory.ids:
-        _file_id_factory.ids[key] = _file_id_factory.id
-        _file_id_factory.id += 1
-    return _file_id_factory.ids[key]
-_file_id_factory.ids = {}
-_file_id_factory.id = 0
+    @staticmethod
+    def get(id):
+        return _sub_store.subs[id]
+
+
+class _FileStore:
+    def __init__(self):
+        self.ids = {}
+        self.id = 0
+        self.files = {}
+
+    def factory(self, file):
+        key = file.path
+        if key not in self.ids:
+            self.ids[key] = self.id
+            self.files[self.id] = file
+            self.id += 1
+        return self.ids[key]
+_file_store = _FileStore()
+
 
 _lexer_cache = {}
-
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
-    name = attr.ib(cmp=False, hash=False)
+    name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
     submission = attr.ib(cmp=False, hash=False)
-    id = attr.ib(default=attr.Factory(_file_id_factory, takes_self=True))
+    id = attr.ib(default=attr.Factory(_file_store.factory, takes_self=True))
 
     @property
     def path(self):
@@ -61,6 +75,10 @@ class File:
 
     def tokens(self):
         return self.submission.preprocessor(self._tokenize())
+
+    @staticmethod
+    def get(id):
+        return _file_store.files[id]
 
     def _tokenize(self):
         with open(self.path, "r")  as f:

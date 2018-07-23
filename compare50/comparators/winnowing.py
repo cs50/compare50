@@ -6,7 +6,7 @@ import itertools
 
 import compare50
 import compare50.preprocessors as preprocessors
-from compare50.data import FileMatch, SpanMatches, Span, _file_id_factory
+from compare50.data import FileMatch, SpanMatches, Span, File
 
 
 class Winnowing(compare50.Comparator):
@@ -76,11 +76,9 @@ class Index:
         self.w = t - k + 1
         self._complete = complete
         self._index = collections.defaultdict(set)
-        self._id_to_file = {}
         self._max_id = 0
 
     def add(self, file):
-        self._id_to_file[file.id] = file
         if file.id > self._max_id:
             self._max_id = file.id
 
@@ -140,7 +138,7 @@ class Index:
                 scores[index[:,0], index[:,1]] += 1
 
         # Return only those FileMatches with a score > 0
-        return [FileMatch(self._id_to_file[id1], self._id_to_file[id2], scores[id1][id2])\
+        return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])\
                 for id1, id2 in zip(*np.where(scores > 0)) if id1 < id2]
 
     def _fingerprint(self, file, complete=False):
