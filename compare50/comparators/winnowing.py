@@ -117,20 +117,29 @@ class Index:
         return self
 
     def compare(self, other):
-        # validate other index
+        # Validate other index
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
 
+        # Keep a self.max_file_id by other.max_file_id matrix for counting score
         scores = np.zeros((self._max_id + 1, other._max_id + 1))
 
+        # Find common fingerprints (hashes)
         common_hashes = set(self._index.keys()) & set(other._index.keys())
         for hash_ in common_hashes:
+            # All file_ids associated with fingerprint in self
             index_1 = self._index[hash_]
+            # All file_ids associated with fingerprint in other
             index_2 = other._index[hash_]
             if index_1 and index_2:
+                # Create the product of all file_ids from self and other
+                # https://stackoverflow.com/questions/28684492/numpy-equivalent-of-itertools-product
                 index = np.array(np.meshgrid(list(index_1), list(index_2))).T.reshape(-1, 2)
+
+                # Add 1 to all combo's (the product) of file_ids from self and other
                 scores[index[:,0], index[:,1]] += 1
 
+        # Return only those FileMatches with a score > 0
         return [FileMatch(self._id_to_file[id1], self._id_to_file[id2], scores[id1][id2])\
                 for id1, id2 in zip(*np.where(scores > 0)) if id1 < id2]
 
