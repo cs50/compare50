@@ -10,16 +10,24 @@ import compare50
 import compare50.preprocessors as preprocessors
 from compare50.data import FileMatch, SpanMatches, Span, File
 
-class add_submission:
+class index_submission:
     def __init__(self, k, t):
         self.k = k
         self.t = t
     def __call__(self, submission):
         index = Index(self.k, self.t)
         for file in submission.files():
-            index.add(file)
+            index.include(file)
         return index
 
+class index_file:
+    def __init__(self, k, t):
+        self.k = k
+        self.t = t
+    def __call__(self, file):
+        index = Index(self.k, self.t)
+        index.include(file)
+        return index
 
 class Winnowing(compare50.Comparator):
     def __init__(self, k, t):
@@ -36,11 +44,16 @@ class Winnowing(compare50.Comparator):
                 pass
 
         with futures.ProcessPoolExecutor() as executor:
-            for index in executor.map(add_submission(self.k, self.t), submissions):
-                submissions_index.merge_inplace(index)
+            for index in executor.map(index_file(self.k, self.t), (file for submission in submissions for file in submission.files())):
+                submissions_index.include_all(index)
 
-            # for index in executor.map(add_submission(self.k, self.t), archive_submissions):
-                # archive_index.merge_inplace(index)
+            for index in executor.map(index_submission(self.k, self.t), archive_submissions):
+                archive_index.include_all(index)
+
+            for index in executor.map(index_file(self.k, self.t), ignored_files):
+                submissions_index.ignore_all(index)
+                archive_index.ignore_all(index)
+
 
 
         # # Index all archived submissions
@@ -54,7 +67,7 @@ class Winnowing(compare50.Comparator):
             # archive_index.remove(file)
 
         # Add submissions to archive (the Index we're going to compare against)
-        archive_index.merge_inplace(submissions_index)
+        archive_index.include_all(submissions_index)
 
         return submissions_index.compare(archive_index)
 
@@ -98,7 +111,7 @@ class Index:
         self._max_id = 0
         self._id_to_file = {}
 
-    def add(self, file):
+    def include(self, file):
         if file.id > self._max_id:
             self._max_id = file.id
 
@@ -108,15 +121,19 @@ class Index:
             else:
                 self._index[hash].add(file.id)
 
-    def remove(self, other):
+    def ignore(self, other):
         for hash, _ in self._fingerprint(file):
             self._index.pop(hash, None)
 
-    def merge_inplace(self, other):
+    def include_all(self, other):
         for hash, spans in other._index.items():
             self._index[hash] |= spans
         self._max_id = max(self._max_id, other._max_id)
         return self
+
+    def ignore_all(self, other):
+        for hash in other._index():
+            self._index.pop(hash, None)
 
     def compare(self, other):
         # Validate other index
