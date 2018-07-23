@@ -11,7 +11,7 @@ class Comparator(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def create_spans(self, file1, file2, ignored_files):
+    def create_spans(self, matches, ignored_files):
         pass
 
 
