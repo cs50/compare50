@@ -47,6 +47,8 @@ def _file_id_factory(file):
 _file_id_factory.ids = {}
 _file_id_factory.id = 0
 
+_lexer_cache = {}
+
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
     name = attr.ib(cmp=False, hash=False)
@@ -64,14 +66,19 @@ class File:
         with open(self.path, "r")  as f:
             text = f.read()
 
-        # get lexer for this file type
-        try:
-            lexer = pygments.lexers.get_lexer_for_filename(self.path)
-        except pygments.util.ClassNotFound:
+        ext = self.name.suffix
+        if ext in _lexer_cache:
+            lexer = _lexer_cache[ext]
+        else:
+            # get lexer for this file type
             try:
-                lexer = pygments.lexers.guess_lexer(text)
+                lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
+                _lexer_cache[ext] = lexer
             except pygments.util.ClassNotFound:
-                lexer = pygments.lexers.special.TextLexer()
+                try:
+                    lexer = pygments.lexers.guess_lexer(text)
+                except pygments.util.ClassNotFound:
+                    lexer = pygments.lexers.special.TextLexer()
 
         # tokenize file into (start, type, value) tuples
         tokens = lexer.get_tokens_unprocessed(text)

@@ -152,6 +152,17 @@ def main():
          submissions(args.archive, preprocessor) as archive_subs,\
          files(args.distro, preprocessor) as ignored_files:
 
+        # for s in subs:
+        #     for fn in s.files():
+        #         #with open(fn.path) as f:
+        #         list(fn._tokenize())
+        #
+        # for s in archive_subs:
+        #     for fn in s.files():
+        #         #with open(fn.path) as f:
+        #         list(fn._tokenize())
+        # return
+        #
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
@@ -167,15 +178,16 @@ def main():
         # TODO
         # html = api.render(groups)
 
-# PROFILE = [ main
-#           , api.rank_submissions
-#           , comparators.winnowing.Winnowing.cross_compare
-#           , comparators.winnowing.Index.compare
-#           , comparators.winnowing.Index.add
-#           , comparators.winnowing.Index._fingerprint
-#           ]
+PROFILE = [ main
+          , api.rank_submissions
+          , comparators.winnowing.Winnowing.cross_compare
+          , comparators.winnowing.Index.compare
+          , comparators.winnowing.Index.add
+          , comparators.winnowing.Index._fingerprint
+          , data.File._tokenize
+          ]
 
-PROFILE = []
+#PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler
