@@ -39,15 +39,16 @@ class Winnowing(compare50.Comparator):
         submissions_index = Index(self.k, self.t)
         archive_index = Index(self.k, self.t)
 
-        for sub in submissions:
-            for file in sub.files():
-                pass
+        def iter_files(subs):
+            for sub in subs:
+                for file in sub.files():
+                    yield file
 
         with futures.ProcessPoolExecutor() as executor:
-            for index in executor.map(index_file(self.k, self.t), (file for submission in submissions for file in submission.files())):
+            for index in executor.map(index_file(self.k, self.t), iter_files(submissions)):
                 submissions_index.include_all(index)
 
-            for index in executor.map(index_submission(self.k, self.t), archive_submissions):
+            for index in executor.map(index_file(self.k, self.t), iter_files(archive_submissions)):
                 archive_index.include_all(index)
 
             for index in executor.map(index_file(self.k, self.t), ignored_files):
