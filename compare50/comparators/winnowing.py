@@ -114,7 +114,7 @@ class Index:
         common_hashes = set(self._index.keys()) & set(other._index.keys())
         for hash in common_hashes:
             for span1, span2 in itertools.product(self._index[hash], other._index[hash]):
-                if span1.file == span2.file:
+                if span1.file.submission == span2.file.submission:
                     continue
                 # Normalize tuple order
                 scores[tuple(sorted([span1.file, span2.file]))] += 1
@@ -122,6 +122,9 @@ class Index:
 
     def _fingerprint(self, file, complete=False):
         tokens = list(file.tokens())
+
+        if not tokens:
+            return []
 
         kgrams = zip(*((tok.val for tok in tokens[i:]) for i in range(self.k)))
         hashes = (hash("".join(kgram)) for kgram in kgrams)

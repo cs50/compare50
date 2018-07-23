@@ -4,12 +4,19 @@ from . import passes
 from . import api
 from . import errors
 from . import data
+from . import comparators
 from .data import Submission
 import patoolib
 import pathlib
 import os
 import contextlib
 from tempfile import TemporaryDirectory
+
+import sys
+
+from astropy.io import ascii
+from astropy.table import Table
+
 
 @contextlib.contextmanager
 def submissions(path, preprocessor):
@@ -97,7 +104,7 @@ class ListAction(argparse.Action):
         parser.exit()
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser(prog="compare50")
 
     parser.add_argument("submissions", help="Path to directory or .zip file containing submissions at the top level.")
@@ -148,12 +155,36 @@ if __name__ == "__main__":
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
-        for sm in submission_matches:
-            print(sm.sub_a)
-            print(sm.sub_b)
+        def fmt_match(sm):
+            return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
+
+        data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
+        ascii.write(data, sys.stdout, format="fixed_width")
 
         groups = api.create_groups(submission_matches, comparator, ignored_files)
         #print(groups)
 
         # TODO
         # html = api.render(groups)
+
+PROFILE = [ main
+          , api.rank_submissions
+          , comparators.winnowing.Winnowing.cross_compare
+          , comparators.winnowing.Index.compare
+          , comparators.winnowing.Index.add
+          , comparators.winnowing.Index._fingerprint
+          ]
+
+if __name__ == "__main__":
+    if PROFILE:
+        from line_profiler import LineProfiler
+        profiler = LineProfiler()
+        for f in PROFILE:
+            profiler.add_function(f)
+        profiler.enable_by_count()
+        try:
+            main()
+        finally:
+            profiler.print_stats()
+    else:
+        main()

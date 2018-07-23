@@ -6,22 +6,16 @@ from compare50.data import *
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
     results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
-    #results = [FileMatch(list(submissions[0].files())[0], list(submissions[1].files())[0], 10), \
-    #            FileMatch(list(submissions[1].files())[0], list(submissions[2].files())[0], 20)]
 
     # Link submission pairs to file matches
-    submissions_file_matches = {}
+    submissions_file_matches = collections.defaultdict(list)
     for file_match in results:
-        key = frozenset([file_match.file_a.submission, file_match.file_b.submission])
-        val = submissions_file_matches.get(key, [])
-        val.append(file_match)
-        submissions_file_matches[key] = val
+        key = tuple(sorted([file_match.file_a.submission, file_match.file_b.submission]))
+        assert key[0] != key[1]
+        submissions_file_matches[key].append(file_match)
 
     # Create submission matches
-    submission_matches = []
-    for sub_pair, file_matches in submissions_file_matches.items():
-        sub_a, sub_b = tuple(sub_pair)
-        submission_matches.append(SubmissionMatch(sub_a, sub_b, file_matches))
+    submission_matches = [SubmissionMatch(sub_a, sub_b, file_matches) for (sub_a, sub_b), file_matches in submissions_file_matches.items()]
 
     # Keep only top `n` submission matches
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
