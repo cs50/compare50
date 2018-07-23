@@ -124,7 +124,6 @@ class Index:
         self._complete = complete
         self._index = collections.defaultdict(set)
         self._max_id = 0
-        self._id_to_file = {}
 
     def include(self, file):
         if file.id > self._max_id:
