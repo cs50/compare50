@@ -232,5 +232,3 @@ class Index:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
         return fingerprints
-
-
