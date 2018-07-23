@@ -153,7 +153,7 @@ def main():
 
     # Extract comparator and preprocessors from pass
     try:
-        pass_ = passes.get(args.comparator)()
+        pass_ = passes.get(args.comparator)
     except KeyError:
         raise errors.Error("{} is not a comparator, try one of these: {}"\
                             .format(args.comparator, [c.__name__ for c in passes.get_all()]))
