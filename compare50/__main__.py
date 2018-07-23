@@ -63,9 +63,15 @@ def unpack(path, dest):
     if not dest.exists():
         raise errors.Error("Unpacking destination: {} does not exist.".format(dest))
 
-    ARCHIVES = (".bz2", ".tar", ".tar.gz", ".tgz", ".zip", ".7z", ".xz")
+    ARCHIVES = ( [".bz2"]
+               , [".tar"]
+               , [".tar", ".gz"]
+               , [".tgz"]
+               , [".zip"]
+               , [".7z"]
+               , [".xz"] )
 
-    if str(path).lower().endswith(ARCHIVES):
+    if path.suffixes in ARCHIVES:
         try:
             patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
             return dest
@@ -78,8 +84,7 @@ def unpack(path, dest):
 def _submissions_from_dir(dir, preprocessor):
     path = pathlib.Path(dir).absolute()
     result = []
-    for item in os.listdir(str(path)):
-        item = path / item
+    for item in path.iterdir():
         if item.is_dir():
             result.append(data.Submission(item, preprocessor))
     return result
@@ -178,7 +183,7 @@ def main():
         # TODO
         # html = api.render(groups)
 
-#PROFILE = [ main
+# PROFILE = [ main
           # , api.rank_submissions
           # , comparators.winnowing.Winnowing.cross_compare
           # , comparators.winnowing.Index.compare
