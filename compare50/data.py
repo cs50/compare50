@@ -18,16 +18,16 @@ class Comparator(metaclass=abc.ABCMeta):
 class _IdStore:
     def __init__(self, key=lambda obj: obj):
         self.ids = {}
-        self.id = 0
+        self.max_id = 0
         self.objs = {}
         self.key = key
 
     def id(self, obj):
         key = self.key(obj)
         if key not in self.ids:
-            self.ids[key] = self.id
-            self.objs[self.id] = obj
-            self.id += 1
+            self.ids[key] = self.max_id
+            self.objs[self.max_id] = obj
+            self.max_id += 1
         return self.ids[key]
 
 
