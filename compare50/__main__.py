@@ -197,16 +197,16 @@ def main():
         # TODO
         # html = api.render(groups)
 
-PROFILE = [ main
-          , api.rank_submissions
-          , comparators.winnowing.Winnowing.cross_compare
-          , comparators.winnowing.Index.compare
-          , comparators.winnowing.Index.include
-          , comparators.winnowing.Index._fingerprint
-          , api.create_groups
-          , comparators.winnowing.Index.compare]
+# PROFILE = [ main
+          # , api.rank_submissions
+          # , comparators.winnowing.Winnowing.cross_compare
+          # , comparators.winnowing.Index.compare
+          # , comparators.winnowing.Index.include
+          # , comparators.winnowing.Index._fingerprint
+          # , api.create_groups
+          # , comparators.winnowing.Index.compare]
 
-#PROFILE = []
+PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler
