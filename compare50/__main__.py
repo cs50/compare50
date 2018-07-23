@@ -108,6 +108,14 @@ class ListAction(argparse.Action):
                 print("{}{}".format(indentation, line))
         parser.exit()
 
+class Preprocessor:
+    def __init__(self, preprocessors):
+        self.preprocessors = preprocessors
+    def __call__(self, tokens):
+        for preprocessor in self.preprocessors:
+            tokens = preprocessor(tokens)
+        return tokens
+
 
 def main():
     parser = argparse.ArgumentParser(prog="compare50")
@@ -148,10 +156,11 @@ def main():
 
     comparator = pass_.comparator
     preprocessors = pass_.preprocessors
-    def preprocessor(tokens):
-        for pp in preprocessors:
-            tokens = pp(tokens)
-        return tokens
+    # def preprocessor(tokens):
+        # for pp in preprocessors:
+            # tokens = pp(tokens)
+        # return tokens
+    preprocessor = Preprocessor(pass_.preprocessors)
     # Collect all submissions, archive submissions and distro files
     with submissions(args.submissions, preprocessor) as subs,\
          submissions(args.archive, preprocessor) as archive_subs,\
@@ -183,16 +192,16 @@ def main():
         # TODO
         # html = api.render(groups)
 
-# PROFILE = [ main
-          # , api.rank_submissions
-          # , comparators.winnowing.Winnowing.cross_compare
-          # , comparators.winnowing.Index.compare
-          # , comparators.winnowing.Index.add
-          # , comparators.winnowing.Index._fingerprint
-          # , data.File._tokenize
-          # ]
+PROFILE = [ main
+          , api.rank_submissions
+          , comparators.winnowing.Winnowing.cross_compare
+          , comparators.winnowing.Index.compare
+          , comparators.winnowing.Index.add
+          , comparators.winnowing.Index._fingerprint
+          , data.File._tokenize
+          ]
 
-PROFILE = []
+# PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
         from line_profiler import LineProfiler

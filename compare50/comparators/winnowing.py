@@ -4,9 +4,21 @@ import math
 import numpy as np
 import itertools
 
+import concurrent.futures as futures
+
 import compare50
 import compare50.preprocessors as preprocessors
 from compare50.data import FileMatch, SpanMatches, Span, File
+
+class add_submission:
+    def __init__(self, k, t):
+        self.k = k
+        self.t = t
+    def __call__(self, submission):
+        index = Index(self.k, self.t)
+        for file in submission.files():
+            index.add(file)
+        return index
 
 
 class Winnowing(compare50.Comparator):
@@ -19,23 +31,30 @@ class Winnowing(compare50.Comparator):
         submissions_index = Index(self.k, self.t)
         archive_index = Index(self.k, self.t)
 
-        # Index all submissions
         for sub in submissions:
             for file in sub.files():
-                submissions_index.add(file)
+                pass
 
-        # Index all archived submissions
-        for sub in archive_submissions:
-            for file in sub.files():
-                archive_index.add(file)
+        with futures.ProcessPoolExecutor() as executor:
+            for index in executor.map(add_submission(self.k, self.t), submissions):
+                submissions_index.merge_inplace(index)
+
+            # for index in executor.map(add_submission(self.k, self.t), archive_submissions):
+                # archive_index.merge_inplace(index)
+
+
+        # # Index all archived submissions
+        # for sub in archive_submissions:
+            # for file in sub.files():
+                # archive_index.add(file)
 
         # Ignore all files from distro
-        for file in ignored_files:
-            submissions_index.remove(file)
-            archive_index.remove(file)
+        # for file in ignored_files:
+            # submissions_index.remove(file)
+            # archive_index.remove(file)
 
         # Add submissions to archive (the Index we're going to compare against)
-        archive_index |= submissions_index
+        archive_index.merge_inplace(submissions_index)
 
         return submissions_index.compare(archive_index)
 
@@ -77,6 +96,7 @@ class Index:
         self._complete = complete
         self._index = collections.defaultdict(set)
         self._max_id = 0
+        self._id_to_file = {}
 
     def add(self, file):
         if file.id > self._max_id:
@@ -92,17 +112,11 @@ class Index:
         for hash, _ in self._fingerprint(file):
             self._index.pop(hash, None)
 
-    def __ior__(self, other):
+    def merge_inplace(self, other):
         for hash, spans in other._index.items():
             self._index[hash] |= spans
         self._max_id = max(self._max_id, other._max_id)
         return self
-
-    def __or__(self, other):
-        result = copy.deepcopy(self)
-        result |= other
-        self._max_id = max(self._max_id, other._max_id)
-        return result
 
     def compare(self, other):
         # Validate other index
