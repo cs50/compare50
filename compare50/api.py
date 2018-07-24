@@ -9,7 +9,7 @@ from pygments.formatters import HtmlFormatter
 
 from .data import *
 
-def render(groups, dest):
+def render(submission_matches, groups, dest):
     dest = pathlib.Path(dest)
 
     if not dest.exists():
@@ -20,21 +20,22 @@ def render(groups, dest):
     for group in groups:
         subs_to_groups[(group.sub_a, group.sub_b)].append(group)
 
+    subs_groups = [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
+
     formatter = HtmlFormatter(linenos=True)
     with open(dest / "style.css", "w") as f:
         f.write(formatter.get_style_defs('.highlight'))
 
-    for i, subs in enumerate(subs_to_groups):
-        sub_a, sub_b = subs
+    for i, (sub_a, sub_b, groups) in enumerate(subs_groups):
         with open(dest / "match_{}.html".format(i), "w") as f:
             f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
             f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
 
-            for group in subs_to_groups[subs]:
+            for group in groups:
                 f.write(" ".join(str(span) for span in group.spans))
                 f.write("<br/>")
 
-            for sub in subs:
+            for sub in (sub_a, sub_b):
                 for file in sub.files():
                     with open(file.path) as in_file:
                         pygments.highlight(in_file.read(), file.lexer(), formatter, f)

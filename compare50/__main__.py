@@ -222,7 +222,8 @@ def main():
         # Get the matching spans, group them per submission
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        api.render(groups, "./html")
+        print_results(submission_matches)
+        api.render(submission_matches, groups, "./html")
 
 # PROFILE = [ main
 #           , api.rank_submissions
