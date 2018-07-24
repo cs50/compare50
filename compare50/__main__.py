@@ -13,7 +13,7 @@ from . import passes, api, errors, data, comparators
 
 
 @contextlib.contextmanager
-def get(generator, paths, preprocessor):
+def get(generator, paths, preprocessor, include_hidden=False):
     """
     Calls generator for every path.
     If path is a compressed file, first unpacks it into a temporary dir.
@@ -27,17 +27,20 @@ def get(generator, paths, preprocessor):
 
     try:
         for path in paths:
-            path = pathlib.Path(path)
-            if is_archive(path):
-                temp_dirs.append(tempfile.mkdtemp())
-                content.extend(generator(unpack(path, temp_dirs[-1]), preprocessor))
-                path = pathlib.Path(temp_dirs[-1])
-            content.extend(generator(path, preprocessor))
 
+            path = pathlib.Path(path)
+            if not include_hidden and path.name.startswith("."):
+                continue
+
+            if is_archive(path):
+                temp_dirs.append(tempfile.TeporaryDirectory())
+                unpack(path, temp_dirs[-1])
+                path = temp_dirs[-1]
+            content.extend(generator(path, preprocessor))
         yield content
     finally:
-        for d in temp_dirs:
-            shutil.rmtree(d)
+        for dir in temp_dirs:
+            dir.cleanup()
 
 
 def unpack(path, dest):
@@ -70,13 +73,25 @@ def is_archive(path):
     return path.suffixes in ARCHIVES
 
 
-def submissions(path, preprocessor):
+def submissions(path, preprocessor, include_hidden=False):
     path = pathlib.Path(path).absolute()
     if path.is_file():
-        return (data.Submission.from_file_path(path, preprocessor),)
+        yield data.Submission(path, preprocessor)
+        return
 
     subs = []
-    for root, dirs, files in os.walk(path):
+
+    if include_hidden:
+        def is_valid(path):
+            return True
+    else:
+        def is_valid(path):
+             return not path.startswith(".")
+
+    for root, dirs, files in filter(lambda info: is_valid(info[0]), os.walk(path)):
+        dirs = list(filter(is_valid, dirs))
+        files = list(filter(is_valid, files))
+
         # Keep walking until you stumble upon a single file or multiple items
         if len(dirs) == 1 and len(files) == 0:
             continue
@@ -85,21 +100,17 @@ def submissions(path, preprocessor):
 
         # Create a Submission for every dir
         for dir in dirs:
-            subs.append(data.Submission(root / dir, preprocessor))
+            yield data.Submission(root / dir, preprocessor)
 
         # Create a single file Submission for every file
         for file in files:
-            subs.append(data.Submission.from_file_path(root / file, preprocessor))
+            yield data.Submission.from_file_path(root / file, preprocessor)
         break
     return subs
 
 
-def files(path, preprocessor):
-    path = pathlib.Path(path).absolute()
-    if path.is_file():
-        return list(data.Submission.from_file_path(path, preprocessor).files())
-
-    return list(data.Submission(path, preprocessor).files())
+def files(path, preprocessor, include_hidden=False):
+    return data.Submission(pathlib.Path(path).absolute(), preprocessor).files()
 
 
 class ListAction(argparse.Action):
@@ -174,7 +185,7 @@ def main():
                         help="Specify which pass to use.")
     parser.add_argument("--hidden",
                         action="store_true",
-                        help="Also include hidden files and directories.")
+                        help="Include hidden files and directories.")
     parser.add_argument("--log",
                         action="store_true",
                         help="Display more detailed information about comparison process.")

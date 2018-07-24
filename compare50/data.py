@@ -6,6 +6,8 @@ import attr
 import pygments
 import pygments.lexers
 
+from . import errors
+
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def cross_compare(self, submissions, archive_submissions, ignored_files):
@@ -39,16 +41,27 @@ class Submission:
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
     id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
-    file_paths = attr.ib(default=tuple(), hash=False, cmp=False)
+    _include_hidden = attr.ib(default=False, hash=False, cmp=False)
+
+    @path.validator
+    def _validate_path(self, attribute, value):
+        if self._include_hidden and value.name.startswith("."):
+            raise Error("Attempted to initialize Submission with a hidden path and include_hidden set to False")
+
+
+    def __attrs_post_init__(self):
+        # Special case single-file submissions
+        if self.path.is_file():
+            file_path = self.path
+            object.__setattr__(self, "files", lambda: iter([File(file_path, self)]))
+            object.__setattr__(self, "path", self.path.parent)
 
     def files(self):
-        if self.file_paths:
-            for file_path in self.file_paths:
-                yield File(file_path, self)
-
-        for root, dirs, files in os.walk(str(self.path)):
+        for root, dirs, files in os.walk(self.path):
             for f in files:
-                yield File((pathlib.Path(root) / f).relative_to(self.path), self)
+                if not f.startswith(".") or self._include_hidden:
+                    yield File((pathlib.Path(root) / f).relative_to(self.path), self)
+
 
     @classmethod
     def get(cls, id):
