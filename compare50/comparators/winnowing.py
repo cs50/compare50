@@ -167,7 +167,7 @@ class Index:
         scores = np.zeros((self._max_id + 1, other._max_id + 1))
 
         # Find common fingerprints (hashes)
-        common_hashes = set(self._index.keys()) & set(other._index.keys())
+        common_hashes = set(self._index) & set(other._index)
         for hash_ in common_hashes:
             # All file_ids associated with fingerprint in self
             index1 = self._index[hash_]
