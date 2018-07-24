@@ -199,7 +199,7 @@ class Index:
 
 
     def _fingerprint(self, file):
-        tokens = list(file.tokens())
+        tokens = file.tokens()
 
         if not tokens:
             return []

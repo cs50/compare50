@@ -50,9 +50,10 @@ class Submission:
         return cls._store.objs[id]
 
 
-_lexer_cache = {}
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
+    _lexer_cache = {}
+    _token_cache = {}
     _store = _IdStore(key=lambda file: file.path)
 
     name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
@@ -65,24 +66,29 @@ class File:
 
 
     def tokens(self):
-        return self.submission.preprocessor(self._tokenize())
+        try:
+            return self._token_cache[self.id]
+        except KeyError:
+            tokens = list(self.submission.preprocessor(self._tokenize()))
+            self._token_cache[self.id] = tokens
+            return tokens
 
     @classmethod
     def get(cls, id):
         return cls._store.objs[id]
 
     def _tokenize(self):
-        with open(str(self.path), "r")  as f:
+        with open(str(self.path)) as f:
             text = f.read()
 
         ext = self.name.suffix
-        if ext in _lexer_cache:
-            lexer = _lexer_cache[ext]
+        if ext in self._lexer_cache:
+            lexer = self._lexer_cache[ext]
         else:
             # get lexer for this file type
             try:
                 lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
-                _lexer_cache[ext] = lexer
+                self._lexer_cache[ext] = lexer
             except pygments.util.ClassNotFound:
                 try:
                     lexer = pygments.lexers.guess_lexer(text)
@@ -173,8 +179,8 @@ class SpanMatches:
         if not self._matches:
             return self
 
-        tokens_a = list(self._matches[0][0].file.tokens())
-        tokens_b = list(self._matches[0][1].file.tokens())
+        tokens_a = self._matches[0][0].file.tokens()
+        tokens_b = self._matches[0][1].file.tokens()
 
         start_to_index_a = {t.start:i for i, t in enumerate(tokens_a)}
         start_to_index_b = {t.start:i for i, t in enumerate(tokens_b)}
