@@ -39,8 +39,13 @@ class Submission:
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
     id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
+    file_paths = attr.ib(default=tuple(), hash=False, cmp=False)
 
     def files(self):
+        if self.file_paths:
+            for file_path in self.file_paths:
+                yield File(file_path, self)
+
         for root, dirs, files in os.walk(str(self.path)):
             for f in files:
                 yield File((pathlib.Path(root) / f).relative_to(self.path), self)
@@ -48,6 +53,11 @@ class Submission:
     @classmethod
     def get(cls, id):
         return cls._store.objs[id]
+
+    @staticmethod
+    def create_single_file_submission(path, preprocessor):
+        path = pathlib.Path(path).absolute()
+        return Submission(path.parent, preprocessor, file_paths=[path.name])
 
 
 @attr.s(slots=True, frozen=True, hash=True)

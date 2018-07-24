@@ -13,7 +13,7 @@ from . import passes, api, errors, data, comparators
 
 
 @contextlib.contextmanager
-def get(generator, paths, preprocessor, only_dirs=True):
+def get(generator, paths, preprocessor):
     """
     Calls generator for every path.
     If path is a compressed file, first unpacks it into a temporary dir.
@@ -28,14 +28,11 @@ def get(generator, paths, preprocessor, only_dirs=True):
     try:
         for path in paths:
             path = pathlib.Path(path)
-            if path.is_dir():
-                content.extend(generator(path, preprocessor))
-            elif is_archive(path):
+            if is_archive(path):
                 temp_dirs.append(tempfile.mkdtemp())
                 content.extend(generator(unpack(path, temp_dirs[-1]), preprocessor))
-            elif not only_dirs:
-                # TODO create sub/file containing one file
-                pass
+                path = pathlib.Path(temp_dirs[-1])
+            content.extend(generator(path, preprocessor))
 
         yield content
     finally:
@@ -74,12 +71,27 @@ def is_archive(path):
 
 
 def submissions(path, preprocessor):
-    path = pathlib.Path(path).absolute()
-    result = []
-    for item in path.iterdir():
-        if item.is_dir():
-            result.append(data.Submission(item, preprocessor))
-    return result
+    path = pathlib.Path(path)
+    if path.is_file():
+        return (data.Submission.create_single_file_submission(path, preprocessor),)
+
+    subs = []
+    for root, dirs, files in os.walk(path):
+        # Keep walking until you stumble upon a single file or multiple items
+        if len(dirs) == 1 and len(files) == 0:
+            continue
+
+        root = pathlib.Path(root).absolute()
+
+        # Create a Submission for every dir
+        for dir in dirs:
+            subs.append(data.Submission(root / dir, preprocessor))
+
+        # Create a single file Submission for every file
+        for file in files:
+            subs.append(data.Submission.create_single_file_submission(root / file, preprocessor))
+        break
+    return subs
 
 
 def files(path, preprocessor):
@@ -156,9 +168,9 @@ def main():
                         action="store",
                         dest="pass_",
                         help="Specify which pass to use.")
-    parser.add_argument("--file",
+    parser.add_argument("--hidden",
                         action="store_true",
-                        help="Treat every file as a seperate submission. Allows you to pass filepaths as submissions")
+                        help="Also include hidden files and directories.")
     parser.add_argument("--log",
                         action="store_true",
                         help="Display more detailed information about comparison process.")
@@ -190,9 +202,9 @@ def main():
     preprocessor = Preprocessor(pass_.preprocessors)
 
     # Collect all submissions, archive submissions and distro files
-    with get(submissions, args.submissions, preprocessor, only_dirs=not args.file) as subs,\
-         get(submissions, args.archive, preprocessor, only_dirs=not args.file) as archive_subs,\
-         get(files, args.distro, preprocessor, only_dirs=not args.file) as ignored_files:
+    with get(submissions, args.submissions, preprocessor) as subs,\
+         get(submissions, args.archive, preprocessor) as archive_subs,\
+         get(files, args.distro, preprocessor) as ignored_files:
 
         # for s in subs:
         #     for fn in s.files():
@@ -205,11 +217,12 @@ def main():
         #         list(fn.tokens())
         # return
         # Cross compare and rank all submissions, keep only top `n`
+
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        print(groups[0].spans)
+        print(len(groups))
 
         # TODO
         # html = api.render(groups)
