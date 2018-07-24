@@ -71,9 +71,9 @@ def is_archive(path):
 
 
 def submissions(path, preprocessor):
-    path = pathlib.Path(path)
+    path = pathlib.Path(path).absolute()
     if path.is_file():
-        return (data.Submission.create_single_file_submission(path, preprocessor),)
+        return (data.Submission.from_file_path(path, preprocessor),)
 
     subs = []
     for root, dirs, files in os.walk(path):
@@ -89,12 +89,16 @@ def submissions(path, preprocessor):
 
         # Create a single file Submission for every file
         for file in files:
-            subs.append(data.Submission.create_single_file_submission(root / file, preprocessor))
+            subs.append(data.Submission.from_file_path(root / file, preprocessor))
         break
     return subs
 
 
 def files(path, preprocessor):
+    path = pathlib.Path(path).absolute()
+    if path.is_file():
+        return list(data.Submission.from_file_path(path, preprocessor).files())
+
     return list(data.Submission(path, preprocessor).files())
 
 
@@ -217,7 +221,6 @@ def main():
         #         list(fn.tokens())
         # return
         # Cross compare and rank all submissions, keep only top `n`
-
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
         groups = api.create_groups(submission_matches, comparator, ignored_files)

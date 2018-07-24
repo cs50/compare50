@@ -55,7 +55,7 @@ class Submission:
         return cls._store.objs[id]
 
     @staticmethod
-    def create_single_file_submission(path, preprocessor):
+    def from_file_path(path, preprocessor):
         path = pathlib.Path(path).absolute()
         return Submission(path.parent, preprocessor, file_paths=[path.name])
 
