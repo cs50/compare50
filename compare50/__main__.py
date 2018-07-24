@@ -223,6 +223,7 @@ def main():
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
+        print_results(submission_matches)
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
         print(len(groups))
