@@ -29,6 +29,9 @@ class Winnowing(compare50.Comparator):
     :parma k: the noise threshold; any matching sequence of tokens shorter than this will be ignored
     :type k: int
     """
+
+    __slots__ = ["k", "t"]
+
     def __init__(self, k, t):
         self.k = k
         self.t = t
@@ -125,7 +128,9 @@ class StripAll(compare50.Pass):
 
 
 class Index:
+
     __slots__ = ["k", "w", "_complete", "_index", "_max_id"]
+
     def __init__(self, k, t, complete=False):
         self.k = k
         self.w = t - k + 1
@@ -134,16 +139,12 @@ class Index:
         self._max_id = 0
 
     def include(self, file):
-        if file.id > self._max_id:
-            self._max_id = file.id
+        self._max_id = max(self._max_id, file.id)
 
         for hash, span in self._fingerprint(file):
-            if self._complete:
-                self._index[hash].add(span)
-            else:
-                self._index[hash].add(file.id)
+            self._index[hash].add(span)
 
-    def ignore(self, other):
+    def ignore(self, file):
         for hash, _ in self._fingerprint(file):
             self._index.pop(hash, None)
 
@@ -154,7 +155,7 @@ class Index:
         return self
 
     def ignore_all(self, other):
-        for hash in other._index():
+        for hash in other._index:
             self._index.pop(hash, None)
 
     def compare(self, other):
@@ -169,13 +170,14 @@ class Index:
         common_hashes = set(self._index.keys()) & set(other._index.keys())
         for hash_ in common_hashes:
             # All file_ids associated with fingerprint in self
-            index_1 = self._index[hash_]
+            index1 = self._index[hash_]
             # All file_ids associated with fingerprint in other
-            index_2 = other._index[hash_]
-            if index_1 and index_2:
+            index2 = other._index[hash_]
+            if index1 and index2:
                 # Create the product of all file_ids from self and other
                 # https://stackoverflow.com/questions/28684492/numpy-equivalent-of-itertools-product
-                index = np.array(np.meshgrid(list(index_1), list(index_2))).T.reshape(-1, 2)
+                index = np.array(np.meshgrid([span.file.id for span in index1],
+                                             [span.file.id for span in index2])).T.reshape(-1, 2)
                 # index = index[index[:,0] < index[:,1]]
 
                 # Add 1 to all combo's (the product) of file_ids from self and other
