@@ -116,22 +116,6 @@ class ListAction(argparse.Action):
         parser.exit()
 
 
-class FileAction(argparse.Action):
-    """Hook into argparse to allow a file flag"""
-    def __init__(self,
-                 option_strings,
-                 dest=argparse.SUPPRESS,
-                 default=argparse.SUPPRESS,
-                 metavar=("FILE1", "FILE2"),
-                 nargs=2,
-                 help="Compare files against each other and exit. Can be used in combination with distro."):
-        super().__init__(option_strings, dest=dest, default=default, metavar=metavar, nargs=nargs, help=help)
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        print(values)
-        namespace.submissions = values
-        print(dir(parser))
-
 @attr.s(slots=True)
 class Preprocessor:
     """Hack to ensure that composed preprocessor is serializable by Pickle."""
