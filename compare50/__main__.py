@@ -205,26 +205,13 @@ def main():
          get(submissions, args.archive, preprocessor) as archive_subs,\
          get(files, args.distro, preprocessor) as ignored_files:
 
-        # for s in subs:
-        #     for fn in s.files():
-        #         #with open(fn.path) as f:
-        #         list(fn.tokens())
-        #
-        # for s in archive_subs:
-        #     for fn in s.files():
-        #         #with open(fn.path) as f:
-        #         list(fn.tokens())
-        # return
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
-        print_results(submission_matches)
+        # Get the matching spans, group them per submission
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        print(len(groups))
-
-        # TODO
-        # html = api.render(groups)
+        api.render(groups, "./html")
 
 # PROFILE = [ main
 #           , api.rank_submissions

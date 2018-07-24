@@ -2,8 +2,38 @@ import collections
 import concurrent.futures as futures
 import heapq
 import os
+import pathlib
+
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
 
 from .data import *
+
+def render(groups, dest):
+    dest = pathlib.Path(dest)
+
+    if not dest.exists():
+        os.mkdir(dest)
+
+    subs_to_groups = collections.defaultdict(list)
+
+    for group in groups:
+        subs_to_groups[(group.sub_a, group.sub_b)].append(group)
+
+    for i, subs in enumerate(subs_to_groups):
+        sub_a, sub_b = subs
+        with open(dest / "match_{}.html".format(i), "w") as f:
+            f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
+
+            for group in subs_to_groups[subs]:
+                f.write(" ".join(str(span) for span in group.spans))
+                f.write("<br/>")
+
+            for sub in subs:
+                for file in sub.files():
+                    with open(file.path) as in_file:
+                        f.write(highlight(in_file.read(), file.lexer(), HtmlFormatter()))
+
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""

@@ -74,7 +74,6 @@ class File:
     def path(self):
         return self.submission.path / self.name
 
-
     def tokens(self):
         try:
             return self._token_cache[self.id]
@@ -82,6 +81,22 @@ class File:
             tokens = list(self.submission.preprocessor(self._tokenize()))
             self._token_cache[self.id] = tokens
             return tokens
+
+    def lexer(self):
+        ext = self.name.suffix
+        if ext in self._lexer_cache:
+            return self._lexer_cache[ext]
+
+        # get lexer for this file type
+        try:
+            lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
+            self._lexer_cache[ext] = lexer
+            return lexer
+        except pygments.util.ClassNotFound:
+            try:
+                return pygments.lexers.guess_lexer(text)
+            except pygments.util.ClassNotFound:
+                return pygments.lexers.special.TextLexer()
 
     @classmethod
     def get(cls, id):
@@ -91,22 +106,8 @@ class File:
         with open(str(self.path)) as f:
             text = f.read()
 
-        ext = self.name.suffix
-        if ext in self._lexer_cache:
-            lexer = self._lexer_cache[ext]
-        else:
-            # get lexer for this file type
-            try:
-                lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
-                self._lexer_cache[ext] = lexer
-            except pygments.util.ClassNotFound:
-                try:
-                    lexer = pygments.lexers.guess_lexer(text)
-                except pygments.util.ClassNotFound:
-                    lexer = pygments.lexers.special.TextLexer()
-
         # tokenize file into (start, type, value) tuples
-        tokens = lexer.get_tokens_unprocessed(text)
+        tokens = self.lexer().get_tokens_unprocessed(text)
 
         prevToken = None
 
@@ -120,21 +121,6 @@ class File:
         if prevToken:
             yield Token(start=prevToken[0], end=len(text),
                         type=prevToken[1], val=prevToken[2])
-
-        #
-        # prevToken = None
-        # result = []
-        # for token in tokens:
-        #     if prevToken:
-        #         result.append(Token(start=prevToken[0], end=token[0],
-        #                     type=prevToken[1], val=prevToken[2]))
-        #
-        #     prevToken = token
-        #
-        # if prevToken:
-        #     result.append(Token(start=prevToken[0], end=len(text),
-        #                 type=prevToken[1], val=prevToken[2]))
-        # return result
 
 
 @attr.s(slots=True, frozen=True, hash=True, repr=False)
@@ -246,9 +232,36 @@ class SubmissionMatch:
     score = attr.ib(init=False, default=attr.Factory(lambda self: sum(f.score for f in self.file_matches), takes_self=True))
 
 
+def _sorted_subs(group):
+    sub = None
+    for span in group.spans:
+        if not sub:
+            sub = span.file.submission
+        elif sub < span.file.submission:
+            return (sub, span.file.submission)
+        elif sub > span.file.submission:
+            return (span.file.submission, sub)
+
 @attr.s(slots=True, frozen=True, hash=True)
 class Group:
     spans = attr.ib(converter=frozenset)
+    _subs = attr.ib(init=False, default=attr.Factory(_sorted_subs, takes_self=True))
+
+    @property
+    def sub_a(self):
+        return self._subs[0]
+
+    @property
+    def sub_b(self):
+        return self._subs[1]
+
+    @property
+    def sub_a_files(self):
+        return {span.file for span in self.spans if span.file.submission == self.sub_a}
+
+    @property
+    def sub_b_files(self):
+        return {span.file for span in self.spans if span.file.submission == self.sub_b}
 
 
 @attr.s(slots=True)
