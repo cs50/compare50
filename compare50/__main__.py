@@ -11,6 +11,14 @@ import patoolib
 
 from . import passes, api, errors, data, comparators
 
+# Supported archives, per https://github.com/wummel/patool
+ARCHIVES = ( [".bz2"]
+           , [".tar"]
+           , [".tar", ".gz"]
+           , [".tgz"]
+           , [".zip"]
+           , [".7z"]
+           , [".xz"] )
 
 @contextlib.contextmanager
 def get(generator, paths, preprocessor):
@@ -59,14 +67,6 @@ def unpack(path, dest):
 
 
 def is_archive(path):
-    # Supported archives, per https://github.com/wummel/patool
-    ARCHIVES = ( [".bz2"]
-               , [".tar"]
-               , [".tar", ".gz"]
-               , [".tgz"]
-               , [".zip"]
-               , [".7z"]
-               , [".xz"] )
     return path.suffixes in ARCHIVES
 
 

@@ -145,7 +145,7 @@ class FileMatch:
     score = attr.ib()
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True)
 class SpanMatches:
     _matches = attr.ib(default=attr.Factory(list), converter=list)
 
@@ -218,7 +218,8 @@ class SpanMatches:
                 Span(span_b.file, tokens_b[index_b - left_diff].start, tokens_b[index_b + right_diff].end))
             )
 
-        return SpanMatches(expanded_span_pairs)
+        self._matches = list(expanded_span_pairs)
+        return self
 
     def __iter__(self):
         return iter(self._matches)

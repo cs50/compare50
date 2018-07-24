@@ -1,5 +1,6 @@
 import unittest
 
+from compare50.__main__ import Preprocessor
 import compare50.data as data
 import compare50.api as api
 
@@ -13,7 +14,8 @@ class TestRankSubmissions(unittest.TestCase):
 
 class TestGroupSpans(unittest.TestCase):
     def span(self, start):
-        return data.Span(data.File("dummy", None), start, start + 1)
+        file = list(data.Submission.from_file_path("bar/foo", Preprocessor([lambda tokens : tokens])).files())[0]
+        return data.Span(file, start, start + 1)
 
     def test_single_spanmatches_single_group(self):
         # Generate matches (0,1) (1,2) ... (9,10)
