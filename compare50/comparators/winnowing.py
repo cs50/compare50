@@ -188,7 +188,7 @@ class Index:
             raise RuntimeError("comparison with different n-gram lengths")
 
         # Find common fingerprints (hashes)
-        common_hashes = set(self._index.keys()) & set(other._index.keys())
+        common_hashes = set(self._index) & set(other._index)
         for hash_ in common_hashes:
             # All spans associated with fingerprint in self
             spans_1 = self._index[hash_]
