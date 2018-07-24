@@ -7,21 +7,15 @@ import attr
 
 import concurrent.futures as futures
 
-import compare50
-import compare50.preprocessors as preprocessors
-from compare50.data import FileMatch, SpanMatches, Span, File
+from compare50 import (
+        preprocessors,
+        Comparator,
+        File, FileMatch,
+        Pass,
+        Span, SpanMatches,
+)
 
-# class index_submission:
-    # def __init__(self, k, t):
-        # self.k = k
-        # self.t = t
-    # def __call__(self, submission):
-        # index = Index(self.k, self.t)
-        # for file in submission.files():
-            # index.include(file)
-        # return index
-
-class Winnowing(compare50.Comparator):
+class Winnowing(Comparator):
     """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
 
     :param t: the guarantee threshold; any matching sequence of tokens of length at least t is guaranteed to be matched
@@ -112,13 +106,13 @@ class Winnowing(compare50.Comparator):
             return index
 
 
-class StripWhitespace(compare50.Pass):
+class StripWhitespace(Pass):
     description = "Remove all whitespace, then run Winnowing with k=16, t=32."
     preprocessors = [preprocessors.strip_whitespace, preprocessors.by_character]
     comparator = Winnowing(k=16, t=32)
 
 
-class StripAll(compare50.Pass):
+class StripAll(Pass):
     description = "Remove all whitespace, norm all comments/ids/strings, then run Winnowing with k=10, t=20."
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,

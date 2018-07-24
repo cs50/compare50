@@ -1,8 +1,9 @@
 import collections
-import os
-import heapq
 import concurrent.futures as futures
-from compare50.data import *
+import heapq
+import os
+
+from .data import *
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""

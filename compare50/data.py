@@ -1,9 +1,10 @@
-import attr
+import abc
 import os
+import pathlib
+
+import attr
 import pygments
 import pygments.lexers
-import abc
-import pathlib
 
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod

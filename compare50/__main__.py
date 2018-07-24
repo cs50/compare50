@@ -1,24 +1,14 @@
 import argparse
+import contextlib
+import os
+import pathlib
+import tempfile
 import textwrap
-from . import passes
-from . import api
-from . import errors
-from . import data
-from . import comparators
-from .data import Submission
 
 import attr
 import patoolib
-import pathlib
-import os
-import contextlib
-from tempfile import TemporaryDirectory
 
-import sys
-
-from astropy.io import ascii
-from astropy.table import Table
-
+from . import passes, api, errors, data, comparators
 
 @contextlib.contextmanager
 def submissions(path, preprocessor):
@@ -32,7 +22,7 @@ def submissions(path, preprocessor):
 
     path = pathlib.Path(path)
     if not path.is_dir():
-        with TemporaryDirectory() as dir:
+        with tempfile.TemporaryDirectory() as dir:
             yield _submissions_from_dir(unpack(path, dir), preprocessor)
     else:
         yield _submissions_from_dir(path, preprocessor)
@@ -50,7 +40,7 @@ def files(path, preprocessor):
 
     path = pathlib.Path(path)
     if not path.is_dir():
-        with TemporaryDirectory() as dir:
+        with tempfile.TemporaryDirectory() as dir:
             yield _files_from_dir(unpack(path, dir), preprocessor)
     else:
         yield _files_from_dir(path, preprocessor)
@@ -121,6 +111,18 @@ class Preprocessor:
         return tokens
 
 
+# Temporary function to print results as an ascii table
+def print_results(submission_matches):
+    from astropy.io import ascii
+    from astropy.table import Table
+
+    def fmt_match(sm):
+        return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
+
+    data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
+    ascii.write(data, format="fixed_width")
+
+
 def main():
     parser = argparse.ArgumentParser(prog="compare50")
 
@@ -183,12 +185,6 @@ def main():
 
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
-
-        def fmt_match(sm):
-            return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
-
-        data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
-        ascii.write(data, sys.stdout, format="fixed_width")
 
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
