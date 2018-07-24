@@ -48,10 +48,6 @@ def create_groups(submission_matches, comparator, ignored_files):
         for gs in executor.map(group_spans, sub_match_to_span_matches.values()):
             groups.extend(gs)
 
-    #groups = []
-    #for span_matches_list in sub_match_to_span_matches.values():
-    #    groups.extend(group_spans(span_matches_list))
-
     return groups
 
 

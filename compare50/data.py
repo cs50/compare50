@@ -120,6 +120,21 @@ class File:
         # return result
 
 
+@attr.s(slots=True, frozen=True, hash=True, repr=False)
+class Span:
+    """Represents a range of characters in a particular file.
+
+    file - the ID of the File containing the span
+    start - the character index of the first character in the span
+    stop - the character index one past the end of the span
+    """
+    file = attr.ib()
+    start = attr.ib()
+    stop = attr.ib()
+
+    def __repr__(self):
+        return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
+
 @attr.s(slots=True, frozen=True)
 class FileMatch:
     file_a = attr.ib()
@@ -253,17 +268,3 @@ class MatchResult:
     spans = attr.ib(repr=False)
 
 
-@attr.s(slots=True, frozen=True, hash=True, repr=False)
-class Span:
-    """Represents a range of characters in a particular file.
-
-    file - the ID of the File containing the span
-    start - the character index of the first character in the span
-    stop - the character index one past the end of the span
-    """
-    file = attr.ib()
-    start = attr.ib()
-    stop = attr.ib()
-
-    def __repr__(self):
-        return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
