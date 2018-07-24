@@ -4,7 +4,7 @@ import heapq
 import os
 import pathlib
 
-from pygments import highlight
+import pygments
 from pygments.formatters import HtmlFormatter
 
 from .data import *
@@ -20,9 +20,14 @@ def render(groups, dest):
     for group in groups:
         subs_to_groups[(group.sub_a, group.sub_b)].append(group)
 
+    formatter = HtmlFormatter(linenos=True)
+    with open(dest / "style.css", "w") as f:
+        f.write(formatter.get_style_defs('.highlight'))
+
     for i, subs in enumerate(subs_to_groups):
         sub_a, sub_b = subs
         with open(dest / "match_{}.html".format(i), "w") as f:
+            f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
             f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
 
             for group in subs_to_groups[subs]:
@@ -32,7 +37,7 @@ def render(groups, dest):
             for sub in subs:
                 for file in sub.files():
                     with open(file.path) as in_file:
-                        f.write(highlight(in_file.read(), file.lexer(), HtmlFormatter()))
+                        pygments.highlight(in_file.read(), file.lexer(), formatter, f)
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
