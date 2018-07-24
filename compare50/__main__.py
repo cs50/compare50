@@ -161,13 +161,13 @@ def main():
                         nargs="+",
                         help="Paths to directories or compressed files containing submissions at the top level.")
     parser.add_argument("-a", "--archive",
-                        action="store",
-                        nargs="+",
-                        help="Paths to directories or compressed files containing archive submissions at the top level.")
+                        action="append",
+                        default=[],
+                        help="Path to directory or compressed file containing archive submissions at the top level (can be specified multiple times)")
     parser.add_argument("-d", "--distro",
-                        action="store",
-                        nargs="+",
-                        help="Paths to directories or compressed files containing distro files to ignore at the top level.")
+                        action="append",
+                        default=[],
+                        help="Paths to directory or compressed file containing distro files to ignore at the top level (can be specified multiple times).")
     parser.add_argument("-p", "--pass",
                         action="store",
                         dest="pass_",
@@ -183,17 +183,12 @@ def main():
 
     args = parser.parse_args()
 
-    # Validate args.submissions exists
-    for sub in args.submissions:
-        if not pathlib.Path(sub).exists():
-            raise errors.Error("Path {} does not exist.".format(sub))
+    # Validate args
+    for items in (args.submissions, args.archive, args.distro):
+        for item in items:
+            if not pathlib.Path(item).exists():
+                raise errors.Error("Path {} does not exist.".format(item))
 
-    # Validate args.archive and args.distro exist if specified
-    for optional_items in [args.archive, args.distro]:
-        if optional_items:
-            for optional_item in optional_items:
-                if not pathlib.Path(optional_item).exists():
-                    raise errors.Error("Path {} does not exist.".format(optional_item))
 
     # Extract comparator and preprocessors from pass
     try:
