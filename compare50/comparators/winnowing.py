@@ -122,7 +122,6 @@ class StripAll(Pass):
 
 
 class Index:
-
     __slots__ = ["k", "w", "_complete", "_index", "_max_id"]
 
     def __init__(self, k, t, complete=False):
@@ -178,7 +177,6 @@ class Index:
                 scores[index[:,0], index[:,1]] += 1
 
         # Return only those FileMatches with a score > 0 from different submissions
-
         return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 

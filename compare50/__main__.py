@@ -4,66 +4,54 @@ import os
 import pathlib
 import tempfile
 import textwrap
+import shutil
 
 import attr
 import patoolib
 
 from . import passes, api, errors, data, comparators
 
+
 @contextlib.contextmanager
-def submissions(path, preprocessor):
+def get(generator, paths, preprocessor, only_dirs=True):
     """
-    Creates a data.Submission instance for every top level dir in path.
+    Calls generator for every path.
     If path is a compressed file, first unpacks it into a temporary dir.
     """
-    if not path:
+    if not paths:
         yield []
         return
 
-    path = pathlib.Path(path)
-    if not path.is_dir():
-        with tempfile.TemporaryDirectory() as dir:
-            yield _submissions_from_dir(unpack(path, dir), preprocessor)
-    else:
-        yield _submissions_from_dir(path, preprocessor)
+    temp_dirs = []
+    content = []
 
+    try:
+        for path in paths:
+            path = pathlib.Path(path)
+            if path.is_dir():
+                content.extend(generator(path, preprocessor))
+            elif is_archive(path):
+                temp_dirs.append(tempfile.mkdtemp())
+                content.extend(generator(unpack(path, temp_dirs[-1]), preprocessor))
+            elif not only_dirs:
+                # TODO create sub/file containing one file
+                pass
 
-@contextlib.contextmanager
-def files(path, preprocessor):
-    """
-    Creates a data.File instance for every file in path.
-    If path is a compressed file, first unpacks it into a temporary dir.
-    """
-    if not path:
-        yield []
-        return
-
-    path = pathlib.Path(path)
-    if not path.is_dir():
-        with tempfile.TemporaryDirectory() as dir:
-            yield _files_from_dir(unpack(path, dir), preprocessor)
-    else:
-        yield _files_from_dir(path, preprocessor)
+        yield content
+    finally:
+        for d in temp_dirs:
+            shutil.rmtree(d)
 
 
 def unpack(path, dest):
     """Unpacks compressed file in path to dest."""
-    # Supported archives, per https://github.com/wummel/patool
     path = pathlib.Path(path)
     dest = pathlib.Path(dest)
 
     if not dest.exists():
         raise errors.Error("Unpacking destination: {} does not exist.".format(dest))
 
-    ARCHIVES = ( [".bz2"]
-               , [".tar"]
-               , [".tar", ".gz"]
-               , [".tgz"]
-               , [".zip"]
-               , [".7z"]
-               , [".xz"] )
-
-    if path.suffixes in ARCHIVES:
+    if is_archive(path):
         try:
             patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
             return dest
@@ -73,8 +61,20 @@ def unpack(path, dest):
         raise errors.Error("Unsupported archive, try one of these: {}".format(ARCHIVES))
 
 
-def _submissions_from_dir(dir, preprocessor):
-    path = pathlib.Path(dir).absolute()
+def is_archive(path):
+    # Supported archives, per https://github.com/wummel/patool
+    ARCHIVES = ( [".bz2"]
+               , [".tar"]
+               , [".tar", ".gz"]
+               , [".tgz"]
+               , [".zip"]
+               , [".7z"]
+               , [".xz"] )
+    return path.suffixes in ARCHIVES
+
+
+def submissions(path, preprocessor):
+    path = pathlib.Path(path).absolute()
     result = []
     for item in path.iterdir():
         if item.is_dir():
@@ -82,23 +82,39 @@ def _submissions_from_dir(dir, preprocessor):
     return result
 
 
-def _files_from_dir(path, preprocessor):
+def files(path, preprocessor):
     return list(data.Submission(path, preprocessor).files())
 
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag"""
-
-    def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help="List all available comparators and exit."):
+    def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help="List all available passes and exit."):
         super().__init__(option_strings, dest=dest, nargs=0, default=default, help=help)
 
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = "    "
         for cfg in passes.get_all():
-            print(str(cfg.id()))
-            for line in textwrap.wrap(cfg.description(), 80 - len(indentation)):
+            print(str(cfg.__name__))
+            for line in textwrap.wrap(cfg.description, 80 - len(indentation)):
                 print("{}{}".format(indentation, line))
         parser.exit()
+
+
+class FileAction(argparse.Action):
+    """Hook into argparse to allow a file flag"""
+    def __init__(self,
+                 option_strings,
+                 dest=argparse.SUPPRESS,
+                 default=argparse.SUPPRESS,
+                 metavar=("FILE1", "FILE2"),
+                 nargs=2,
+                 help="Compare files against each other and exit. Can be used in combination with distro."):
+        super().__init__(option_strings, dest=dest, default=default, metavar=metavar, nargs=nargs, help=help)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(values)
+        namespace.submissions = values
+        print(dir(parser))
 
 @attr.s(slots=True)
 class Preprocessor:
@@ -125,17 +141,24 @@ def print_results(submission_matches):
 
 def main():
     parser = argparse.ArgumentParser(prog="compare50")
-
-    parser.add_argument("submissions", help="Path to directory or .zip file containing submissions at the top level.")
+    parser.add_argument("submissions",
+                        nargs="+",
+                        help="Paths to directories or compressed files containing submissions at the top level.")
     parser.add_argument("-a", "--archive",
                         action="store",
-                        help="Path to directory or .zip file containing archive submissions at the top level.")
+                        nargs="+",
+                        help="Paths to directories or compressed files containing archive submissions at the top level.")
     parser.add_argument("-d", "--distro",
                         action="store",
-                        help="Path to directory or .zip file containing distro files to ignore at the top level.")
-    parser.add_argument("-c", "--comparator",
+                        nargs="+",
+                        help="Paths to directories or compressed files containing distro files to ignore at the top level.")
+    parser.add_argument("-p", "--pass",
                         action="store",
-                        help="Name of comparator to use")
+                        dest="pass_",
+                        help="Specify which pass to use.")
+    parser.add_argument("--file",
+                        action="store_true",
+                        help="Treat every file as a seperate submission. Allows you to pass filepaths as submissions")
     parser.add_argument("--log",
                         action="store_true",
                         help="Display more detailed information about comparison process.")
@@ -145,32 +168,31 @@ def main():
     args = parser.parse_args()
 
     # Validate args.submissions exists
-    if not pathlib.Path(args.submissions).exists():
-        raise errors.Error("Path {args.submissions} does not exist.")
+    for sub in args.submissions:
+        if not pathlib.Path(sub).exists():
+            raise errors.Error("Path {} does not exist.".format(sub))
 
     # Validate args.archive and args.distro exist if specified
-    for optional_item in [args.archive, args.distro]:
-        if optional_item and not pathlib.Path(optional_item).exists():
-            raise errors.Error("Path {optional_item} does not exist.")
+    for optional_items in [args.archive, args.distro]:
+        if optional_items:
+            for optional_item in optional_items:
+                if pathlib.Path(optional_item).exists():
+                    raise errors.Error("Path {} does not exist.".format(optional_item))
 
     # Extract comparator and preprocessors from pass
     try:
-        pass_ = passes.get(args.comparator)
+        pass_ = passes.get(args.pass_)
     except KeyError:
-        raise errors.Error("{} is not a comparator, try one of these: {}"\
-                            .format(args.comparator, [c.__name__ for c in passes.get_all()]))
+        raise errors.Error("{} is not a pass, try one of these: {}"\
+                            .format(args.pass_, [c.__name__ for c in passes.get_all()]))
 
     comparator = pass_.comparator
-    preprocessors = pass_.preprocessors
-    # def preprocessor(tokens):
-        # for pp in preprocessors:
-            # tokens = pp(tokens)
-        # return tokens
     preprocessor = Preprocessor(pass_.preprocessors)
+
     # Collect all submissions, archive submissions and distro files
-    with submissions(args.submissions, preprocessor) as subs,\
-         submissions(args.archive, preprocessor) as archive_subs,\
-         files(args.distro, preprocessor) as ignored_files:
+    with get(submissions, args.submissions, preprocessor, only_dirs=not args.file) as subs,\
+         get(submissions, args.archive, preprocessor, only_dirs=not args.file) as archive_subs,\
+         get(files, args.distro, preprocessor, only_dirs=not args.file) as ignored_files:
 
         # for s in subs:
         #     for fn in s.files():
@@ -182,7 +204,6 @@ def main():
         #         #with open(fn.path) as f:
         #         list(fn.tokens())
         # return
-
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
@@ -194,13 +215,13 @@ def main():
         # html = api.render(groups)
 
 # PROFILE = [ main
-          # , api.rank_submissions
-          # , comparators.winnowing.Winnowing.cross_compare
-          # , comparators.winnowing.Index.compare
-          # , comparators.winnowing.Index.include
-          # , comparators.winnowing.Index._fingerprint
-          # , api.create_groups
-          # , comparators.winnowing.Index.compare]
+#           , api.rank_submissions
+#           , comparators.winnowing.Winnowing.cross_compare
+#           , comparators.winnowing.Index.compare
+#           , comparators.winnowing.Index.include
+#           , comparators.winnowing.Index._fingerprint
+#           , api.create_groups
+#           , comparators.winnowing.Index.compare]
 
 PROFILE = []
 if __name__ == "__main__":
