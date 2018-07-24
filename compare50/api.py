@@ -28,7 +28,6 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
                           for (sub_id_a, sub_id_b), file_matches in sub_ids_to_file_matches.items()]
 
     # Keep only top `n` submission matches
-
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 def _expand(span_matches):

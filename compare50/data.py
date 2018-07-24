@@ -135,14 +135,14 @@ class Span:
     def __repr__(self):
         return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class FileMatch:
     file_a = attr.ib()
     file_b = attr.ib()
     score = attr.ib()
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class SpanMatches:
     _matches = attr.ib(default=attr.Factory(list), converter=list)
 
@@ -221,7 +221,7 @@ class SpanMatches:
         return iter(self._matches)
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class SubmissionMatch:
     sub_a = attr.ib()
     sub_b = attr.ib()
@@ -229,7 +229,7 @@ class SubmissionMatch:
     score = attr.ib(init=False, default=attr.Factory(lambda self: sum(f.score for f in self.file_matches), takes_self=True))
 
 
-@attr.s(slots=True, hash=True, frozen=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class Group:
     spans = attr.ib(converter=frozenset)
 
@@ -250,7 +250,7 @@ class Token:
     val = attr.ib()
 
 
-@attr.s(slots=True, frozen=True)
+@attr.s(slots=True, frozen=True, hash=True)
 class MatchResult:
     """The result of a comparison between two submissions.
 
@@ -266,5 +266,3 @@ class MatchResult:
     b = attr.ib()
     score = attr.ib()
     spans = attr.ib(repr=False)
-
-
