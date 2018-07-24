@@ -188,7 +188,7 @@ def main():
     for optional_items in [args.archive, args.distro]:
         if optional_items:
             for optional_item in optional_items:
-                if pathlib.Path(optional_item).exists():
+                if not pathlib.Path(optional_item).exists():
                     raise errors.Error("Path {} does not exist.".format(optional_item))
 
     # Extract comparator and preprocessors from pass
