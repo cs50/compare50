@@ -43,3 +43,25 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[2].spans, set())
         self.assertEqual(fragments[3].spans, {span_2})
         self.assertEqual(fragments[4].spans, set())
+
+    def test_fragmentize_overlapping_spans(self):
+        span_1 = data.Span(self.file, 3, 7)
+        span_2 = data.Span(self.file, 5, 9)
+        fragments = renderer.fragmentize(self.file, [span_1, span_2])
+        self.assertEqual([f.content for f in fragments], ["012", "34", "56", "78", "9"])
+        self.assertEqual(fragments[0].spans, set())
+        self.assertEqual(fragments[1].spans, {span_1})
+        self.assertEqual(fragments[2].spans, {span_1, span_2})
+        self.assertEqual(fragments[3].spans, {span_2})
+        self.assertEqual(fragments[4].spans, set())
+
+    def test_fragmentize_completely_overlapping_spans(self):
+        span_1 = data.Span(self.file, 1, 9)
+        span_2 = data.Span(self.file, 4, 6)
+        fragments = renderer.fragmentize(self.file, [span_1, span_2])
+        self.assertEqual([f.content for f in fragments], ["0", "123", "45", "678", "9"])
+        self.assertEqual(fragments[0].spans, set())
+        self.assertEqual(fragments[1].spans, {span_1})
+        self.assertEqual(fragments[2].spans, {span_1, span_2})
+        self.assertEqual(fragments[3].spans, {span_1})
+        self.assertEqual(fragments[4].spans, set())

@@ -28,7 +28,7 @@ class Fragments:
                 # Split fragments
                 # Add span to fragment
                 if start <= span.start <= end and start <= span.end <= end:
-                    is_assigning = True
+                    is_assigning = False
                     frags = fragment.split(span.start - start, span.end - start)
                     frags[1].spans.add(span)
                 elif start <= span.start <= end:
