@@ -63,7 +63,6 @@ class Submission:
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
     _lexer_cache = {}
-    _token_cache = {}
     _store = _IdStore(key=lambda file: file.path)
 
     name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
@@ -79,17 +78,15 @@ class File:
             return f.read(size)
 
     def tokens(self):
-        try:
-            return self._token_cache[self.id]
-        except KeyError:
-            tokens = list(self.submission.preprocessor(self._tokenize()))
-            self._token_cache[self.id] = tokens
-            return tokens
+        return self.submission.preprocessor(self._tokenize())
+
 
     def lexer(self):
         ext = self.name.suffix
-        if ext in self._lexer_cache:
+        try:
             return self._lexer_cache[ext]
+        except KeyError:
+            pass
 
         # get lexer for this file type
         try:
@@ -98,23 +95,21 @@ class File:
             return lexer
         except pygments.util.ClassNotFound:
             try:
-                return pygments.lexers.guess_lexer(text)
+                return pygments.lexers.guess_lexer(self.read())
             except pygments.util.ClassNotFound:
                 return pygments.lexers.special.TextLexer()
+
 
     @classmethod
     def get(cls, id):
         return cls._store.objs[id]
 
-    def _tokenize(self):
-        with open(str(self.path)) as f:
-            text = f.read()
 
-        # tokenize file into (start, type, value) tuples
+    def _tokenize(self):
+        text = self.read()
         tokens = self.lexer().get_tokens_unprocessed(text)
 
         prevToken = None
-
         for token in tokens:
             if prevToken:
                 yield Token(start=prevToken[0], end=token[0],

@@ -37,8 +37,7 @@ def render(submission_matches, groups, dest):
 
             for sub in (sub_a, sub_b):
                 for file in sub.files():
-                    with open(file.path) as in_file:
-                        pygments.highlight(in_file.read(), file.lexer(), formatter, f)
+                    pygments.highlight(file.read(), file.lexer(), formatter, f)
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
