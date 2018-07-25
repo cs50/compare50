@@ -134,10 +134,15 @@ def print_results(submission_matches):
     from astropy.io import ascii
     from astropy.table import Table
 
+
     def fmt_match(sm):
         return (sm.sub_a.path.name, sm.sub_b.path.name, sm.score)
 
-    data = Table(rows=list(map(fmt_match, submission_matches)), names=("Submission A", "Submission B", "Score"))
+    if submission_matches:
+        rows = list(map(fmt_match, submission_matches))
+    else:
+        rows = [("-", "-", "-")]
+    data = Table(rows=rows, names=("Submission A", "Submission B", "Score"))
     ascii.write(data, format="fixed_width")
 
 
