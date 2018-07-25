@@ -74,6 +74,10 @@ class File:
     def path(self):
         return self.submission.path / self.name
 
+    def read(self, size=-1):
+        with open(self.path) as f:
+            return f.read(size)
+
     def tokens(self):
         try:
             return self._token_cache[self.id]
@@ -138,6 +142,7 @@ class Span:
     def __repr__(self):
         return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
 
+
 @attr.s(slots=True, frozen=True, hash=True)
 class FileMatch:
     file_a = attr.ib()
@@ -173,19 +178,16 @@ class SpanMatches:
         returns a new instance of SpanMatches with maximally extended spans.
         """
         if not self._matches:
-            return self
-
-        tokens_a = self._matches[0][0].file.tokens()
-        tokens_b = self._matches[0][1].file.tokens()
-
-        start_to_index_a = {t.start:i for i, t in enumerate(tokens_a)}
-        start_to_index_b = {t.start:i for i, t in enumerate(tokens_b)}
+            return
 
         expanded_span_pairs = set()
 
+        file_a = self.file_a.read()
+        file_b = self.file_b.read()
+
         for span_a, span_b in self._matches:
-            index_a = start_to_index_a[span_a.start]
-            index_b = start_to_index_b[span_b.start]
+            # index_a = start_to_index_a[span_a.start]
+            # index_b = start_to_index_b[span_b.start]
 
             # TODO decide if "optimisation" actually adds/optimizes anything
             # TODO check that both spans aren't already absorbed by another expanded span
@@ -195,18 +197,18 @@ class SpanMatches:
             #        pass
 
             # Expand left
-            left_diff = -1
+            left_diff = 1
             try:
-                while tokens_a[index_a - left_diff] == tokens_b[index_b - left_diff]:
-                    left_diff -= 1
+                while file_a[span_a.start - left_diff] == file_b[span_b.start - left_diff]:
+                    left_diff += 1
             except IndexError:
                 pass
-            left_diff += 1
+            left_diff -= 1
 
-            # Expand right
             right_diff = 1
+            # Expand right
             try:
-                while tokens_a[index_a + right_diff] == tokens_b[index_b + right_diff]:
+                while file_a[span_a.stop + right_diff] == file_b[span_b.stop + right_diff]:
                     right_diff += 1
             except IndexError:
                 pass
@@ -214,12 +216,11 @@ class SpanMatches:
 
             # Add new spans
             expanded_span_pairs.add(
-                (Span(span_a.file, tokens_a[index_a - left_diff].start, tokens_a[index_a + right_diff].end),
-                Span(span_b.file, tokens_b[index_b - left_diff].start, tokens_b[index_b + right_diff].end))
+                (Span(span_a.file, span_a.start - left_diff, span_a.stop + right_diff),
+                 Span(span_b.file, span_b.start - left_diff, span_b.stop + right_diff))
             )
 
         self._matches = list(expanded_span_pairs)
-        return self
 
     def __iter__(self):
         return iter(self._matches)

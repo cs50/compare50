@@ -68,7 +68,8 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 def _expand(span_matches):
-    return span_matches.expand()
+    span_matches.expand()
+    return span_matches
 
 def create_groups(submission_matches, comparator, ignored_files):
     file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
