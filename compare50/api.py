@@ -4,40 +4,37 @@ import heapq
 import os
 import pathlib
 
-import pygments
-from pygments.formatters import HtmlFormatter
-
 from .data import *
 
-def render(submission_matches, groups, dest):
-    dest = pathlib.Path(dest)
-
-    if not dest.exists():
-        os.mkdir(dest)
-
-    subs_to_groups = collections.defaultdict(list)
-
-    for group in groups:
-        subs_to_groups[(group.sub_a, group.sub_b)].append(group)
-
-    subs_groups = [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
-
-    formatter = HtmlFormatter(linenos=True)
-    with open(dest / "style.css", "w") as f:
-        f.write(formatter.get_style_defs('.highlight'))
-
-    for i, (sub_a, sub_b, groups) in enumerate(subs_groups):
-        with open(dest / "match_{}.html".format(i), "w") as f:
-            f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
-            f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
-
-            for group in groups:
-                f.write(" ".join(str(span) for span in group.spans))
-                f.write("<br/>")
-
-            for sub in (sub_a, sub_b):
-                for file in sub.files():
-                    pygments.highlight(file.read(), file.lexer(), formatter, f)
+# def render(submission_matches, groups, dest):
+#     dest = pathlib.Path(dest)
+#
+#     if not dest.exists():
+#         os.mkdir(dest)
+#
+#     subs_to_groups = collections.defaultdict(list)
+#
+#     for group in groups:
+#         subs_to_groups[(group.sub_a, group.sub_b)].append(group)
+#
+#     subs_groups = [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
+#
+#     formatter = HtmlFormatter(linenos=True)
+#     with open(dest / "style.css", "w") as f:
+#         f.write(formatter.get_style_defs('.highlight'))
+#
+#     for i, (sub_a, sub_b, groups) in enumerate(subs_groups):
+#         with open(dest / "match_{}.html".format(i), "w") as f:
+#             f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
+#             f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
+#
+#             for group in groups:
+#                 f.write(" ".join(str(span) for span in group.spans))
+#                 f.write("<br/>")
+#
+#             for sub in (sub_a, sub_b):
+#                 for file in sub.files():
+#                     pygments.highlight(file.read(), file.lexer(), formatter, f)
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
@@ -84,7 +81,12 @@ def create_groups(submission_matches, comparator, ignored_files):
         for gs in executor.map(group_spans, sub_match_to_span_matches.values()):
             groups.extend(gs)
 
-    return groups
+    subs_to_groups = collections.defaultdict(list)
+
+    for group in groups:
+        subs_to_groups[(group.sub_a, group.sub_b)].append(group)
+
+    return [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
 
 
 def group_spans(span_matches_list):
@@ -278,3 +280,84 @@ def group_spans(span_matches_list):
 #             results[file] = file_results
 #
 #     return a_results, b_results
+
+    #
+    #
+    # class HTMLFile:
+    #     def __init__(self):
+    #         self.map = collections.OrderedDict()
+    #         self._span_to_content = collections.OrderedDict()
+    #
+    #     def add_pre(self):
+    #         pass
+    #
+    #     def add_post(self):
+    #         pass
+    #
+    #     def add_span(self, span):
+    #         left_i = 0
+    #         while not span.start - left_i in self.map:
+    #             left_i -= 1
+    #
+    #         right_i = 0
+    #         while not span.end + right_i in self.map:
+    #             right_i += 1
+    #
+    #         content = []
+    #         for i in range(span.start - left_i, span.end + right_i + 1):
+    #             if i in self.map:
+    #                 content.append(self.map[i])
+    #
+    #         self._span_to_content[span] = content
+    #         return content
+    #
+    #     def add(self, index, data):
+    #         self.map[index] = data
+    #
+    #     def construct(self):
+    #         code = []
+    #         for content in self.map.values():
+    #             code.append(content)
+    #         return "\n".join(code)
+    #
+    #
+    # class PygmentsParser(HTMLParser):
+    #     def __init__(self, *args, **kwargs):
+    #         super().__init__(*args, **kwargs)
+    #         self.count = 0
+    #         self.is_counting = False
+    #         self.spans = tuple()
+    #         self.html_file = None
+    #
+    #         self._tag = None
+    #         self._attrs = None
+    #
+    #     def handle_starttag(self, tag, attrs):
+    #         if tag == "pre":
+    #             self.is_counting = True
+    #             self._tag = tag
+    #             self._attrs = attrs
+    #         #print("Encountered a start tag:", tag, attrs)
+    #
+    #     def handle_endtag(self, tag):
+    #         if tag == "pre":
+    #             self.is_counting = False
+    #         #print("Encountered an end tag :", tag)
+    #
+    #     def handle_data(self, data):
+    #         #print("Encountered some data: {} - {}".format(self.count, data))
+    #         if not self.is_counting:
+    #             return
+    #
+    #         formatted_attrs = []
+    #         for attr in self._attrs:
+    #             formatted_attrs.append(f"{attr}={self._attrs[attr]}")
+    #
+    #         self.html_file.add(self.count, f"<{self._tag} {' '.join(formatted_attrs)}> {data} </{self._tag}>")
+    #         self.count += len(data)
+    #
+    #     def start(self, content, spans):
+    #         self.spans = spans
+    #         self.html_file = HTMLFile()
+    #         self.feed(content)
+    #         return self.html_file

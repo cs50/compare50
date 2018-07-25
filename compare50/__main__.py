@@ -5,10 +5,12 @@ import pathlib
 import tempfile
 import textwrap
 import shutil
+import attr
 
 import attr
 import patoolib
 
+from . import html_renderer
 from . import passes, api, errors, data, comparators
 
 # Supported archives, per https://github.com/wummel/patool
@@ -192,11 +194,13 @@ def main():
         # Cross compare and rank all submissions, keep only top `n`
         submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
+        print_results(submission_matches)
+
         # Get the matching spans, group them per submission
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        print_results(submission_matches)
-        api.render(submission_matches, groups, "./html")
+        html_renderer.render(groups)
+        # TODO api.as_json(groups)
 
 # PROFILE = [ main
 #           , api.rank_submissions
