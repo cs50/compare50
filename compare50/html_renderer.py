@@ -22,22 +22,22 @@ class Fragments:
             end = start + len(fragment.content)
 
             # If span cuts into fragment, split fragment
-            if start <= span.start <= end or start <= span.stop <= end:
+            if start <= span.start <= end or start <= span.end <= end:
 
                 # Decide on indices on which to split
                 # Split fragments
                 # Add span to fragment
-                if start <= span.start <= end and start <= span.stop <= end:
+                if start <= span.start <= end and start <= span.end <= end:
                     is_assigning = True
-                    frags = fragment.split(span.start - start, span.stop - start)
+                    frags = fragment.split(span.start - start, span.end - start)
                     frags[1].spans.add(span)
                 elif start <= span.start <= end:
                     is_assigning = True
                     frags = fragment.split(span.start - start)
                     frags[1].spans.add(span)
-                elif start <= span.stop <= end:
+                elif start <= span.end <= end:
                     is_assigning = False
-                    frags = fragment.split(span.stop - start)
+                    frags = fragment.split(span.end - start)
                     frags[0].spans.add(span)
 
                 # Add new frags to index
