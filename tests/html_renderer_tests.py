@@ -16,16 +16,30 @@ class TestCase(unittest.TestCase):
         os.chdir(self._wd)
 
 class TestFragmentize(TestCase):
-    def test_fragmentize_single_span(self):
-        content = "0123456789"
-        filename = "foo.txt"
-        with open(filename, "w") as f:
-            f.write(content)
+    def setUp(self):
+        super().setUp()
+        self.content = "0123456789"
+        self.filename = "foo.txt"
+        with open(self.filename, "w") as f:
+            f.write(self.content)
 
-        file = list(data.Submission.from_file_path(pathlib.Path(filename), lambda ts: ts).files())[0]
-        span = data.Span(file, 3, 5)
-        fragments = renderer.fragmentize(file, [span])
+        self.file = list(data.Submission.from_file_path(pathlib.Path(self.filename), lambda ts: ts).files())[0]
+
+    def test_fragmentize_single_span(self):
+        span = data.Span(self.file, 3, 5)
+        fragments = renderer.fragmentize(self.file, [span])
         self.assertEqual([f.content for f in fragments], ["012", "34", "56789"])
         self.assertEqual(fragments[0].spans, set())
         self.assertEqual(fragments[1].spans, {span})
         self.assertEqual(fragments[2].spans, set())
+
+    def test_fragmentize_multiple_spans(self):
+        span_1 = data.Span(self.file, 3, 5)
+        span_2 = data.Span(self.file, 7, 9)
+        fragments = renderer.fragmentize(self.file, [span_1, span_2])
+        self.assertEqual([f.content for f in fragments], ["012", "34", "56", "78", "9"])
+        self.assertEqual(fragments[0].spans, set())
+        self.assertEqual(fragments[1].spans, {span_1})
+        self.assertEqual(fragments[2].spans, set())
+        self.assertEqual(fragments[3].spans, {span_2})
+        self.assertEqual(fragments[4].spans, set())
