@@ -1,13 +1,13 @@
 import abc
-import bisect
+from itertools import islice
 import os
 import pathlib
 
 import attr
 import pygments
 import pygments.lexers
-
 from sortedcontainers import SortedList
+
 
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -206,18 +206,21 @@ class SpanMatches:
 
 
             # Expand right
-            end_a = tokens_a.bisect_key_left(span_a.end)
-            end_b = tokens_b.bisect_key_left(span_b.end)
+            end_a = tokens_a.bisect_key_right(span_a.end) - 1
+            end_b = tokens_b.bisect_key_right(span_b.end) - 1
             right_diff = 0
             for token_a, token_b in zip(tokens_a[end_a:], tokens_b[end_b:]):
                 if token_a != token_b:
                     break
                 right_diff += 1
+            right_diff -= 1
 
+            span_a = Span(span_a.file, tokens_a[start_a-left_diff].start, tokens_a[end_a+right_diff].end)
+            span_b = Span(span_b.file, tokens_b[start_b-left_diff].start, tokens_b[end_b+right_diff].end)
             # Add new spans
-            expanded_span_pairs.add(
-                    (Span(span_a.file, tokens_a[start_a-left_diff].start, tokens_a[end_a+right_diff].start),
-                     Span(span_b.file, tokens_b[start_b-left_diff].start, tokens_b[end_b+right_diff].start)))
+            expanded_span_pairs.add((span_a, span_b))
+
+
 
 
         self._matches = list(expanded_span_pairs)
