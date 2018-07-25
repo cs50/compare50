@@ -1,10 +1,13 @@
 import abc
+import bisect
 import os
 import pathlib
 
 import attr
 import pygments
 import pygments.lexers
+
+from sortedcontainers import SortedList
 
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -128,14 +131,14 @@ class Span:
 
     file - the ID of the File containing the span
     start - the character index of the first character in the span
-    stop - the character index one past the end of the span
+    end - the character index one past the end of the span
     """
     file = attr.ib()
     start = attr.ib()
-    stop = attr.ib()
+    end = attr.ib()
 
     def __repr__(self):
-        return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.stop)
+        return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.end)
 
 
 @attr.s(slots=True, frozen=True, hash=True)
@@ -177,8 +180,9 @@ class SpanMatches:
 
         expanded_span_pairs = set()
 
-        file_a = self.file_a.read()
-        file_b = self.file_b.read()
+        tokens_a = SortedList(self.file_a.tokens(), key=lambda tok: tok.start)
+        tokens_b = SortedList(self.file_b.tokens(), key=lambda tok: tok.start)
+
 
         for span_a, span_b in self._matches:
             # index_a = start_to_index_a[span_a.start]
@@ -192,28 +196,29 @@ class SpanMatches:
             #        pass
 
             # Expand left
-            left_diff = 1
-            try:
-                while file_a[span_a.start - left_diff] == file_b[span_b.start - left_diff]:
-                    left_diff += 1
-            except IndexError:
-                pass
-            left_diff -= 1
+            start_a = tokens_a.bisect_key_right(span_a.start) - 1
+            start_b = tokens_b.bisect_key_right(span_b.start) - 1
+            left_diff = 0
+            for token_a, token_b in zip(tokens_a[start_a-1::-1], tokens_b[start_b-1::-1]):
+                if token_a != token_b:
+                    break
+                left_diff += 1
 
-            right_diff = 1
+
             # Expand right
-            try:
-                while file_a[span_a.stop + right_diff] == file_b[span_b.stop + right_diff]:
-                    right_diff += 1
-            except IndexError:
-                pass
-            right_diff -= 1
+            end_a = tokens_a.bisect_key_left(span_a.end)
+            end_b = tokens_b.bisect_key_left(span_b.end)
+            right_diff = 0
+            for token_a, token_b in zip(tokens_a[end_a:], tokens_b[end_b:]):
+                if token_a != token_b:
+                    break
+                right_diff += 1
 
             # Add new spans
             expanded_span_pairs.add(
-                (Span(span_a.file, span_a.start - left_diff, span_a.stop + right_diff),
-                 Span(span_b.file, span_b.start - left_diff, span_b.stop + right_diff))
-            )
+                    (Span(span_a.file, tokens_a[start_a-left_diff].start, tokens_a[end_a+right_diff].start),
+                     Span(span_b.file, tokens_b[start_b-left_diff].start, tokens_b[end_b+right_diff].start)))
+
 
         self._matches = list(expanded_span_pairs)
 
@@ -261,18 +266,18 @@ class Group:
         return {span.file for span in self.spans if span.file.submission == self.sub_b}
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, cmp=True)
 class Token:
     """A result of the lexical analysis of a file. Preprocessors operate
     on Token streams.
 
     start - the character index of the beginning of the token
-    stop - the character index one past the end of the token
+    end - the character index one past the end of the token
     type - the Pygments token type
     val - the string contents of the token
     """
-    start = attr.ib()
-    end = attr.ib()
+    start = attr.ib(cmp=False)
+    end = attr.ib(cmp=False)
     type = attr.ib()
     val = attr.ib()
 
