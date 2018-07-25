@@ -123,6 +123,17 @@ class TestSubmissions(TestCase):
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].path.name, "foo")
 
+    def test_single_file_submission(self):
+        preprocessor = lambda tokens : tokens
+        os.mkdir("foo")
+        with open("foo/bar.py", "w") as f:
+            pass
+
+        subs = main.submissions("foo/bar.py", preprocessor)
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(len(list(subs[0].files())), 1)
+        self.assertEqual(str(list(subs[0].files())[0].name), "bar.py")
+
 
 class TestFiles(TestCase):
     pass

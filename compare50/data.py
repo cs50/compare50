@@ -48,6 +48,7 @@ class Submission:
         if self.file_paths:
             for file_path in self.file_paths:
                 yield File(file_path, self)
+            return
 
         for root, dirs, files in os.walk(str(self.path)):
             for f in files:
