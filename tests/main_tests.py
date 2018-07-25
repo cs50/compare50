@@ -73,12 +73,8 @@ class TestSubmissions(TestCase):
     def test_no_submissions(self):
         preprocessor = lambda tokens : tokens
         os.mkdir("foo")
-        with main.submissions("foo", preprocessor) as subs:
-            self.assertEqual(subs, [])
-
-        zipdir("bar.zip", "foo")
-        with main.submissions("bar.zip", preprocessor) as subs:
-            self.assertEqual(subs, [])
+        subs = main.submissions("foo", preprocessor)
+        self.assertEqual(subs, [])
 
     def test_one_submission(self):
         preprocessor = lambda tokens : tokens
@@ -87,15 +83,15 @@ class TestSubmissions(TestCase):
         with open("foo/bar/baz.txt", "w") as f:
             pass
 
-        with main.submissions("foo", preprocessor) as subs:
-            self.assertEqual(len(subs), 1)
-            self.assertEqual(subs[0].path.name, "bar")
+        subs = main.submissions("foo", preprocessor)
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(subs[0].path.name, "bar")
 
         os.chdir("foo")
         zipdir("baz.zip", "bar")
-        with main.submissions("baz.zip", preprocessor) as subs:
-            self.assertEqual(len(subs), 1)
-            self.assertEqual(subs[0].path.name, "bar")
+        subs = main.submissions("baz.zip", preprocessor)
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(subs[0].path.name, "foo")
 
     def test_preprocessor_is_passed(self):
         preprocessor = lambda tokens: list(tokens) + ["foo"]
@@ -104,10 +100,10 @@ class TestSubmissions(TestCase):
         with open("foo/bar/baz.txt", "w") as f:
             pass
 
-        with main.submissions("foo", preprocessor) as subs:
-            self.assertEqual(subs[0].preprocessor(""), ["foo"])
+        subs = main.submissions("foo", preprocessor)
+        self.assertEqual(subs[0].preprocessor(""), ["foo"])
 
-    def test_ignores_files(self):
+    def test_includes_files(self):
         preprocessor = lambda tokens : tokens
         os.mkdir("foo")
         os.mkdir("foo/bar")
@@ -117,15 +113,15 @@ class TestSubmissions(TestCase):
         with open("foo/qux.txt", "w") as f:
             pass
 
-        with main.submissions("foo", preprocessor) as subs:
-            self.assertEqual(len(subs), 1)
-            self.assertEqual(subs[0].path.name, "bar")
+        subs = main.submissions("foo", preprocessor)
+        self.assertEqual(len(subs), 2)
+        self.assertEqual(set(sub.path.name for sub in subs), {"bar", "foo"})
 
         os.chdir("foo")
         zipdir("baz.zip", "bar")
-        with main.submissions("baz.zip", preprocessor) as subs:
-            self.assertEqual(len(subs), 1)
-            self.assertEqual(subs[0].path.name, "bar")
+        subs = main.submissions("baz.zip", preprocessor)
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(subs[0].path.name, "foo")
 
 
 class TestFiles(TestCase):

@@ -1,6 +1,6 @@
 from .data import _IdStore
 import pygments
-from pygments.formatters import HtmlFormatter
+from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
 
@@ -85,12 +85,13 @@ def render(submission_groups):
 
 
 def render_file(file, fragments, span_to_group):
+    formatter = TerminalFormatter(linenos=True, bg="dark")
     print("*" * 80)
     print(file.name)
     print("*" * 80)
     for fragment in fragments:
         groups = list({span_to_group[span] for span in fragment.spans})
-        print(fragment.content)
+        print(pygments.highlight(fragment.content, file.lexer(), formatter))
         print("Spans:", fragment.spans)
         print("Number of groups:", len(groups))
         print("Matches with:", [group.spans for group in groups])
