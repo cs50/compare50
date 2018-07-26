@@ -25,7 +25,7 @@ class TestFragmentize(TestCase):
 
         self.file = list(data.Submission.from_file_path(pathlib.Path(self.filename), lambda ts: ts).files())[0]
 
-    def test_fragmentize_single_span(self):
+    def test_single_span(self):
         span = data.Span(self.file, 3, 5)
         fragments = renderer.fragmentize(self.file, [span])
         self.assertEqual([f.content for f in fragments], ["012", "34", "56789"])
@@ -33,7 +33,7 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[1].spans, {span})
         self.assertEqual(fragments[2].spans, set())
 
-    def test_fragmentize_multiple_spans(self):
+    def test_multiple_spans(self):
         span_1 = data.Span(self.file, 3, 5)
         span_2 = data.Span(self.file, 7, 9)
         fragments = renderer.fragmentize(self.file, [span_1, span_2])
@@ -44,7 +44,7 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[3].spans, {span_2})
         self.assertEqual(fragments[4].spans, set())
 
-    def test_fragmentize_overlapping_spans(self):
+    def test_overlapping_spans(self):
         span_1 = data.Span(self.file, 3, 7)
         span_2 = data.Span(self.file, 5, 9)
         fragments = renderer.fragmentize(self.file, [span_1, span_2])
@@ -55,7 +55,7 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[3].spans, {span_2})
         self.assertEqual(fragments[4].spans, set())
 
-    def test_fragmentize_completely_overlapping_spans(self):
+    def test_completely_overlapping_spans(self):
         span_1 = data.Span(self.file, 1, 9)
         span_2 = data.Span(self.file, 4, 6)
         fragments = renderer.fragmentize(self.file, [span_1, span_2])
@@ -66,16 +66,32 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[3].spans, {span_1})
         self.assertEqual(fragments[4].spans, set())
 
-    def test_fragmentize_from_start(self):
+    def test_from_start(self):
         span = data.Span(self.file, 0, 5)
         fragments = renderer.fragmentize(self.file, [span])
         self.assertEqual([f.content for f in fragments], ["01234", "56789"])
         self.assertEqual(fragments[0].spans, {span})
         self.assertEqual(fragments[1].spans, set())
 
-    def test_fragmentize_till_end(self):
+    def test_till_end(self):
         span = data.Span(self.file, 5, len(self.content))
         fragments = renderer.fragmentize(self.file, [span])
         self.assertEqual([f.content for f in fragments], ["01234", "56789"])
         self.assertEqual(fragments[0].spans, set())
         self.assertEqual(fragments[1].spans, {span})
+
+    def test_from_start_till_end(self):
+        span = data.Span(self.file, 0, len(self.content))
+        fragments = renderer.fragmentize(self.file, [span])
+        self.assertEqual([f.content for f in fragments], ["0123456789"])
+        self.assertEqual(fragments[0].spans, {span})
+
+    def test_touching_spans(self):
+        span_1 = data.Span(self.file, 3, 5)
+        span_2 = data.Span(self.file, 5, 7)
+        fragments = renderer.fragmentize(self.file, [span_1, span_2])
+        self.assertEqual([f.content for f in fragments], ["012", "34", "56", "789"])
+        self.assertEqual(fragments[0].spans, set())
+        self.assertEqual(fragments[1].spans, {span_1})
+        self.assertEqual(fragments[2].spans, {span_2})
+        self.assertEqual(fragments[3].spans, set())

@@ -6,45 +6,46 @@ import attr
 
 class _FragmentSlicer:
     def __init__(self):
-        self._indices = set()
+        self._slicing_marks = set()
         self._start_to_spans = collections.defaultdict(set)
         self._end_to_spans = collections.defaultdict(set)
 
     def slice(self, file):
-        # A slice cuts both ways, so add an extra expected fragment starting at 0
-        if 0 in self._indices:
-            self._indices.remove(0)
+        # Slicing at 0 has no effect, so remove
+        if 0 in self._slicing_marks:
+            self._slicing_marks.remove(0)
 
-        indices = sorted(self._indices)
+        # Perform slicing in order
+        slicing_marks = sorted(self._slicing_marks)
 
         # Create list of spans at every fragment
         spans = [self._start_to_spans[0] - self._end_to_spans[0]]
-        for index in indices:
+        for mark in slicing_marks:
             cur = set(spans[-1])
-            cur |= self._start_to_spans[index]
-            cur -= self._end_to_spans[index]
+            cur |= self._start_to_spans[mark]
+            cur -= self._end_to_spans[mark]
             spans.append(cur)
 
         # Get file content
         with open(file.path) as f:
             content = f.read()
 
-        # Make sure that last index is the last index in file
-        if indices[-1] != len(content):
-            indices.append(len(content))
+        # Make sure that last slice ends at the last index in file
+        if slicing_marks[-1] < len(content):
+            slicing_marks.append(len(content))
 
         # Split fragments from file
         fragments = []
-        start_index = 0
-        for spans, index in zip(spans, indices):
-            fragments.append(Fragment(content[start_index:index], spans))
-            start_index = index
+        start_mark = 0
+        for fragment_spans, mark in zip(spans, slicing_marks):
+            fragments.append(Fragment(content[start_mark:mark], fragment_spans))
+            start_mark = mark
 
         return fragments
 
     def add_span(self, span):
-        self._indices.add(span.start)
-        self._indices.add(span.end)
+        self._slicing_marks.add(span.start)
+        self._slicing_marks.add(span.end)
         self._start_to_spans[span.start].add(span)
         self._end_to_spans[span.end].add(span)
 
