@@ -197,32 +197,33 @@ class SpanMatches:
             #        pass
 
             # Expand left
-            start_a = tokens_a.bisect_key_right(span_a.start) - 1
-            start_b = tokens_b.bisect_key_right(span_b.start) - 1
-            left_diff = 0
-            for token_a, token_b in zip(tokens_a[start_a-1::-1], tokens_b[start_b-1::-1]):
-                if token_a != token_b:
-                    break
-                left_diff += 1
-
+            start_a = tokens_a.bisect_key_right(span_a.start) - 2
+            start_b = tokens_b.bisect_key_right(span_b.start) - 2
+            try:
+                while tokens_a[start_a] == tokens_b[start_b]:
+                    start_a -= 1
+                    start_b -= 1
+            except IndexError:
+                pass
+            start_a += 1
+            start_b += 1
 
             # Expand right
-            end_a = tokens_a.bisect_key_right(span_a.end) - 1
-            end_b = tokens_b.bisect_key_right(span_b.end) - 1
-            right_diff = 0
-            for token_a, token_b in zip(tokens_a[end_a:], tokens_b[end_b:]):
-                if token_a != token_b:
-                    break
-                right_diff += 1
-            right_diff -= 1
+            end_a = tokens_a.bisect_key_right(span_a.end) - 2
+            end_b = tokens_b.bisect_key_right(span_b.end) - 2
+            try:
+                while tokens_a[end_a] == tokens_b[end_b]:
+                    end_a += 1
+                    end_b += 1
+            except IndexError:
+                pass
+            end_a -= 1
+            end_b -= 1
 
-            span_a = Span(span_a.file, tokens_a[start_a-left_diff].start, tokens_a[end_a+right_diff].end)
-            span_b = Span(span_b.file, tokens_b[start_b-left_diff].start, tokens_b[end_b+right_diff].end)
+            span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
+            span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
             # Add new spans
             expanded_span_pairs.add((span_a, span_b))
-
-
-
 
         self._matches = list(expanded_span_pairs)
 
