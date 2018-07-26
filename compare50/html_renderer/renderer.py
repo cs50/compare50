@@ -22,9 +22,11 @@ def render(submission_groups, dest="html"):
 
     # Copy compare50.js
     shutil.copyfile(src / "static/js/compare50.js", dest / "compare50.js")
+    shutil.copyfile(src / "static/style.css", dest / "style.css")
 
     formatter = HtmlFormatter(linenos=True)
-    with open(dest / "style.css", "w") as f:
+
+    with open(dest / "style.css", "a") as f:
         f.write(formatter.get_style_defs('.highlight'))
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
