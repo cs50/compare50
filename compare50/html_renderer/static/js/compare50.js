@@ -10,9 +10,7 @@ function init_maps() {
 
   // Create fragment_to_spans
   fragment_to_spans = {};
-  let fragments = new Set();
-  span_to_fragments.forEach(frags => frags.forEach(frag => fragments.add(frag)));
-  fragments.forEach((frag) => fragment_to_spans[frag] = []);
+  span_to_fragments.forEach(frags => frags.forEach(frag => fragment_to_spans[frag] = []));
   span_to_fragments.forEach((frags, span) => {
     frags.forEach(frag => fragment_to_spans[frag].push(span));
   });
