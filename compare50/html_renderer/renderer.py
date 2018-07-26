@@ -55,7 +55,7 @@ def render(submission_groups, dest="html"):
                     frag_id = f"frag{frag_ids.id(fragment)}"
                     frag_list.append((frag_id, pygments.highlight(fragment.content, file.lexer(), formatter)))
                     for span in fragment.spans:
-                        span_to_fragments[span_ids.id(span)] = frag_id
+                        span_to_fragments[span_ids.id(span)].append(frag_id)
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
 

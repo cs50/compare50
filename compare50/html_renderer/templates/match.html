@@ -4,10 +4,10 @@
     </head>
     <body>
         <div class="container">
-            {% for (sub_name, files), side in (sub_a, "left"), (sub_a, "right") %}
+            {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
                 <div class="split {{side}}">
-                        <h2>{{sub_name}}</h2>
-                        {% for file, frags in files %}
+                        <h2>{{sub[0]}}</h2>
+                        {% for file, frags in sub[1] %}
                             <div class="submission-file">
                                 <h4>{{file}}</h4>
                                 {% for id, contents in frags %}
