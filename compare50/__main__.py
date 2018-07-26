@@ -40,7 +40,7 @@ def get(generator, paths, preprocessor):
             path = pathlib.Path(path)
             if is_archive(path):
                 temp_dirs.append(tempfile.mkdtemp())
-                content.extend(generator(unpack(path, temp_dirs[-1]), preprocessor))
+                unpack(path, temp_dirs[-1])
                 path = pathlib.Path(temp_dirs[-1])
             content.extend(generator(path, preprocessor))
 
@@ -70,6 +70,14 @@ def unpack(path, dest):
 
 def is_archive(path):
     return path.suffixes in ARCHIVES
+
+
+def individual_submissions(path, preprocessor):
+    path = pathlib.Path(path).absolute()
+    if path.is_file():
+        return (data.Submission.from_file_path(path, preprocessor),)
+
+    return (data.Submission(path, preprocessor),)
 
 
 def submissions(path, preprocessor):
@@ -150,7 +158,7 @@ def main():
     parser = argparse.ArgumentParser(prog="compare50")
     parser.add_argument("submissions",
                         nargs="+",
-                        help="Paths to directories or compressed files containing submissions at the top level.")
+                        help="Path to directory or compressed file containing submissions. If more than one argument is passed compare50 treats them as individual submissions.")
     parser.add_argument("-a", "--archive",
                         action="append",
                         default=[],
@@ -191,8 +199,10 @@ def main():
     comparator = pass_.comparator
     preprocessor = Preprocessor(pass_.preprocessors)
 
+    sub_gen = submissions if len(args.submissions) == 1 else individual_submissions
+
     # Collect all submissions, archive submissions and distro files
-    with get(submissions, args.submissions, preprocessor) as subs,\
+    with get(sub_gen, args.submissions, preprocessor) as subs,\
          get(submissions, args.archive, preprocessor) as archive_subs,\
          get(files, args.distro, preprocessor) as ignored_files:
 
