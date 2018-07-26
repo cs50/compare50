@@ -4,7 +4,7 @@ from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
 
-class Fragments:
+class FragmentSlicer:
     def __init__(self, file):
         with open(file.path) as f:
             self._content = f.read()
@@ -12,11 +12,17 @@ class Fragments:
         self._start_to_spans = collections.defaultdict(set)
         self._end_to_spans = collections.defaultdict(set)
 
-    def create(self):
-        indices = sorted(list(self._indices))
+    def slice(self):
+        cut_indices = sorted(list(self._indices))
+
+        if 0 not in self._indices:
+            indices = [0] + cut_indices
+        else:
+            indices = cut_indices
+
         spans_at = []
         prev = set()
-        for index in [0] + indices:
+        for index in indices:
             cur = set(prev)
             cur |= self._start_to_spans[index]
             cur -= self._end_to_spans[index]
@@ -42,7 +48,14 @@ class Fragment:
     spans = attr.ib(default=attr.Factory(set))
 
     def split(self, index, *indices):
-        indices = [index] + list(indices) + [len(self.content)]
+        if index == 0:
+            indices = list(indices)
+        else:
+            indices = [index] + list(indices)
+
+        if indices[-1] != len(self.content):
+            indices.append(len(self.content))
+
         fragments = []
         start_index = 0
         for index in indices:
@@ -82,10 +95,10 @@ def render_file(file, fragments, span_to_group):
 
 
 def fragmentize(file, spans):
-    fragments = Fragments(file)
+    slicer = FragmentSlicer(file)
     for span in spans:
-        fragments.add_span(span)
-    return fragments.create()
+        slicer.add_span(span)
+    return slicer.slice()
 
 
 

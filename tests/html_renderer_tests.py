@@ -65,3 +65,17 @@ class TestFragmentize(TestCase):
         self.assertEqual(fragments[2].spans, {span_1, span_2})
         self.assertEqual(fragments[3].spans, {span_1})
         self.assertEqual(fragments[4].spans, set())
+
+    def test_fragmentize_from_start(self):
+        span = data.Span(self.file, 0, 5)
+        fragments = renderer.fragmentize(self.file, [span])
+        self.assertEqual([f.content for f in fragments], ["01234", "56789"])
+        self.assertEqual(fragments[0].spans, {span})
+        self.assertEqual(fragments[1].spans, set())
+
+    def test_fragmentize_till_end(self):
+        span = data.Span(self.file, 5, len(self.content))
+        fragments = renderer.fragmentize(self.file, [span])
+        self.assertEqual([f.content for f in fragments], ["01234", "56789"])
+        self.assertEqual(fragments[0].spans, set())
+        self.assertEqual(fragments[1].spans, {span})
