@@ -4,34 +4,41 @@ from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
 
-class FragmentSlicer:
-    def __init__(self, file):
-        with open(file.path) as f:
-            self._content = f.read()
+class _FragmentSlicer:
+    def __init__(self):
         self._indices = set()
         self._start_to_spans = collections.defaultdict(set)
         self._end_to_spans = collections.defaultdict(set)
 
-    def slice(self):
-        cut_indices = sorted(list(self._indices))
+    def slice(self, file):
+        # A slice cuts both ways, so add an extra expected fragment starting at 0
+        if 0 in self._indices:
+            self._indices.remove(0)
 
-        if 0 not in self._indices:
-            indices = [0] + cut_indices
-        else:
-            indices = cut_indices
+        indices = sorted(self._indices)
 
-        spans_at = []
-        prev = set()
+        # Create list of spans at every fragment
+        spans = [self._start_to_spans[0] - self._end_to_spans[0]]
         for index in indices:
-            cur = set(prev)
+            cur = set(spans[-1])
             cur |= self._start_to_spans[index]
             cur -= self._end_to_spans[index]
-            spans_at.append(cur)
-            prev = cur
+            spans.append(cur)
 
-        fragments = Fragment(self._content).split(*indices)
-        for i, fragment in enumerate(fragments):
-            fragment.spans = spans_at[i]
+        # Get file content
+        with open(file.path) as f:
+            content = f.read()
+
+        # Make sure that last index is the last index in file
+        if indices[-1] != len(content):
+            indices.append(len(content))
+
+        # Split fragments from file
+        fragments = []
+        start_index = 0
+        for spans, index in zip(spans, indices):
+            fragments.append(Fragment(content[start_index:index], spans))
+            start_index = index
 
         return fragments
 
@@ -42,27 +49,10 @@ class FragmentSlicer:
         self._end_to_spans[span.end].add(span)
 
 
-@attr.s(slots=True)
+@attr.s(slots=True, frozen=True)
 class Fragment:
     content = attr.ib()
     spans = attr.ib(default=attr.Factory(set))
-
-    def split(self, index, *indices):
-        if index == 0:
-            indices = list(indices)
-        else:
-            indices = [index] + list(indices)
-
-        if indices[-1] != len(self.content):
-            indices.append(len(self.content))
-
-        fragments = []
-        start_index = 0
-        for index in indices:
-            content = self.content[start_index:index]
-            fragments.append(Fragment(content, set(self.spans)))
-            start_index = index
-        return fragments
 
 
 def render(submission_groups):
@@ -95,10 +85,10 @@ def render_file(file, fragments, span_to_group):
 
 
 def fragmentize(file, spans):
-    slicer = FragmentSlicer(file)
+    slicer = _FragmentSlicer()
     for span in spans:
         slicer.add_span(span)
-    return slicer.slice()
+    return slicer.slice(file)
 
 
 
