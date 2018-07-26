@@ -7,50 +7,33 @@ import attr
 class Fragments:
     def __init__(self, file):
         with open(file.path) as f:
-            content = f.read()
-        self._index = [(0, Fragment(content))]
+            self._content = f.read()
+        self._indices = set()
+        self._start_to_spans = collections.defaultdict(set)
+        self._end_to_spans = collections.defaultdict(set)
 
-    @property
-    def content(self):
-        return [fragment for _, fragment in self._index]
+    def create(self):
+        indices = sorted(list(self._indices))
+        spans_at = []
+        prev = set()
+        for index in [0] + indices:
+            cur = set(prev)
+            cur |= self._start_to_spans[index]
+            cur -= self._end_to_spans[index]
+            spans_at.append(cur)
+            prev = cur
+
+        fragments = Fragment(self._content).split(*indices)
+        for i, fragment in enumerate(fragments):
+            fragment.spans = spans_at[i]
+
+        return fragments
 
     def add_span(self, span):
-        index = []
-
-        is_assigning = False
-        for start, fragment in self._index:
-            end = start + len(fragment.content)
-
-            # If span cuts into fragment, split fragment
-            if start <= span.start <= end or start <= span.end <= end:
-
-                # Decide on indices on which to split
-                # Split fragments
-                # Add span to fragment
-                if start <= span.start <= end and start <= span.end <= end:
-                    is_assigning = False
-                    frags = fragment.split(span.start - start, span.end - start)
-                    frags[1].spans.add(span)
-                elif start <= span.start <= end:
-                    is_assigning = True
-                    frags = fragment.split(span.start - start)
-                    frags[1].spans.add(span)
-                elif start <= span.end <= end:
-                    is_assigning = False
-                    frags = fragment.split(span.end - start)
-                    frags[0].spans.add(span)
-
-                # Add new frags to index
-                new_start = start
-                for frag in frags:
-                    index.append((new_start, frag))
-                    new_start += len(frag.content)
-            else:
-                index.append((start, fragment))
-                if is_assigning:
-                    fragment.spans.add(span)
-
-        self._index = index
+        self._indices.add(span.start)
+        self._indices.add(span.end)
+        self._start_to_spans[span.start].add(span)
+        self._end_to_spans[span.end].add(span)
 
 
 @attr.s(slots=True)
@@ -102,7 +85,7 @@ def fragmentize(file, spans):
     fragments = Fragments(file)
     for span in spans:
         fragments.add_span(span)
-    return fragments.content
+    return fragments.create()
 
 
 
