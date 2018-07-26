@@ -12,8 +12,7 @@ class _FragmentSlicer:
 
     def slice(self, file):
         # Slicing at 0 has no effect, so remove
-        if 0 in self._slicing_marks:
-            self._slicing_marks.remove(0)
+        self._slicing_marks.discard(0)
 
         # Perform slicing in order
         slicing_marks = sorted(self._slicing_marks)
