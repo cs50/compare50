@@ -214,7 +214,7 @@ def main():
         # Get the matching spans, group them per submission
         groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        # html_renderer.render(groups)
+        html_renderer.render(groups)
         # TODO api.as_json(groups)
 
 # PROFILE = [ main

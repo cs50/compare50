@@ -1,8 +1,82 @@
-from .data import _IdStore
+from ..data import _IdStore
 import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
+import pathlib
+from jinja2 import Template
+import json
+
+
+@attr.s(slots=True, frozen=True, hash=True)
+class Fragment:
+    content = attr.ib()
+    spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
+
+
+def render(submission_groups):
+    for sub_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
+        span_to_group = {}
+        file_to_spans = collections.defaultdict(list)
+        spans = []
+
+        for group in groups:
+            for span in group.spans:
+                file_to_spans[span.file].append(span)
+                span_to_group[span] = group
+                spans.append(span)
+
+        fragments = []
+        for file in file_to_spans:
+            fragments.extend(fragmentize(file, file_to_spans[file]))
+
+        # Assign an id to spans
+        span_to_id = {}
+        for id, span in enumerate(spans):
+            span_to_id[span] = id
+
+        # Get mapping from span to fragments
+        span_to_fragments = collections.defaultdict(list)
+        for frag_id, fragment in enumerate(fragments):
+            frag_id = f"frag{frag_id}"
+            for span in fragment.spans:
+                span_to_fragments[span_to_id[span]].append(frag_id)
+
+        # Get mapping from group to spans
+        group_to_spans = collections.defaultdict(list)
+        for group_id, group in enumerate(groups):
+            for span in group.spans:
+                group_to_spans[group_id].append(span_to_id[span])
+
+        # Get template
+        with open(pathlib.Path(__file__).absolute().parent / "templates/template.html") as f:
+            content = f.read()
+        template = Template(content)
+
+        # Render
+        print(template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans))
+
+
+def render_file_terminal(file, fragments, span_to_group):
+    formatter = TerminalFormatter(linenos=True, bg="dark")
+    print("*" * 80)
+    print(file.name)
+    print("*" * 80)
+    for fragment in fragments:
+        groups = list({span_to_group[span] for span in fragment.spans})
+        print(pygments.highlight(fragment.content, file.lexer(), formatter))
+        print("Spans:", fragment.spans)
+        print("Number of groups:", len(groups))
+        print("Matches with:", [group.spans for group in groups])
+        print("=" * 80)
+
+
+def fragmentize(file, spans):
+    slicer = _FragmentSlicer()
+    for span in spans:
+        slicer.add_span(span)
+    return slicer.slice(file)
+
 
 class _FragmentSlicer:
     def __init__(self):
@@ -47,50 +121,6 @@ class _FragmentSlicer:
         self._slicing_marks.add(span.end)
         self._start_to_spans[span.start].add(span)
         self._end_to_spans[span.end].add(span)
-
-
-@attr.s(slots=True, frozen=True)
-class Fragment:
-    content = attr.ib()
-    spans = attr.ib(default=attr.Factory(set))
-
-
-def render(submission_groups):
-    for sub_a, sub_b, groups in submission_groups:
-        span_to_group = {}
-        file_to_spans = collections.defaultdict(list)
-
-        for group in groups:
-            for span in group.spans:
-                file_to_spans[span.file].append(span)
-                span_to_group[span] = group
-
-        for file in file_to_spans:
-            fragments = fragmentize(file, file_to_spans[file])
-            render_file(file, fragments, span_to_group)
-
-
-def render_file(file, fragments, span_to_group):
-    formatter = TerminalFormatter(linenos=True, bg="dark")
-    print("*" * 80)
-    print(file.name)
-    print("*" * 80)
-    for fragment in fragments:
-        groups = list({span_to_group[span] for span in fragment.spans})
-        print(pygments.highlight(fragment.content, file.lexer(), formatter))
-        print("Spans:", fragment.spans)
-        print("Number of groups:", len(groups))
-        print("Matches with:", [group.spans for group in groups])
-        print("=" * 80)
-
-
-def fragmentize(file, spans):
-    slicer = _FragmentSlicer()
-    for span in spans:
-        slicer.add_span(span)
-    return slicer.slice(file)
-
-
 
 
 
