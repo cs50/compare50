@@ -1,0 +1,28 @@
+<html>
+    <head>
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="container">
+            {% for (sub_name, files), side in (sub_a, "left"), (sub_a, "right") %}
+                <div class="split {{side}}">
+                        <h2>{{sub_name}}</h2>
+                        {% for file, frags in files %}
+                            <div class="submission-file">
+                                <h4>{{file}}</h4>
+                                {% for id, contents in frags %}
+                                    <span class="fragment" id={{id}}>
+                                        {{contents}}
+                                    </span>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+            {% endfor %}
+        </div>
+        <script>
+            var span_to_fragments = {{span_to_fragments|tojson|safe}}
+            var group_to_fragments = {{group_to_spans|tojson|safe}}
+        </script>
+    </body>
+</html>

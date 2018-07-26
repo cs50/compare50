@@ -14,47 +14,50 @@ class Fragment:
     spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
 
-def render(submission_groups):
+def render(submission_groups, dest="html"):
+    dest = pathlib.Path(dest)
+    dest.mkdir(exist_ok=True)
+
+    formatter = HtmlFormatter(linenos=True)
+    # with open(dest / "style.css", "w") as f:
+        # f.write(formatter.get_style_defs('.highlight'))
+
     for sub_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
+        frag_ids = _IdStore()
+        span_ids = _IdStore()
+        group_ids = _IdStore()
+
         span_to_group = {}
         file_to_spans = collections.defaultdict(list)
-        spans = []
+        group_to_spans = collections.defaultdict(list)
+        span_to_fragments = collections.defaultdict(list)
+
 
         for group in groups:
+            group_id = group_ids.id(group)
+            group_to_spans[group_id] = [span_ids.id(span) for span in group.spans]
             for span in group.spans:
                 file_to_spans[span.file].append(span)
-                span_to_group[span] = group
-                spans.append(span)
 
-        fragments = []
-        for file in file_to_spans:
-            fragments.extend(fragmentize(file, file_to_spans[file]))
-
-        # Assign an id to spans
-        span_to_id = {}
-        for id, span in enumerate(spans):
-            span_to_id[span] = id
-
-        # Get mapping from span to fragments
-        span_to_fragments = collections.defaultdict(list)
-        for frag_id, fragment in enumerate(fragments):
-            frag_id = f"frag{frag_id}"
-            for span in fragment.spans:
-                span_to_fragments[span_to_id[span]].append(frag_id)
-
-        # Get mapping from group to spans
-        group_to_spans = collections.defaultdict(list)
-        for group_id, group in enumerate(groups):
-            for span in group.spans:
-                group_to_spans[group_id].append(span_to_id[span])
+        submissions = []
+        for submission in (sub_a, sub_b):
+            file_list = []
+            for file in submission.files():
+                frag_list = []
+                for fragment in fragmentize(file, file_to_spans[file]):
+                    frag_id = f"frag{frag_ids.id(fragment)}"
+                    frag_list.append((frag_id, pygments.highlight(fragment.content, file.lexer(), formatter)))
+                    for span in fragment.spans:
+                        span_to_fragments[span_ids.id(span)] = frag_id
+                file_list.append((str(file.name), frag_list))
+            submissions.append((str(submission.path), file_list))
 
         # Get template
-        with open(pathlib.Path(__file__).absolute().parent / "templates/template.html") as f:
+        with open(pathlib.Path(__file__).absolute().parent / "templates/match.html") as f:
             content = f.read()
         template = Template(content)
-
         # Render
-        print(template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans))
+        print(template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans, sub_a=submissions[0], sub_b=submissions[1]))
 
 
 def render_file_terminal(file, fragments, span_to_group):
