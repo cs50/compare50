@@ -3,6 +3,7 @@ import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
+import shutil
 import pathlib
 from jinja2 import Template
 import json
@@ -15,14 +16,18 @@ class Fragment:
 
 
 def render(submission_groups, dest="html"):
+    src = pathlib.Path(__file__).absolute().parent
     dest = pathlib.Path(dest)
     dest.mkdir(exist_ok=True)
 
-    formatter = HtmlFormatter(linenos=True)
-    # with open(dest / "style.css", "w") as f:
-        # f.write(formatter.get_style_defs('.highlight'))
+    # Copy compare50.js
+    shutil.copyfile(src / "static/js/compare50.js", dest / "compare50.js")
 
-    for sub_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
+    formatter = HtmlFormatter(linenos=True)
+    with open(dest / "style.css", "w") as f:
+        f.write(formatter.get_style_defs('.highlight'))
+
+    for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
         frag_ids = _IdStore()
         span_ids = _IdStore()
         group_ids = _IdStore()
@@ -57,8 +62,10 @@ def render(submission_groups, dest="html"):
             content = f.read()
         template = Template(content)
         # Render
-        print(template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans, sub_a=submissions[0], sub_b=submissions[1]))
+        rendered_html = template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans, sub_a=submissions[0], sub_b=submissions[1])
 
+        with open(dest / f"match_{match_id}.html", "w") as f:
+            f.write(rendered_html)
 
 def render_file_terminal(file, fragments, span_to_group):
     formatter = TerminalFormatter(linenos=True, bg="dark")
