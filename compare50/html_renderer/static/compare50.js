@@ -1,70 +1,78 @@
 var span_to_group = null;
 var fragment_to_spans = null;
 
-function Group(id) {
-  this.id = id;
-  this.spans = [];
-  return this;
-}
-Group.prototype.init = function(fragments, spans, groups) {
-  this.spans = [];
-  let obj = this;
-  group_to_spans[this.id].forEach(span => obj.spans.push(spans[span]));
-}
-
-function Span(id) {
-  this.id = id;
-  this.fragments = [];
-  this.group = null;
-  return this;
-}
-Span.prototype.init = function(fragments, spans, groups) {
-  this.fragments = [];
-  let obj = this;
-  span_to_fragments[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
-  this.group = groups[span_to_group[this.id]];
-}
-
-function Fragment(id) {
-  this.id = id;
-  this.dom_element = document.getElementById(id);
-  this.fragments = [];
-  this.span = null;
-  this.group = null;
-  this.spans = [];
-  return this;
-}
-Fragment.prototype.init = function(fragments, spans, groups) {
-  if (fragment_to_spans[this.id] !== undefined) {
+class Group {
+  constructor(id) {
+    this.id = id;
     this.spans = [];
-    this.groups = [];
-    for (span_id of fragment_to_spans[this.id]) {
-      this.spans.push(spans[span_id]);
-      this.groups.push(groups[span_to_group[span_id]]);
-    }
+  }
 
-    // Get closest enclosing span & group
-    this.span = this.spans[0];
-    this.group = this.groups[0];
+  init(fragments, spans, groups) {
+    this.spans = [];
+    let obj = this;
+    group_to_spans[this.id].forEach(span => obj.spans.push(spans[span]));
+  }
+}
 
+class Span {
+  constructor(id) {
+    this.id = id;
     this.fragments = [];
-    for (span_id of group_to_spans[this.group.id]) {
-      for (frag_id of span_to_fragments[span_id]) {
-        this.fragments.push(fragments[frag_id]);
+    this.group = null;
+  }
+
+  init(fragments, spans, groups) {
+    this.fragments = [];
+    let obj = this;
+    span_to_fragments[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
+    this.group = groups[span_to_group[this.id]];
+  }
+}
+
+class Fragment {
+  constructor(id) {
+    this.id = id;
+    this.dom_element = document.getElementById(id);
+    this.fragments = [];
+    this.span = null;
+    this.group = null;
+    this.spans = [];
+    return this;
+  }
+
+  init(fragments, spans, groups) {
+    if (fragment_to_spans[this.id] !== undefined) {
+      this.spans = [];
+      this.groups = [];
+      for (span_id of fragment_to_spans[this.id]) {
+        this.spans.push(spans[span_id]);
+        this.groups.push(groups[span_to_group[span_id]]);
+      }
+
+      // Get closest enclosing span & group
+      this.span = this.spans[0];
+      this.group = this.groups[0];
+
+      this.fragments = [];
+      for (span_id of group_to_spans[this.group.id]) {
+        let fragment_ids = span_to_fragments[span_id];
+        for (let i = 0; i < fragment_ids.length; i++) {
+          this.fragments.push(fragments[fragment_ids[i]]);
+        }
       }
     }
-    console.log(this.id, this.fragments);
   }
-}
-Fragment.prototype.highlight_match = function() {
-  for (frag of this.fragments) {
-    frag.dom_element.classList.add("match");
-  }
-}
-Fragment.prototype.unhighlight = function() {
-  this.dom_element.classList.remove("match");
-}
 
+  highlight_match() {
+    for (frag of this.fragments) {
+      frag.dom_element.classList.add("match");
+    }
+  }
+
+  unhighlight() {
+    this.dom_element.classList.remove("match");
+  }
+}
 
 function init_maps() {
   // Create span_to_group
