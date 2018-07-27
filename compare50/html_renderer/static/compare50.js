@@ -85,8 +85,8 @@ class Fragment {
             do {
                 curtop += obj.offsetTop;
             } while (obj = obj.offsetParent);
-        return [curtop];
         }
+        return curtop;
     }
     function easeInOutQuad(t, b, c, d) {
       t /= d/2;
