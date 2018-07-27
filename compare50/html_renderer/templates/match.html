@@ -21,8 +21,8 @@
             {% endfor %}
         </div>
         <script>
-            var span_to_fragments = {{span_to_fragments|tojson|safe}}
-            var group_to_spans = {{group_to_spans|tojson|safe}}
+            var fragment_to_spans = {{fragment_to_spans|tojson|safe}}
+            var span_to_group = {{span_to_group|tojson|safe}}
         </script>
         <script src="compare50.js"></script>
     </body>

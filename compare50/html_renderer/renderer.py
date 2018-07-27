@@ -36,14 +36,13 @@ def render(submission_groups, dest="html"):
 
         span_to_group = {}
         file_to_spans = collections.defaultdict(list)
-        group_to_spans = collections.defaultdict(list)
-        span_to_fragments = collections.defaultdict(list)
+        fragment_to_spans = {}
 
 
         for group in groups:
             group_id = group_ids.id(group)
-            group_to_spans[group_id] = [span_ids.id(span) for span in group.spans]
             for span in group.spans:
+                span_to_group[span_ids.id(span)] = group_id
                 file_to_spans[span.file].append(span)
 
         submissions = []
@@ -54,8 +53,7 @@ def render(submission_groups, dest="html"):
                 for fragment in fragmentize(file, file_to_spans[file]):
                     frag_id = f"frag{frag_ids.id(fragment)}"
                     frag_list.append((frag_id, fragment.content))
-                    for span in fragment.spans:
-                        span_to_fragments[span_ids.id(span)].append(frag_id)
+                    fragment_to_spans[frag_id] = [span_ids.id(span) for span in fragment.spans]
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
 
@@ -64,7 +62,11 @@ def render(submission_groups, dest="html"):
             content = f.read()
         template = Template(content)
         # Render
-        rendered_html = template.render(span_to_fragments=span_to_fragments, group_to_spans=group_to_spans, sub_a=submissions[0], sub_b=submissions[1])
+
+        rendered_html = template.render(fragment_to_spans=fragment_to_spans,
+                                        span_to_group=span_to_group,
+                                        sub_a=submissions[0],
+                                        sub_b=submissions[1])
 
         with open(dest / f"match_{match_id}.html", "w") as f:
             f.write(rendered_html)
@@ -123,7 +125,7 @@ class _FragmentSlicer:
         fragments = []
         start_mark = 0
         for fragment_spans, mark in zip(spans, slicing_marks):
-            fragments.append(Fragment(content[start_mark:mark], fragment_spans))
+            fragments.append(Fragment(content[start_mark:mark], sorted(fragment_spans, key=lambda span: span.start, reverse=True)))
             start_mark = mark
 
         return fragments
