@@ -48,7 +48,7 @@ Fragment.prototype.init = function(fragments, spans, groups) {
     this.group = this.groups[0];
 
     this.fragments = [];
-    for (span_id of span_to_group[this.group.id]) {
+    for (span_id of group_to_spans[this.group.id]) {
       for (frag_id of span_to_fragments[span_id]) {
         this.fragments.push(fragments[frag_id]);
       }
