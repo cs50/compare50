@@ -56,7 +56,6 @@ class Fragment {
 
     this.matching_fragments = [];
     for (let span_id of GROUP_TO_SPANS[this.group.id]) {
-      let fragment_ids = SPAN_TO_FRAGMENTS[span_id];
       for (let frag_id of SPAN_TO_FRAGMENTS[span_id]) {
           this.matching_fragments.push(fragments[frag_id])
       }

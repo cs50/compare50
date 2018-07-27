@@ -2,30 +2,39 @@
     <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
         <link rel="stylesheet" type="text/css" href="compare50.css">
     </head>
     <body>
-        <div class="container">
-            {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
-                <div class="split {{side}}" id="{{side}}">
-                        <h2>{{sub[0]}}</h2>
-                        {% for file, frags in sub[1] %}
-                            <div class="submission-file">
-                                <h4>{{file}}</h4>
-                                <pre>
-                                    {%- for id, contents in frags -%}
-                                        <code class="fragment" id={{id}}>{{contents}}</code>
-                                    {%- endfor -%}
-                                </pre>
-                            </div>
-                        {% endfor %}
-                    </div>
-            {% endfor %}
-        </div>
-        <script>
-            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
-            var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
-        </script>
-        <script src="compare50.js"></script>
+      <div class="container-fluid h-100">
+          <div class="row h-3" id="sub_names">
+              {% for sub in sub_a, sub_b %}
+                  <div class="col-sm-6 col-2 sub_name">
+                      <b>{{sub[0]}}</b>
+                  </div>
+              {% endfor %}
+          </div>
+          <div class="row h-97" id="diff">
+              {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
+                  <div class="col-sm-6 col-2" id="{{side}}">
+                      {% for file, frags in sub[1] %}
+                          <div class="submission-file">
+                              <h4>{{file}}</h4>
+                              <pre>
+                                  {%- for id, contents in frags -%}
+                                      <code class="fragment" id={{id}}>{{contents}}</code>
+                                  {%- endfor -%}
+                              </pre>
+                          </div>
+                      {% endfor %}
+                  </div>
+              {% endfor %}
+          </div>
+      </div>
+      <script>
+          var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
+          var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
+      </script>
+      <script src="compare50.js"></script>
     </body>
 </html>

@@ -9,26 +9,29 @@ body, h1, h4, h5 {
     text-decoration: none;
 }
 
-/* split view */
-.split {
-    height: 100%;
-    width: 50%;
-    position: absolute;
-    overflow-x: auto;
-    overflow-y: scroll;
+#sub_names {
+  height: 3%;
 }
 
-.left {
-    left: 0;
-    border: 1px solid black;
-    border-top: 0;
+#diff {
+  height: 97%;
 }
 
-.right {
-    right: 0;
-    border: 1px solid black;
-    border-left: 0;
-    border-top: 0;
+#left {
+  overflow-y: scroll;
+  left: 0;
+  border: 1px solid black;
+  border-top: 0;
+  max-width: 50%;
+}
+
+#right {
+  overflow-y: scroll;
+  right: 0;
+  border: 1px solid black;
+  border-left: 0;
+  border-top: 0;
+  max-width: 50%;
 }
 
 /* style code samples */
