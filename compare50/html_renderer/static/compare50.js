@@ -16,12 +16,14 @@ class Span {
     this.id = id;
     this.fragments = [];
     this.group = null;
+    this.submission = null;
   }
 
   init(fragments, spans, groups) {
     this.fragments = [];
     let obj = this;
     SPAN_TO_FRAGMENTS[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
+    this.submission = this.fragments[0].submission;
     this.group = groups[SPAN_TO_GROUP[this.id]];
   }
 }
@@ -33,6 +35,7 @@ class Fragment {
     this.matching_fragments = [];
     this.span = null;
     this.group = null;
+    this.submission = document.getElementById("left").contains(this.dom_element) ? "left" : "right";
     this.spans = [];
     return this;
   }
@@ -46,11 +49,11 @@ class Fragment {
       this.spans.push(spans[span_id]);
       this.groups.push(groups[SPAN_TO_GROUP[span_id]]);
     }
-  
+
     // Get closest enclosing span & group
     this.span = this.spans[0];
     this.group = this.groups[0];
-  
+
     this.matching_fragments = [];
     for (let span_id of GROUP_TO_SPANS[this.group.id]) {
       let fragment_ids = SPAN_TO_FRAGMENTS[span_id];
@@ -68,6 +71,48 @@ class Fragment {
 
   unhighlight() {
     this.dom_element.classList.remove("match");
+  }
+
+  // Custom implementation/hack of element.scrollIntoView();
+  // Because safari does not support smooth scrolling @ 27th July 2018
+  // Feel free to replace once it does:
+  //     this.dom_element.scrollIntoView({"behavior":"smooth"});
+  // Credits: https://gist.github.com/andjosh/6764939
+  scrollTo() {
+    function findPos(obj) {
+        var curtop = 0;
+        if (obj.offsetParent) {
+            do {
+                curtop += obj.offsetTop;
+            } while (obj = obj.offsetParent);
+        return [curtop];
+        }
+    }
+    function easeInOutQuad(t, b, c, d) {
+      t /= d/2;
+      if (t < 1) return c/2*t*t + b;
+      t--;
+      return -c/2 * (t*(t-2) - 1) + b;
+    };
+
+    let scrollable = document.getElementById(this.submission);
+    let to = findPos(this.dom_element) - 200;
+    let duration = 1000;
+
+    let start = scrollable.scrollTop;
+    let change = to - start;
+    let currentTime = 0;
+    let increment = 20;
+
+    var animateScroll = function(){
+        currentTime += increment;
+        let val = easeInOutQuad(currentTime, start, change, duration);
+        scrollable.scrollTop = val;
+        if(currentTime < duration) {
+            setTimeout(animateScroll, increment);
+        }
+    };
+    animateScroll();
   }
 }
 
@@ -114,6 +159,31 @@ function add_mouse_over_listeners(fragments) {
   });
 }
 
+function add_click_listeners(fragments) {
+  fragments.forEach(frag => {
+    if (frag.group === null) {
+      return;
+    }
+
+    // Find all frags in the other file
+    let other_spans = [];
+    frag.group.spans.forEach(span => {
+      if (span.submission !== frag.submission) {
+        other_spans.push(span);
+      }
+    });
+
+    // Keep track of which fragment we've jumped to
+    let i = 0;
+    //Finds y value of given object
+
+    frag.dom_element.addEventListener("click", event => {
+      other_spans[i].fragments[0].scrollTo();
+      i = (i + 1) % other_spans.length;
+    });
+  });
+}
+
 function init_objects() {
   let frags = document.getElementsByClassName("fragment");
   let fragments = {};
@@ -139,7 +209,6 @@ function init_objects() {
   return [fragments, spans, groups];
 }
 
-
 document.addEventListener("DOMContentLoaded", event => {
     reverse_maps();
     console.log("GROUP_TO_SPANS", GROUP_TO_SPANS);
@@ -149,4 +218,5 @@ document.addEventListener("DOMContentLoaded", event => {
 
     let [fragments, spans, groups] = init_objects().map(Object.values)
     add_mouse_over_listeners(fragments);
+    add_click_listeners(fragments);
 });

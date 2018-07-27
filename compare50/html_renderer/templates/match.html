@@ -7,7 +7,7 @@
     <body>
         <div class="container">
             {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
-                <div class="split {{side}}">
+                <div class="split {{side}}" id="{{side}}">
                         <h2>{{sub[0]}}</h2>
                         {% for file, frags in sub[1] %}
                             <div class="submission-file">
