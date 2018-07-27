@@ -20,13 +20,13 @@ def render(submission_groups, dest="html"):
     dest = pathlib.Path(dest)
     dest.mkdir(exist_ok=True)
 
-    # Copy compare50.js
-    shutil.copyfile(src / "static/js/compare50.js", dest / "compare50.js")
-    shutil.copyfile(src / "static/style.css", dest / "style.css")
+    # Copy compare50.js & compare50.css
+    shutil.copyfile(src / "static/compare50.js", dest / "compare50.js")
+    shutil.copyfile(src / "static/compare50.css", dest / "compare50.css")
 
     formatter = HtmlFormatter(linenos=True)
 
-    with open(dest / "style.css", "a") as f:
+    with open(dest / "compare50.css", "a") as f:
         f.write(formatter.get_style_defs('.highlight'))
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
