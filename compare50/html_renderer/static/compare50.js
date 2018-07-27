@@ -97,7 +97,7 @@ class Fragment {
 
     let scrollable = document.getElementById(this.submission);
     let to = findPos(this.dom_element) - 200;
-    let duration = 1000;
+    let duration = 300;
 
     let start = scrollable.scrollTop;
     let change = to - start;
