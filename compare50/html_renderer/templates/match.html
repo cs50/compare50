@@ -10,11 +10,11 @@
                         {% for file, frags in sub[1] %}
                             <div class="submission-file">
                                 <h4>{{file}}</h4>
-                                {% for id, contents in frags %}
-                                    <span class="fragment" id={{id}}>
-                                        {{contents}}
-                                    </span>
-                                {% endfor %}
+                                <pre>
+                                    {%- for id, contents in frags -%}
+                                        <code class="fragment" id={{id}}>{{contents}}</code>
+                                    {%- endfor -%}
+                                </pre>
                             </div>
                         {% endfor %}
                     </div>

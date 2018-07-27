@@ -21,36 +21,6 @@ function init_maps() {
 function add_mouse_over_listeners() {
   let frags = document.getElementsByClassName("fragment");
 
-  // Create highlighters
-  let frag_to_highlighter = {};
-  for (let i = 0; i < frags.length; i++) {
-    let frag = frags[i];
-    frag_to_highlighter[frag.id] = () => {
-      // Keep track of bgs
-      let originalBackgrounds = [];
-
-      // Find every element who's background we need to change
-      let contents = frag.querySelectorAll(".highlight");
-
-      // Set new background
-      for (let j = 0; j < contents.length; j++) {
-        originalBackgrounds.push(contents[j].style.backgroundColor);
-        contents[j].style.backgroundColor = "#A9A9A9";
-      }
-
-      // Remember how to unset
-      return () => {
-        for (let j = 0; j < contents.length; j++) {
-          contents[j].style.backgroundColor = originalBackgrounds[j];
-        }
-      }
-    }
-  }
-
-  // Keep track of how to unhighlight
-  let unhighlighters = [];
-
-  // Register listener for every frag
   for (let i = 0; i < frags.length; i++) {
     let frag = frags[i];
     frag.addEventListener("mouseover", (event) => {
@@ -61,15 +31,13 @@ function add_mouse_over_listeners() {
       if (grouped_fragments.length === 0) {
           return;
       }
-
-      // If anything was previously highlighted, unhighlight
-      if (unhighlighters.length > 0) {
-        unhighlighters.forEach(unhighlight => unhighlight());
-        unhighlighters = [];
+      
+      for (f of frags) {
+         f.classList.remove("match")
       }
-
-      // Highlight, and remember how to unhighlight
-      grouped_fragments.forEach(f => unhighlighters.push(frag_to_highlighter[f]()));
+      grouped_fragments.forEach(f => {
+          document.getElementById(f).classList.add("match")
+      })
     }, false);
   }
 }

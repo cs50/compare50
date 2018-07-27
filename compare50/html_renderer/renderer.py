@@ -24,10 +24,10 @@ def render(submission_groups, dest="html"):
     shutil.copyfile(src / "static/compare50.js", dest / "compare50.js")
     shutil.copyfile(src / "static/compare50.css", dest / "compare50.css")
 
-    formatter = HtmlFormatter(linenos=True)
+    # formatter = HtmlFormatter(linenos=True)
 
-    with open(dest / "compare50.css", "a") as f:
-        f.write(formatter.get_style_defs('.highlight'))
+    # with open(dest / "compare50.css", "a") as f:
+        # f.write(formatter.get_style_defs('.highlight'))
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
         frag_ids = _IdStore()
@@ -53,7 +53,7 @@ def render(submission_groups, dest="html"):
                 frag_list = []
                 for fragment in fragmentize(file, file_to_spans[file]):
                     frag_id = f"frag{frag_ids.id(fragment)}"
-                    frag_list.append((frag_id, pygments.highlight(fragment.content, file.lexer(), formatter)))
+                    frag_list.append((frag_id, fragment.content))
                     for span in fragment.spans:
                         span_to_fragments[span_ids.id(span)].append(frag_id)
                 file_list.append((str(file.name), frag_list))
@@ -116,7 +116,7 @@ class _FragmentSlicer:
             content = f.read()
 
         # Make sure that last slice ends at the last index in file
-        if slicing_marks[-1] < len(content):
+        if slicing_marks and slicing_marks[-1] < len(content):
             slicing_marks.append(len(content))
 
         # Split fragments from file
