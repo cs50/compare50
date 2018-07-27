@@ -1,6 +1,3 @@
-var span_to_group = null;
-var fragment_to_spans = null;
-
 class Group {
   constructor(id) {
     this.id = id;
@@ -10,7 +7,7 @@ class Group {
   init(fragments, spans, groups) {
     this.spans = [];
     let obj = this;
-    group_to_spans[this.id].forEach(span => obj.spans.push(spans[span]));
+    GROUP_TO_SPANS[this.id].forEach(span => obj.spans.push(spans[span]));
   }
 }
 
@@ -24,8 +21,8 @@ class Span {
   init(fragments, spans, groups) {
     this.fragments = [];
     let obj = this;
-    span_to_fragments[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
-    this.group = groups[span_to_group[this.id]];
+    SPAN_TO_FRAGMENTS[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
+    this.group = groups[SPAN_TO_GROUP[this.id]];
   }
 }
 
@@ -33,7 +30,7 @@ class Fragment {
   constructor(id) {
     this.id = id;
     this.dom_element = document.getElementById(id);
-    this.fragments = [];
+    this.matching_fragments = [];
     this.span = null;
     this.group = null;
     this.spans = [];
@@ -41,30 +38,30 @@ class Fragment {
   }
 
   init(fragments, spans, groups) {
-    if (fragment_to_spans[this.id] !== undefined) {
-      this.spans = [];
-      this.groups = [];
-      for (span_id of fragment_to_spans[this.id]) {
-        this.spans.push(spans[span_id]);
-        this.groups.push(groups[span_to_group[span_id]]);
-      }
+    if (!FRAGMENT_TO_SPANS[this.id]) return;
 
-      // Get closest enclosing span & group
-      this.span = this.spans[0];
-      this.group = this.groups[0];
-
-      this.fragments = [];
-      for (span_id of group_to_spans[this.group.id]) {
-        let fragment_ids = span_to_fragments[span_id];
-        for (let i = 0; i < fragment_ids.length; i++) {
-          this.fragments.push(fragments[fragment_ids[i]]);
-        }
+    this.spans = [];
+    this.groups = [];
+    for (span_id of FRAGMENT_TO_SPANS[this.id]) {
+      this.spans.push(spans[span_id]);
+      this.groups.push(groups[SPAN_TO_GROUP[span_id]]);
+    }
+  
+    // Get closest enclosing span & group
+    this.span = this.spans[0];
+    this.group = this.groups[0];
+  
+    this.matching_fragments = [];
+    for (span_id of GROUP_TO_SPANS[this.group.id]) {
+      let fragment_ids = SPAN_TO_FRAGMENTS[span_id];
+      for (let i = 0; i < fragment_ids.length; i++) {
+          this.matching_fragments.push(fragments[fragment_ids[i]])
       }
     }
   }
 
   highlight_match() {
-    for (frag of this.fragments) {
+    for (frag of this.matching_fragments) {
       frag.dom_element.classList.add("match");
     }
   }
@@ -74,20 +71,30 @@ class Fragment {
   }
 }
 
-function init_maps() {
-  // Create span_to_group
-  span_to_group = {};
-  Object.keys(group_to_spans).forEach(group => {
-    let spans = group_to_spans[group];
-    spans.forEach(span => span_to_group[span] = group);
+function reverse_maps() {
+  GROUP_TO_SPANS = {};
+  Object.keys(SPAN_TO_GROUP).forEach(span => {
+    let group = SPAN_TO_GROUP[span];
+
+    if (GROUP_TO_SPANS[group] === undefined) {
+        GROUP_TO_SPANS[group] = []
+    }
+
+    GROUP_TO_SPANS[group].push(span)
   });
 
-  // Create fragment_to_spans
-  fragment_to_spans = {};
-  Object.values(span_to_fragments).forEach(frags => frags.forEach(frag => fragment_to_spans[frag] = []));
-  Object.keys(span_to_fragments).forEach(span => {
-    let frags = span_to_fragments[span];
-    frags.forEach(frag => fragment_to_spans[frag].push(span));
+  SPAN_TO_FRAGMENTS = {}
+  Object.keys(FRAGMENT_TO_SPANS).forEach(frag => {
+      FRAGMENT_TO_SPANS[frag].forEach(span => {
+          if (SPAN_TO_FRAGMENTS[span] === undefined) {
+              SPAN_TO_FRAGMENTS[span] = []
+          }
+          SPAN_TO_FRAGMENTS[span].push(frag)
+      })
+
+      if (FRAGMENT_TO_SPANS[frag].length === 0) {
+          FRAGMENT_TO_SPANS[frag] = null;
+      }
   });
 }
 
@@ -117,11 +124,11 @@ function init_objects() {
     fragments[frag.id] = new Fragment(frag.id);
   }
 
-  for (span_id of Object.keys(span_to_group)) {
+  for (span_id of Object.keys(SPAN_TO_GROUP)) {
     spans[span_id] = new Span(span_id);
   }
 
-  for (group_id of Object.keys(group_to_spans)) {
+  for (group_id of Object.keys(GROUP_TO_SPANS)) {
     groups[group_id] = new Group(group_id);
   }
 
@@ -132,20 +139,14 @@ function init_objects() {
   return [fragments, spans, groups];
 }
 
-document.addEventListener("DOMContentLoaded", function(event) {
-  init_maps();
-  console.log("group_to_spans", group_to_spans);
-  console.log("span_to_fragments", span_to_fragments);
-  console.log("span_to_group", span_to_group);
-  console.log("fragment_to_spans", fragment_to_spans);
 
-  objs = init_objects();
-  frag_id_to_fragments = objs[0];
-  span_id_to_spans = objs[1];
-  group_id_to_groups = objs[2];
-  fragments = Object.values(frag_id_to_fragments);
-  spans = Object.values(span_id_to_spans);
-  groups = Object.values(group_id_to_groups);
+document.addEventListener("DOMContentLoaded", event => {
+    reverse_maps();
+    console.log("GROUP_TO_SPANS", GROUP_TO_SPANS);
+    console.log("SPAN_TO_FRAGMENTS", SPAN_TO_FRAGMENTS);
+    console.log("SPAN_TO_GROUP", SPAN_TO_GROUP);
+    console.log("FRAGMENT_TO_SPANS", FRAGMENT_TO_SPANS);
 
-  add_mouse_over_listeners(fragments);
+    let [fragments, spans, groups] = init_objects().map(Object.values)
+    add_mouse_over_listeners(fragments);
 });
