@@ -42,7 +42,7 @@ class Fragment {
 
     this.spans = [];
     this.groups = [];
-    for (span_id of FRAGMENT_TO_SPANS[this.id]) {
+    for (let span_id of FRAGMENT_TO_SPANS[this.id]) {
       this.spans.push(spans[span_id]);
       this.groups.push(groups[SPAN_TO_GROUP[span_id]]);
     }
@@ -52,16 +52,16 @@ class Fragment {
     this.group = this.groups[0];
   
     this.matching_fragments = [];
-    for (span_id of GROUP_TO_SPANS[this.group.id]) {
+    for (let span_id of GROUP_TO_SPANS[this.group.id]) {
       let fragment_ids = SPAN_TO_FRAGMENTS[span_id];
-      for (let i = 0; i < fragment_ids.length; i++) {
-          this.matching_fragments.push(fragments[fragment_ids[i]])
+      for (let frag_id of SPAN_TO_FRAGMENTS[span_id]) {
+          this.matching_fragments.push(fragments[frag_id])
       }
     }
   }
 
   highlight_match() {
-    for (frag of this.matching_fragments) {
+    for (let frag of this.matching_fragments) {
       frag.dom_element.classList.add("match");
     }
   }
@@ -106,7 +106,7 @@ function add_mouse_over_listeners(fragments) {
           return;
       }
 
-      for (f of fragments) {
+      for (let f of fragments) {
         f.unhighlight();
       }
       frag.highlight_match();
@@ -120,15 +120,15 @@ function init_objects() {
   let spans = {};
   let groups = {};
 
-  for (frag of frags) {
+  for (let frag of frags) {
     fragments[frag.id] = new Fragment(frag.id);
   }
 
-  for (span_id of Object.keys(SPAN_TO_GROUP)) {
+  for (let span_id of Object.keys(SPAN_TO_GROUP)) {
     spans[span_id] = new Span(span_id);
   }
 
-  for (group_id of Object.keys(GROUP_TO_SPANS)) {
+  for (let group_id of Object.keys(GROUP_TO_SPANS)) {
     groups[group_id] = new Group(group_id);
   }
 
