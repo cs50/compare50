@@ -21,8 +21,7 @@ function init_maps() {
 function add_mouse_over_listeners() {
   let frags = document.getElementsByClassName("fragment");
 
-  for (let i = 0; i < frags.length; i++) {
-    let frag = frags[i];
+  for (frag of frags) {
     frag.addEventListener("mouseover", (event) => {
       // Get all fragments grouped with frag
       let grouped_fragments = get_grouped_fragments(frag.id);
