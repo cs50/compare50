@@ -48,12 +48,21 @@ Fragment.prototype.init = function(fragments, spans, groups) {
     this.group = this.groups[0];
 
     this.fragments = [];
-    for (span of this.spans) {
-      for (frag_id of span_to_fragments[span.id]) {
+    for (span_id of span_to_group[this.group.id]) {
+      for (frag_id of span_to_fragments[span_id]) {
         this.fragments.push(fragments[frag_id]);
       }
     }
+    console.log(this.id, this.fragments);
   }
+}
+Fragment.prototype.highlight_match = function() {
+  for (frag of this.fragments) {
+    frag.dom_element.classList.add("match");
+  }
+}
+Fragment.prototype.unhighlight = function() {
+  this.dom_element.classList.remove("match");
 }
 
 
@@ -74,28 +83,20 @@ function init_maps() {
   });
 }
 
-function add_mouse_over_listeners() {
-  let frags = document.getElementsByClassName("fragment");
-
-  for (frag of frags) {
-    let frag = frag; // I hate javascript
-    frag.addEventListener("mouseover", (event) => {
-      // Get all fragments grouped with frag
-      let grouped_fragments = get_grouped_fragments(frag.id);
-
-      // Fragment is not part of a match, return
-      if (grouped_fragments.length === 0) {
+function add_mouse_over_listeners(fragments) {
+  fragments.forEach(frag => {
+    frag.dom_element.addEventListener("mouseover", (event) => {
+      // Fragment is not part of a group, return
+      if (frag.group === null) {
           return;
       }
-      
-      for (f of frags) {
-         f.classList.remove("match")
+
+      for (f of fragments) {
+        f.unhighlight();
       }
-      grouped_fragments.forEach(f => {
-          document.getElementById(f).classList.add("match")
-      })
+      frag.highlight_match();
     }, false);
-  }
+  });
 }
 
 function init_objects() {
@@ -116,7 +117,6 @@ function init_objects() {
     groups[group_id] = new Group(group_id);
   }
 
-  console.log(fragments);
   Object.values(fragments).forEach(frag => frag.init(fragments, spans, groups));
   Object.values(spans).forEach(span => span.init(fragments, spans, groups));
   Object.values(groups).forEach(group => group.init(fragments, spans, groups));
@@ -132,7 +132,12 @@ document.addEventListener("DOMContentLoaded", function(event) {
   console.log("fragment_to_spans", fragment_to_spans);
 
   objs = init_objects();
-  console.log(objs);
+  frag_id_to_fragments = objs[0];
+  span_id_to_spans = objs[1];
+  group_id_to_groups = objs[2];
+  fragments = Object.values(frag_id_to_fragments);
+  spans = Object.values(span_id_to_spans);
+  groups = Object.values(group_id_to_groups);
 
-  //add_mouse_over_listeners();
+  add_mouse_over_listeners(fragments);
 });
