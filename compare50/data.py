@@ -36,7 +36,7 @@ class IdStore(Mapping):
         return self._ids[key]
 
     def __iter__(self):
-        return self.objects.values()
+        return iter(self.objects.values())
 
     def __len__(self):
         return len(self.objects)
