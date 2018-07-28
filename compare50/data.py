@@ -141,6 +141,9 @@ class Span:
     def __repr__(self):
         return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.end)
 
+    def _raw_contents(self):
+        return self.file.read()[self.start:self.end]
+
 
 @attr.s(slots=True, frozen=True, hash=True)
 class FileMatch:
@@ -199,18 +202,16 @@ class SpanMatches:
             # Expand left
             start_a = tokens_a.bisect_key_right(span_a.start) - 2
             start_b = tokens_b.bisect_key_right(span_b.start) - 2
-            try:
-                while tokens_a[start_a] == tokens_b[start_b]:
-                    start_a -= 1
-                    start_b -= 1
-            except IndexError:
-                pass
+            while min(start_a, start_b) >= 0 and tokens_a[start_a] == tokens_b[start_b]:
+                start_a -= 1
+                start_b -= 1
             start_a += 1
             start_b += 1
 
             # Expand right
             end_a = tokens_a.bisect_key_right(span_a.end) - 2
             end_b = tokens_b.bisect_key_right(span_b.end) - 2
+
             try:
                 while tokens_a[end_a] == tokens_b[end_b]:
                     end_a += 1
@@ -220,10 +221,10 @@ class SpanMatches:
             end_a -= 1
             end_b -= 1
 
-            span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
-            span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
+            new_span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
+            new_span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
             # Add new spans
-            expanded_span_pairs.add((span_a, span_b))
+            expanded_span_pairs.add((new_span_a, new_span_b))
 
         self._matches = list(expanded_span_pairs)
 

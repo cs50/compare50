@@ -118,7 +118,7 @@ class StripAll(Pass):
                      preprocessors.strip_comments,
                      preprocessors.normalize_identifiers,
                      preprocessors.normalize_string_literals]
-    comparator = Winnowing(k=10, t=20)
+    comparator = Winnowing(k=16, t=32)
 
 
 class Index:
@@ -194,7 +194,6 @@ class Index:
             spans_1 = self._index[hash_]
             # All spans associated with fingerprint in other
             spans_2 = other._index[hash_]
-
             matches.extend(itertools.product(spans_1, spans_2))
 
         return SpanMatches(matches)

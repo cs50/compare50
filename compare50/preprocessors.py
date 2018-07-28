@@ -1,6 +1,5 @@
 import attr
 from pygments.token import Comment, Name, Number, String, Text
-
 from .data import Token
 
 def strip_whitespace(tokens):
