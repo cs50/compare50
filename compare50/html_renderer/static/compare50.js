@@ -160,11 +160,12 @@ function add_mouse_over_listeners(fragments) {
 
 function add_click_listeners(fragments) {
   fragments.forEach(frag => {
+    // Not part of a group, nothing to be done here
     if (frag.group === null) {
       return;
     }
 
-    // Find all frags in the other file
+    // Find all matching spans in the other file
     let other_spans = [];
     frag.group.spans.forEach(span => {
       if (span.submission !== frag.submission) {
@@ -172,10 +173,24 @@ function add_click_listeners(fragments) {
       }
     });
 
-    // Keep track of which fragment we've jumped to
-    let i = 0;
-    //Finds y value of given object
+    // Sort by position in document
+    other_spans.sort((span_a, span_b) => {
+      let res = span_a.fragments[0].dom_element.compareDocumentPosition(span_b.fragments[0].dom_element)
+      if (res & Node.DOCUMENT_POSITION_FOLLOWING) {
+        return -1;
+      }
+      else if (res & Node.DOCUMENT_POSITION_PRECEDING) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
+    });
 
+    // Keep track of which span we've jumped to
+    let i = 0;
+
+    // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
       other_spans[i].fragments[0].scrollTo();
       i = (i + 1) % other_spans.length;
