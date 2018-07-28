@@ -26,6 +26,7 @@ body, h1, h4, h5 {
   border: 1px solid black;
   border-top: 0;
   max-width: 50%;
+  height: 100%;
 }
 
 #right {
@@ -36,6 +37,7 @@ body, h1, h4, h5 {
   border-left: 0;
   border-top: 0;
   max-width: 50%;
+  height: 100%;
 }
 
 .fragment:before {
