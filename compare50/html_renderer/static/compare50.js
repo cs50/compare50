@@ -176,15 +176,7 @@ function add_click_listeners(fragments) {
     // Sort by position in document
     other_spans.sort((span_a, span_b) => {
       let res = span_a.fragments[0].dom_element.compareDocumentPosition(span_b.fragments[0].dom_element)
-      if (res & Node.DOCUMENT_POSITION_FOLLOWING) {
-        return -1;
-      }
-      else if (res & Node.DOCUMENT_POSITION_PRECEDING) {
-        return 1;
-      }
-      else {
-        return 0;
-      }
+      return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     });
 
     // Keep track of which span we've jumped to
