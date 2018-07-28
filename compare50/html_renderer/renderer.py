@@ -11,7 +11,7 @@ import json
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Fragment:
-    content = attr.ib()
+    content = attr.ib(convert=lambda c : tuple(c.splitlines(True)))
     spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
 

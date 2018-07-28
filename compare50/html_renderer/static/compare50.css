@@ -1,6 +1,7 @@
 /* Make text more readable */
 body, h1, h4, h5 {
     font-family: inherit;
+    counter-reset: line_numbers;
 }
 
 /* Don't underline title */
@@ -34,9 +35,8 @@ body, h1, h4, h5 {
   max-width: 50%;
 }
 
-/* style code samples */
-.submission-file {
-    border-top: 1px solid black;
+.fragment:before {
+  counter-reset: none;
 }
 
 /* highlighted code fragments */
@@ -51,4 +51,18 @@ body, h1, h4, h5 {
 
 .highlight {
     background-color: yellow;
+}
+
+/* style code samples */
+.submission-file {
+  border-top: 1px solid black;
+  white-space: pre-wrap;
+}
+.submission-file code.newline {
+  counter-increment: line_numbers;
+}
+.submission-file code.newline::before {
+  content: counter(line_numbers) "";
+  display: inline-block;
+  width:3em;
 }
