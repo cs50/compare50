@@ -184,6 +184,7 @@ function add_click_listeners(fragments) {
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
+      console.log(other_spans)
       other_spans[i].fragments[0].scrollTo();
       i = (i + 1) % other_spans.length;
     });

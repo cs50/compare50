@@ -23,12 +23,12 @@
                               <pre>
                                   {%- set ns = namespace(is_newline=true) -%}
                                   {%- for id, contents in frags -%}
-                                      <span class="fragment" id="{{id}}">
+                                      <code class="fragment" id="{{id}}">
                                           {%- for line in contents -%}
                                               <code class="line {{'newline' if ns.is_newline else ''}}">{{line}}</code>
                                               {%- set ns.is_newline = line.endswith('\n') -%}
                                           {%- endfor -%}
-                                      </span>
+                                      </code>
                                   {%- endfor -%}
                               </pre>
                           </div>

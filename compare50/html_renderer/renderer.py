@@ -1,4 +1,5 @@
 from ..data import _IdStore
+import cgi
 import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
@@ -52,7 +53,7 @@ def render(submission_groups, dest="html"):
                 frag_list = []
                 for fragment in fragmentize(file, file_to_spans[file]):
                     frag_id = f"frag{frag_ids.id(fragment)}"
-                    frag_list.append((frag_id, fragment.content))
+                    frag_list.append((frag_id, map(cgi.escape, fragment.content)))
                     fragment_to_spans[frag_id] = [span_ids.id(span) for span in fragment.spans]
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
