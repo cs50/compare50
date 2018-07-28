@@ -1,4 +1,5 @@
 import abc
+from collections.abc import Mapping
 from itertools import islice
 import os
 import pathlib
@@ -19,29 +20,34 @@ class Comparator(metaclass=abc.ABCMeta):
         pass
 
 
-class _IdStore:
+class IdStore(Mapping):
     def __init__(self, key=lambda obj: obj):
-        self.ids = {}
-        self.max_id = 0
-        self.objs = {}
-        self.key = key
+        self.objects = {}
+        self._key = key
+        self._ids = {}
+        self._max_id = 0
 
-    def id(self, obj):
-        key = self.key(obj)
-        if key not in self.ids:
-            self.ids[key] = self.max_id
-            self.objs[self.max_id] = obj
-            self.max_id += 1
-        return self.ids[key]
+    def __getitem__(self, obj):
+        key = self._key(obj)
+        if key not in self._ids:
+            self._ids[key] = self._max_id
+            self.objects[self._max_id] = obj
+            self._max_id += 1
+        return self._ids[key]
 
+    def __iter__(self):
+        return self.objects.values()
+
+    def __len__(self):
+        return len(self.objects)
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
-    _store = _IdStore(key=lambda sub: sub.path)
+    _store = IdStore(key=lambda sub: sub.path)
 
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
+    id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
     file_paths = attr.ib(default=tuple(), hash=False, cmp=False)
 
     def files(self):
@@ -56,7 +62,7 @@ class Submission:
 
     @classmethod
     def get(cls, id):
-        return cls._store.objs[id]
+        return cls._store.objects[id]
 
     @staticmethod
     def from_file_path(path, preprocessor):
@@ -67,11 +73,11 @@ class Submission:
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
     _lexer_cache = {}
-    _store = _IdStore(key=lambda file: file.path)
+    _store = IdStore(key=lambda file: file.path)
 
     name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
     submission = attr.ib(cmp=False, hash=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store.id(self), takes_self=True), init=False)
+    id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
 
     @property
     def path(self):
@@ -106,7 +112,7 @@ class File:
 
     @classmethod
     def get(cls, id):
-        return cls._store.objs[id]
+        return cls._store.objects[id]
 
 
     def _tokenize(self):

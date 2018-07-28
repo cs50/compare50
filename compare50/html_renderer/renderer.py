@@ -1,4 +1,4 @@
-from ..data import _IdStore
+from ..data import IdStore
 import cgi
 import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
@@ -31,9 +31,9 @@ def render(submission_groups, dest="html"):
         # f.write(formatter.get_style_defs('.highlight'))
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
-        frag_ids = _IdStore()
-        span_ids = _IdStore()
-        group_ids = _IdStore()
+        frag_ids = IdStore()
+        span_ids = IdStore()
+        group_ids = IdStore()
 
         span_to_group = {}
         file_to_spans = collections.defaultdict(list)
@@ -41,9 +41,9 @@ def render(submission_groups, dest="html"):
 
 
         for group in groups:
-            group_id = group_ids.id(group)
+            group_id = group_ids[group]
             for span in group.spans:
-                span_to_group[span_ids.id(span)] = group_id
+                span_to_group[span_ids[span]] = group_id
                 file_to_spans[span.file].append(span)
 
         submissions = []
@@ -52,9 +52,9 @@ def render(submission_groups, dest="html"):
             for file in submission.files():
                 frag_list = []
                 for fragment in fragmentize(file, file_to_spans[file]):
-                    frag_id = f"frag{frag_ids.id(fragment)}"
+                    frag_id = f"frag{frag_ids[fragment]}"
                     frag_list.append((frag_id, map(cgi.escape, fragment.content)))
-                    fragment_to_spans[frag_id] = [span_ids.id(span) for span in fragment.spans]
+                    fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans]
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
 
