@@ -26,7 +26,7 @@
                                       <span class="fragment" id="{{id}}">
                                           {%- for line in contents -%}
                                               <code class="line {{'newline' if ns.is_newline else ''}}">{{line}}</code>
-                                              {%- set ns.is_newline = true if '\n' in line else false -%}
+                                              {%- set ns.is_newline = line.endswith('\n') -%}
                                           {%- endfor -%}
                                       </span>
                                   {%- endfor -%}
