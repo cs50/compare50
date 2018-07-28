@@ -185,6 +185,8 @@ class Index:
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
 
+        matches = []
+
         # Find common fingerprints (hashes)
         common_hashes = set(self._index) & set(other._index)
         for hash_ in common_hashes:
@@ -193,7 +195,9 @@ class Index:
             # All spans associated with fingerprint in other
             spans_2 = other._index[hash_]
 
-            return SpanMatches(itertools.product(spans_1, spans_2))
+            matches.extend(list(itertools.product(spans_1, spans_2)))
+
+        return SpanMatches(matches)
 
 
     def _fingerprint(self, file):
