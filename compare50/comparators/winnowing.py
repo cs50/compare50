@@ -195,7 +195,7 @@ class Index:
             # All spans associated with fingerprint in other
             spans_2 = other._index[hash_]
 
-            matches.extend(list(itertools.product(spans_1, spans_2)))
+            matches.extend(itertools.product(spans_1, spans_2))
 
         return SpanMatches(matches)
 

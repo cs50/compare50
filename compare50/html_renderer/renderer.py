@@ -61,8 +61,8 @@ def render(submission_groups, dest="html"):
         with open(pathlib.Path(__file__).absolute().parent / "templates/match.html") as f:
             content = f.read()
         template = Template(content)
-        # Render
 
+        # Render
         rendered_html = template.render(fragment_to_spans=fragment_to_spans,
                                         span_to_group=span_to_group,
                                         sub_a=submissions[0],
