@@ -1,7 +1,6 @@
 /* Make text more readable */
 body, h1, h4, h5 {
     font-family: inherit;
-    overflow: hidden;
     counter-reset: line_numbers;
 }
 
