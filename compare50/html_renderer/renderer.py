@@ -126,7 +126,7 @@ class _FragmentSlicer:
         fragments = []
         start_mark = 0
         for fragment_spans, mark in zip(spans, slicing_marks):
-            fragments.append(Fragment(content[start_mark:mark], sorted(fragment_spans, key=lambda span: span.start, reverse=True)))
+            fragments.append(Fragment(content[start_mark:mark], sorted(fragment_spans, key=lambda span: span.end - span.start)))
             start_mark = mark
 
         return fragments
