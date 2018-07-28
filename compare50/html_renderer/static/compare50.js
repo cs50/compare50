@@ -43,6 +43,7 @@ class Fragment {
   init(fragments, spans, groups) {
     if (!FRAGMENT_TO_SPANS[this.id]) return;
 
+    this.dom_element.classList.add("match");
     this.spans = [];
     this.groups = [];
     for (let span_id of FRAGMENT_TO_SPANS[this.id]) {
@@ -64,12 +65,12 @@ class Fragment {
 
   highlight_match() {
     for (let frag of this.matching_fragments) {
-      frag.dom_element.classList.add("match");
+      frag.dom_element.classList.add("active_match");
     }
   }
 
   unhighlight() {
-    this.dom_element.classList.remove("match");
+    this.dom_element.classList.remove("active_match");
   }
 
   // Custom implementation/hack of element.scrollIntoView();
