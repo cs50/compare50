@@ -1,6 +1,7 @@
 /* Make text more readable */
 body, h1, h4, h5 {
     font-family: inherit;
+    overflow: hidden;
     counter-reset: line_numbers;
 }
 
@@ -19,6 +20,7 @@ body, h1, h4, h5 {
 }
 
 #left {
+  height: 97%;
   overflow-y: scroll;
   left: 0;
   border: 1px solid black;
@@ -27,6 +29,7 @@ body, h1, h4, h5 {
 }
 
 #right {
+  height: 97%;
   overflow-y: scroll;
   right: 0;
   border: 1px solid black;
