@@ -31,7 +31,12 @@ class Fragment {
     this.matching_fragments = [];
     this.span = null;
     this.group = null;
-    this.submission = document.getElementById("left").contains(this.dom_element) ? "left" : "right";
+    left = document.getElementById("left");
+    if (left.contains(this.dom_element)) {
+        this.submission = left;
+    } else {
+        this.submission = document.getElementById("right");
+    }
     this.spans = [];
     return this;
   }
@@ -90,8 +95,8 @@ class Fragment {
       return -c / 2 * (t * (t - 2) - 1) + b;
     };
 
-    let scrollable = document.getElementById(this.submission);
-    let to = this.findPos() - offset;
+    let scrollable = this.submission;
+    let to = this.find_pos() - offset;
     let duration = 300;
 
     let start = scrollable.scrollTop;
@@ -177,14 +182,14 @@ function add_click_listeners(fragments) {
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
-      let frag_offset = frag.findPos();
-      let find_offset = document.getElementById(other_spans[0].fragments[0].submission).scrollTop + frag_offset;
-      let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment.findPos() > find_offset);
+      let frag_offset = frag.find_pos();
+      let find_offset = other_spans[0].submission.scrollTop + frag_offset;
+      let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment.find_pos() > find_offset);
 
       if (next_fragment === undefined) {
           next_fragment = other_spans[0].fragments[0];
       }
-      next_fragment.scrollTo(frag_offset);
+      next_fragment.scroll_to(frag_offset);
     });
   });
 }
