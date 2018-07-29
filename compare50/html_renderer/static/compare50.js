@@ -55,21 +55,34 @@ class Fragment {
     }
   }
 
+  highlight_match() {
+    for (let frag of this.matching_fragments) {
+      frag.dom_element.classList.add("active_match");
+    }
+  }
+
+  unhighlight() {
+    this.dom_element.classList.remove("active_match");
+  }
+
+  find_pos() {
+      let obj = this.dom_element;
+      var curtop = 0;
+      if (obj.offsetParent) {
+          do {
+              curtop += obj.offsetTop;
+          } while (obj = obj.offsetParent);
+      }
+      return curtop;
+  }
+
+
   // Custom implementation/hack of element.scrollIntoView();
   // Because safari does not support smooth scrolling @ 27th July 2018
   // Feel free to replace once it does:
   //     this.dom_element.scrollIntoView({"behavior":"smooth"});
   // Credits: https://gist.github.com/andjosh/6764939
-  scroll_to() {
-    let findPos = obj => {
-      var curtop = 0;
-      if (obj.offsetParent) {
-        do {
-          curtop += obj.offsetTop;
-        } while (obj = obj.offsetParent);
-      }
-      return curtop;
-    }
+  scroll_to(offset=200) {
     let easeInOutQuad = (t, b, c, d) => {
       t /= d / 2;
       if (t < 1) return c / 2 * t * t + b;
@@ -78,7 +91,7 @@ class Fragment {
     };
 
     let scrollable = document.getElementById(this.submission);
-    let to = findPos(this.dom_element) - 200;
+    let to = this.findPos() - offset;
     let duration = 300;
 
     let start = scrollable.scrollTop;
@@ -162,13 +175,16 @@ function add_click_listeners(fragments) {
       return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     });
 
-    // Keep track of which span we've jumped to
-    let i = 0;
-
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
-      other_spans[i].fragments[0].scroll_to();
-      i = (i + 1) % other_spans.length;
+      let frag_offset = frag.findPos();
+      let find_offset = document.getElementById(other_spans[0].fragments[0].submission).scrollTop + frag_offset;
+      let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment.findPos() > find_offset);
+
+      if (next_fragment === undefined) {
+          next_fragment = other_spans[0].fragments[0];
+      }
+      next_fragment.scrollTo(frag_offset);
     });
   });
 }

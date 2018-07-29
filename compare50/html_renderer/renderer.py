@@ -19,11 +19,13 @@ class Fragment:
 def render(submission_groups, dest="html"):
     src = pathlib.Path(__file__).absolute().parent
     dest = pathlib.Path(dest)
-    dest.mkdir(exist_ok=True)
+    if dest.exists():
+        shutil.rmtree(dest)
+    dest.mkdir()
 
     # Copy compare50.js & compare50.css
-    shutil.copyfile(src / "static/compare50.js", dest / "compare50.js")
-    shutil.copyfile(src / "static/compare50.css", dest / "compare50.css")
+    for fname in ("compare50.js", "compare50.css"):
+        shutil.copyfile(src / "static" / fname, dest / fname)
 
     # formatter = HtmlFormatter(linenos=True)
 
