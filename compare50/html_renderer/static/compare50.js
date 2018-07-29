@@ -31,7 +31,7 @@ class Fragment {
     this.matching_fragments = [];
     this.span = null;
     this.group = null;
-    left = document.getElementById("left");
+    let left = document.getElementById("left");
     if (left.contains(this.dom_element)) {
         this.submission = left;
     } else {
