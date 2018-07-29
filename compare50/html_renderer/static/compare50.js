@@ -182,7 +182,8 @@ function add_click_listeners(fragments) {
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
-      let frag_offset = frag.find_pos();
+      let frag_offset = frag.spans[frag.spans.length-1].fragments[0].find_pos() - frag.submission.scrollTop;
+      //let frag_offset = frag.find_pos();
       let find_offset = other_spans[0].submission.scrollTop + frag_offset;
       let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment.find_pos() > find_offset);
 
