@@ -156,6 +156,11 @@ function add_mouse_over_listeners(fragments) {
       }
       frag.highlight_match();
     }, false);
+    frag.dom_element.addEventListener("mouseleave", (event) => {
+        for (let f of fragments) {
+            f.unhighlight();
+        }
+    }, false);
   });
 }
 

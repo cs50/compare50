@@ -43,15 +43,13 @@ body, h1, h4, h5 {
 
 /* highlighted code fragments */
 .match {
-    background-color: #FFC107;
-    box-shadow: 0.5em 0 0 #FFC107,-0.5em 0 0 #FFC107;
+    background-color: #FFCC00;
 }
 
 .active_match {
     font-weight: bold;
     background-color: #DC3545;
     color: white;
-    box-shadow: 0.5em 0 0 #DC3545,-0.5em 0 0 #DC3545;
 }
 
 .distro {
