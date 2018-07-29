@@ -152,12 +152,7 @@ function add_mouse_over_listeners(fragments) {
 }
 
 function add_click_listeners(fragments) {
-  fragments.forEach(frag => {
-    // Not part of a group, nothing to be done here
-    if (frag.group === null) {
-      return;
-    }
-
+  fragments.filter(frag => frag.group !== null).forEach(frag => {
     // Find all matching spans in the other file
     let other_spans = frag.group.spans.filter(span => span.submission !== frag.submission);
 
