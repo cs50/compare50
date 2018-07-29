@@ -61,20 +61,20 @@ class Fragment {
   //     this.dom_element.scrollIntoView({"behavior":"smooth"});
   // Credits: https://gist.github.com/andjosh/6764939
   scroll_to() {
-    function findPos(obj) {
-        var curtop = 0;
-        if (obj.offsetParent) {
-            do {
-                curtop += obj.offsetTop;
-            } while (obj = obj.offsetParent);
-        }
-        return curtop;
+    let findPos = obj => {
+      var curtop = 0;
+      if (obj.offsetParent) {
+        do {
+          curtop += obj.offsetTop;
+        } while (obj = obj.offsetParent);
+      }
+      return curtop;
     }
-    function easeInOutQuad(t, b, c, d) {
-      t /= d/2;
-      if (t < 1) return c/2*t*t + b;
+    let easeInOutQuad = (t, b, c, d) => {
+      t /= d / 2;
+      if (t < 1) return c / 2 * t * t + b;
       t--;
-      return -c/2 * (t*(t-2) - 1) + b;
+      return -c / 2 * (t * (t - 2) - 1) + b;
     };
 
     let scrollable = document.getElementById(this.submission);
@@ -86,13 +86,13 @@ class Fragment {
     let currentTime = 0;
     let increment = 20;
 
-    var animateScroll = function(){
-        currentTime += increment;
-        let val = easeInOutQuad(currentTime, start, change, duration);
-        scrollable.scrollTop = val;
-        if(currentTime < duration) {
-            setTimeout(animateScroll, increment);
-        }
+    let animateScroll = () => {
+      currentTime += increment;
+      let val = easeInOutQuad(currentTime, start, change, duration);
+      scrollable.scrollTop = val;
+      if(currentTime < duration) {
+        setTimeout(animateScroll, increment);
+      }
     };
     animateScroll();
   }
