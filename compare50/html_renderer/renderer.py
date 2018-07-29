@@ -56,7 +56,7 @@ def render(submission_groups, dest="html"):
                     frag_list.append((frag_id, map(cgi.escape, fragment.content)))
                     fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans]
                 file_list.append((str(file.name), frag_list))
-            submissions.append((str(submission.path), file_list))
+            submissions.append((str(submission.name), file_list))
 
         # Get template
         with open(pathlib.Path(__file__).absolute().parent / "templates/match.html") as f:

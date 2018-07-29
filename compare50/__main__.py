@@ -38,12 +38,17 @@ def get(generator, paths, preprocessor):
     try:
         for path in paths:
             path = pathlib.Path(path)
-            if is_archive(path):
-                temp_dirs.append(tempfile.mkdtemp())
-                unpack(path, temp_dirs[-1])
-                path = pathlib.Path(temp_dirs[-1])
-            content.extend(generator(path, preprocessor))
 
+            if not is_archive(path):
+                content.extend(generator(path, preprocessor))
+            else:
+                temp_dirs.append(tempfile.mkdtemp())
+                temp_path = pathlib.Path(temp_dirs[-1])
+                unpack(path, temp_path)
+
+                for c in generator(temp_path, preprocessor):
+                    object.__setattr__(c, "name", "{} @ {}".format(path, c.path.relative_to(temp_path)))
+                    content.append(c)
         yield content
     finally:
         for d in temp_dirs:

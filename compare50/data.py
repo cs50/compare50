@@ -49,6 +49,7 @@ class Submission:
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
     id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
     file_paths = attr.ib(default=tuple(), hash=False, cmp=False)
+    name = attr.ib(default=attr.Factory(lambda self: self.path, takes_self=True), convert=str, hash=False, cmp=False)
 
     def files(self):
         if self.file_paths:
