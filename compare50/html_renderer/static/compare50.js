@@ -5,9 +5,7 @@ class Group {
   }
 
   init(fragments, spans, groups) {
-    this.spans = [];
-    let obj = this;
-    GROUP_TO_SPANS[this.id].forEach(span => obj.spans.push(spans[span]));
+    this.spans = GROUP_TO_SPANS[this.id].map(span_id => spans[span_id]);
   }
 }
 
@@ -20,9 +18,7 @@ class Span {
   }
 
   init(fragments, spans, groups) {
-    this.fragments = [];
-    let obj = this;
-    SPAN_TO_FRAGMENTS[this.id].forEach(frag_id => obj.fragments.push(fragments[frag_id]));
+    this.fragments = SPAN_TO_FRAGMENTS[this.id].map(frag_id => fragments[frag_id]);
     this.submission = this.fragments[0].submission;
     this.group = groups[SPAN_TO_GROUP[this.id]];
   }
@@ -44,12 +40,8 @@ class Fragment {
     if (!FRAGMENT_TO_SPANS[this.id]) return;
 
     this.dom_element.classList.add("match");
-    this.spans = [];
-    this.groups = [];
-    for (let span_id of FRAGMENT_TO_SPANS[this.id]) {
-      this.spans.push(spans[span_id]);
-      this.groups.push(groups[SPAN_TO_GROUP[span_id]]);
-    }
+    this.spans = FRAGMENT_TO_SPANS[this.id].map(span_id => spans[span_id]);
+    this.groups = FRAGMENT_TO_SPANS[this.id].map(span_id => groups[SPAN_TO_GROUP[span_id]]);
 
     // Get closest enclosing span & group
     this.span = this.spans[0];
@@ -78,7 +70,7 @@ class Fragment {
   // Feel free to replace once it does:
   //     this.dom_element.scrollIntoView({"behavior":"smooth"});
   // Credits: https://gist.github.com/andjosh/6764939
-  scrollTo() {
+  scroll_to() {
     function findPos(obj) {
         var curtop = 0;
         if (obj.offsetParent) {
@@ -172,12 +164,7 @@ function add_click_listeners(fragments) {
     }
 
     // Find all matching spans in the other file
-    let other_spans = [];
-    frag.group.spans.forEach(span => {
-      if (span.submission !== frag.submission) {
-        other_spans.push(span);
-      }
-    });
+    let other_spans = frag.group.spans.filter(span => span.submission !== frag.submission);
 
     // Sort by position in document
     other_spans.sort((span_a, span_b) => {
@@ -190,7 +177,7 @@ function add_click_listeners(fragments) {
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
-      other_spans[i].fragments[0].scrollTo();
+      other_spans[i].fragments[0].scroll_to();
       i = (i + 1) % other_spans.length;
     });
   });
