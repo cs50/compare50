@@ -55,16 +55,6 @@ class Fragment {
     }
   }
 
-  highlight_match() {
-    for (let frag of this.matching_fragments) {
-      frag.dom_element.classList.add("active_match");
-    }
-  }
-
-  unhighlight() {
-    this.dom_element.classList.remove("active_match");
-  }
-
   // Custom implementation/hack of element.scrollIntoView();
   // Because safari does not support smooth scrolling @ 27th July 2018
   // Feel free to replace once it does:
@@ -106,6 +96,14 @@ class Fragment {
     };
     animateScroll();
   }
+
+  highlight() {
+    this.dom_element.classList.add("active_match");
+  }
+
+  unhighlight() {
+    this.dom_element.classList.remove("active_match");
+  }
 }
 
 function reverse_maps() {
@@ -136,22 +134,19 @@ function reverse_maps() {
 }
 
 function add_mouse_over_listeners(fragments) {
-  fragments.forEach(frag => {
-    frag.dom_element.addEventListener("mouseover", (event) => {
-      // Fragment is not part of a group, return
-      if (frag.group === null) {
-          return;
-      }
+  let highlighted_frags = [];
 
-      for (let f of fragments) {
-        f.unhighlight();
-      }
-      frag.highlight_match();
+  fragments.filter(frag => frag.group !== null).forEach(frag => {
+    frag.dom_element.addEventListener("mouseover", (event) => {
+      highlighted_frags.forEach(f => f.unhighlight());
+
+      highlighted_frags = frag.matching_fragments;
+      highlighted_frags.forEach(f => f.highlight());
     }, false);
+
     frag.dom_element.addEventListener("mouseleave", (event) => {
-        for (let f of fragments) {
-            f.unhighlight();
-        }
+      highlighted_frags.forEach(f => f.unhighlight());
+      highlighted_frags = [];
     }, false);
   });
 }
