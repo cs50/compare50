@@ -43,13 +43,13 @@ class IdStore(Mapping):
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
-    _store = IdStore(key=lambda sub: sub.path)
+    _store = IdStore(key=lambda sub: (sub.path, sub.file_paths))
 
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
-    file_paths = attr.ib(default=tuple(), hash=False, cmp=False)
     name = attr.ib(default=attr.Factory(lambda self: self.path, takes_self=True), convert=str, hash=False, cmp=False)
+    file_paths = attr.ib(default=tuple(), convert=tuple, hash=False, cmp=False)
+    id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
 
     def files(self):
         if self.file_paths:
@@ -66,10 +66,11 @@ class Submission:
         return cls._store.objects[id]
 
     @staticmethod
-    def from_file_path(path, preprocessor):
+    def from_file_path(path, preprocessor, submission_name=""):
         path = pathlib.Path(path).absolute()
+        if submission_name:
+            return Submission(path.parent, preprocessor, file_paths=[path.name], name=submission_name)
         return Submission(path.parent, preprocessor, file_paths=[path.name])
-
 
 @attr.s(slots=True, frozen=True, hash=True)
 class File:

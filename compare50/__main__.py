@@ -45,10 +45,7 @@ def get(generator, paths, preprocessor):
                 temp_dirs.append(tempfile.mkdtemp())
                 temp_path = pathlib.Path(temp_dirs[-1])
                 unpack(path, temp_path)
-
-                for c in generator(temp_path, preprocessor):
-                    object.__setattr__(c, "name", "{} @ {}".format(path, c.path.relative_to(temp_path)))
-                    content.append(c)
+                content.extend(generator(temp_path, preprocessor, archive_path=path))
         yield content
     finally:
         for d in temp_dirs:
@@ -77,18 +74,23 @@ def is_archive(path):
     return path.suffixes in ARCHIVES
 
 
-def individual_submissions(path, preprocessor):
+def individual_submission(path, preprocessor, archive_path=None):
+    path = pathlib.Path(path).absolute()
+
+    if path.is_file():
+        if archive_path:
+            return (data.Submission.from_file_path(path, preprocessor, submission_name=archive_path),)
+        else:
+            return (data.Submission.from_file_path(path, preprocessor),)
+
+    name = str(archive_path) if archive_path else str(path)
+    return (data.Submission(path, preprocessor, name=name),)
+
+
+def submissions(path, preprocessor, archive_path=None):
     path = pathlib.Path(path).absolute()
     if path.is_file():
-        return (data.Submission.from_file_path(path, preprocessor),)
-
-    return (data.Submission(path, preprocessor),)
-
-
-def submissions(path, preprocessor):
-    path = pathlib.Path(path).absolute()
-    if path.is_file():
-        return (data.Submission.from_file_path(path, preprocessor),)
+        return individual_submission(path, preprocessor, archive_path=archive_path)
 
     subs = []
     for root, dirs, files in os.walk(path):
@@ -100,21 +102,23 @@ def submissions(path, preprocessor):
 
         # Create a Submission for every dir
         for dir in dirs:
-            subs.append(data.Submission(root / dir, preprocessor))
+            name = "{} @ {}".format(archive_path, dir) if archive_path else root / dir
+            subs.append(data.Submission(root / dir, preprocessor, name=name))
 
         # Create a single file Submission for every file
         for file in files:
-            subs.append(data.Submission.from_file_path(root / file, preprocessor))
+            file_path = root / file
+            if archive_path:
+                sub_name = "{} @ {}".format(archive_path, file_path.parent.relative_to(path))
+                subs.append(data.Submission.from_file_path(file_path, preprocessor, submission_name=sub_name))
+            else:
+                subs.append(data.Submission.from_file_path(file_path, preprocessor))
         break
     return subs
 
 
-def files(path, preprocessor):
-    path = pathlib.Path(path).absolute()
-    if path.is_file():
-        return list(data.Submission.from_file_path(path, preprocessor).files())
-
-    return list(data.Submission(path, preprocessor).files())
+def files(path, preprocessor, archive_path=None):
+    return list(individual_submission(path, preprocessor, archive_path=archive_path).files())
 
 
 class ListAction(argparse.Action):
@@ -204,7 +208,7 @@ def main():
     comparator = pass_.comparator
     preprocessor = Preprocessor(pass_.preprocessors)
 
-    sub_gen = submissions if len(args.submissions) == 1 else individual_submissions
+    sub_gen = submissions if len(args.submissions) == 1 else individual_submission
 
     # Collect all submissions, archive submissions and distro files
     with get(sub_gen, args.submissions, preprocessor) as subs,\
