@@ -7,14 +7,14 @@
     </head>
     <body>
       <div class="container-fluid h-100">
-          <div class="row h-3" id="sub_names">
+          <div class="row sticky-top bg-dark text-light" id="sub_names">
               {% for sub in sub_a, sub_b %}
                   <div class="col-sm-6 col-2 sub_name">
-                      <b>{{sub[0]}}</b>
+                      <h5>{{sub[0]}}</h5>
                   </div>
               {% endfor %}
           </div>
-          <div class="row h-97" id="diff">
+          <div class="row" id="diff">
               {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
                   <div class="col-sm-6 col-2" id="{{side}}">
                       {% for file, frags in sub[1] %}

@@ -71,5 +71,14 @@ body, h1, h4, h5 {
 .submission-file code.newline::before {
   content: counter(line_numbers) "";
   display: inline-block;
-  width:3em;
+  width: 3em;
+  border-right: 1px solid black;
+  margin-right: 0.5em;
+  padding-right: 1em;
+  text-align: right;
+  padding 0 0.5em;
+}
+
+pre {
+  line-height: 1.25;
 }
