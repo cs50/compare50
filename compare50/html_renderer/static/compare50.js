@@ -66,6 +66,10 @@ class Fragment {
     }
   }
 
+  highlight() {
+    this.dom_element.classList.add("active_match");
+  }
+
   unhighlight() {
     this.dom_element.classList.remove("active_match");
   }
@@ -80,7 +84,6 @@ class Fragment {
       }
       return curtop;
   }
-
 
   // Custom implementation/hack of element.scrollIntoView();
   // Because safari does not support smooth scrolling @ 27th July 2018
@@ -113,14 +116,6 @@ class Fragment {
       }
     };
     animateScroll();
-  }
-
-  highlight() {
-    this.dom_element.classList.add("active_match");
-  }
-
-  unhighlight() {
-    this.dom_element.classList.remove("active_match");
   }
 }
 
