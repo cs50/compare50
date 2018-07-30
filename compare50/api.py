@@ -118,7 +118,31 @@ def group_spans(span_matches_list):
             content_to_spans[content].add(span_a)
             content_to_spans[content].add(span_b)
 
-    return [Group(spans) for spans in content_to_spans.values()]
+    return _filter_subsumed_groups([Group(spans) for spans in content_to_spans.values()])
+
+
+def _is_span_subsumed(span, other_spans):
+    for other_span in other_spans:
+        if span.start >= other_span.start and span.end <= other_span.end:
+            return True
+    return False
+
+
+def _is_group_subsumed(group, groups):
+    for other_group in groups:
+        if other_group == group or len(other_group.spans) < len(group.spans):
+            continue
+
+        for span in group.spans:
+            if not _is_span_subsumed(span, other_group.spans):
+                break
+        else:
+            return True
+    return False
+
+
+def _filter_subsumed_groups(groups):
+    return [g for g in groups if not _is_group_subsumed(g, groups)]
 
 
 # def expand_spans(match, tokens):
