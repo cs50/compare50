@@ -3,6 +3,10 @@ body, h1, h4, h5 {
     counter-reset: line_numbers;
 }
 
+pre {
+  overflow-y: hidden;
+}
+
 #sub_names {
   height: 3%;
 }
@@ -69,4 +73,3 @@ body, h1, h4, h5 {
     line-height: 1em;
     font-family: Inconsolata,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
 }
-
