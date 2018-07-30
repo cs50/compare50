@@ -6,37 +6,6 @@ import pathlib
 
 from .data import *
 
-# def render(submission_matches, groups, dest):
-#     dest = pathlib.Path(dest)
-#
-#     if not dest.exists():
-#         os.mkdir(dest)
-#
-#     subs_to_groups = collections.defaultdict(list)
-#
-#     for group in groups:
-#         subs_to_groups[(group.sub_a, group.sub_b)].append(group)
-#
-#     subs_groups = [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
-#
-#     formatter = HtmlFormatter(linenos=True)
-#     with open(dest / "style.css", "w") as f:
-#         f.write(formatter.get_style_defs('.highlight'))
-#
-#     for i, (sub_a, sub_b, groups) in enumerate(subs_groups):
-#         with open(dest / "match_{}.html".format(i), "w") as f:
-#             f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
-#             f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
-#
-#             for group in groups:
-#                 f.write(" ".join(str(span) for span in group.spans))
-#                 f.write("<br/>")
-#
-#             for sub in (sub_a, sub_b):
-#                 for file in sub.files():
-#                     pygments.highlight(file.read(), file.lexer(), formatter, f)
-
-
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
     results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
