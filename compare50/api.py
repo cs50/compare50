@@ -43,17 +43,17 @@ def create_groups(submission_matches, comparator, ignored_files):
     span_matches_list = list(comparator.create_spans(file_matches, ignored_files))
 
     groups = []
-    for span_matches in map(_expand, span_matches_list):
-        sub_match_to_span_matches[(span_matches.file_a.submission.id, span_matches.file_b.submission.id)].append(span_matches)
+    # for span_matches in map(_expand, span_matches_list):
+        # sub_match_to_span_matches[(span_matches.file_a.submission.id, span_matches.file_b.submission.id)].append(span_matches)
 
-    for gs in map(group_spans, sub_match_to_span_matches.values()):
-        groups.extend(gs)
-    # with futures.ProcessPoolExecutor() as executor:
-        # for span_matches in executor.map(_expand, span_matches_list):
-            # sub_match_to_span_matches[(span_matches.file_a.submission.id, span_matches.file_b.submission.id)].append(span_matches)
+    # for gs in map(group_spans, sub_match_to_span_matches.values()):
+        # groups.extend(gs)
+    with futures.ProcessPoolExecutor() as executor:
+        for span_matches in executor.map(_expand, span_matches_list):
+            sub_match_to_span_matches[(span_matches.file_a.submission.id, span_matches.file_b.submission.id)].append(span_matches)
 
-        # for gs in executor.map(group_spans, sub_match_to_span_matches.values()):
-            # groups.extend(gs)
+        for gs in executor.map(group_spans, sub_match_to_span_matches.values()):
+            groups.extend(gs)
 
     subs_to_groups = collections.defaultdict(list)
 
