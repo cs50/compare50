@@ -1,13 +1,6 @@
 /* Make text more readable */
 body, h1, h4, h5 {
-    font-family: inherit;
     counter-reset: line_numbers;
-}
-
-/* Don't underline title */
-.block-title a {
-    color: #000;
-    text-decoration: none;
 }
 
 #sub_names {
@@ -44,20 +37,13 @@ body, h1, h4, h5 {
 /* highlighted code fragments */
 .match {
     background-color: #FFCC00;
+
 }
 
 .active_match {
     font-weight: bold;
     background-color: #DC3545;
     color: white;
-}
-
-.distro {
-    color: silver;
-}
-
-.highlight {
-    background-color: yellow;
 }
 
 /* style code samples */
@@ -79,6 +65,8 @@ body, h1, h4, h5 {
   padding 0 0.5em;
 }
 
-pre {
-  line-height: 1.25;
+.line {
+    line-height: 1em;
+    font-family: Inconsolata,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
 }
+
