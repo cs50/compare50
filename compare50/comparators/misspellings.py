@@ -5,7 +5,8 @@ import numpy as np
 import itertools
 import attr
 import pathlib
-
+import re
+from pygments.token import Token as PygToken
 import concurrent.futures as futures
 
 from compare50 import (
@@ -13,11 +14,21 @@ from compare50 import (
         Comparator,
         File, FileMatch,
         Pass,
-        Span, SpanMatches,
+        Span, SpanMatches, Token
 )
 
 def words(tokens):
-    return tokens
+    for t in tokens:
+        if t.type == PygToken.Comment.Single or t.type == PygToken.Comment.Multiline:
+            start = t.start
+            only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
+            for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
+                yield Token(t.start + start, t.start + end, t.type, val)
+
+def lowercase(tokens):
+    for t in tokens:
+        t.val = t.val.lower()
+        yield t
 
 class Misspellings(Comparator):
     def __init__(self, dictionary):
@@ -30,7 +41,7 @@ class Misspellings(Comparator):
     def cross_compare(self, submissions, archive_submissions, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
-            ignored_words += {token.val for token in ignored_file.tokens()}
+            ignored_words |= {token.val for token in ignored_file.tokens()}
 
         file_to_words = {}
         for sub in submissions:
@@ -75,13 +86,14 @@ class Misspellings(Comparator):
                 for token_a, token_b in itertools.product(ts_a, ts_b):
                     matches.append((
                         Span(file_match.file_a, token_a.start, token_a.end),
-                        Span(file_match.file_b, token_b.start, token_b.end),
+                        Span(file_match.file_b, token_b.start, token_b.end)
                     ))
-            span_matches.append(SpanMatches(matches))
+            if common_misspellings:
+                span_matches.append(SpanMatches(matches))
 
         return span_matches
 
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."
-    preprocessors = [words]
+    preprocessors = [words, lowercase]
     comparator = Misspellings(pathlib.Path(__file__).parent / "english_dictionary.txt")
