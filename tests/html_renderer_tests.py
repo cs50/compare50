@@ -25,6 +25,11 @@ class TestFragmentize(TestCase):
 
         self.file = list(data.Submission.from_file_path(pathlib.Path(self.filename), lambda ts: ts).files())[0]
 
+    def test_no_span(self):
+        fragments = renderer.fragmentize(self.file, [])
+        self.assertEqual([f.content for f in fragments], [("0123456789",)])
+        self.assertEqual(fragments[0].spans, tuple())
+
     def test_single_span(self):
         span = data.Span(self.file, 3, 5)
         fragments = renderer.fragmentize(self.file, [span])

@@ -27,11 +27,6 @@ def render(submission_groups, dest="html"):
     for fname in ("compare50.js", "compare50.css"):
         shutil.copyfile(src / "static" / fname, dest / fname)
 
-    # formatter = HtmlFormatter(linenos=True)
-
-    # with open(dest / "compare50.css", "a") as f:
-        # f.write(formatter.get_style_defs('.highlight'))
-
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
         frag_ids = IdStore()
         span_ids = IdStore()
@@ -105,6 +100,14 @@ class _FragmentSlicer:
         # Slicing at 0 has no effect, so remove
         self._slicing_marks.discard(0)
 
+        # Get file content
+        with open(file.path) as f:
+            content = f.read()
+
+        # If there are no slicing marks, return entire file in one fragment
+        if not self._slicing_marks:
+            return [Fragment(content)]
+
         # Perform slicing in order
         slicing_marks = sorted(self._slicing_marks)
 
@@ -115,10 +118,6 @@ class _FragmentSlicer:
             cur |= self._start_to_spans[mark]
             cur -= self._end_to_spans[mark]
             spans.append(cur)
-
-        # Get file content
-        with open(file.path) as f:
-            content = f.read()
 
         # Make sure that last slice ends at the last index in file
         if slicing_marks and slicing_marks[-1] < len(content):
