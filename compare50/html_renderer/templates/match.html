@@ -42,8 +42,8 @@
             </div>
         </div>
         <script>
-            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
-            var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
+            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson}};
+            var SPAN_TO_GROUP = {{span_to_group|tojson}};
         </script>
         {% for script in js %}
             <script>

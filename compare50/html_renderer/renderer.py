@@ -1,13 +1,12 @@
 from ..data import IdStore
-import cgi
 import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
 import shutil
 import pathlib
-from jinja2 import Template
-import json
+
+import jinja2
 
 
 @attr.s(slots=True, frozen=True, hash=True)
@@ -53,7 +52,7 @@ def render(submission_groups, dest="html"):
                 frag_list = []
                 for fragment in fragmentize(file, file_to_spans[file]):
                     frag_id = f"frag{frag_ids[fragment]}"
-                    frag_list.append((frag_id, map(cgi.escape, fragment.content)))
+                    frag_list.append((frag_id, fragment.content))
                     fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans]
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.name), file_list))
@@ -61,7 +60,8 @@ def render(submission_groups, dest="html"):
         # Get template
         with open(pathlib.Path(__file__).absolute().parent / "templates/match.html") as f:
             content = f.read()
-        template = Template(content)
+
+        template = jinja2.Template(content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
         # Render
         rendered_html = template.render(fragment_to_spans=fragment_to_spans,
