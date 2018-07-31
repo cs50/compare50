@@ -23,9 +23,12 @@ def render(submission_groups, dest="html"):
         shutil.rmtree(dest)
     dest.mkdir()
 
-    # Copy compare50.js & compare50.css
-    for fname in ("compare50.js", "compare50.css"):
-        shutil.copyfile(src / "static" / fname, dest / fname)
+    def read_file(fname):
+        with open(fname) as f:
+            return f.read()
+    js, css, bootstrap, fonts = (read_file(src / "static" / name)
+                         for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
+
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
         frag_ids = IdStore()
@@ -64,23 +67,13 @@ def render(submission_groups, dest="html"):
         rendered_html = template.render(fragment_to_spans=fragment_to_spans,
                                         span_to_group=span_to_group,
                                         sub_a=submissions[0],
-                                        sub_b=submissions[1])
+                                        sub_b=submissions[1],
+                                        js=(js,),
+                                        css=(fonts, bootstrap, css))
 
         with open(dest / f"match_{match_id}.html", "w") as f:
             f.write(rendered_html)
 
-def render_file_terminal(file, fragments, span_to_group):
-    formatter = TerminalFormatter(linenos=True, bg="dark")
-    print("*" * 80)
-    print(file.name)
-    print("*" * 80)
-    for fragment in fragments:
-        groups = list({span_to_group[span] for span in fragment.spans})
-        print(pygments.highlight(fragment.content, file.lexer(), formatter))
-        print("Spans:", fragment.spans)
-        print("Number of groups:", len(groups))
-        print("Matches with:", [group.spans for group in groups])
-        print("=" * 80)
 
 
 def fragmentize(file, spans):

@@ -3,10 +3,14 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Inconsolata">
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="compare50.css">
+
+    {% for style in css %}
+      <style>{{style}}</style>
+    {% endfor %}
+    <!--<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">-->
+    <!--<link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Inconsolata">-->
+    <!--<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">-->
+    <!--<link rel="stylesheet" type="text/css" href="compare50.css">-->
     </head>
     <body>
       <div class="container-fluid h-100">
@@ -44,6 +48,8 @@
           var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
           var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
       </script>
-      <script src="compare50.js"></script>
+      {% for script in js %}
+        <script>{{script}}</script>
+      {% endfor %}
     </body>
 </html>
