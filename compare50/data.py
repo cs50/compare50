@@ -188,7 +188,7 @@ class SpanMatches:
         returns a new instance of SpanMatches with maximally extended spans.
         """
         if not self._matches:
-            return
+            return self
 
         expanded_span_pairs = set()
 
@@ -235,6 +235,7 @@ class SpanMatches:
             expanded_span_pairs.add((new_span_a, new_span_b))
 
         self._matches = list(expanded_span_pairs)
+        return self
 
     def __iter__(self):
         return iter(self._matches)

@@ -91,7 +91,8 @@ class Winnowing(Comparator):
                 a_index.ignore(file)
                 b_index.ignore(file)
 
-            return a_index.create_spans(b_index)
+            spans = a_index.create_spans(b_index)
+            return spans
 
     @attr.s(slots=True)
     class _index_file:
@@ -196,7 +197,7 @@ class Index:
             spans_2 = other._index[hash_]
             matches.extend(itertools.product(spans_1, spans_2))
 
-        return SpanMatches(matches)
+        return SpanMatches(matches).expand()
 
 
     def _fingerprint(self, file):
