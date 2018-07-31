@@ -12,7 +12,6 @@ def strip_whitespace(tokens):
             yield tok
             #yield attr.evolve(tok, val=val)
 
-
 def strip_comments(tokens):
     for tok in tokens:
         if tok.type not in Comment:
