@@ -42,10 +42,9 @@ class Winnowing(Comparator):
         archive_index = Index(self.k, self.t)
 
         with futures.ProcessPoolExecutor() as executor:
-            ignored_indices = list(executor.map(self._index_file(self.k, self.t), ignored_files))
             ignored_index = Index(self.k, self.t)
-            for ignored_i in ignored_indices:
-                ignored_index.include_all(ignored_i)
+            for index in executor.map(self._index_file(self.k, self.t), ignored_files):
+                ignored_index.include_all(index)
 
             for index in executor.map(self._index_file(self.k, self.t, ignored_index), iter_files(submissions)):
                 submissions_index.include_all(index)
@@ -75,9 +74,8 @@ class Winnowing(Comparator):
             # yield a_index.create_spans(b_index)
 
         with futures.ProcessPoolExecutor() as executor:
-            ignored_indices = list(executor.map(self._index_file(self.k, self.t), ignored_files))
             ignored_index = Index(self.k, self.t)
-            for ignored_i in ignored_indices:
+            for ignored_i in executor.map(self._index_file(self.k, self.t), ignored_files):
                 ignored_index.include_all(ignored_i)
 
             return executor.map(self._create_spans(self.k, self.t, ignored_index), file_matches)
