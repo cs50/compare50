@@ -92,7 +92,6 @@ class File:
     def tokens(self):
         return self.submission.preprocessor(self._tokenize())
 
-
     def lexer(self):
         ext = self.name.suffix
         try:
@@ -182,7 +181,7 @@ class SpanMatches:
     def __iter__(self):
         return iter(self._matches)
 
-    def expand(self):
+    def expand(self, tokens_a=None, tokens_b=None):
         """
         Expand all spans in this SpanMatches.
         returns a new instance of SpanMatches with maximally extended spans.
@@ -192,9 +191,13 @@ class SpanMatches:
 
         expanded_span_pairs = set()
 
-        tokens_a = SortedList(self.file_a.tokens(), key=lambda tok: tok.start)
-        tokens_b = SortedList(self.file_b.tokens(), key=lambda tok: tok.start)
+        if not tokens_a:
+            tokens_a = list(self.file_a.tokens())
+        if not tokens_b:
+            tokens_b = list(self.file_b.tokens())
 
+        tokens_a_sorted = SortedList(tokens_a, key=lambda tok: tok.start)
+        tokens_b_sorted = SortedList(tokens_b, key=lambda tok: tok.start)
 
         for span_a, span_b in self._matches:
             # index_a = start_to_index_a[span_a.start]
@@ -208,8 +211,8 @@ class SpanMatches:
             #        pass
 
             # Expand left
-            start_a = tokens_a.bisect_key_right(span_a.start) - 2
-            start_b = tokens_b.bisect_key_right(span_b.start) - 2
+            start_a = tokens_a_sorted.bisect_key_right(span_a.start) - 2
+            start_b = tokens_b_sorted.bisect_key_right(span_b.start) - 2
             while min(start_a, start_b) >= 0 and tokens_a[start_a] == tokens_b[start_b]:
                 start_a -= 1
                 start_b -= 1
@@ -217,8 +220,8 @@ class SpanMatches:
             start_b += 1
 
             # Expand right
-            end_a = tokens_a.bisect_key_right(span_a.end) - 2
-            end_b = tokens_b.bisect_key_right(span_b.end) - 2
+            end_a = tokens_a_sorted.bisect_key_right(span_a.end) - 2
+            end_b = tokens_b_sorted.bisect_key_right(span_b.end) - 2
 
             try:
                 while tokens_a[end_a] == tokens_b[end_b]:
@@ -296,6 +299,9 @@ class Token:
     type = attr.ib()
     val = attr.ib()
 
+    def __eq__(self, other):
+        """Note that there is no sanity checking, sacrificed for performance."""
+        return self.val == other.val and self.type == other.type
 
 @attr.s(slots=True, frozen=True, hash=True)
 class MatchResult:

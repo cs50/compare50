@@ -4,6 +4,7 @@ import math
 import numpy as np
 import itertools
 import attr
+import multiprocessing
 
 import concurrent.futures as futures
 
@@ -41,23 +42,25 @@ class Winnowing(Comparator):
         archive_index = Index(self.k, self.t)
 
         with futures.ProcessPoolExecutor() as executor:
-            for index in executor.map(self._index_file(self.k, self.t), iter_files(submissions)):
+            ignored_indices = list(executor.map(self._index_file(self.k, self.t), ignored_files))
+            ignored_index = Index(self.k, self.t)
+            for ignored_i in ignored_indices:
+                ignored_index.include_all(ignored_i)
+
+            for index in executor.map(self._index_file(self.k, self.t, ignored_index), iter_files(submissions)):
                 submissions_index.include_all(index)
 
-            for index in executor.map(self._index_file(self.k, self.t), iter_files(archive_submissions)):
+            for index in executor.map(self._index_file(self.k, self.t, ignored_index), iter_files(archive_submissions)):
                 archive_index.include_all(index)
-
-            for index in executor.map(self._index_file(self.k, self.t), ignored_files):
-                submissions_index.ignore_all(index)
-                archive_index.ignore_all(index)
-
 
         # Add submissions to archive (the Index we're going to compare against)
         archive_index.include_all(submissions_index)
 
         return submissions_index.compare(archive_index)
 
+
     def create_spans(self, file_matches, ignored_files):
+        # V0
         # for file_match in file_matches:
             # a_index = Index(self.k, self.t, complete=True)
             # b_index = Index(self.k, self.t, complete=True)
@@ -71,65 +74,36 @@ class Winnowing(Comparator):
 
             # yield a_index.create_spans(b_index)
 
-         # with futures.ProcessPoolExecutor() as executor:
-         #    return executor.map(self._create_spans(self.k, self.t, ignored_files), file_matches)
-        files = set()
-        for fm in file_matches:
-            files.add(fm.file_a)
-            files.add(fm.file_b)
-
         with futures.ProcessPoolExecutor() as executor:
-            ignored_indices = list(executor.map(self._create_index(self.k, self.t, []), ignored_files))
-            file_to_index = {f:i for f,i in executor.map(self._create_index(self.k, self.t, ignored_indices), files)}
+            ignored_indices = list(executor.map(self._index_file(self.k, self.t), ignored_files))
+            ignored_index = Index(self.k, self.t)
+            for ignored_i in ignored_indices:
+                ignored_index.include_all(ignored_i)
 
-            def indices():
-                for fm in file_matches:
-                    yield (file_to_index[fm.file_a], file_to_index[fm.file_b])
-
-            return executor.map(self._create_spans(self.k, self.t, ignored_indices), list(indices()))
-
-    @attr.s(slots=True)
-    class _create_index:
-        k = attr.ib()
-        t = attr.ib()
-        ignored_indices = attr.ib()
-
-        def __call__(self, file):
-            index = Index(self.k, self.t, complete=True)
-            index.include(file)
-            for i in self.ignored_indices:
-                index.ignore_all(i)
-            return file, index
+            return executor.map(self._create_spans(self.k, self.t, ignored_index), file_matches)
 
     @attr.s(slots=True)
     class _create_spans:
         k = attr.ib()
         t = attr.ib()
-        ignored_indices = attr.ib()
+        ignored_index = attr.ib(default=None)
 
-        def __call__(self, indices):
-            return indices[0].create_spans(indices[1])
+        def __call__(self, file_match):
+            index_a = Index(self.k, self.t, complete=True)
+            index_b = Index(self.k, self.t, complete=True)
 
-    #
-    # @attr.s(slots=True)
-    # class _create_spans:
-    #     k = attr.ib()
-    #     t = attr.ib()
-    #     ignored_files = attr.ib()
-    #
-    #     def __call__(self, file_match):
-    #         a_index = Index(self.k, self.t, complete=True)
-    #         b_index = Index(self.k, self.t, complete=True)
-    #
-    #         a_index.include(file_match.file_a)
-    #         b_index.include(file_match.file_b)
-    #
-    #         for file in self.ignored_files:
-    #             a_index.ignore(file)
-    #             b_index.ignore(file)
-    #
-    #         spans = a_index.create_spans(b_index)
-    #         return spans
+            tokens_a = list(file_match.file_a.tokens())
+            tokens_b = list(file_match.file_b.tokens())
+
+            index_a.include(file_match.file_a, tokens=tokens_a)
+            index_b.include(file_match.file_b, tokens=tokens_b)
+
+            if self.ignored_index:
+                index_a.ignore_all(self.ignored_index)
+                index_b.ignore_all(self.ignored_index)
+
+            return index_a.create_spans(index_b, tokens_a=tokens_a, tokens_b=tokens_b)
+
 
     @attr.s(slots=True)
     class _index_file:
@@ -137,10 +111,13 @@ class Winnowing(Comparator):
         In the form of a class so that pickle can serialize it. """
         k = attr.ib()
         t = attr.ib()
+        ignored_index = attr.ib(default=None)
 
         def __call__(self, file):
             index = Index(self.k, self.t)
             index.include(file)
+            if self.ignored_index:
+                index.ignore_all(self.ignored_index)
             return index
 
 
@@ -169,10 +146,9 @@ class Index:
         self._index = collections.defaultdict(set)
         self._max_id = 0
 
-    def include(self, file):
+    def include(self, file, tokens=None):
         self._max_id = max(self._max_id, file.id)
-
-        for hash, span in self._fingerprint(file):
+        for hash, span in self._fingerprint(file, tokens):
             self._index[hash].add(span)
 
     def ignore(self, file):
@@ -218,7 +194,7 @@ class Index:
         return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
-    def create_spans(self, other):
+    def create_spans(self, other, tokens_a=None, tokens_b=None):
         # Validate other index
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
@@ -234,14 +210,14 @@ class Index:
             spans_2 = other._index[hash_]
             matches.extend(itertools.product(spans_1, spans_2))
 
-        return SpanMatches(matches).expand()
+        return SpanMatches(matches).expand(tokens_a, tokens_b)
 
 
-    def _fingerprint(self, file):
-        tokens = list(file.tokens())
-
+    def _fingerprint(self, file, tokens=None):
         if not tokens:
-            return []
+            tokens = list(file.tokens())
+            if not tokens:
+                return []
 
         kgrams = zip(*((tok.val for tok in tokens[i:]) for i in range(self.k)))
         hashes = (hash("".join(kgram)) for kgram in kgrams)
@@ -274,3 +250,54 @@ class Index:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
         return fingerprints
+
+#
+# def group(pairs):
+#     # Generate fictive content by which we can identify spans
+#     def content_factory():
+#         content_factory.i += 1
+#         return content_factory.i
+#     content_factory.i = -1
+#
+#     # Map a span to its content
+#     item_to_content = collections.defaultdict(content_factory)
+#     # Group spans by content
+#     content_to_items = collections.defaultdict(lambda : set())
+#
+#     for a, b in pairs:
+#         # Get contents of span_a
+#         content_a = item_to_content[a]
+#
+#         # If span_b has no contents, give it span_a's contents
+#         if b not in item_to_content:
+#             content_b = item_to_content[a]
+#             item_to_content[b] = content_b
+#         # Otherwise, retrieve span_b's contents
+#         else:
+#             content_b = item_to_content[b]
+#
+#         # If content_a is higher (older) than content_b
+#         if content_a > content_b:
+#             # Set all spans that share content_a to instead contain content_b
+#             for item in content_to_items[content_a]:
+#                 content_to_items[content_b].add(item)
+#                 item_to_content[item] = content_b
+#             # Delete content_a
+#             del content_to_items[content_a]
+#         # Otherwise if content_b is higher (older) than content_a
+#         elif content_a < content_b:
+#             # Set all spans that share content_b to instead contain content_a
+#             for item in content_to_items[content_b]:
+#                 content_to_items[content_a].add(item)
+#                 item_to_content[item] = content_a
+#             # Delete content_b
+#             del content_to_items[content_b]
+#
+#         # Add span_a and span_b to content maps
+#         content = min(content_a, content_b)
+#         item_to_content[a] = content
+#         item_to_content[b] = content
+#         content_to_items[content].add(a)
+#         content_to_items[content].add(b)
+#
+#     return list(content_to_items.values())

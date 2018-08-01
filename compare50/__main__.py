@@ -118,7 +118,7 @@ def submissions(path, preprocessor, archive_path=None):
 
 
 def files(path, preprocessor, archive_path=None):
-    return list(individual_submission(path, preprocessor, archive_path=archive_path).files())
+    return list(individual_submission(path, preprocessor, archive_path=archive_path)[0].files())
 
 
 class ListAction(argparse.Action):
@@ -231,9 +231,14 @@ def main():
 #           , comparators.misspellings.Misspellings.cross_compare
 #           , comparators.misspellings.Misspellings.create_spans
 #           , api.create_groups]
-#
+
 # PROFILE = [ main
-#           , comparators.winnowing.Winnowing.create_spans]
+#           , comparators.winnowing.Winnowing.cross_compare
+#           , comparators.winnowing.Winnowing.create_spans
+#           , comparators.winnowing.Winnowing._create_spans.__call__
+#           , data.File.tokens
+#           , comparators.winnowing.Index.create_spans
+#           , data.SpanMatches.expand]
 
 PROFILE = []
 if __name__ == "__main__":
