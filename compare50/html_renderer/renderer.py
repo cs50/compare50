@@ -25,6 +25,7 @@ def render(submission_groups, dest="html"):
     def read_file(fname):
         with open(fname) as f:
             return f.read()
+
     js, css, bootstrap, fonts = (read_file(src / "static" / name)
                          for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
 

@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {% for style in css %}
             <style>
-                {{style}}
+                {{style|safe}}
             </style>
         {% endfor %}
     </head>
@@ -42,12 +42,12 @@
             </div>
         </div>
         <script>
-            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson}};
-            var SPAN_TO_GROUP = {{span_to_group|tojson}};
+            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
+            var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
         </script>
         {% for script in js %}
             <script>
-                {{script}}
+                {{script|safe}}
             </script>
         {% endfor %}
     </body>
