@@ -228,12 +228,9 @@ def main():
 
 # PROFILE = [ main
 #           , api.rank_submissions
-#           , comparators.winnowing.Winnowing.cross_compare
-#           , comparators.winnowing.Index.compare
-#           , comparators.winnowing.Index.include
-#           , comparators.winnowing.Index._fingerprint
-#           , api.create_groups
-#           , comparators.winnowing.Index.compare]
+#           , comparators.misspellings.Misspellings.cross_compare
+#           , comparators.misspellings.Misspellings.create_spans
+#           , api.create_groups]
 
 PROFILE = []
 if __name__ == "__main__":

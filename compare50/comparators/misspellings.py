@@ -67,9 +67,18 @@ class Misspellings(Comparator):
             ignored_words += {token.val for token in ignored_file.tokens()}
 
         span_matches = []
+        file_to_tokens = {}
         for file_match in file_matches:
-            tokens_a = self._misspelled_tokens(file_match.file_a)
-            tokens_b = self._misspelled_tokens(file_match.file_b)
+            if file_match.file_a not in file_to_tokens:
+                file_to_tokens[file_match.file_a] = self._misspelled_tokens(file_match.file_a)
+            tokens_a = file_to_tokens[file_match.file_a]
+
+            if file_match.file_b not in file_to_tokens:
+                file_to_tokens[file_match.file_b] = self._misspelled_tokens(file_match.file_b)
+            tokens_b = file_to_tokens[file_match.file_b]
+
+            # tokens_a = self._misspelled_tokens(file_match.file_a)
+            # tokens_b = self._misspelled_tokens(file_match.file_b)
 
             word_to_tokens_a = collections.defaultdict(list)
             for token in tokens_a:
