@@ -71,28 +71,65 @@ class Winnowing(Comparator):
 
             # yield a_index.create_spans(b_index)
 
+         # with futures.ProcessPoolExecutor() as executor:
+         #    return executor.map(self._create_spans(self.k, self.t, ignored_files), file_matches)
+        files = set()
+        for fm in file_matches:
+            files.add(fm.file_a)
+            files.add(fm.file_b)
+
         with futures.ProcessPoolExecutor() as executor:
-            return executor.map(self._create_spans(self.k, self.t, ignored_files), file_matches)
+            ignored_indices = list(executor.map(self._create_index(self.k, self.t, []), ignored_files))
+            file_to_index = {f:i for f,i in executor.map(self._create_index(self.k, self.t, ignored_indices), files)}
+
+            def indices():
+                for fm in file_matches:
+                    yield (file_to_index[fm.file_a], file_to_index[fm.file_b])
+
+            return executor.map(self._create_spans(self.k, self.t, ignored_indices), list(indices()))
+
+    @attr.s(slots=True)
+    class _create_index:
+        k = attr.ib()
+        t = attr.ib()
+        ignored_indices = attr.ib()
+
+        def __call__(self, file):
+            index = Index(self.k, self.t, complete=True)
+            index.include(file)
+            for i in self.ignored_indices:
+                index.ignore_all(i)
+            return file, index
 
     @attr.s(slots=True)
     class _create_spans:
         k = attr.ib()
         t = attr.ib()
-        ignored_files = attr.ib()
+        ignored_indices = attr.ib()
 
-        def __call__(self, file_match):
-            a_index = Index(self.k, self.t, complete=True)
-            b_index = Index(self.k, self.t, complete=True)
+        def __call__(self, indices):
+            return indices[0].create_spans(indices[1])
 
-            a_index.include(file_match.file_a)
-            b_index.include(file_match.file_b)
-
-            for file in self.ignored_files:
-                a_index.ignore(file)
-                b_index.ignore(file)
-
-            spans = a_index.create_spans(b_index)
-            return spans
+    #
+    # @attr.s(slots=True)
+    # class _create_spans:
+    #     k = attr.ib()
+    #     t = attr.ib()
+    #     ignored_files = attr.ib()
+    #
+    #     def __call__(self, file_match):
+    #         a_index = Index(self.k, self.t, complete=True)
+    #         b_index = Index(self.k, self.t, complete=True)
+    #
+    #         a_index.include(file_match.file_a)
+    #         b_index.include(file_match.file_b)
+    #
+    #         for file in self.ignored_files:
+    #             a_index.ignore(file)
+    #             b_index.ignore(file)
+    #
+    #         spans = a_index.create_spans(b_index)
+    #         return spans
 
     @attr.s(slots=True)
     class _index_file:

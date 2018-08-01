@@ -231,6 +231,9 @@ def main():
 #           , comparators.misspellings.Misspellings.cross_compare
 #           , comparators.misspellings.Misspellings.create_spans
 #           , api.create_groups]
+#
+# PROFILE = [ main
+#           , comparators.winnowing.Winnowing.create_spans]
 
 PROFILE = []
 if __name__ == "__main__":
