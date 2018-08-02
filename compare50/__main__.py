@@ -28,15 +28,13 @@ class SubmissionFactory:
         fp = lib50.config.FilePattern(lib50.config.FileType.Excluded, pattern)
         self.patterns.append(fp)
 
-    def get(self, path, preprocessor, only_files=False):
+    def _get(self, path, preprocessor):
         path = pathlib.Path(path)
 
         if path.is_file():
             file_paths = [path]
-        elif not only_files:
-            included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
         else:
-            raise errors.Error("Accepting only files as submissions.")
+            included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
 
         decodable_files = []
         for file_path in included:
@@ -53,14 +51,15 @@ class SubmissionFactory:
 
         return data.Submission(path, decodable_files, preprocessor=preprocessor)
 
-    def get_all(self, paths, preprocessor, only_files=False):
+    def get_all(self, paths, preprocessor):
         subs = []
         for sub_path in paths:
             try:
-                subs.append(self.get(sub_path, preprocessor, only_files))
+                subs.append(self._get(sub_path, preprocessor))
             except Error:
                 pass
         return subs
+
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag"""
@@ -108,15 +107,15 @@ def main():
     parser = argparse.ArgumentParser(prog="compare50")
     parser.add_argument("submissions",
                         nargs="+",
-                        help="Path to directory or compressed file containing submissions. If more than one argument is passed compare50 treats them as individual submissions.")
+                        help="Paths to submissions.")
     parser.add_argument("-a", "--archive",
-                        action="append",
+                        nargs="+",
                         default=[],
-                        help="Path to directory or compressed file containing archive submissions at the top level (can be specified multiple times)")
+                        help="Paths to archive submissions. Compare50 does not compare archive submissions versus archive submissions.")
     parser.add_argument("-d", "--distro",
-                        action="append",
+                        nargs="+",
                         default=[],
-                        help="Paths to directory or compressed file containing distro files to ignore at the top level (can be specified multiple times).")
+                        help="Paths to distribution files. Contents of these files are stripped from submissions.")
     parser.add_argument("-p", "--pass",
                         action="store",
                         dest="pass_",
@@ -138,7 +137,6 @@ def main():
             if not pathlib.Path(item).exists():
                 raise errors.Error("Path {} does not exist.".format(item))
 
-
     # Extract comparator and preprocessors from pass
     try:
         pass_ = passes.get(args.pass_)
@@ -154,7 +152,8 @@ def main():
     # TODO parse include / exclude
     subs = submission_factory.get_all(args.submissions, preprocessor)
     archive_subs = submission_factory.get_all(args.archive, preprocessor)
-    ignored_files = submission_factory.get_all(args.distro, preprocessor)
+    ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+    ignored_files = [f for sub in ignored_subs for f in sub.files]
 
     # Cross compare and rank all submissions, keep only top `n`
     submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
