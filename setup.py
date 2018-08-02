@@ -11,7 +11,7 @@ setup(
     ],
     license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
-    install_requires=["attrs", "astropy", "numpy", "patool", "sortedcontainers", "pygments", "jinja2"],
+    install_requires=["attrs", "astropy", "numpy", "patool", "pygments", "jinja2"],
     keywords=["compare", "compare50"],
     name="compare50",
     python_requires=">=3.5",

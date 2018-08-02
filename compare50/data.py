@@ -1,13 +1,12 @@
 import abc
-from collections.abc import Mapping
-from itertools import islice
+from collections.abc import Mapping, Sequence
 import os
 import pathlib
 
 import attr
 import pygments
 import pygments.lexers
-from sortedcontainers import SortedList
+
 
 
 class Comparator(metaclass=abc.ABCMeta):
@@ -191,18 +190,12 @@ class SpanMatches:
 
         expanded_span_pairs = set()
 
-        if not tokens_a:
-            tokens_a = list(self.file_a.tokens())
-        if not tokens_b:
-            tokens_b = list(self.file_b.tokens())
-
-        tokens_a_sorted = SortedList(tokens_a, key=lambda tok: tok.start)
-        tokens_b_sorted = SortedList(tokens_b, key=lambda tok: tok.start)
+        tokens_a = SortedList.from_sorted(tokens_a if tokens_a else self.file_a.tokens(),
+                                          key=lambda tok: tok.start)
+        tokens_b = SortedList.from_sorted(tokens_b if tokens_b else self.file_b.tokens(),
+                                          key=lambda tok: tok.start)
 
         for span_a, span_b in self._matches:
-            # index_a = start_to_index_a[span_a.start]
-            # index_b = start_to_index_b[span_b.start]
-
             # TODO decide if "optimisation" actually adds/optimizes anything
             # TODO check that both spans aren't already absorbed by another expanded span
             #     set other (if not absorbed) to match
@@ -211,8 +204,8 @@ class SpanMatches:
             #        pass
 
             # Expand left
-            start_a = tokens_a_sorted.bisect_key_right(span_a.start) - 2
-            start_b = tokens_b_sorted.bisect_key_right(span_b.start) - 2
+            start_a = tokens_a.bisect_key_right(span_a.start) - 2
+            start_b = tokens_b.bisect_key_right(span_b.start) - 2
             while min(start_a, start_b) >= 0 and tokens_a[start_a] == tokens_b[start_b]:
                 start_a -= 1
                 start_b -= 1
@@ -220,8 +213,8 @@ class SpanMatches:
             start_b += 1
 
             # Expand right
-            end_a = tokens_a_sorted.bisect_key_right(span_a.end) - 2
-            end_b = tokens_b_sorted.bisect_key_right(span_b.end) - 2
+            end_a = tokens_a.bisect_key_right(span_a.end) - 2
+            end_b = tokens_b.bisect_key_right(span_b.end) - 2
 
             try:
                 while tokens_a[end_a] == tokens_b[end_b]:
@@ -319,3 +312,46 @@ class MatchResult:
     b = attr.ib()
     score = attr.ib()
     spans = attr.ib(repr=False)
+
+
+class SortedList(Sequence):
+    def __init__(self, iter=None, key=lambda x: x):
+        self.contents = sorted(iter, key=key) if iter is not None else []
+        self.key = key
+
+    @classmethod
+    def from_sorted(cls, iter=None, key=lambda x: x):
+        s_list = SortedList(key=key)
+        if iter is not None:
+            s_list.contents = list(iter)
+        return s_list
+
+    def __len__(self):
+        return len(self.contents)
+
+    def __getitem__(self, idx):
+        return self.contents[idx]
+
+    def bisect_key_right(self, x):
+        lo = 0
+        hi = len(self.contents)
+
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if x < self.key(self.contents[mid]):
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo
+
+    def bisect_key_left(self, key):
+        lo = 0
+        hi = len(self.contents)
+
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if self.key(self.contents[mid]) < x:
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
