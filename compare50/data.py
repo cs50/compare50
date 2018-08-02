@@ -344,7 +344,7 @@ class SortedList(Sequence):
                 lo = mid + 1
         return lo
 
-    def bisect_key_left(self, key):
+    def bisect_key_left(self, x):
         lo = 0
         hi = len(self.contents)
 
