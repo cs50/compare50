@@ -64,56 +64,60 @@ def group_spans(span_matches_list):
     Finds all spans that share the same content, and groups them in one Group.
     returns a list of Groups.
     """
+    span_groups = group([(span_a, span_b) for span_matches in span_matches_list for span_a, span_b in span_matches])
+    return _filter_subsumed_groups([Group(spans) for spans in span_groups])
 
-    # Generate fictive content by which we can identify spans
+
+def group(pairs):
+    """Group pairs in the largest possible group (the transitive closure)"""
+    # Generate fictive content by which we can identify
     def content_factory():
         content_factory.i += 1
         return content_factory.i
     content_factory.i = -1
 
-    # Map a span to its content
-    span_to_content = collections.defaultdict(content_factory)
-    # Group spans by content
-    content_to_spans = collections.defaultdict(lambda : set())
+    # Map an item to its content
+    item_to_content = collections.defaultdict(content_factory)
+    # Group items by content
+    content_to_items = collections.defaultdict(lambda : set())
 
-    for span_matches in span_matches_list:
-        for span_a, span_b in span_matches:
-            # Get contents of span_a
-            content_a = span_to_content[span_a]
+    for a, b in pairs:
+        # Get contents of a
+        content_a = item_to_content[a]
 
-            # If span_b has no contents, give it span_a's contents
-            if span_b not in span_to_content:
-                content_b = span_to_content[span_a]
-                span_to_content[span_b] = content_b
-            # Otherwise, retrieve span_b's contents
-            else:
-                content_b = span_to_content[span_b]
+        # If b has no contents, give it a's contents
+        if b not in item_to_content:
+            content_b = item_to_content[a]
+            item_to_content[b] = content_b
+        # Otherwise, retrieve b's contents
+        else:
+            content_b = item_to_content[b]
 
-            # If content_a is higher (older) than content_b
-            if content_a > content_b:
-                # Set all spans that share content_a to instead contain content_b
-                for span in content_to_spans[content_a]:
-                    content_to_spans[content_b].add(span)
-                    span_to_content[span] = content_b
-                # Delete content_a
-                del content_to_spans[content_a]
-            # Otherwise if content_b is higher (older) than content_a
-            elif content_a < content_b:
-                # Set all spans that share content_b to instead contain content_a
-                for span in content_to_spans[content_b]:
-                    content_to_spans[content_a].add(span)
-                    span_to_content[span] = content_a
-                # Delete content_b
-                del content_to_spans[content_b]
+        # If content_a is higher (older) than content_b
+        if content_a > content_b:
+            # Set all items that share content_a to instead contain content_b
+            for item in content_to_items[content_a]:
+                content_to_items[content_b].add(item)
+                item_to_content[item] = content_b
+            # Delete content_a
+            del content_to_items[content_a]
+        # Otherwise if content_b is higher (older) than content_a
+        elif content_a < content_b:
+            # Set all items that share content_b to instead contain content_a
+            for item in content_to_items[content_b]:
+                content_to_items[content_a].add(item)
+                item_to_content[item] = content_a
+            # Delete content_b
+            del content_to_items[content_b]
 
-            # Add span_a and span_b to content maps
-            content = min(content_a, content_b)
-            span_to_content[span_a] = content
-            span_to_content[span_b] = content
-            content_to_spans[content].add(span_a)
-            content_to_spans[content].add(span_b)
+        # Add a and b to content maps
+        content = min(content_a, content_b)
+        item_to_content[a] = content
+        item_to_content[b] = content
+        content_to_items[content].add(a)
+        content_to_items[content].add(b)
 
-    return _filter_subsumed_groups([Group(spans) for spans in content_to_spans.values()])
+    return list(content_to_items.values())
 
 
 def _is_span_subsumed(span, other_spans):

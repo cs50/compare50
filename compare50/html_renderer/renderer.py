@@ -11,7 +11,7 @@ import jinja2
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Fragment:
-    content = attr.ib(convert=lambda c : tuple(c.splitlines(True)))
+    content = attr.ib(convert=lambda c: tuple(c.splitlines(True)))
     spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
 
@@ -28,7 +28,6 @@ def render(submission_groups, dest="html"):
 
     js, css, bootstrap, fonts = (read_file(src / "static" / name)
                          for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
-
 
     for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
         frag_ids = IdStore()
