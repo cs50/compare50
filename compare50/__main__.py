@@ -10,116 +10,57 @@ import attr
 import attr
 import patoolib
 
+import lib50
+
 from . import html_renderer
 from . import passes, api, errors, data, comparators
 
-# Supported archives, per https://github.com/wummel/patool
-ARCHIVES = ( [".bz2"]
-           , [".tar"]
-           , [".tar", ".gz"]
-           , [".tgz"]
-           , [".zip"]
-           , [".7z"]
-           , [".xz"] )
+class SubmissionFactory:
+    def __init__(self):
+        self.patterns = []
+        self.submissions = {}
 
-@contextlib.contextmanager
-def get(generator, paths, preprocessor):
-    """
-    Calls generator for every path.
-    If path is a compressed file, first unpacks it into a temporary dir.
-    """
-    if not paths:
-        yield []
-        return
+    def include(self, pattern):
+        fp = lib50.config.FilePattern(lib50.config.FileType.Included, pattern)
+        self.patterns.append(fp)
 
-    temp_dirs = []
-    content = []
+    def exclude(self, pattern):
+        fp = lib50.config.FilePattern(lib50.config.FileType.Excluded, pattern)
+        self.patterns.append(fp)
 
-    try:
-        for path in paths:
-            path = pathlib.Path(path)
+    def get(self, path, preprocessor, only_files=False):
+        path = pathlib.Path(path)
 
-            if not is_archive(path):
-                content.extend(generator(path, preprocessor))
-            else:
-                temp_dirs.append(tempfile.mkdtemp())
-                temp_path = pathlib.Path(temp_dirs[-1])
-                unpack(path, temp_path)
-                content.extend(generator(temp_path, preprocessor, archive_path=path))
-        yield content
-    finally:
-        for d in temp_dirs:
-            shutil.rmtree(d)
-
-
-def unpack(path, dest):
-    """Unpacks compressed file in path to dest."""
-    path = pathlib.Path(path)
-    dest = pathlib.Path(dest)
-
-    if not dest.exists():
-        raise errors.Error("Unpacking destination: {} does not exist.".format(dest))
-
-    if not is_archive(path):
-        raise errors.Error("Unsupported archive, try one of these: {}".format(ARCHIVES))
-
-    try:
-        patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
-        return dest
-    except patoolib.util.PatoolError:
-        raise errors.Error("Failed to extract: {}".format(path))
-
-
-def is_archive(path):
-    return path.suffixes in ARCHIVES
-
-
-def individual_submission(path, preprocessor, archive_path=None):
-    path = pathlib.Path(path).absolute()
-
-    if path.is_file():
-        if archive_path:
-            return (data.Submission.from_file_path(path, preprocessor, submission_name=archive_path),)
+        if path.is_file():
+            file_paths = [path]
+        elif not only_files:
+            included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
         else:
-            return (data.Submission.from_file_path(path, preprocessor),)
+            raise errors.Error("Accepting only files as submissions.")
 
-    name = str(archive_path) if archive_path else str(path)
-    return (data.Submission(path, preprocessor, name=name),)
-
-
-def submissions(path, preprocessor, archive_path=None):
-    path = pathlib.Path(path).absolute()
-    if path.is_file():
-        return individual_submission(path, preprocessor, archive_path=archive_path)
-
-    subs = []
-    for root, dirs, files in os.walk(path):
-        # Keep walking until you stumble upon a single file or multiple items
-        if len(dirs) == 1 and len(files) == 0:
-            continue
-
-        root = pathlib.Path(root).absolute()
-
-        # Create a Submission for every dir
-        for dir in dirs:
-            name = "{} @ {}".format(archive_path, dir) if archive_path else root / dir
-            subs.append(data.Submission(root / dir, preprocessor, name=name))
-
-        # Create a single file Submission for every file
-        for file in files:
-            file_path = root / file
-            if archive_path:
-                sub_name = "{} @ {}".format(archive_path, file_path.parent.relative_to(path))
-                subs.append(data.Submission.from_file_path(file_path, preprocessor, submission_name=sub_name))
+        decodable_files = []
+        for file_path in included:
+            try:
+                with open(path / file_path) as f:
+                    f.read()
+            except TypeError:
+                pass
             else:
-                subs.append(data.Submission.from_file_path(file_path, preprocessor))
-        break
-    return subs
+                decodable_files.append(file_path)
 
+        if not decodable_files:
+            raise errors.Error("Empty submission.")
 
-def files(path, preprocessor, archive_path=None):
-    return list(individual_submission(path, preprocessor, archive_path=archive_path)[0].files())
+        return data.Submission(path, decodable_files, preprocessor=preprocessor)
 
+    def get_all(self, paths, preprocessor, only_files=False):
+        subs = []
+        for sub_path in paths:
+            try:
+                subs.append(self.get(sub_path, preprocessor, only_files))
+            except Error:
+                pass
+        return subs
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag"""
@@ -208,23 +149,36 @@ def main():
     comparator = pass_.comparator
     preprocessor = Preprocessor(pass_.preprocessors)
 
-    sub_gen = submissions if len(args.submissions) == 1 else individual_submission
-
     # Collect all submissions, archive submissions and distro files
-    with get(sub_gen, args.submissions, preprocessor) as subs,\
-         get(submissions, args.archive, preprocessor) as archive_subs,\
-         get(files, args.distro, preprocessor) as ignored_files:
+    submission_factory = SubmissionFactory()
+    # TODO parse include / exclude
+    subs = submission_factory.get_all(args.submissions, preprocessor)
+    archive_subs = submission_factory.get_all(args.archive, preprocessor)
+    ignored_files = submission_factory.get_all(args.distro, preprocessor)
 
-        # Cross compare and rank all submissions, keep only top `n`
-        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
+    # Cross compare and rank all submissions, keep only top `n`
+    submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
-        print_results(submission_matches)
+    print_results(submission_matches)
 
-        # Get the matching spans, group them per submission
-        groups = api.create_groups(submission_matches, comparator, ignored_files)
+    # Get the matching spans, group them per submission
+    groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        html_renderer.render(groups)
-        # TODO api.as_json(groups)
+    html_renderer.render(groups)
+    # # TODO api.as_json(groups)
+    #
+
+
+def filter(files):
+    kept_files = []
+
+    for file in files:
+        with open(file.path, "r") as f:
+            try:
+                f.read()
+                kept_files.append(file)
+            except TypeError:
+                pass
 
 # PROFILE = [ main
 #           , api.rank_submissions
@@ -243,6 +197,9 @@ def main():
 # PROFILE = [ main
 #           , api.create_groups
 #           , api.transitive_closure]
+
+# PROFILE = [ main
+#           , read_all]
 
 PROFILE = []
 if __name__ == "__main__":

@@ -45,12 +45,12 @@ class Misspellings(Comparator):
 
         file_to_words = {}
         for sub in submissions:
-            for file in sub.files():
+            for file in sub.files:
                 file_to_words[file] = {t.val for t in self._misspelled_tokens(file)} - ignored_words
 
         archive_file_to_words = {}
         for sub in archive_submissions:
-            for file in sub.files():
+            for file in sub.files:
                 archive_file_to_words[file] = {t.val for t in self._misspelled_tokens(file)} - ignored_words
 
         file_matches = []

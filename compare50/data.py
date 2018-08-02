@@ -42,34 +42,20 @@ class IdStore(Mapping):
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
-    _store = IdStore(key=lambda sub: (sub.path, sub.file_paths))
+    _store = IdStore(key=lambda sub: (sub.path, sub.files))
 
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
+    files = attr.ib(hash=False, cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
-    name = attr.ib(default=attr.Factory(lambda self: self.path, takes_self=True), convert=str, hash=False, cmp=False)
-    file_paths = attr.ib(default=tuple(), convert=tuple, hash=False, cmp=False)
-    id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
+    id = attr.ib(init=False)
 
-    def files(self):
-        if self.file_paths:
-            for file_path in self.file_paths:
-                yield File(file_path, self)
-            return
-
-        for root, dirs, files in os.walk(str(self.path)):
-            for f in files:
-                yield File((pathlib.Path(root) / f).relative_to(self.path), self)
+    def __attrs_post_init__(self):
+        object.__setattr__(self, "files", tuple([File(pathlib.Path(path).name, self) for path in self.files]))
+        object.__setattr__(self, "id", Submission._store[self])
 
     @classmethod
     def get(cls, id):
         return cls._store.objects[id]
-
-    @staticmethod
-    def from_file_path(path, preprocessor, submission_name=""):
-        path = pathlib.Path(path).absolute()
-        if submission_name:
-            return Submission(path.parent, preprocessor, file_paths=[path.name], name=submission_name)
-        return Submission(path.parent, preprocessor, file_paths=[path.name])
 
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
@@ -109,11 +95,9 @@ class File:
             except pygments.util.ClassNotFound:
                 return pygments.lexers.special.TextLexer()
 
-
     @classmethod
     def get(cls, id):
         return cls._store.objects[id]
-
 
     def _tokenize(self):
         text = self.read()

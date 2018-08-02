@@ -35,7 +35,7 @@ class Winnowing(Comparator):
         """"""
         def iter_files(subs):
             for sub in subs:
-                for file in sub.files():
+                for file in sub.files:
                     yield file
 
         submissions_index = Index(self.k, self.t)
