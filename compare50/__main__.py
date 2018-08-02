@@ -240,6 +240,10 @@ def main():
 #           , comparators.winnowing.Index.create_spans
 #           , data.SpanMatches.expand]
 
+# PROFILE = [ main
+#           , api.create_groups
+#           , api.transitive_closure]
+
 PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
