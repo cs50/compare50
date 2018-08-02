@@ -60,14 +60,14 @@ def unpack(path, dest):
     if not dest.exists():
         raise errors.Error("Unpacking destination: {} does not exist.".format(dest))
 
-    if is_archive(path):
-        try:
-            patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
-            return dest
-        except patoolib.util.PatoolError:
-            raise errors.Error("Failed to extract: {}".format(path))
-    else:
+    if not is_archive(path):
         raise errors.Error("Unsupported archive, try one of these: {}".format(ARCHIVES))
+
+    try:
+        patoolib.extract_archive(str(path), outdir=str(dest), verbosity=-1)
+        return dest
+    except patoolib.util.PatoolError:
+        raise errors.Error("Failed to extract: {}".format(path))
 
 
 def is_archive(path):
