@@ -44,8 +44,9 @@ def create_groups(submission_matches, comparator, ignored_files):
         ignored_spans = flatten(ignored_spans)
 
     groups = []
-    for grouped_spans in map(group_spans, sub_match_to_span_matches.values()):
-        groups.extend(grouped_spans)
+    for span_matches_list in sub_match_to_span_matches.values():
+        span_pairs = [(span_a, span_b) for span_matches in span_matches_list for span_a, span_b in span_matches]
+        groups.extend(group_span_pairs(span_pairs))
 
     sub_match_to_groups = collections.defaultdict(list)
     for group in groups:
@@ -71,17 +72,18 @@ def flatten(spans):
         if spans[i].end < spans[i + 1].start:
             flattened_spans.append(Span(file, start, spans[i].end))
             start = spans[i + 1].start
-    
+
     flattened_spans.append(Span(file, start, spans[-1].end))
     return flattened_spans
 
-def group_spans(span_matches_list):
+
+def group_span_pairs(span_pairs):
     """
-    Transforms a list of SpanMatches into a list of Groups.
+    Transforms a list of span_pairs (2 item tuples of Spans) into a list of Groups.
     Finds all spans that share the same content, and groups them in one Group.
     returns a list of Groups.
     """
-    span_groups = transitive_closure([(span_a, span_b) for span_matches in span_matches_list for span_a, span_b in span_matches])
+    span_groups = transitive_closure(span_pairs)
     return _filter_subsumed_groups([Group(spans) for spans in span_groups])
 
 
@@ -122,7 +124,7 @@ def transitive_closure(connections):
 
 def _is_span_subsumed(span, other_spans):
     for other_span in other_spans:
-        if span.file == other_span.file and span.start >= other_span.start and span.end <= other_span.end:
+        if span.start >= other_span.start and span.end <= other_span.end:
             return True
     return False
 
