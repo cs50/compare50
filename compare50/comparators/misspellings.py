@@ -111,7 +111,7 @@ class Misspellings(Comparator):
             if common_misspellings:
                 span_matches_list.append(SpanMatches(matches))
 
-        return zip(span_matches_list, ignored_spans)
+        return zip(span_matches_list, ignored_spans_list)
 
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."
