@@ -43,9 +43,11 @@ def create_groups(submission_matches, comparator, ignored_files):
         sub_match = (span_matches.file_a.submission, span_matches.file_b.submission)
 
         sub_match_to_span_matches[sub_match].append(span_matches)
-
+        
+        ignored_spans.extend(missing_spans(span_matches.file_a))
+        ignored_spans.extend(missing_spans(span_matches.file_b))
         ignored_spans = flatten(ignored_spans)
-        sub_match_to_ignored_spans[sub_match].append(ignored_spans)
+        sub_match_to_ignored_spans[sub_match].extend(ignored_spans)
 
     groups = []
     for span_matches_list in sub_match_to_span_matches.values():
