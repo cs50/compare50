@@ -32,7 +32,8 @@ class SubmissionFactory:
         path = pathlib.Path(path)
 
         if path.is_file():
-            file_paths = [path]
+            included, excluded = [path.name], []
+            path = path.parent
         else:
             included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
 
@@ -56,7 +57,7 @@ class SubmissionFactory:
         for sub_path in paths:
             try:
                 subs.append(self._get(sub_path, preprocessor))
-            except Error:
+            except errors.Error:
                 pass
         return subs
 
