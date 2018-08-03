@@ -29,7 +29,7 @@ def render(submission_groups, dest="html"):
     js, css, bootstrap, fonts = (read_file(src / "static" / name)
                          for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
 
-    for match_id, (sub_a, sub_b, groups) in enumerate(submission_groups):
+    for match_id, (sub_a, sub_b, groups, ignored_spans) in enumerate(submission_groups):
         frag_ids = IdStore()
         span_ids = IdStore()
         group_ids = IdStore()
@@ -37,7 +37,6 @@ def render(submission_groups, dest="html"):
         span_to_group = {}
         file_to_spans = collections.defaultdict(list)
         fragment_to_spans = {}
-
 
         for group in groups:
             group_id = group_ids[group]

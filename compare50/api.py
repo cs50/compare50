@@ -6,12 +6,12 @@ import pathlib
 
 from .data import *
 
+
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
     results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
 
     # Link submission pairs to file matches
-    #submissions_file_matches = collections.defaultdict(list)
     sub_ids_to_file_matches = collections.defaultdict(list)
     for file_match in results:
         sub_id1, sub_id2 = file_match.file_a.submission.id, file_match.file_b.submission.id
@@ -32,16 +32,20 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     # Keep only top `n` submission matches
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
+
 def create_groups(submission_matches, comparator, ignored_files):
     file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
 
     sub_match_to_span_matches = collections.defaultdict(list)
+    sub_match_to_ignored_spans = collections.defaultdict(list)
 
     for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
-        sub_match_to_span_matches[(span_matches.file_a.submission,
-                                   span_matches.file_b.submission)].append(span_matches)
+        sub_match = (span_matches.file_a.submission, span_matches.file_b.submission)
+
+        sub_match_to_span_matches[sub_match].append(span_matches)
 
         ignored_spans = flatten(ignored_spans)
+        sub_match_to_ignored_spans[sub_match].append(ignored_spans)
 
     groups = []
     for span_matches_list in sub_match_to_span_matches.values():
@@ -52,7 +56,11 @@ def create_groups(submission_matches, comparator, ignored_files):
     for group in groups:
         sub_match_to_groups[(group.sub_a, group.sub_b)].append(group)
 
-    return [(sm.sub_a, sm.sub_b, sub_match_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
+    return [(sm.sub_a,
+             sm.sub_b,
+             sub_match_to_groups[(sm.sub_a, sm.sub_b)],
+             sub_match_to_ignored_spans[(sm.sub_a, sm.sub_b)])
+            for sm in submission_matches]
 
 
 def flatten(spans):
