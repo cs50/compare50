@@ -61,5 +61,33 @@ class TestGroupSpans(unittest.TestCase):
         self.assertEqual(set(groups), {data.Group(spans_1), data.Group(spans_2)})
 
 
+class TestFlatten(unittest.TestCase):
+    def span(self, start, end):
+        file = data.Submission(".", ["bar/foo"]).files[0]
+        return data.Span(file, start, end)
+
+    def test_flatten_no_spans(self):
+        self.assertEqual(api.flatten([]), [])
+
+    def test_flatten_one_span(self):
+        span = self.span(0, 10)
+        self.assertEqual(api.flatten([span]), [span])
+
+    def test_flatten_overlapping_spans(self):
+        span_1 = self.span(0, 10)
+        span_2 = self.span(5, 15)
+        resulting_span = self.span(0, 15)
+        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+
+    def test_connecting_spans(self):
+        span_1 = self.span(0, 10)
+        span_2 = self.span(10, 20)
+        resulting_span = self.span(0, 20)
+        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+
+        span_1 = self.span(0, 9)
+        span_2 = self.span(10, 20)
+        self.assertEqual(api.flatten([span_1, span_2]), [span_1, span_2])
+
 if __name__ == '__main__':
     unittest.main()

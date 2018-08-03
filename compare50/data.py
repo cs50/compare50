@@ -178,13 +178,6 @@ class SpanMatches:
                                           key=lambda tok: tok.start)
 
         for span_a, span_b in self._matches:
-            # TODO decide if "optimisation" actually adds/optimizes anything
-            # TODO check that both spans aren't already absorbed by another expanded span
-            #     set other (if not absorbed) to match
-            # for exp_span_a, exp_span_b in expanded_spans:
-            #    if absorbs(exp_span_a, span_a) and absorbs(exp_span_b, span_b):
-            #        pass
-
             # Expand left
             start_a = tokens_a.bisect_key_right(span_a.start) - 2
             start_b = tokens_b.bisect_key_right(span_b.start) - 2
@@ -197,7 +190,6 @@ class SpanMatches:
             # Expand right
             end_a = tokens_a.bisect_key_right(span_a.end) - 2
             end_b = tokens_b.bisect_key_right(span_b.end) - 2
-
             try:
                 while tokens_a[end_a] == tokens_b[end_b]:
                     end_a += 1
@@ -209,6 +201,7 @@ class SpanMatches:
 
             new_span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
             new_span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
+
             # Add new spans
             expanded_span_pairs.add((new_span_a, new_span_b))
 

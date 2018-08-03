@@ -36,11 +36,12 @@ def create_groups(submission_matches, comparator, ignored_files):
     file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
 
     sub_match_to_span_matches = collections.defaultdict(list)
-    matches_list = list(comparator.create_spans(file_matches, ignored_files))
 
-    for span_matches, ignored_spans in matches_list:
+    for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
         sub_match_to_span_matches[(span_matches.file_a.submission,
                                    span_matches.file_b.submission)].append(span_matches)
+
+        ignored_spans = flatten(ignored_spans)
 
     groups = []
     for grouped_spans in map(group_spans, sub_match_to_span_matches.values()):
@@ -52,6 +53,27 @@ def create_groups(submission_matches, comparator, ignored_files):
 
     return [(sm.sub_a, sm.sub_b, sub_match_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
 
+
+def flatten(spans):
+    """
+    Flatten a collection of spans.
+    The resulting list of spans covers the same area and has no overlapping spans.
+    """
+    if not spans:
+        return spans
+
+    spans = sorted(spans, key=lambda span: span.start)
+    file = spans[0].file
+
+    start = 0
+    flattened_spans = []
+    for i in range(len(spans) - 1):
+        if spans[i].end < spans[i + 1].start:
+            flattened_spans.append(Span(file, start, spans[i].end))
+            start = spans[i + 1].start
+    
+    flattened_spans.append(Span(file, start, spans[-1].end))
+    return flattened_spans
 
 def group_spans(span_matches_list):
     """
