@@ -14,7 +14,7 @@ class TestRankSubmissions(unittest.TestCase):
 
 class TestGroupSpans(unittest.TestCase):
     def span(self, start):
-        file = list(data.Submission.from_file_path("bar/foo", Preprocessor([lambda tokens : tokens])).files())[0]
+        file = data.Submission(".", ["bar/foo"]).files[0]
         return data.Span(file, start, start + 1)
 
     def test_single_spanmatches_single_group(self):

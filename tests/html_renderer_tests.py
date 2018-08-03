@@ -23,7 +23,7 @@ class TestFragmentize(TestCase):
         with open(self.filename, "w") as f:
             f.write(self.content)
 
-        self.file = list(data.Submission.from_file_path(pathlib.Path(self.filename), lambda ts: ts).files())[0]
+        self.file = data.Submission(".", [self.filename]).files[0]
 
     def test_no_span(self):
         fragments = renderer.fragmentize(self.file, [])
