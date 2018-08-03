@@ -65,6 +65,7 @@ class Fragment {
       frag.dom_element.classList.add("active_match");
     }
   }
+  
 
   highlight() {
     this.dom_element.classList.add("active_match");
@@ -76,13 +77,28 @@ class Fragment {
 
   find_pos() {
       let obj = this.dom_element;
-      var curtop = 0;
+      let curtop = 0;
       if (obj.offsetParent) {
           do {
               curtop += obj.offsetTop;
           } while (obj = obj.offsetParent);
       }
       return curtop;
+  }
+
+  _highlight_offset() {
+      let self_matches = this.matching_fragments.filter(frag => frag.submission === this.submission);
+      let top_fragment = this;
+      while (true) {
+        let test_element = top_fragment.dom_element.previousElementSibling;
+        let test_fragment = self_matches.find(frag => frag.dom_element === test_element);
+        if (test_fragment === undefined) {
+          break; 
+        } else {
+            top_fragment = test_fragment;
+        }
+      }
+      return top_fragment.find_pos() - this.submission.scrollTop;
   }
 
   // Custom implementation/hack of element.scrollIntoView();
@@ -177,10 +193,10 @@ function add_click_listeners(fragments) {
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
-      let frag_offset = frag.spans[frag.spans.length-1].fragments[0].find_pos() - frag.submission.scrollTop;
       //let frag_offset = frag.find_pos();
+      let frag_offset = frag._highlight_offset();
       let find_offset = other_spans[0].submission.scrollTop + frag_offset;
-      let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment.find_pos() > find_offset);
+      let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment._highlight_offset() > find_offset);
 
       if (next_fragment === undefined) {
           next_fragment = other_spans[0].fragments[0];

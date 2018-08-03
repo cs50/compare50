@@ -139,6 +139,7 @@ def main():
     parser.add_argument("-p", "--pass",
                         action="store",
                         dest="pass_",
+                        metavar="PASS",
                         help="Specify which pass to use.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,

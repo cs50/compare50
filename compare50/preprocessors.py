@@ -14,7 +14,7 @@ def strip_whitespace(tokens):
 
 def strip_comments(tokens):
     for tok in tokens:
-        if tok.type not in Comment:
+        if tok.type not in (Comment.Multiline, Comment.Single, Comment.Hashbang):
             yield tok
 
 

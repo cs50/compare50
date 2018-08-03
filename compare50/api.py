@@ -43,7 +43,7 @@ def create_groups(submission_matches, comparator, ignored_files):
                                    span_matches.file_b.submission)].append(span_matches)
 
     groups = []
-    for grouped_spans in (group_spans(span_matches) for span_matches in sub_match_to_span_matches.values()):
+    for grouped_spans in map(group_spans, sub_match_to_span_matches.values()):
         groups.extend(grouped_spans)
 
     sub_match_to_groups = collections.defaultdict(list)
@@ -100,7 +100,7 @@ def transitive_closure(connections):
 
 def _is_span_subsumed(span, other_spans):
     for other_span in other_spans:
-        if span.start >= other_span.start and span.end <= other_span.end:
+        if span.file == other_span.file and span.start >= other_span.start and span.end <= other_span.end:
             return True
     return False
 

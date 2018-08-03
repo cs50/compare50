@@ -82,7 +82,7 @@ class Winnowing(Comparator):
             index_a.include(file_match.file_a, tokens=tokens_a)
             index_b.include(file_match.file_b, tokens=tokens_b)
 
-            if self.ignored_index:
+            if self.ignored_index._index:
                 ignored_spans = list(index_a.common_spans(self.ignored_index) | index_b.common_spans(self.ignored_index))
                 index_a.ignore_all(self.ignored_index)
                 index_b.ignore_all(self.ignored_index)

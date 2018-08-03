@@ -21,17 +21,15 @@ class Comparator(metaclass=abc.ABCMeta):
 
 class IdStore(Mapping):
     def __init__(self, key=lambda obj: obj):
-        self.objects = {}
+        self.objects = []
         self._key = key
         self._ids = {}
-        self._max_id = 0
 
     def __getitem__(self, obj):
         key = self._key(obj)
         if key not in self._ids:
-            self._ids[key] = self._max_id
-            self.objects[self._max_id] = obj
-            self._max_id += 1
+            self._ids[key] = len(self.objects)
+            self.objects.append(obj)
         return self._ids[key]
 
     def __iter__(self):
@@ -46,7 +44,7 @@ class Submission:
 
     path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
     files = attr.ib(hash=False, cmp=False)
-    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False)
+    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False, repr=False)
     id = attr.ib(init=False)
 
     def __attrs_post_init__(self):
