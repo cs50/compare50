@@ -68,6 +68,28 @@ class TestSubmissionFactory(TestCase):
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
 
+    def test_exclude_pattern(self):
+        preprocessor = lambda tokens : tokens
+        os.mkdir("foo")
+        with open("foo/bar.py", "w") as f:
+            pass
+
+        self.factory.exclude("*")
+        subs = self.factory.get_all(["foo"], preprocessor)
+        self.assertEquals(subs, [])
+
+    def test_include_pattern(self):
+        preprocessor = lambda tokens : tokens
+        os.mkdir("foo")
+        with open("foo/bar.py", "w") as f:
+            pass
+
+        self.factory.exclude("*")
+        self.factory.include("bar.py")
+        subs = self.factory.get_all(["foo"], preprocessor)
+        self.assertEqual(len(subs), 1)
+        self.assertEqual(len(list(subs[0].files)), 1)
+        self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
 
 if __name__ == "__main__":
     unittest.main()

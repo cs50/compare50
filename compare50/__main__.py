@@ -21,11 +21,11 @@ class SubmissionFactory:
         self.submissions = {}
 
     def include(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.FileType.Included, pattern)
+        fp = lib50.config.FilePattern(lib50.config.PatternType.Included, pattern)
         self.patterns.append(fp)
 
     def exclude(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.FileType.Excluded, pattern)
+        fp = lib50.config.FilePattern(lib50.config.PatternType.Excluded, pattern)
         self.patterns.append(fp)
 
     def _get(self, path, preprocessor):
