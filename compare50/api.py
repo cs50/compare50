@@ -36,21 +36,21 @@ def create_groups(submission_matches, comparator, ignored_files):
     file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
 
     sub_match_to_span_matches = collections.defaultdict(list)
-    span_matches_list = list(comparator.create_spans(file_matches, ignored_files))
+    matches_list = list(comparator.create_spans(file_matches, ignored_files))
 
+    for span_matches, ignored_spans in matches_list:
+        sub_match_to_span_matches[(span_matches.file_a.submission,
+                                   span_matches.file_b.submission)].append(span_matches)
 
-    for span_matches in span_matches_list:
-        sub_match_to_span_matches[(span_matches.file_a.submission.id,
-                                   span_matches.file_b.submission.id)].append(span_matches)
     groups = []
-    for grouped_spans in map(group_spans, sub_match_to_span_matches.values()):
+    for grouped_spans in (group_spans(span_matches) for span_matches in sub_match_to_span_matches.values()):
         groups.extend(grouped_spans)
 
-    subs_to_groups = collections.defaultdict(list)
+    sub_match_to_groups = collections.defaultdict(list)
     for group in groups:
-        subs_to_groups[(group.sub_a, group.sub_b)].append(group)
+        sub_match_to_groups[(group.sub_a, group.sub_b)].append(group)
 
-    return [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
+    return [(sm.sub_a, sm.sub_b, sub_match_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
 
 
 def group_spans(span_matches_list):
@@ -96,6 +96,7 @@ def transitive_closure(connections):
         nodes -= reachable_nodes
         trans_closure.append(reachable_nodes)
     return trans_closure
+
 
 def _is_span_subsumed(span, other_spans):
     for other_span in other_spans:

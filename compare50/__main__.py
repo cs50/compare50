@@ -131,12 +131,10 @@ def main():
     parser.add_argument("-a", "--archive",
                         nargs="+",
                         default=[],
-                        action="append",
                         help="Paths to archive submissions. Compare50 does not compare archive submissions versus archive submissions.")
     parser.add_argument("-d", "--distro",
                         nargs="+",
                         default=[],
-                        action="append",
                         help="Paths to distribution files. Contents of these files are stripped from submissions.")
     parser.add_argument("-p", "--pass",
                         action="store",

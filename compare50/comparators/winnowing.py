@@ -59,22 +59,8 @@ class Winnowing(Comparator):
 
 
     def create_spans(self, file_matches, ignored_files):
-        # V0
-        # for file_match in file_matches:
-            # a_index = Index(self.k, self.t, complete=True)
-            # b_index = Index(self.k, self.t, complete=True)
-
-            # a_index.include(file_match.file_a)
-            # b_index.include(file_match.file_b)
-
-            # for file in ignored_files:
-                # a_index.ignore(file)
-                # b_index.ignore(file)
-
-            # yield a_index.create_spans(b_index)
-
         with futures.ProcessPoolExecutor() as executor:
-            ignored_index = Index(self.k, self.t)
+            ignored_index = Index(self.k, self.t, complete=True)
             for ignored_i in executor.map(self._index_file(self.k, self.t), ignored_files):
                 ignored_index.include_all(ignored_i)
 
@@ -97,10 +83,16 @@ class Winnowing(Comparator):
             index_b.include(file_match.file_b, tokens=tokens_b)
 
             if self.ignored_index:
+                ignored_spans = list(index_a.common_spans(self.ignored_index) | index_b.common_spans(self.ignored_index))
                 index_a.ignore_all(self.ignored_index)
                 index_b.ignore_all(self.ignored_index)
+            else:
+                ignored_spans = []
 
-            return index_a.create_spans(index_b, tokens_a=tokens_a, tokens_b=tokens_b)
+            span_matches = index_a.create_spans(index_b)
+            span_matches.expand(tokens_a, tokens_b)
+
+            return span_matches, ignored_spans
 
 
     @attr.s(slots=True)
@@ -192,7 +184,7 @@ class Index:
         return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
-    def create_spans(self, other, tokens_a=None, tokens_b=None):
+    def create_spans(self, other):
         # Validate other index
         if self.k != other.k:
             raise RuntimeError("comparison with different n-gram lengths")
@@ -208,8 +200,15 @@ class Index:
             spans_2 = other._index[hash_]
             matches.extend(itertools.product(spans_1, spans_2))
 
-        return SpanMatches(matches).expand(tokens_a, tokens_b)
+        span_matches = SpanMatches(matches)
+        return span_matches
 
+    def common_spans(self, other):
+        spans = set()
+        for hash_ in set(self._index) & set(other._index):
+            spans |= self._index[hash_]
+            spans |= other._index[hash_]
+        return spans
 
     def _fingerprint(self, file, tokens=None):
         if not tokens:
@@ -248,3 +247,6 @@ class Index:
                         min_idx = idx
                         fingerprints.append(buf[min_idx])
         return fingerprints
+
+    def __bool__(self):
+        return len(self._index) != 0
