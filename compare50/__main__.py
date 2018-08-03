@@ -6,6 +6,7 @@ import tempfile
 import textwrap
 import shutil
 import attr
+import sys
 
 import attr
 import patoolib
@@ -61,9 +62,14 @@ class SubmissionFactory:
                 pass
         return subs
 
+class ArgParser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_help()
+        sys.stderr.write('error: %s\n' % message)
+        sys.exit(2)
 
 class ListAction(argparse.Action):
-    """Hook into argparse to allow a list flag"""
+    """Hook into argparse to allow a list flag."""
     def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help="List all available passes and exit."):
         super().__init__(option_strings, dest=dest, nargs=0, default=default, help=help)
 
@@ -75,6 +81,18 @@ class ListAction(argparse.Action):
                 print("{}{}".format(indentation, line))
         parser.exit()
 
+
+class IncludeExcludeAction(argparse.Action):
+    """Hook into argparse to allow ordering of include/exclude."""
+    def __init__(self, option_strings, callback=None, **kwargs):
+        super().__init__(option_strings, **kwargs)
+        if not callback:
+            raise errors.Error("IncludeExcludeAction requires a callback.")
+        self.callback = callback
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        for v in values:
+            self.callback(v)
 
 @attr.s(slots=True)
 class Preprocessor:
@@ -105,22 +123,39 @@ def print_results(submission_matches):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="compare50")
+    parser = ArgParser(prog="compare50")
+    submission_factory = SubmissionFactory()
     parser.add_argument("submissions",
                         nargs="+",
                         help="Paths to submissions.")
     parser.add_argument("-a", "--archive",
                         nargs="+",
                         default=[],
+                        action="append",
                         help="Paths to archive submissions. Compare50 does not compare archive submissions versus archive submissions.")
     parser.add_argument("-d", "--distro",
                         nargs="+",
                         default=[],
+                        action="append",
                         help="Paths to distribution files. Contents of these files are stripped from submissions.")
     parser.add_argument("-p", "--pass",
                         action="store",
                         dest="pass_",
                         help="Specify which pass to use.")
+    parser.add_argument("-i", "--include",
+                        callback=submission_factory.include,
+                        nargs="+",
+                        action=IncludeExcludeAction,
+                        help="Globbing patterns to include from every submission."\
+                             " Includes everything (*) by default."\
+                             " Make sure to quote your patterns to escape any shell globbing!")
+    parser.add_argument("-x", "--exclude",
+                        callback=submission_factory.exclude,
+                        nargs="+",
+                        action=IncludeExcludeAction,
+                        help="Globbing patterns to exclude from every submission."\
+                             " Nothing is excluded by default."\
+                             " Make sure to quote your patterns to escape any shell globbing!")
     parser.add_argument("--hidden",
                         action="store_true",
                         help="Also include hidden files and directories.")
@@ -149,8 +184,6 @@ def main():
     preprocessor = Preprocessor(pass_.preprocessors)
 
     # Collect all submissions, archive submissions and distro files
-    submission_factory = SubmissionFactory()
-    # TODO parse include / exclude
     subs = submission_factory.get_all(args.submissions, preprocessor)
     archive_subs = submission_factory.get_all(args.archive, preprocessor)
     ignored_subs = submission_factory.get_all(args.distro, preprocessor)
