@@ -42,7 +42,7 @@ class SubmissionFactory:
             try:
                 with open(path / file_path) as f:
                     f.read()
-            except TypeError:
+            except UnicodeDecodeError:
                 pass
             else:
                 decodable_files.append(file_path)

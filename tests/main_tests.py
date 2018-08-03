@@ -91,5 +91,15 @@ class TestSubmissionFactory(TestCase):
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
 
+    def test_ignore_non_utf8(self):
+        preprocessor = lambda tokens : tokens
+        os.mkdir("foo")
+        with open("foo/bar.py", "wb") as f:
+            f.write(b'\x80abc')
+
+        subs = self.factory.get_all(["foo"], preprocessor)
+        self.assertEqual(subs, [])
+
+
 if __name__ == "__main__":
     unittest.main()
