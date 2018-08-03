@@ -64,11 +64,16 @@ class Misspellings(Comparator):
     def create_spans(self, file_matches, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
-            ignored_words += {token.val for token in ignored_file.tokens()}
+            for token in ignored_file.tokens():
+                ignored_words.add(token.val)
 
-        span_matches = []
+        ignored_spans_list = []
+        span_matches_list = []
         file_to_tokens = {}
         for file_match in file_matches:
+            ignored_spans_list.append(set())
+            ignored_spans = ignored_spans_list[-1]
+
             if file_match.file_a not in file_to_tokens:
                 file_to_tokens[file_match.file_a] = self._misspelled_tokens(file_match.file_a)
             tokens_a = file_to_tokens[file_match.file_a]
@@ -77,9 +82,6 @@ class Misspellings(Comparator):
                 file_to_tokens[file_match.file_b] = self._misspelled_tokens(file_match.file_b)
             tokens_b = file_to_tokens[file_match.file_b]
 
-            # tokens_a = self._misspelled_tokens(file_match.file_a)
-            # tokens_b = self._misspelled_tokens(file_match.file_b)
-
             word_to_tokens_a = collections.defaultdict(list)
             for token in tokens_a:
                 word_to_tokens_a[token.val].append(token)
@@ -87,7 +89,16 @@ class Misspellings(Comparator):
             for token in tokens_b:
                 word_to_tokens_b[token.val].append(token)
 
+            for word in ignored_words:
+                if word in word_to_tokens_a:
+                    for token in word_to_tokens_a[word]:
+                        ignored_spans.add(Span(file_match.file_a, token.start, token.end))
+                if word in word_to_tokens_b:
+                    for token in word_to_tokens_b[word]:
+                        ignored_spans.add(Span(file_match.file_b, token.start, token.end))
+
             common_misspellings = ({t.val for t in tokens_a} & {t.val for t in tokens_b}) - ignored_words
+
             matches = []
             for misspelling in common_misspellings:
                 ts_a = word_to_tokens_a[misspelling]
@@ -98,9 +109,9 @@ class Misspellings(Comparator):
                         Span(file_match.file_b, token_b.start, token_b.end)
                     ))
             if common_misspellings:
-                span_matches.append(SpanMatches(matches))
+                span_matches_list.append(SpanMatches(matches))
 
-        return span_matches
+        return zip(span_matches_list, ignored_spans)
 
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."
