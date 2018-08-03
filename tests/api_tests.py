@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+import os
 
 from compare50.__main__ import Preprocessor
 import compare50.data as data
@@ -86,6 +88,69 @@ class TestFlatten(unittest.TestCase):
         span_1 = self.span(0, 9)
         span_2 = self.span(10, 20)
         self.assertEqual(api.flatten([span_1, span_2]), [span_1, span_2])
+
+
+class TestMissingSpans(unittest.TestCase):
+    def setUp(self):
+        self.working_directory = tempfile.TemporaryDirectory()
+        self._wd = os.getcwd()
+        os.chdir(self.working_directory.name)
+
+        self.content = "def bar():\n"\
+                       "    print('qux')\n"
+
+        with open("foo.py", "w") as f:
+            f.write(self.content)
+
+        self.file = data.Submission(".", ["foo.py"]).files[0]
+
+    def tearDown(self):
+        self.working_directory.cleanup()
+        os.chdir(self._wd)
+
+    def span(self, start, end):
+        return data.Span(self.file, start, end)
+
+    def test_all_spans_missing(self):
+        self.file = data.Submission(".", ["foo.py"], preprocessor=lambda tokens : []).files[0]
+        resulting_span = self.span(0, len(self.content))
+        spans = api.missing_spans(self.file)
+        self.assertEqual(spans, [resulting_span])
+
+    def test_last_span_missing(self):
+        missing_tokens = []
+        def preprocessor(tokens):
+            missing_tokens.append(tokens[-1])
+            return tokens[:-1]
+
+        self.file = data.Submission(".", ["foo.py"], preprocessor=preprocessor).files[0]
+        spans = api.missing_spans(self.file)
+        resulting_span = self.span(missing_tokens[0].start, len(self.content))
+        self.assertEqual(spans, [resulting_span])
+
+    def test_first_span_missing(self):
+        missing_tokens = []
+        def preprocessor(tokens):
+            missing_tokens.append(tokens[0])
+            return tokens[1:]
+
+        self.file = data.Submission(".", ["foo.py"], preprocessor=preprocessor).files[0]
+        spans = api.missing_spans(self.file)
+        resulting_span = self.span(0, missing_tokens[0].end)
+        self.assertEqual(spans, [resulting_span])
+
+    def test_middle_span_missing(self):
+        missing_tokens = []
+        def preprocessor(tokens):
+            middle = len(tokens) // 2
+            missing_tokens.append(tokens[middle])
+            return tokens[:middle] + tokens[middle + 1:]
+
+        self.file = data.Submission(".", ["foo.py"], preprocessor=preprocessor).files[0]
+        spans = api.missing_spans(self.file)
+        resulting_span = self.span(missing_tokens[0].start, missing_tokens[0].end)
+        self.assertEqual(spans, [resulting_span])
+
 
 if __name__ == '__main__':
     unittest.main()

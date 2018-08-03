@@ -73,7 +73,7 @@ class File:
             return f.read(size)
 
     def tokens(self):
-        return self.submission.preprocessor(self._tokenize())
+        return self.submission.preprocessor(self.unprocessed_tokens())
 
     def lexer(self):
         ext = self.name.suffix
@@ -97,7 +97,7 @@ class File:
     def get(cls, id):
         return cls._store.objects[id]
 
-    def _tokenize(self):
+    def unprocessed_tokens(self):
         text = self.read()
         tokens = self.lexer().get_tokens_unprocessed(text)
 
