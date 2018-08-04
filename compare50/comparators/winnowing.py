@@ -104,7 +104,7 @@ class Winnowing(Comparator):
     class _create_spans:
         k = attr.ib()
         t = attr.ib()
-        ignored_index = attr.ib(default=None)
+        ignored_index = attr.ib()
 
         def __call__(self, file_match):
             file_a = file_match.file_a
@@ -116,8 +116,8 @@ class Winnowing(Comparator):
             tokens_a = ignore(file_a, self.ignored_index, tokens=original_tokens_a)
             tokens_b = ignore(file_b, self.ignored_index, tokens=original_tokens_b)
 
-            index_a = Index(self.k, self.t, complete=True)
-            index_b = Index(self.k, self.t, complete=True)
+            index_a = Index(self.k, self.t, complete=self.ignored_index.complete)
+            index_b = Index(self.k, self.t, complete=self.ignored_index.complete)
 
             index_a.include(file_a, tokens=tokens_a)
             index_b.include(file_b, tokens=tokens_b)
