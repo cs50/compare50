@@ -8,6 +8,8 @@ import multiprocessing
 
 import concurrent.futures as futures
 
+from .. import api
+
 from compare50 import (
         preprocessors,
         Comparator,
@@ -105,28 +107,28 @@ class Winnowing(Comparator):
         ignored_index = attr.ib(default=None)
 
         def __call__(self, file_match):
+            file_a = file_match.file_a
+            file_b = file_match.file_b
+
+            original_tokens_a = list(file_a.tokens())
+            original_tokens_b = list(file_b.tokens())
+
+            tokens_a = ignore(file_a, self.ignored_index, tokens=original_tokens_a)
+            tokens_b = ignore(file_b, self.ignored_index, tokens=original_tokens_b)
+
             index_a = Index(self.k, self.t, complete=True)
             index_b = Index(self.k, self.t, complete=True)
 
-            tokens_a = list(file_match.file_a.tokens())
-            tokens_b = list(file_match.file_b.tokens())
-
-            index_a.include(file_match.file_a, tokens=tokens_a)
-            index_b.include(file_match.file_b, tokens=tokens_b)
-
-            if self.ignored_index._index:
-                ignored_spans = list(index_a.common_spans(self.ignored_index))
-                ignored_spans.extend(index_b.common_spans(self.ignored_index))
-                index_a.ignore_all(self.ignored_index)
-                index_b.ignore_all(self.ignored_index)
-            else:
-                ignored_spans = []
+            index_a.include(file_a, tokens=tokens_a)
+            index_b.include(file_b, tokens=tokens_b)
 
             span_matches = index_a.create_spans(index_b)
             span_matches.expand(tokens_a, tokens_b)
 
-            return span_matches, ignored_spans
+            ignored_spans = api.missing_spans(file_a, original_tokens=original_tokens_a, preprocessed_tokens=tokens_a)
+            ignored_spans.extend(api.missing_spans(file_b, original_tokens=original_tokens_b, preprocessed_tokens=tokens_b))
 
+            return span_matches, ignored_spans
 
     @attr.s(slots=True)
     class _index_file:
