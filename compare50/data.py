@@ -51,6 +51,9 @@ class Submission:
         object.__setattr__(self, "files", tuple([File(pathlib.Path(path), self) for path in self.files]))
         object.__setattr__(self, "id", Submission._store[self])
 
+    def __iter__(self):
+        return iter(self.files)
+
     @classmethod
     def get(cls, id):
         return cls._store.objects[id]

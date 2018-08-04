@@ -16,6 +16,39 @@ from compare50 import (
         Span, SpanMatches,
 )
 
+def ignore(file, ignored_index, tokens=None):
+    if tokens is None:
+        tokens = list(file.tokens())
+
+    # Create an index of file with same settings as ignored_index
+    index = Index(k=ignored_index.k, t=ignored_index.t, complete=ignored_index.complete)
+    index.include(file, tokens=tokens)
+
+    # Figure out spans (regions) of the file to ignore
+    # Note: these can overlap!
+    ignored_spans = sorted(index.common_spans(ignored_index), key=lambda span: span.start)
+
+    # Nothing to ignore
+    if not ignored_spans:
+        return tokens
+
+    # Find relevant tokens (any token not completely in an ignored_span)
+    relevant_tokens = []
+    i = 0
+    span_iter = iter(ignored_spans)
+    span = next(span_iter)
+    for i, token in enumerate(tokens):
+        # If token comes after span, move on to next span
+        while token.end > span.end:
+            try:
+                span = next(span_iter)
+            except StopIteration:
+                return relevant_tokens + tokens[i:]
+        # If token starts before the span does, it's relevant
+        if token.start < span.start:
+            relevant_tokens.append(token)
+    return relevant_tokens
+
 class Winnowing(Comparator):
     """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
 
@@ -35,7 +68,7 @@ class Winnowing(Comparator):
         """"""
         def iter_files(subs):
             for sub in subs:
-                for file in sub.files:
+                for file in sub:
                     yield file
 
         submissions_index = Index(self.k, self.t)
@@ -128,12 +161,13 @@ class StripAll(Pass):
 
 
 class Index:
-    __slots__ = ["k", "w", "_complete", "_index", "_max_id"]
+    __slots__ = ["k", "t", "w", "complete", "_index", "_max_id"]
 
     def __init__(self, k, t, complete=False):
         self.k = k
+        self.t = t
         self.w = t - k + 1
-        self._complete = complete
+        self.complete = complete
         self._index = collections.defaultdict(set)
         self._max_id = 0
 
@@ -224,7 +258,7 @@ class Index:
         ends = itertools.chain((tok.start for tok in tokens[self.k:]), (tokens[-1].end,))
 
         fingerprints = []
-        if self._complete:
+        if self.complete:
             # use all fingerprints instead of sampling
             for start, end, hash_ in zip(starts, ends, hashes):
                 fingerprints.append((hash_, Span(file, start, end)))
