@@ -44,15 +44,25 @@ def render(submission_groups, dest="html"):
                 span_to_group[span_ids[span]] = group_id
                 file_to_spans[span.file].append(span)
 
+        file_to_ignored_spans = collections.defaultdict(list)
+        for span in ignored_spans:
+            file_to_ignored_spans[span.file].append(span)
+
+        ignored_spans = set(ignored_spans)
+
         submissions = []
         for submission in (sub_a, sub_b):
             file_list = []
             for file in submission.files:
                 frag_list = []
-                for fragment in fragmentize(file, file_to_spans[file]):
+                for fragment in fragmentize(file, file_to_spans[file] + file_to_ignored_spans[file]):
                     frag_id = f"frag{frag_ids[fragment]}"
-                    frag_list.append((frag_id, fragment.content))
-                    fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans]
+                    is_ignored = any(span in ignored_spans for span in fragment.spans)
+                    frag_list.append((frag_id, fragment.content, is_ignored))
+
+                    # If span is part of a group, add
+                    if any(span not in ignored_spans for span in fragment.spans):
+                        fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans if span not in ignored_spans]
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
 
@@ -72,8 +82,6 @@ def render(submission_groups, dest="html"):
 
         with open(dest / f"match_{match_id}.html", "w") as f:
             f.write(rendered_html)
-
-
 
 def fragmentize(file, spans):
     slicer = _FragmentSlicer()

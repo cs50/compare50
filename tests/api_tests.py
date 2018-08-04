@@ -89,6 +89,17 @@ class TestFlatten(unittest.TestCase):
         span_2 = self.span(10, 20)
         self.assertEqual(api.flatten([span_1, span_2]), [span_1, span_2])
 
+    def test_subsuming_spans(self):
+        span_1 = self.span(0, 30)
+        span_2 = self.span(10, 20)
+        resulting_span = self.span(0, 30)
+        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+
+        span_1 = self.span(0, 30)
+        span_2 = self.span(10, 40)
+        resulting_span = self.span(0, 40)
+        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+
 
 class TestMissingSpans(unittest.TestCase):
     def setUp(self):

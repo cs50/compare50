@@ -61,7 +61,7 @@ class Winnowing(Comparator):
     def create_spans(self, file_matches, ignored_files):
         with futures.ProcessPoolExecutor() as executor:
             ignored_index = Index(self.k, self.t, complete=True)
-            for ignored_i in executor.map(self._index_file(self.k, self.t), ignored_files):
+            for ignored_i in executor.map(self._index_file(self.k, self.t, complete=True), ignored_files):
                 ignored_index.include_all(ignored_i)
 
             return executor.map(self._create_spans(self.k, self.t, ignored_index), file_matches)
@@ -83,7 +83,8 @@ class Winnowing(Comparator):
             index_b.include(file_match.file_b, tokens=tokens_b)
 
             if self.ignored_index._index:
-                ignored_spans = list(index_a.common_spans(self.ignored_index) | index_b.common_spans(self.ignored_index))
+                ignored_spans = list(index_a.common_spans(self.ignored_index))
+                ignored_spans.extend(index_b.common_spans(self.ignored_index))
                 index_a.ignore_all(self.ignored_index)
                 index_b.ignore_all(self.ignored_index)
             else:
@@ -102,9 +103,10 @@ class Winnowing(Comparator):
         k = attr.ib()
         t = attr.ib()
         ignored_index = attr.ib(default=None)
+        complete=attr.ib(default=False)
 
         def __call__(self, file):
-            index = Index(self.k, self.t)
+            index = Index(self.k, self.t, complete=self.complete)
             index.include(file)
             if self.ignored_index:
                 index.ignore_all(self.ignored_index)

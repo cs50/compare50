@@ -41,12 +41,19 @@ def create_groups(submission_matches, comparator, ignored_files):
 
     for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
         sub_match = (span_matches.file_a.submission, span_matches.file_b.submission)
-
         sub_match_to_span_matches[sub_match].append(span_matches)
-        
-        ignored_spans.extend(missing_spans(span_matches.file_a))
-        ignored_spans.extend(missing_spans(span_matches.file_b))
-        ignored_spans = flatten(ignored_spans)
+
+        ignored_spans_a = []
+        ignored_spans_b = []
+        for span in ignored_spans:
+            if span.file.id == span_matches.file_a.id:
+                ignored_spans_a.append(span)
+            else:
+                ignored_spans_b.append(span)
+
+        ignored_spans_a.extend(missing_spans(span_matches.file_a))
+        ignored_spans_b.extend(missing_spans(span_matches.file_b))
+        ignored_spans = flatten(ignored_spans_a) + flatten(ignored_spans_b)
         sub_match_to_ignored_spans[sub_match].extend(ignored_spans)
 
     groups = []
@@ -87,25 +94,30 @@ def missing_spans(file):
 
     return spans
 
+
 def flatten(spans):
     """
     Flatten a collection of spans.
     The resulting list of spans covers the same area and has no overlapping spans.
     """
-    if not spans:
+    if len(spans) <= 1:
         return spans
 
     spans = sorted(spans, key=lambda span: span.start)
     file = spans[0].file
 
-    start = 0
     flattened_spans = []
+    start = spans[0].start
+    cur = spans[0]
     for i in range(len(spans) - 1):
-        if spans[i].end < spans[i + 1].start:
-            flattened_spans.append(Span(file, start, spans[i].end))
-            start = spans[i + 1].start
+        next = spans[i + 1]
+        if cur.end < next.start:
+            flattened_spans.append(Span(file, start, cur.end))
+            start = next.start
+        if cur.end <= next.end:
+            cur = next
 
-    flattened_spans.append(Span(file, start, spans[-1].end))
+    flattened_spans.append(Span(file, start, cur.end))
     return flattened_spans
 
 

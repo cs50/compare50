@@ -26,10 +26,10 @@
                                 <h4 class="file_name">{{file}}</h4>
                                     <pre>
                                         {%- set ns = namespace(is_newline=true) -%}
-                                        {%- for id, contents in frags -%}
-                                            <code class="fragment" id="{{id}}">
+                                        {%- for id, contents, is_ignored in frags -%}
+                                            <code class="fragment{{' ignored' if is_ignored else ''}}" id="{{id}}">
                                                 {%- for line in contents -%}
-                                                    <code class="line {{'newline' if ns.is_newline else ''}}">{{line}}</code>
+                                                    <code class="line{{' newline' if ns.is_newline else ''}}">{{line}}</code>
                                                     {%- set ns.is_newline = line.endswith('\n') -%}
                                                 {%- endfor -%}
                                             </code>

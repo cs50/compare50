@@ -34,6 +34,10 @@ pre {
   height: 100%;
 }
 
+.ignored {
+  color: LightGray;
+}
+
 .fragment:before {
   counter-reset: none;
 }
@@ -41,7 +45,6 @@ pre {
 /* highlighted code fragments */
 .match {
     background-color: #FFCC00;
-
 }
 
 .active_match {
@@ -67,6 +70,7 @@ pre {
   padding-right: 1em;
   text-align: right;
   padding 0 0.5em;
+  color: black;
 }
 
 .line {

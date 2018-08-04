@@ -66,7 +66,6 @@ class Fragment {
     }
   }
   
-
   highlight() {
     this.dom_element.classList.add("active_match");
   }
@@ -93,7 +92,7 @@ class Fragment {
         let test_element = top_fragment.dom_element.previousElementSibling;
         let test_fragment = self_matches.find(frag => frag.dom_element === test_element);
         if (test_fragment === undefined) {
-          break; 
+          break;
         } else {
             top_fragment = test_fragment;
         }

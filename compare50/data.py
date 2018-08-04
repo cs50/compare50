@@ -116,8 +116,8 @@ class File:
 
 @attr.s(slots=True, frozen=True, hash=True, repr=False)
 class Span:
-    """Represents a range of characters in a particular file.
-
+    """
+    Represents a range of characters in a particular file.
     file - the ID of the File containing the span
     start - the character index of the first character in the span
     end - the character index one past the end of the span
@@ -128,6 +128,9 @@ class Span:
 
     def __repr__(self):
         return "Span({} {}:{})".format(self.file.path.relative_to(self.file.submission.path.parent), self.start, self.end)
+
+    def __contains__(self, other):
+        return self.file == other.file and self.start <= other.start and self.end >= other.end
 
     def _raw_contents(self):
         return self.file.read()[self.start:self.end]
