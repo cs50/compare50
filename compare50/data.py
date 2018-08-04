@@ -168,6 +168,9 @@ class SpanMatches:
     def __iter__(self):
         return iter(self._matches)
 
+    def __bool__(self):
+        return len(self._matches) != 0
+
     def expand(self, tokens_a=None, tokens_b=None):
         """
         Expand all spans in this SpanMatches.

@@ -40,6 +40,9 @@ def create_groups(submission_matches, comparator, ignored_files):
     sub_match_to_ignored_spans = collections.defaultdict(list)
 
     for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
+        if not span_matches:
+            continue
+
         sub_match = (span_matches.file_a.submission, span_matches.file_b.submission)
         sub_match_to_span_matches[sub_match].append(span_matches)
 
