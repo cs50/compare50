@@ -48,7 +48,7 @@ class Submission:
     id = attr.ib(init=False)
 
     def __attrs_post_init__(self):
-        object.__setattr__(self, "files", tuple([File(pathlib.Path(path).name, self) for path in self.files]))
+        object.__setattr__(self, "files", tuple([File(pathlib.Path(path), self) for path in self.files]))
         object.__setattr__(self, "id", Submission._store[self])
 
     @classmethod

@@ -57,7 +57,6 @@ class Winnowing(Comparator):
 
         return submissions_index.compare(archive_index)
 
-
     def create_spans(self, file_matches, ignored_files):
         with futures.ProcessPoolExecutor() as executor:
             ignored_index = Index(self.k, self.t, complete=True)
