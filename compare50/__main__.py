@@ -188,10 +188,11 @@ def main():
                         action=ListAction)
     parser.add_argument("-o", "--output",
                         action="store",
+                        default="html",
                         type=pathlib.Path,
                         help="location of compare50's output")
     parser.add_argument("-v", "--verbose",
-                        action="store",
+                        action="store_true",
                         help="display the full tracebacks of any errors")
 
     args = parser.parse_args()
