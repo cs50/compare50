@@ -37,8 +37,7 @@ def ignore(file, ignored_index, tokens=None):
 
     # Nothing to ignore
     if not ignored_index:
-        yield tokens
-        return
+        return [tokens]
 
     # Create an index of file with same settings as ignored_index
     index = Index(k=ignored_index.k, t=ignored_index.t, complete=ignored_index.complete)
@@ -50,10 +49,10 @@ def ignore(file, ignored_index, tokens=None):
 
     # Nothing to ignore
     if not ignored_spans:
-        yield tokens
-        return
+        return [tokens]
 
     # Find relevant tokens (any token not completely in an ignored_span)
+    relevant_token_lists = []
     relevant_tokens = []
     i = 0
     span_iter = iter(ignored_spans)
@@ -64,16 +63,18 @@ def ignore(file, ignored_index, tokens=None):
             try:
                 span = next(span_iter)
             except StopIteration:
-                yield relevant_tokens + tokens[i:]
-                return
+                relevant_token_lists.append(relevant_tokens + tokens[i:])
+                return relevant_token_lists
 
         # If token starts before the span does, it's relevant
         if token.start < span.start:
             relevant_tokens.append(token)
         # If a token is ignored, yield any relevant_tokens so far
         elif relevant_tokens:
-            yield relevant_tokens
+            relevant_token_lists.append(relevant_tokens)
             relevant_tokens = []
+
+    return relevant_token_lists
 
 class Winnowing(Comparator):
     """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
@@ -138,8 +139,8 @@ class Winnowing(Comparator):
             original_tokens_b = list(file_b.tokens())
 
             # List of list of tokens (each list is uninterupted by ignored content)
-            token_lists_a = list(ignore(file_a, self.ignored_index, tokens=original_tokens_a))
-            token_lists_b = list(ignore(file_b, self.ignored_index, tokens=original_tokens_b))
+            token_lists_a = ignore(file_a, self.ignored_index, tokens=original_tokens_a)
+            token_lists_b = ignore(file_b, self.ignored_index, tokens=original_tokens_b)
 
             indices_a = [Index(self.k, self.t, complete=self.ignored_index.complete) for ts in token_lists_a]
             indices_b = [Index(self.k, self.t, complete=self.ignored_index.complete) for ts in token_lists_b]
