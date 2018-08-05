@@ -73,7 +73,7 @@ class File:
             return f.read(size)
 
     def tokens(self):
-        return self.submission.preprocessor(self.unprocessed_tokens())
+        return list(self.submission.preprocessor(self.unprocessed_tokens()))
 
     def lexer(self):
         ext = self.name.suffix
@@ -99,19 +99,20 @@ class File:
 
     def unprocessed_tokens(self):
         text = self.read()
-        tokens = self.lexer().get_tokens_unprocessed(text)
-
+        lexer_tokens = self.lexer().get_tokens_unprocessed(text)
+        tokens = []
         prevToken = None
-        for token in tokens:
+        for token in lexer_tokens:
             if prevToken:
-                yield Token(start=prevToken[0], end=token[0],
-                            type=prevToken[1], val=prevToken[2])
+                tokens.append(Token(start=prevToken[0], end=token[0],
+                                    type=prevToken[1], val=prevToken[2]))
 
             prevToken = token
 
         if prevToken:
-            yield Token(start=prevToken[0], end=len(text),
-                        type=prevToken[1], val=prevToken[2])
+            tokens.append(Token(start=prevToken[0], end=len(text),
+                                type=prevToken[1], val=prevToken[2]))
+        return tokens
 
 
 @attr.s(slots=True, frozen=True, hash=True, repr=False)

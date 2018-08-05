@@ -95,7 +95,7 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
     Find which spans were not part of tokens (due to a preprocessor stripping them).
     """
     if original_tokens is None:
-        original_tokens = list(file.unprocessed_tokens())
+        original_tokens = file.unprocessed_tokens()
     if preprocessed_tokens is None:
         preprocessed_tokens = list(file.submission.preprocessor(original_tokens))
 

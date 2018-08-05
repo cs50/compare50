@@ -4,6 +4,7 @@ import math
 import numpy as np
 import itertools
 import attr
+import time
 import multiprocessing
 
 import concurrent.futures as futures
@@ -33,7 +34,7 @@ class FauxExecutor:
 
 def ignore(file, ignored_index, tokens=None):
     if tokens is None:
-        tokens = list(file.tokens())
+        tokens = file.tokens()
 
     # Nothing to ignore
     if not ignored_index:
@@ -123,7 +124,22 @@ class Winnowing(Comparator):
             for ignored_i in executor.map(self._index_file(self.k, self.t, complete=True), ignored_files):
                 ignored_index.include_all(ignored_i)
 
-            return executor.map(self._create_spans(self.k, self.t, ignored_index), file_matches)
+            # Find all unique files
+            files = set()
+            for fm in file_matches:
+                files.add(fm.file_a)
+                files.add(fm.file_b)
+
+            # Tokenize all files
+            file_tokens = {}
+            for file in files:
+                file_tokens[file] = file.tokens()
+
+            def iter_file_matches(file_matches):
+                for fm in file_matches:
+                    yield (fm, file_tokens[fm.file_a], file_tokens[fm.file_b])
+
+            return executor.map(self._create_spans(self.k, self.t, ignored_index), iter_file_matches(file_matches))
 
     @attr.s(slots=True)
     class _create_spans:
@@ -131,12 +147,11 @@ class Winnowing(Comparator):
         t = attr.ib()
         ignored_index = attr.ib()
 
-        def __call__(self, file_match):
+        def __call__(self, match):
+            file_match, original_tokens_a, original_tokens_b = match
+
             file_a = file_match.file_a
             file_b = file_match.file_b
-
-            original_tokens_a = list(file_a.tokens())
-            original_tokens_b = list(file_b.tokens())
 
             # List of list of tokens (each list is uninterupted by ignored content)
             token_lists_a = ignore(file_a, self.ignored_index, tokens=original_tokens_a)
@@ -290,7 +305,7 @@ class Index:
 
     def _fingerprint(self, file, tokens=None):
         if not tokens:
-            tokens = list(file.tokens())
+            tokens = file.tokens()
             if not tokens:
                 return []
 
