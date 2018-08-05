@@ -189,16 +189,18 @@ def main():
     ignored_files = [f for sub in ignored_subs for f in sub.files]
 
     # Cross compare and rank all submissions, keep only top `n`
-    submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
-
-    print_results(submission_matches)
+    with lib50.ProgressBar("Ranking"):
+        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
 
     # Get the matching spans, group them per submission
-    groups = api.create_groups(submission_matches, comparator, ignored_files)
+    with lib50.ProgressBar("Comparing"):
+        groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-    html_renderer.render(groups)
-    # # TODO api.as_json(groups)
-    #
+    # Render results
+    with lib50.ProgressBar("Rendering"):
+        html_renderer.render(groups)
+
+    print_results(submission_matches)
 
 
 def filter(files):
