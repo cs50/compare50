@@ -39,7 +39,7 @@ def create_groups(submission_matches, comparator, ignored_files):
     sub_match_to_span_matches = collections.defaultdict(list)
     sub_match_to_ignored_spans = collections.defaultdict(list)
 
-    file_to_missing_spans_cache = {}
+    missing_spans_cache = {}
 
     for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
         if not span_matches:
@@ -61,14 +61,14 @@ def create_groups(submission_matches, comparator, ignored_files):
                 ignored_spans_b.append(span)
 
         # Find all spans lost by preprocessors for file_a
-        if file_a not in file_to_missing_spans_cache:
-            file_to_missing_spans_cache[file_a] = missing_spans(file_a)
-        ignored_spans_a.extend(file_to_missing_spans_cache[file_a])
+        if file_a not in missing_spans_cache:
+            missing_spans_cache[file_a] = missing_spans(file_a)
+        ignored_spans_a.extend(missing_spans_cache[file_a])
 
         # Find all spans lost by preprocessors for file_b
-        if file_b not in file_to_missing_spans_cache:
-            file_to_missing_spans_cache[file_b] = missing_spans(file_b)
-        ignored_spans_b.extend(file_to_missing_spans_cache[file_b])
+        if file_b not in missing_spans_cache:
+            missing_spans_cache[file_b] = missing_spans(file_b)
+        ignored_spans_b.extend(missing_spans_cache[file_b])
 
         # Flatten the spans (they could be overlapping)
         ignored_spans = flatten(ignored_spans_a) + flatten(ignored_spans_b)

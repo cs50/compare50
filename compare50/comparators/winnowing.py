@@ -62,11 +62,16 @@ def ignore(file, ignored_index, tokens=None):
             try:
                 span = next(span_iter)
             except StopIteration:
-                return relevant_tokens + tokens[i:]
+                yield relevant_tokens + tokens[i:]
+                return
+
         # If token starts before the span does, it's relevant
         if token.start < span.start:
             relevant_tokens.append(token)
-    return relevant_tokens
+        # If a token is ignored, yield any relevant_tokens so far
+        elif relevant_tokens:
+            yield relevant_tokens
+            relevant_tokens = []
 
 class Winnowing(Comparator):
     """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
@@ -130,20 +135,36 @@ class Winnowing(Comparator):
             original_tokens_a = list(file_a.tokens())
             original_tokens_b = list(file_b.tokens())
 
-            tokens_a = ignore(file_a, self.ignored_index, tokens=original_tokens_a)
-            tokens_b = ignore(file_b, self.ignored_index, tokens=original_tokens_b)
+            # List of list of tokens (each list is uninterupted by ignored content)
+            token_lists_a = list(ignore(file_a, self.ignored_index, tokens=original_tokens_a))
+            token_lists_b = list(ignore(file_b, self.ignored_index, tokens=original_tokens_b))
 
-            index_a = Index(self.k, self.t, complete=self.ignored_index.complete)
-            index_b = Index(self.k, self.t, complete=self.ignored_index.complete)
+            indices_a = [Index(self.k, self.t, complete=self.ignored_index.complete) for ts in token_lists_a]
+            indices_b = [Index(self.k, self.t, complete=self.ignored_index.complete) for ts in token_lists_b]
 
-            index_a.include(file_a, tokens=tokens_a)
-            index_b.include(file_b, tokens=tokens_b)
+            for index_a, tokens_a in zip(indices_a, token_lists_a):
+                index_a.include(file_a, tokens=tokens_a)
 
-            span_matches = index_a.create_spans(index_b)
-            span_matches.expand(tokens_a, tokens_b)
+            for index_b, tokens_b in zip(indices_b, token_lists_b):
+                index_b.include(file_b, tokens=tokens_b)
 
-            ignored_spans = api.missing_spans(file_a, original_tokens=original_tokens_a, preprocessed_tokens=tokens_a)
-            ignored_spans.extend(api.missing_spans(file_b, original_tokens=original_tokens_b, preprocessed_tokens=tokens_b))
+            ignored_spans = \
+                api.missing_spans(
+                    file_a,
+                    original_tokens=original_tokens_a,
+                    preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_a)))
+            ignored_spans.extend(
+                api.missing_spans(
+                    file_b,
+                    original_tokens=original_tokens_b,
+                    preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_b))))
+
+            span_matches = SpanMatches()
+            for index_a, tokens_a in zip(indices_a, token_lists_a):
+                for index_b, tokens_b in zip(indices_b, token_lists_b):
+                    sm = index_a.create_spans(index_b)
+                    sm.expand(tokens_a, tokens_b)
+                    span_matches += sm
 
             return span_matches, ignored_spans
 

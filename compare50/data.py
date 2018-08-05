@@ -2,12 +2,9 @@ import abc
 from collections.abc import Mapping, Sequence
 import os
 import pathlib
-
 import attr
 import pygments
 import pygments.lexers
-
-
 
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
@@ -167,6 +164,12 @@ class SpanMatches:
 
     def __iter__(self):
         return iter(self._matches)
+
+    def __iadd__(self, other):
+        if not isinstance(other, type(self)):
+            raise TypeError("Can only add SpanMatches to SpanMatches")
+        self._matches.extend(other._matches)
+        return self
 
     def __bool__(self):
         return len(self._matches) != 0
