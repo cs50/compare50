@@ -3,6 +3,7 @@ import contextlib
 import os
 import pathlib
 import tempfile
+import termcolor
 import textwrap
 import shutil
 import attr
@@ -15,6 +16,28 @@ import lib50
 
 from . import html_renderer
 from . import passes, api, errors, data, comparators
+
+
+def excepthook(cls, exc, tb):
+    if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
+        termcolor.cprint(str(exc), "red", file=sys.stderr)
+    elif cls is FileNotFoundError:
+        termcolor.cprint(_("{} not found").format(exc.filename), "red", file=sys.stderr)
+    elif not issubclass(cls, Exception) and not isinstance(exc, KeyboardInterrupt):
+        # Class is some other BaseException, better just let it go
+        return
+    else:
+        termcolor.cprint(_("Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!"), "red", file=sys.stderr)
+
+    if excepthook.verbose:
+        traceback.print_exception(cls, exc, tb)
+
+    sys.exit(1)
+
+
+# Assume we should print tracebacks until we get command line arguments
+excepthook.verbose = True
+sys.excepthook = excepthook
 
 class SubmissionFactory:
     def __init__(self):
@@ -145,32 +168,44 @@ def main():
                         callback=submission_factory.include,
                         nargs="+",
                         action=IncludeExcludeAction,
-                        help="Globbing patterns to include from every submission."\
-                             " Includes everything (*) by default."\
+                        help="Globbing patterns to include from every submission."
+                             " Includes everything (*) by default."
                              " Make sure to quote your patterns to escape any shell globbing!")
     parser.add_argument("-x", "--exclude",
                         callback=submission_factory.exclude,
                         nargs="+",
                         action=IncludeExcludeAction,
-                        help="Globbing patterns to exclude from every submission."\
-                             " Nothing is excluded by default."\
+                        help="Globbing patterns to exclude from every submission."
+                             " Nothing is excluded by default."
                              " Make sure to quote your patterns to escape any shell globbing!")
     parser.add_argument("--hidden",
                         action="store_true",
-                        help="Also include hidden files and directories.")
+                        help="also include hidden files and directories.")
     parser.add_argument("--log",
                         action="store_true",
-                        help="Display more detailed information about comparison process.")
+                        help="display more detailed information about comparison process.")
     parser.add_argument("--list",
                         action=ListAction)
+    parser.add_argument("-o", "--output",
+                        action="store",
+                        type=pathlib.Path,
+                        help="location of compare50's output")
+    parser.add_argument("-v", "--verbose",
+                        action="store",
+                        help="display the full tracebacks of any errors")
 
     args = parser.parse_args()
+    excepthook.verbose = args.verbose
+
 
     # Validate args
     for items in (args.submissions, args.archive, args.distro):
         for item in items:
             if not pathlib.Path(item).exists():
-                raise errors.Error("Path {} does not exist.".format(item))
+                raise FileNotFoundError(item)
+
+    if len(args.submissions) == 1:
+        raise errors.Error("At least two submissions are required for a comparison.")
 
     # Extract comparator and preprocessors from pass
     try:
@@ -183,7 +218,7 @@ def main():
     preprocessor = Preprocessor(pass_.preprocessors)
 
     # Collect all submissions, archive submissions and distro files
-    with lib50.ProgressBar("Loading"):
+    with lib50.ProgressBar("Preparing"):
         subs = submission_factory.get_all(args.submissions, preprocessor)
         archive_subs = submission_factory.get_all(args.archive, preprocessor)
         ignored_subs = submission_factory.get_all(args.distro, preprocessor)
@@ -199,7 +234,7 @@ def main():
 
     # Render results
     with lib50.ProgressBar("Rendering"):
-        html_renderer.render(groups)
+        html_renderer.render(groups, dest=args.output)
 
     print_results(submission_matches)
 

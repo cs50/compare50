@@ -3,6 +3,8 @@ import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
 import attr
+import glob
+import os
 import shutil
 import pathlib
 
@@ -18,9 +20,8 @@ class Fragment:
 def render(submission_groups, dest="html"):
     src = pathlib.Path(__file__).absolute().parent
     dest = pathlib.Path(dest)
-    if dest.exists():
-        shutil.rmtree(dest)
-    dest.mkdir()
+
+    _prepare_dest(dest)
 
     def read_file(fname):
         with open(fname) as f:
@@ -67,8 +68,7 @@ def render(submission_groups, dest="html"):
             submissions.append((str(submission.path), file_list))
 
         # Get template
-        with open(pathlib.Path(__file__).absolute().parent / "templates/match.html") as f:
-            content = f.read()
+        content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
 
         template = jinja2.Template(content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
@@ -83,11 +83,33 @@ def render(submission_groups, dest="html"):
         with open(dest / f"match_{match_id}.html", "w") as f:
             f.write(rendered_html)
 
+
 def fragmentize(file, spans):
     slicer = _FragmentSlicer()
     for span in spans:
         slicer.add_span(span)
     return slicer.slice(file)
+
+
+def _prepare_dest(dest):
+    if dest.is_dir():
+        for file in glob.glob(str(dest / "match_*.html")):
+            try:
+                os.remove(file)
+            except IsADirectoryError:
+                # This shouldn't really ever happen, but just in case...
+                shutil.rmtree(file)
+
+        try:
+            os.remove(dest / "index.html")
+        except IsADirectoryError:
+            shutil.rmtree(dest / "index.html")
+        except FileNotFoundError:
+            pass
+    elif dest.is_file():
+        os.remove(dest)
+
+    dest.mkdir(exist_ok=True)
 
 
 class _FragmentSlicer:
