@@ -183,10 +183,11 @@ def main():
     preprocessor = Preprocessor(pass_.preprocessors)
 
     # Collect all submissions, archive submissions and distro files
-    subs = submission_factory.get_all(args.submissions, preprocessor)
-    archive_subs = submission_factory.get_all(args.archive, preprocessor)
-    ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-    ignored_files = [f for sub in ignored_subs for f in sub.files]
+    with lib50.ProgressBar("Loading"):
+        subs = submission_factory.get_all(args.submissions, preprocessor)
+        archive_subs = submission_factory.get_all(args.archive, preprocessor)
+        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+        ignored_files = [f for sub in ignored_subs for f in sub.files]
 
     # Cross compare and rank all submissions, keep only top `n`
     with lib50.ProgressBar("Ranking"):
