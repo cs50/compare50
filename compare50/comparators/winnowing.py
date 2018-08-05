@@ -37,7 +37,8 @@ def ignore(file, ignored_index, tokens=None):
 
     # Nothing to ignore
     if not ignored_index:
-        return tokens
+        yield tokens
+        return
 
     # Create an index of file with same settings as ignored_index
     index = Index(k=ignored_index.k, t=ignored_index.t, complete=ignored_index.complete)
@@ -49,7 +50,8 @@ def ignore(file, ignored_index, tokens=None):
 
     # Nothing to ignore
     if not ignored_spans:
-        return tokens
+        yield tokens
+        return
 
     # Find relevant tokens (any token not completely in an ignored_span)
     relevant_tokens = []
