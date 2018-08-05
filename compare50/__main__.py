@@ -164,26 +164,26 @@ def main():
     parser.add_argument("--list",
                         action=ListAction)
 
-    args = parser.parse_args()
-
-    # Validate args
-    for items in (args.submissions, args.archive, args.distro):
-        for item in items:
-            if not pathlib.Path(item).exists():
-                raise errors.Error("Path {} does not exist.".format(item))
-
-    # Extract comparator and preprocessors from pass
-    try:
-        pass_ = passes.get(args.pass_)
-    except KeyError:
-        raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(args.pass_, [c.__name__ for c in passes.get_all()]))
-
-    comparator = pass_.comparator
-    preprocessor = Preprocessor(pass_.preprocessors)
-
-    # Collect all submissions, archive submissions and distro files
     with lib50.ProgressBar("Loading"):
+        args = parser.parse_args()
+
+        # Validate args
+        for items in (args.submissions, args.archive, args.distro):
+            for item in items:
+                if not pathlib.Path(item).exists():
+                    raise errors.Error("Path {} does not exist.".format(item))
+
+        # Extract comparator and preprocessors from pass
+        try:
+            pass_ = passes.get(args.pass_)
+        except KeyError:
+            raise errors.Error("{} is not a pass, try one of these: {}"\
+                                .format(args.pass_, [c.__name__ for c in passes.get_all()]))
+
+        comparator = pass_.comparator
+        preprocessor = Preprocessor(pass_.preprocessors)
+
+        # Collect all submissions, archive submissions and distro files
         subs = submission_factory.get_all(args.submissions, preprocessor)
         archive_subs = submission_factory.get_all(args.archive, preprocessor)
         ignored_subs = submission_factory.get_all(args.distro, preprocessor)
