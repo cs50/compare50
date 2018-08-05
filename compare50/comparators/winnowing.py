@@ -35,6 +35,10 @@ def ignore(file, ignored_index, tokens=None):
     if tokens is None:
         tokens = list(file.tokens())
 
+    # Nothing to ignore
+    if not ignored_index:
+        return tokens
+
     # Create an index of file with same settings as ignored_index
     index = Index(k=ignored_index.k, t=ignored_index.t, complete=ignored_index.complete)
     index.include(file, tokens=tokens)

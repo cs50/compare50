@@ -228,10 +228,9 @@ def filter(files):
 
 # PROFILE = [ main
 #           , api.create_groups
-#           , api.transitive_closure]
-
-# PROFILE = [ main
-#           , read_all]
+#           , comparators.winnowing.Winnowing.cross_compare
+#           , comparators.winnowing.Winnowing.create_spans
+#           , comparators.winnowing.ignore]
 
 PROFILE = []
 if __name__ == "__main__":
