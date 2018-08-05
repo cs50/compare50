@@ -18,7 +18,10 @@ class Span {
   }
 
   init(fragments, spans, groups) {
-    this.fragments = SPAN_TO_FRAGMENTS[this.id].map(frag_id => fragments[frag_id]);
+    this.fragments = SPAN_TO_FRAGMENTS[this.id].map(frag_id => fragments[frag_id]).sort((frag_a, frag_b) => {
+      let res = frag_a.dom_element.compareDocumentPosition(frag_b.dom_element)
+      return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
     this.submission = this.fragments[0].submission;
     this.group = groups[SPAN_TO_GROUP[this.id]];
   }
@@ -190,10 +193,12 @@ function add_click_listeners(fragments) {
       return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     });
 
+    let title_height = document.getElementById("sub_names").clientHeight;
+
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
       //let frag_offset = frag.find_pos();
-      let frag_offset = frag._highlight_offset();
+      let frag_offset = Math.max(frag._highlight_offset(), title_height);
       let find_offset = other_spans[0].submission.scrollTop + frag_offset;
       let next_fragment = other_spans.map(span => span.fragments[0]).find(fragment => fragment._highlight_offset() > find_offset);
 
