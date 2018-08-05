@@ -31,15 +31,16 @@ class TestIgnore(TestCase):
     def test_no_ignore(self):
         tokens = list(self.file.tokens())
         ignored_index = winnowing.Index(k=2, t=3, complete=True)
-        relevant_tokens = winnowing.ignore(self.file, ignored_index, tokens=tokens)
-        self.assertEqual(relevant_tokens, tokens)
+        relevant_token_lists = winnowing.ignore(self.file, ignored_index, tokens=tokens)
+        self.assertEqual(len(relevant_token_lists), 1)
+        self.assertEqual(relevant_token_lists[0], tokens)
 
     def test_ignore_all(self):
         tokens = list(self.file.tokens())
         ignored_index = winnowing.Index(k=2, t=3, complete=True)
         ignored_index.include(self.file, tokens=tokens)
-        relevant_tokens = winnowing.ignore(self.file, ignored_index, tokens=tokens)
-        self.assertEqual(relevant_tokens, [])
+        relevant_token_lists = winnowing.ignore(self.file, ignored_index, tokens=tokens)
+        self.assertEqual(relevant_token_lists, [])
 
     def test_ignore_half(self):
         ignore_content = self.content.split("\n")[0]
@@ -49,12 +50,13 @@ class TestIgnore(TestCase):
         ignored_index = winnowing.Index(k=2, t=3, complete=True)
         ignored_index.include(ignored_file)
 
-        relevant_tokens = winnowing.ignore(self.file, ignored_index)
+        relevant_token_lists = winnowing.ignore(self.file, ignored_index)
 
         end = list(ignored_file.tokens())[-1].end
         expected_tokens = [t for t in self.file.tokens() if t.start >= end]
 
-        self.assertEqual(relevant_tokens, expected_tokens)
+        self.assertEqual(len(relevant_token_lists), 1)
+        self.assertEqual(relevant_token_lists[0], expected_tokens)
 
 
 if __name__ == "__main__":
