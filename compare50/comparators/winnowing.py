@@ -135,11 +135,8 @@ class Winnowing(Comparator):
             for file in files:
                 file_tokens[file] = file.tokens()
 
-            def iter_file_matches(file_matches):
-                for fm in file_matches:
-                    yield (fm, file_tokens[fm.file_a], file_tokens[fm.file_b])
-
-            return executor.map(self._create_spans(self.k, self.t, ignored_index), iter_file_matches(file_matches))
+            return executor.map(self._create_spans(self.k, self.t, ignored_index),
+                                ((fm, file_tokens[fm.file_a], file_tokens[fm.file_b]) for fm in file_matches))
 
     @attr.s(slots=True)
     class _create_spans:
