@@ -22,12 +22,12 @@ def excepthook(cls, exc, tb):
     if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
         termcolor.cprint(str(exc), "red", file=sys.stderr)
     elif cls is FileNotFoundError:
-        termcolor.cprint(_("{} not found").format(exc.filename), "red", file=sys.stderr)
+        termcolor.cprint("{} not found".format(exc.filename), "red", file=sys.stderr)
     elif not issubclass(cls, Exception) and not isinstance(exc, KeyboardInterrupt):
         # Class is some other BaseException, better just let it go
         return
     else:
-        termcolor.cprint(_("Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!"), "red", file=sys.stderr)
+        termcolor.cprint("Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "red", file=sys.stderr)
 
     if excepthook.verbose:
         traceback.print_exception(cls, exc, tb)
