@@ -7,12 +7,13 @@ pre {
   overflow-y: hidden;
 }
 
-#sub_names {
-  height: 3%;
+.sub_name {
+    height: 2em;
+    margin-top: 0.33em;
 }
 
 #diff {
-  height: 97%;
+    height: calc(100% - 2em);
 }
 
 #left {
@@ -32,10 +33,6 @@ pre {
   border-top: 0;
   max-width: 50%;
   height: 100%;
-}
-
-.ignored {
-  color: LightGray;
 }
 
 .fragment:before {
@@ -75,5 +72,5 @@ pre {
 
 .line {
     line-height: 1em;
-    font-family: Inconsolata,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace
+    font-family: Inconsolata, monospace;
 }

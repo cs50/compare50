@@ -30,7 +30,7 @@ def render(submission_groups, dest="html"):
                          for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
 
     for match_id, (sub_a, sub_b, groups, ignored_spans) in enumerate(submission_groups):
-        frag_ids = IdStore()
+        frag_id_counter = 0
         span_ids = IdStore()
         group_ids = IdStore()
 
@@ -44,9 +44,8 @@ def render(submission_groups, dest="html"):
                 span_to_group[span_ids[span]] = group_id
                 file_to_spans[span.file].append(span)
 
-        file_to_ignored_spans = collections.defaultdict(list)
         for span in ignored_spans:
-            file_to_ignored_spans[span.file].append(span)
+            file_to_spans[span.file].append(span)
 
         ignored_spans = set(ignored_spans)
 
@@ -55,8 +54,9 @@ def render(submission_groups, dest="html"):
             file_list = []
             for file in submission.files:
                 frag_list = []
-                for fragment in fragmentize(file, file_to_spans[file] + file_to_ignored_spans[file]):
-                    frag_id = f"frag{frag_ids[fragment]}"
+                for fragment in fragmentize(file, file_to_spans[file]):
+                    frag_id = f"frag{frag_id_counter}"
+                    frag_id_counter += 1
                     is_ignored = any(span in ignored_spans for span in fragment.spans)
                     frag_list.append((frag_id, fragment.content, is_ignored))
 

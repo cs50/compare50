@@ -18,6 +18,19 @@ from compare50 import (
         Span, SpanMatches,
 )
 
+class FauxExecutor:
+    def map(self, fn, *iterables, timeout=None, chunksize=1):
+        for iterable in iterables:
+            for res in map(fn, iterable):
+                yield res
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        return
+
+
 def ignore(file, ignored_index, tokens=None):
     if tokens is None:
         tokens = list(file.tokens())
