@@ -5,7 +5,7 @@ import re
 
 from pygments.token import Comment
 
-from .. import Comparator, SubmissionMatch, Pass, Span, SpanMatches, Token
+from .. import Comparator, SubmissionMatch, Pass, Span, SpanMatch, Token
 
 
 def words(tokens):
