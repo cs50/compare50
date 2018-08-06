@@ -13,7 +13,7 @@ from .. import api
 from compare50 import (
         preprocessors,
         Comparator,
-        File, FileMatch,
+        File, Submission, SubmissionMatch,
         Pass,
         Span, SpanMatches,
 )
@@ -221,7 +221,7 @@ class CrossCompareIndex(Index):
 
     def include(self, file, tokens=None):
         super().include(file, tokens)
-        self._max_id = max(self._max_id, file.id)
+        self._max_id = max(self._max_id, file.submission.id)
 
     def include_all(self, other):
         super().include_all(other)
@@ -252,7 +252,7 @@ class CrossCompareIndex(Index):
                 scores[index[:,0], index[:,1]] += 1
 
         # Return only those FileMatches with a score > 0 from different submissions
-        return [FileMatch(File.get(id1), File.get(id2), scores[id1][id2])
+        return [SubmissionMatch(Submission.get(id1), Submission.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
     def fingerprint(self, file, tokens=None):
@@ -270,7 +270,7 @@ class CrossCompareIndex(Index):
         # index of minimum hash in buffer
         min_idx = 0
         for hash_, idx in zip(hashes, itertools.cycle(range(self.w))):
-            buf[idx] = hash_, file.id
+            buf[idx] = hash_, file.submission.id
             if min_idx == idx:
                 # old min not in window, search left for new min
                 for j in range(1, self.w):

@@ -1,45 +1,31 @@
 import collections
 import heapq
+import itertools
 
-from .data import SubmissionMatch, Submission, Span, Group
+from .data import SubmissionMatch, Submission, Span, Group, FilePair
 
 __all__ = ["rank_submissions", "create_groups"]
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
-    results = comparator.cross_compare(submissions, archive_submissions, ignored_files)
-
-    # Link submission pairs to file matches
-    sub_ids_to_file_matches = collections.defaultdict(list)
-    for file_match in results:
-        sub_id1, sub_id2 = file_match.file_a.submission.id, file_match.file_b.submission.id
-
-        if sub_id1 == sub_id2:
-            continue
-        elif sub_id1 < sub_id2:
-            key = sub_id1, sub_id2
-        else:
-            key = sub_id2, sub_id1
-
-        sub_ids_to_file_matches[key].append(file_match)
-
-    # Create submission matches
-    submission_matches = [SubmissionMatch(Submission.get(sub_id_a), Submission.get(sub_id_b), file_matches)
-                          for (sub_id_a, sub_id_b), file_matches in sub_ids_to_file_matches.items()]
+    submission_matches = comparator.cross_compare(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 
 def create_groups(submission_matches, comparator, ignored_files):
-    file_matches = [fm for sm in submission_matches for fm in sm.file_matches]
+    file_pairs = []
+    for sm in submission_matches:
+        for file_a, file_b in itertools.product(sm.sub_a.files, sm.sub_b.files):
+            file_pairs.append(FilePair(file_a, file_b))
 
     sub_match_to_span_matches = collections.defaultdict(list)
     sub_match_to_ignored_spans = collections.defaultdict(list)
 
     missing_spans_cache = {}
 
-    for span_matches, ignored_spans in comparator.create_spans(file_matches, ignored_files):
+    for span_matches, ignored_spans in comparator.create_spans(file_pairs, ignored_files):
         if not span_matches:
             continue
 

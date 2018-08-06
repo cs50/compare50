@@ -181,11 +181,10 @@ class Span:
         return self.file.read()[self.start:self.end]
 
 
-@attr.s(slots=True, frozen=True, hash=True)
-class FileMatch:
+@attr.s(slots=True, frozen=True, hash=True, cmp=True)
+class FilePair:
     file_a = attr.ib()
     file_b = attr.ib()
-    score = attr.ib()
 
 
 @attr.s(slots=True)
@@ -273,8 +272,7 @@ class SpanMatches:
 class SubmissionMatch:
     sub_a = attr.ib()
     sub_b = attr.ib()
-    file_matches = attr.ib()
-    score = attr.ib(init=False, default=attr.Factory(lambda self: sum(f.score for f in self.file_matches), takes_self=True))
+    score = attr.ib()
 
 
 def _sorted_subs(group):

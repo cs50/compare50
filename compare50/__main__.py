@@ -37,7 +37,7 @@ def excepthook(cls, exc, tb):
 
 # Assume we should print tracebacks until we get command line arguments
 excepthook.verbose = True
-sys.excepthook = excepthook
+# sys.excepthook = excepthook
 
 
 class SubmissionFactory:
