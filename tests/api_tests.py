@@ -26,7 +26,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans[i], spans[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api.group_span_pairs(span_pairs)
         groups = list(groups)
         self.assertEqual(list(groups), [data.Group(spans)])
 
@@ -42,7 +42,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api.group_span_pairs(span_pairs)
         self.assertEqual(list(groups), [data.Group(spans_1 + spans_2)])
 
     def test_multiple_spanmatches_multiple_groups(self):
@@ -57,7 +57,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api.group_span_pairs(span_pairs)
         self.assertEqual(set(groups), {data.Group(spans_1), data.Group(spans_2)})
 
 
@@ -66,39 +66,39 @@ class TestFlatten(unittest.TestCase):
         file = data.Submission(".", ["bar/foo"]).files[0]
         return data.Span(file, start, end)
 
-    def test_flatten_no_spans(self):
-        self.assertEqual(api.flatten([]), [])
+    def test_flatten_spans_no_spans(self):
+        self.assertEqual(api._flatten_spans([]), [])
 
-    def test_flatten_one_span(self):
+    def test_flatten_spans_one_span(self):
         span = self.span(0, 10)
-        self.assertEqual(api.flatten([span]), [span])
+        self.assertEqual(api._flatten_spans([span]), [span])
 
-    def test_flatten_overlapping_spans(self):
+    def test_flatten_spans_overlapping_spans(self):
         span_1 = self.span(0, 10)
         span_2 = self.span(5, 15)
         resulting_span = self.span(0, 15)
-        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+        self.assertEqual(api._flatten_spans([span_1, span_2]), [resulting_span])
 
     def test_connecting_spans(self):
         span_1 = self.span(0, 10)
         span_2 = self.span(10, 20)
         resulting_span = self.span(0, 20)
-        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+        self.assertEqual(api._flatten_spans([span_1, span_2]), [resulting_span])
 
         span_1 = self.span(0, 9)
         span_2 = self.span(10, 20)
-        self.assertEqual(api.flatten([span_1, span_2]), [span_1, span_2])
+        self.assertEqual(api._flatten_spans([span_1, span_2]), [span_1, span_2])
 
     def test_subsuming_spans(self):
         span_1 = self.span(0, 30)
         span_2 = self.span(10, 20)
         resulting_span = self.span(0, 30)
-        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+        self.assertEqual(api._flatten_spans([span_1, span_2]), [resulting_span])
 
         span_1 = self.span(0, 30)
         span_2 = self.span(10, 40)
         resulting_span = self.span(0, 40)
-        self.assertEqual(api.flatten([span_1, span_2]), [resulting_span])
+        self.assertEqual(api._flatten_spans([span_1, span_2]), [resulting_span])
 
 
 class TestMissingSpans(unittest.TestCase):

@@ -69,7 +69,7 @@ def create_groups(submission_matches, comparator, ignored_files):
         ignored_spans_b.extend(missing_spans_cache[file_b])
 
         # Flatten the spans (they could be overlapping)
-        ignored_spans = flatten(ignored_spans_a) + flatten(ignored_spans_b)
+        ignored_spans = _flatten_spans(ignored_spans_a) + _flatten_spans(ignored_spans_b)
         sub_match_to_ignored_spans[sub_match].extend(ignored_spans)
 
     groups = []
@@ -113,7 +113,7 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
     return spans
 
 
-def flatten(spans):
+def _flatten_spans(spans):
     """
     Flatten a collection of spans.
     The resulting list of spans covers the same area and has no overlapping spans.
@@ -139,7 +139,7 @@ def flatten(spans):
     return flattened_spans
 
 
-def _group_span_pairs(span_pairs):
+def group_span_pairs(span_pairs):
     """
     Transforms a list of span_pairs (2 item tuples of Spans) into a list of Groups.
     Finds all spans that share the same content, and groups them in one Group.
