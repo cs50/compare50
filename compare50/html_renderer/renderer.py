@@ -7,6 +7,7 @@ import glob
 import os
 import shutil
 import pathlib
+import concurrent.futures as futures
 
 import jinja2
 
@@ -18,19 +19,31 @@ class Fragment:
 
 
 def render(submission_groups, dest="html"):
-    src = pathlib.Path(__file__).absolute().parent
-    dest = pathlib.Path(dest)
+    with futures.ProcessPoolExecutor() as executor:
+        for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups)):
+            with open(dest / f"match_{id}.html", "w") as f:
+                f.write(html)
 
-    _prepare_dest(dest)
 
-    def read_file(fname):
-        with open(fname) as f:
-            return f.read()
+def fragmentize(file, spans):
+    slicer = _FragmentSlicer()
+    for span in spans:
+        slicer.add_span(span)
+    return slicer.slice(file)
 
-    js, css, bootstrap, fonts = (read_file(src / "static" / name)
-                         for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
 
-    for match_id, (sub_a, sub_b, groups, ignored_spans) in enumerate(submission_groups):
+class _RenderFile:
+    def __init__(self, dest):
+        self._prepare_dest(dest)
+        self.dest = dest
+        src = pathlib.Path(__file__).absolute().parent
+        js, css, bootstrap, fonts = (self._read_file(src / "static" / name)
+                                     for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
+        self.js = (js,)
+        self.css = (fonts, bootstrap, css)
+
+    def __call__(self, args):
+        match_id, (sub_a, sub_b, groups, ignored_spans) = args
         frag_id_counter = 0
         span_ids = IdStore()
         group_ids = IdStore()
@@ -67,8 +80,7 @@ def render(submission_groups, dest="html"):
                 file_list.append((str(file.name), frag_list))
             submissions.append((str(submission.path), file_list))
 
-        # Get template
-        content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
+        content = self._read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
 
         template = jinja2.Template(content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
@@ -77,39 +89,37 @@ def render(submission_groups, dest="html"):
                                         span_to_group=span_to_group,
                                         sub_a=submissions[0],
                                         sub_b=submissions[1],
-                                        js=(js,),
-                                        css=(fonts, bootstrap, css))
+                                        js=self.js,
+                                        css=self.css)
 
-        with open(dest / f"match_{match_id}.html", "w") as f:
-            f.write(rendered_html)
+        return match_id, rendered_html
 
-
-def fragmentize(file, spans):
-    slicer = _FragmentSlicer()
-    for span in spans:
-        slicer.add_span(span)
-    return slicer.slice(file)
+    @staticmethod
+    def _read_file(fname):
+        with open(fname) as f:
+            return f.read()
 
 
-def _prepare_dest(dest):
-    if dest.is_dir():
-        for file in glob.glob(str(dest / "match_*.html")):
+    @staticmethod
+    def _prepare_dest(dest):
+        if dest.is_dir():
+            for file in glob.glob(str(dest / "match_*.html")):
+                try:
+                    os.remove(file)
+                except IsADirectoryError:
+                    # This shouldn't really ever happen, but just in case...
+                    shutil.rmtree(file)
+
             try:
-                os.remove(file)
+                os.remove(dest / "index.html")
             except IsADirectoryError:
-                # This shouldn't really ever happen, but just in case...
-                shutil.rmtree(file)
+                shutil.rmtree(dest / "index.html")
+            except FileNotFoundError:
+                pass
+        elif dest.is_file():
+            os.remove(dest)
 
-        try:
-            os.remove(dest / "index.html")
-        except IsADirectoryError:
-            shutil.rmtree(dest / "index.html")
-        except FileNotFoundError:
-            pass
-    elif dest.is_file():
-        os.remove(dest)
-
-    dest.mkdir(exist_ok=True)
+        dest.mkdir(exist_ok=True)
 
 
 class _FragmentSlicer:
@@ -159,58 +169,3 @@ class _FragmentSlicer:
         self._slicing_marks.add(span.end)
         self._start_to_spans[span.start].add(span)
         self._end_to_spans[span.end].add(span)
-
-
-
-#
-#     return
-#
-#     dest = pathlib.Path(dest)
-#
-#     if not dest.exists():
-#         os.mkdir(dest)
-#
-#     subs_to_groups = collections.defaultdict(list)
-#
-#     for group in groups:
-#         subs_to_groups[(group.sub_a, group.sub_b)].append(group)
-#
-#     subs_groups = [(sm.sub_a, sm.sub_b, subs_to_groups[(sm.sub_a, sm.sub_b)]) for sm in submission_matches]
-#
-#     formatter = HtmlFormatter(linenos=True)
-#
-#     with open(dest / "style.css", "w") as f:
-#         f.write(formatter.get_style_defs('.highlight'))
-#
-#     for i, (sub_a, sub_b, groups) in enumerate(subs_groups):
-#         with open(dest / "match_{}.html".format(i), "w") as f:
-#             f.write('<link rel="stylesheet" type="text/css" href="{}">'.format("style.css"))
-#             f.write("{} {}<br/>".format(sub_a.path, sub_b.path))
-#
-#             for group in groups:
-#                 f.write(" ".join(str(span) for span in group.spans))
-#                 f.write("<br/>")
-#
-#             for html in mark_matches(sub_a, sub_b, groups, formatter):
-#                 f.write(html)
-#
-#             # for sub in (sub_a, sub_b):
-#             #     for file in sub.files():
-#             #         with open(file.path) as in_file:
-#             #             f.write(mark_matches(in_file.read(), formatter, file.lexer()))
-#
-# def mark_matches(sub_a, sub_b, groups, formatter):
-#     htmls = []
-#     for file in sub_a.files():
-#         file_spans = [span for group in groups for span in group.spans if span.file.id == file.id]
-#         with open(file.path) as f:
-#             highlighted_html = pygments.highlight(f.read(), file.lexer(), formatter)
-#
-#         soup = BeautifulSoup(highlighted_html, 'html.parser')
-#         for s in soup.find_all("span"):
-#             print(dir(s))
-#             print(s.contents)
-#
-#         htmls.append(str(soup))
-#
-#     return htmls
