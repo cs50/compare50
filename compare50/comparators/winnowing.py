@@ -74,7 +74,7 @@ class Winnowing(Comparator):
 
         return submissions_index.compare(archive_index)
 
-    def create_spans(self, file_matches, ignored_files):
+    def create_spans(self, file_pairs, ignored_files):
         with futures.ProcessPoolExecutor() as executor:
             ignored_index = CompareIndex(self.k)
             for ignored_i in executor.map(self._index_c_file(self.k), ignored_files):
@@ -82,9 +82,9 @@ class Winnowing(Comparator):
 
             # Find all unique files
             files = set()
-            for fm in file_matches:
-                files.add(fm.file_a)
-                files.add(fm.file_b)
+            for fp in file_pairs:
+                files.add(fp.file_a)
+                files.add(fp.file_b)
 
             # Tokenize all files
             file_tokens = {}
@@ -92,7 +92,7 @@ class Winnowing(Comparator):
                 file_tokens[file] = file.tokens()
 
             return executor.map(self._create_spans(self.k, self.t, ignored_index),
-                                ((fm, file_tokens[fm.file_a], file_tokens[fm.file_b]) for fm in file_matches))
+                                ((fp, file_tokens[fp.file_a], file_tokens[fp.file_b]) for fp in file_pair))
 
     @attr.s(slots=True)
     class _create_spans:
@@ -101,10 +101,10 @@ class Winnowing(Comparator):
         ignored_index = attr.ib()
 
         def __call__(self, match):
-            file_match, original_tokens_a, original_tokens_b = match
+            file_pair, original_tokens_a, original_tokens_b = match
 
-            file_a = file_match.file_a
-            file_b = file_match.file_b
+            file_a = file_pair.file_a
+            file_b = file_pair.file_b
 
             # List of list of tokens (each list is uninterupted by ignored content)
             token_lists_a = self.ignored_index.ignore_tokens(file_a, tokens=original_tokens_a)

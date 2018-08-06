@@ -17,7 +17,7 @@ class TestCase(unittest.TestCase):
         self.working_directory.cleanup()
         os.chdir(self._wd)
 
-class TestIgnore(TestCase):
+class TestCompareIndexIgnoreTokens(TestCase):
     def setUp(self):
         super().setUp()
         self.content = "def bar():\n"\
@@ -30,16 +30,16 @@ class TestIgnore(TestCase):
 
     def test_no_ignore(self):
         tokens = list(self.file.tokens())
-        ignored_index = winnowing.Index(k=2, t=3, complete=True)
-        relevant_token_lists = winnowing.ignore(self.file, ignored_index, tokens=tokens)
+        ignored_index = winnowing.CompareIndex(k=2)
+        relevant_token_lists = ignored_index.ignore_tokens(self.file, tokens=tokens)
         self.assertEqual(len(relevant_token_lists), 1)
         self.assertEqual(relevant_token_lists[0], tokens)
 
     def test_ignore_all(self):
         tokens = list(self.file.tokens())
-        ignored_index = winnowing.Index(k=2, t=3, complete=True)
+        ignored_index = winnowing.CompareIndex(k=2)
         ignored_index.include(self.file, tokens=tokens)
-        relevant_token_lists = winnowing.ignore(self.file, ignored_index, tokens=tokens)
+        relevant_token_lists = ignored_index.ignore_tokens(self.file, tokens=tokens)
         self.assertEqual(relevant_token_lists, [])
 
     def test_ignore_half(self):
@@ -47,10 +47,10 @@ class TestIgnore(TestCase):
         with open("ignore.py", "w") as f:
             f.write(ignore_content)
         ignored_file = data.Submission(".", ["ignore.py"]).files[0]
-        ignored_index = winnowing.Index(k=2, t=3, complete=True)
+        ignored_index = winnowing.CompareIndex(k=2)
         ignored_index.include(ignored_file)
 
-        relevant_token_lists = winnowing.ignore(self.file, ignored_index)
+        relevant_token_lists = ignored_index.ignore_tokens(self.file)
 
         end = list(ignored_file.tokens())[-1].end
         expected_tokens = [t for t in self.file.tokens() if t.start >= end]

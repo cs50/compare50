@@ -35,25 +35,27 @@ class Misspellings(Comparator):
         for ignored_file in ignored_files:
             ignored_words |= {token.val for token in ignored_file.tokens()}
 
-        file_to_words = {}
+        sub_to_words = collections.defaultdict(set)
         for sub in submissions:
             for file in sub.files:
-                file_to_words[file] = {t.val for t in self._misspelled_tokens(file)} - ignored_words
+                sub_to_words[sub] |= {t.val for t in self._misspelled_tokens(file)} - ignored_words
 
-        archive_file_to_words = {}
+        archive_sub_to_words = collections.defaultdict(set)
         for sub in archive_submissions:
             for file in sub.files:
-                archive_file_to_words[file] = {t.val for t in self._misspelled_tokens(file)} - ignored_words
+                archive_sub_to_words[sub] |= {t.val for t in self._misspelled_tokens(file)} - ignored_words
 
-        file_matches = []
-        for file_a, words_a in file_to_words.items():
-            for file_b, words_b in file_to_words.items():
-                if file_a == file_b:
+        archive_sub_to_words.update(sub_to_words)
+
+        sub_matches = []
+        for sub_a, words_a in sub_to_words.items():
+            for sub_b, words_b in archive_sub_to_words.items():
+                if sub_a == sub_b:
                     continue
-                file_matches.append(FileMatch(file_a, file_b, len(words_a & words_b)))
-        return file_matches
+                sub_matches.append(SubmissionMatch(sub_a, sub_b, len(words_a & words_b)))
+        return sub_matches
 
-    def create_spans(self, file_matches, ignored_files):
+    def create_spans(self, file_pairs, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
             for token in ignored_file.tokens():
@@ -62,17 +64,20 @@ class Misspellings(Comparator):
         ignored_spans_list = []
         span_matches_list = []
         file_to_tokens = {}
-        for file_match in file_matches:
+        for file_pair in file_pairs:
+            file_a = file_pair.file_a
+            file_b = file_pair.file_b
+
             ignored_spans_list.append(set())
             ignored_spans = ignored_spans_list[-1]
 
-            if file_match.file_a not in file_to_tokens:
-                file_to_tokens[file_match.file_a] = self._misspelled_tokens(file_match.file_a)
-            tokens_a = file_to_tokens[file_match.file_a]
+            if file_a not in file_to_tokens:
+                file_to_tokens[file_a] = self._misspelled_tokens(file_a)
+            tokens_a = file_to_tokens[file_a]
 
-            if file_match.file_b not in file_to_tokens:
-                file_to_tokens[file_match.file_b] = self._misspelled_tokens(file_match.file_b)
-            tokens_b = file_to_tokens[file_match.file_b]
+            if file_b not in file_to_tokens:
+                file_to_tokens[file_b] = self._misspelled_tokens(file_b)
+            tokens_b = file_to_tokens[file_b]
 
             word_to_tokens_a = collections.defaultdict(list)
             for token in tokens_a:
@@ -84,10 +89,10 @@ class Misspellings(Comparator):
             for word in ignored_words:
                 if word in word_to_tokens_a:
                     for token in word_to_tokens_a[word]:
-                        ignored_spans.add(Span(file_match.file_a, token.start, token.end))
+                        ignored_spans.add(Span(file_a, token.start, token.end))
                 if word in word_to_tokens_b:
                     for token in word_to_tokens_b[word]:
-                        ignored_spans.add(Span(file_match.file_b, token.start, token.end))
+                        ignored_spans.add(Span(file_b, token.start, token.end))
 
             common_misspellings = ({t.val for t in tokens_a} & {t.val for t in tokens_b}) - ignored_words
 
@@ -97,8 +102,8 @@ class Misspellings(Comparator):
                 ts_b = word_to_tokens_b[misspelling]
                 for token_a, token_b in itertools.product(ts_a, ts_b):
                     matches.append((
-                        Span(file_match.file_a, token_a.start, token_a.end),
-                        Span(file_match.file_b, token_b.start, token_b.end)
+                        Span(file_a, token_a.start, token_a.end),
+                        Span(file_b, token_b.start, token_b.end)
                     ))
             if common_misspellings:
                 span_matches_list.append(SpanMatches(matches))
