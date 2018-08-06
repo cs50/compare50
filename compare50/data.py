@@ -216,7 +216,7 @@ class SpanMatches:
         return self
 
     def __bool__(self):
-        return len(self._matches) != 0
+        return bool(self._matches)
 
     def expand(self, tokens_a=None, tokens_b=None):
         """

@@ -197,7 +197,7 @@ class Index(abc.ABC):
         pass
 
     def __bool__(self):
-        return len(self._index) != 0
+        return bool(self._index)
 
 
 class CrossCompareIndex(Index):
