@@ -26,7 +26,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans[i], spans[i + 1]))
 
-        groups = api.group_span_pairs(span_pairs)
+        groups = api._group_span_pairs(span_pairs)
         groups = list(groups)
         self.assertEqual(list(groups), [data.Group(spans)])
 
@@ -42,7 +42,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api.group_span_pairs(span_pairs)
+        groups = api._group_span_pairs(span_pairs)
         self.assertEqual(list(groups), [data.Group(spans_1 + spans_2)])
 
     def test_multiple_spanmatches_multiple_groups(self):
@@ -57,7 +57,7 @@ class TestGroupSpans(unittest.TestCase):
         for i in range(10):
             span_pairs.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api.group_span_pairs(span_pairs)
+        groups = api._group_span_pairs(span_pairs)
         self.assertEqual(set(groups), {data.Group(spans_1), data.Group(spans_2)})
 
 

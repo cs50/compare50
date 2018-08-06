@@ -61,7 +61,7 @@ def create_groups(submission_matches, comparator, ignored_files):
     groups = []
     for span_matches_list in sub_match_to_span_matches.values():
         span_pairs = [(span_a, span_b) for span_matches in span_matches_list for span_a, span_b in span_matches]
-        groups.extend(group_span_pairs(span_pairs))
+        groups.extend(_group_span_pairs(span_pairs))
 
     sub_match_to_groups = collections.defaultdict(list)
     for group in groups:
@@ -125,7 +125,7 @@ def _flatten_spans(spans):
     return flattened_spans
 
 
-def group_span_pairs(span_pairs):
+def _group_span_pairs(span_pairs):
     """
     Transforms a list of span_pairs (2 item tuples of Spans) into a list of Groups.
     Finds all spans that share the same content, and groups them in one Group.
