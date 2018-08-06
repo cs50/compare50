@@ -243,6 +243,7 @@ def main():
     print_results(submission_matches)
 
 
+PROFILE =[]
 # PROFILE = [ main
 #           , api.rank_submissions
 #           , comparators.misspellings.Misspellings.cross_compare
@@ -267,9 +268,10 @@ def main():
           # , comparators.winnowing.Winnowing._create_spans.__call__
           # ]
 
-PROFILE = []
 if __name__ == "__main__":
     if PROFILE:
+        outfile = "profile.txt"
+        import termcolor
         from line_profiler import LineProfiler
         profiler = LineProfiler()
         for f in PROFILE:
@@ -278,6 +280,8 @@ if __name__ == "__main__":
         try:
             main()
         finally:
-            profiler.print_stats()
+            with open(outfile, "w") as f:
+                profiler.print_stats(stream=f)
+            termcolor.cprint(f"Profiling data written to {outfile}", "yellow")
     else:
         main()
