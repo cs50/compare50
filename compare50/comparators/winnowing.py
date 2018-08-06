@@ -1,21 +1,20 @@
-import copy
+import abc
 import collections
 import math
-import numpy as np
 import itertools
-import attr
-import time
-import multiprocessing
 import concurrent.futures as futures
-import abc
+
+import attr
+import numpy as np
+
 from .. import api
 
 from compare50 import (
-        preprocessors,
-        Comparator,
-        File, Submission, SubmissionMatch,
-        Pass,
-        Span, SpanMatches,
+    preprocessors,
+    Comparator,
+    File, Submission, SubmissionMatch,
+    Pass,
+    Span, SpanMatches,
 )
 
 class FauxExecutor:
@@ -58,14 +57,14 @@ class Winnowing(Comparator):
 
         with futures.ProcessPoolExecutor() as executor:
             ignored_index = CrossCompareIndex(self.k, self.t)
-            for index in executor.map(self._index_cc_file(self.k, self.t), ignored_files):
+            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), ignored_files):
                 ignored_index.include_all(index)
 
-            for index in executor.map(self._index_cc_file(self.k, self.t), iter_files(submissions)):
+            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), iter_files(submissions)):
                 submissions_index.include_all(index)
             submissions_index.ignore_all(ignored_index)
 
-            for index in executor.map(self._index_cc_file(self.k, self.t), iter_files(archive_submissions)):
+            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), iter_files(archive_submissions)):
                 archive_index.include_all(index)
             archive_index.ignore_all(ignored_index)
 
@@ -77,7 +76,7 @@ class Winnowing(Comparator):
     def create_spans(self, file_pairs, ignored_files):
         with futures.ProcessPoolExecutor() as executor:
             ignored_index = CompareIndex(self.k)
-            for ignored_i in executor.map(self._index_c_file(self.k), ignored_files):
+            for ignored_i in executor.map(self._index_file(CompareIndex, (self.k,)), ignored_files):
                 ignored_index.include_all(ignored_i)
 
             # Find all unique files
@@ -107,8 +106,8 @@ class Winnowing(Comparator):
             file_b = file_pair.file_b
 
             # List of list of tokens (each list is uninterupted by ignored content)
-            token_lists_a = self.ignored_index.ignore_tokens(file_a, tokens=original_tokens_a)
-            token_lists_b = self.ignored_index.ignore_tokens(file_b, tokens=original_tokens_b)
+            token_lists_a = self.ignored_index.unignored_tokens(file_a, tokens=original_tokens_a)
+            token_lists_b = self.ignored_index.unignored_tokens(file_b, tokens=original_tokens_b)
 
             indices_a = [CompareIndex(self.k) for ts in token_lists_a]
             indices_b = [CompareIndex(self.k) for ts in token_lists_b]
@@ -119,16 +118,12 @@ class Winnowing(Comparator):
             for index_b, tokens_b in zip(indices_b, token_lists_b):
                 index_b.include(file_b, tokens=tokens_b)
 
-            ignored_spans = \
-                api.missing_spans(
-                    file_a,
-                    original_tokens=original_tokens_a,
-                    preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_a)))
-            ignored_spans.extend(
-                api.missing_spans(
-                    file_b,
-                    original_tokens=original_tokens_b,
-                    preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_b))))
+            ignored_spans = api.missing_spans(file_a,
+                                              original_tokens=original_tokens_a,
+                                              preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_a))) \
+                          + api.missing_spans(file_b,
+                                              original_tokens=original_tokens_b,
+                                              preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_b)))
 
             span_matches = SpanMatches()
             for index_a, tokens_a in zip(indices_a, token_lists_a):
@@ -140,25 +135,14 @@ class Winnowing(Comparator):
             return span_matches, ignored_spans
 
     @attr.s(slots=True)
-    class _index_cc_file:
+    class _index_file:
         """ "Function" that indexes a file and returns the index.
         In the form of a class so that pickle can serialize it. """
-        k = attr.ib()
-        t = attr.ib()
+        index = attr.ib()
+        args = attr.ib(default=())
 
         def __call__(self, file):
-            index = CrossCompareIndex(self.k, self.t)
-            index.include(file)
-            return index
-
-    @attr.s(slots=True)
-    class _index_c_file:
-        """ "Function" that indexes a file and returns the index.
-        In the form of a class so that pickle can serialize it. """
-        k = attr.ib()
-
-        def __call__(self, file):
-            index = CompareIndex(self.k)
+            index = self.index(*self.args)
             index.include(file)
             return index
 
@@ -221,7 +205,6 @@ class CrossCompareIndex(Index):
         super().__init__(k)
         self.t = t
         self.w = t - k + 1
-        self._index = collections.defaultdict(set)
         self._max_id = 0
 
     def include(self, file, tokens=None):
@@ -318,7 +301,7 @@ class CompareIndex(Index):
             spans |= other._index[hash_]
         return spans
 
-    def ignore_tokens(self, file, tokens=None):
+    def unignored_tokens(self, file, tokens=None):
         if tokens is None:
             tokens = file.tokens()
 
@@ -341,7 +324,6 @@ class CompareIndex(Index):
         # Find relevant tokens (any token not completely in an ignored_span)
         relevant_token_lists = []
         relevant_tokens = []
-        i = 0
         span_iter = iter(ignored_spans)
         span = next(span_iter)
         for i, token in enumerate(tokens):
