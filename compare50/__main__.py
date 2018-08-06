@@ -8,6 +8,7 @@ import textwrap
 import shutil
 import attr
 import sys
+import traceback
 
 import attr
 import patoolib
@@ -37,7 +38,7 @@ def excepthook(cls, exc, tb):
 
 # Assume we should print tracebacks until we get command line arguments
 excepthook.verbose = True
-# sys.excepthook = excepthook
+sys.excepthook = excepthook
 
 class SubmissionFactory:
     def __init__(self):
@@ -150,11 +151,11 @@ def main():
     submission_factory = SubmissionFactory()
     parser.add_argument("submissions",
                         nargs="+",
-                        help="Paths to submissions.")
+                        help="Paths to submissions to compare")
     parser.add_argument("-a", "--archive",
                         nargs="+",
                         default=[],
-                        help="Paths to archive submissions. Compare50 does not compare archive submissions versus archive submissions.")
+                        help="Paths to archive submissions. Archive submissions are not compared against other archive submissions, only against regular submissions.")
     parser.add_argument("-d", "--distro",
                         nargs="+",
                         default=[],
@@ -197,13 +198,6 @@ def main():
 
     args = parser.parse_args()
     excepthook.verbose = args.verbose
-
-
-    # Validate args
-    for items in (args.submissions, args.archive, args.distro):
-        for item in items:
-            if not pathlib.Path(item).exists():
-                raise FileNotFoundError(item)
 
     if len(args.submissions) == 1:
         raise errors.Error("At least two submissions are required for a comparison.")
