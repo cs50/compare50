@@ -12,11 +12,10 @@ import traceback
 
 import attr
 import patoolib
-
 import lib50
 
 from . import html_renderer
-from . import passes, api, errors, data, comparators
+from . import api, errors, data, comparators
 
 
 def excepthook(cls, exc, tb):
@@ -39,6 +38,7 @@ def excepthook(cls, exc, tb):
 # Assume we should print tracebacks until we get command line arguments
 excepthook.verbose = True
 sys.excepthook = excepthook
+
 
 class SubmissionFactory:
     def __init__(self):
@@ -86,11 +86,13 @@ class SubmissionFactory:
                 pass
         return subs
 
+
 class ArgParser(argparse.ArgumentParser):
     def error(self, message):
         self.print_help()
         sys.stderr.write('error: %s\n' % message)
         sys.exit(2)
+
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag."""
@@ -99,7 +101,7 @@ class ListAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = "    "
-        for cfg in passes.get_all():
+        for cfg in data.Pass._get_all():
             print(str(cfg.__name__))
             for line in textwrap.wrap(cfg.description, 80 - len(indentation)):
                 print("{}{}".format(indentation, line))
@@ -204,10 +206,10 @@ def main():
 
     # Extract comparator and preprocessors from pass
     try:
-        pass_ = passes.get(args.pass_)
+        pass_ = data.Pass._get(args.pass_)
     except KeyError:
         raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(args.pass_, [c.__name__ for c in passes.get_all()]))
+                            .format(args.pass_, [c.__name__ for c in data.Pass._get_all()]))
 
     comparator = pass_.comparator
     preprocessor = Preprocessor(pass_.preprocessors)
@@ -233,17 +235,6 @@ def main():
 
     print_results(submission_matches)
 
-
-def filter(files):
-    kept_files = []
-
-    for file in files:
-        with open(file.path, "r") as f:
-            try:
-                f.read()
-                kept_files.append(file)
-            except TypeError:
-                pass
 
 # PROFILE = [ main
 #           , api.rank_submissions

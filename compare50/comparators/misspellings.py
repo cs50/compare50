@@ -1,29 +1,21 @@
-import copy
 import collections
-import math
-import numpy as np
 import itertools
-import attr
 import pathlib
 import re
-from pygments.token import Token as PygToken
-import concurrent.futures as futures
 
-from compare50 import (
-        preprocessors,
-        Comparator,
-        File, FileMatch,
-        Pass,
-        Span, SpanMatches, Token
-)
+from pygments.token import Comment
+
+from compare50 import Comparator, FileMatch, Pass, Span, SpanMatches, Token
+
 
 def words(tokens):
     for t in tokens:
-        if t.type == PygToken.Comment.Single or t.type == PygToken.Comment.Multiline:
+        if t.type == Comment.Single or t.type == Comment.Multiline:
             start = t.start
             only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
             for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
                 yield Token(t.start + start, t.start + end, t.type, val)
+
 
 def lowercase(tokens):
     for t in tokens:
@@ -112,6 +104,7 @@ class Misspellings(Comparator):
                 span_matches_list.append(SpanMatches(matches))
 
         return zip(span_matches_list, ignored_spans_list)
+
 
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."

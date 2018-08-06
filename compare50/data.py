@@ -6,6 +6,48 @@ import attr
 import pygments
 import pygments.lexers
 
+
+class _PassRegistry(abc.ABCMeta):
+    default = "StripAll"
+    passes = {}
+    def __new__(mcls, name, bases, attrs):
+        cls = abc.ABCMeta.__new__(mcls, name, bases, attrs)
+
+        if attrs.get("_{}__register".format(name), True):
+            _PassRegistry.passes[name] = cls
+
+        return cls
+
+    @staticmethod
+    def _get(name=None):
+        if name is None:
+            name = _PassRegistry.default
+        return _PassRegistry.passes[name]
+
+    @staticmethod
+    def _get_all():
+        return list(_PassRegistry.passes.values())
+
+
+class Pass(metaclass=_PassRegistry):
+    __register = False
+
+    @property
+    @abc.abstractmethod
+    def description(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def preprocessors(self):
+        pass
+
+    @property
+    @abc.abstractmethod
+    def comparator(self):
+        pass
+
+
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def cross_compare(self, submissions, archive_submissions, ignored_files):
@@ -35,6 +77,7 @@ class IdStore(Mapping):
     def __len__(self):
         return len(self.objects)
 
+
 @attr.s(slots=True, frozen=True, hash=True)
 class Submission:
     _store = IdStore(key=lambda sub: (sub.path, sub.files))
@@ -54,6 +97,7 @@ class Submission:
     @classmethod
     def get(cls, id):
         return cls._store.objects[id]
+
 
 @attr.s(slots=True, frozen=True, hash=True)
 class File:
@@ -243,6 +287,7 @@ def _sorted_subs(group):
         elif sub > span.file.submission:
             return (span.file.submission, sub)
 
+
 @attr.s(slots=True, frozen=True, hash=True)
 class Group:
     spans = attr.ib(converter=frozenset)
@@ -283,6 +328,7 @@ class Token:
     def __eq__(self, other):
         """Note that there is no sanity checking, sacrificed for performance."""
         return self.val == other.val and self.type == other.type
+
 
 @attr.s(slots=True, frozen=True, hash=True)
 class MatchResult:

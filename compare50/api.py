@@ -1,11 +1,9 @@
 import collections
-import concurrent.futures as futures
 import heapq
-import os
-import pathlib
 
-from .data import *
+from .data import SubmissionMatch, Submission, Span, Group
 
+__all__ = ["rank_submissions", "create_groups"]
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
@@ -77,7 +75,7 @@ def create_groups(submission_matches, comparator, ignored_files):
     groups = []
     for span_matches_list in sub_match_to_span_matches.values():
         span_pairs = [(span_a, span_b) for span_matches in span_matches_list for span_a, span_b in span_matches]
-        groups.extend(group_span_pairs(span_pairs))
+        groups.extend(_group_span_pairs(span_pairs))
 
     sub_match_to_groups = collections.defaultdict(list)
     for group in groups:
@@ -141,17 +139,17 @@ def flatten(spans):
     return flattened_spans
 
 
-def group_span_pairs(span_pairs):
+def _group_span_pairs(span_pairs):
     """
     Transforms a list of span_pairs (2 item tuples of Spans) into a list of Groups.
     Finds all spans that share the same content, and groups them in one Group.
     returns a list of Groups.
     """
-    span_groups = transitive_closure(span_pairs)
+    span_groups = _transitive_closure(span_pairs)
     return _filter_subsumed_groups([Group(spans) for spans in span_groups])
 
 
-def transitive_closure(connections):
+def _transitive_closure(connections):
     class Graph:
         def __init__(self):
             self.connections = collections.defaultdict(set)
