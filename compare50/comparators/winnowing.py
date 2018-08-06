@@ -13,7 +13,7 @@ from .. import (
     Comparator,
     File, Submission, SubmissionMatch,
     Pass,
-    Span, SpanMatches,
+    Span, SpanMatch,
 )
 
 
@@ -61,64 +61,70 @@ class Winnowing(Comparator):
 
         return submissions_index.compare(archive_index)
 
-    def create_spans(self, file_pairs, ignored_files):
+    def create_spans(self, submission_matches, ignored_files):
         with api.Executor() as executor:
             ignored_index = CompareIndex(self.k)
             for ignored_i in executor.map(self._index_file(CompareIndex, (self.k,)), ignored_files):
                 ignored_index.include_all(ignored_i)
 
-            # Find all unique files
-            files = set()
-            for fp in file_pairs:
-                files.add(fp.file_a)
-                files.add(fp.file_b)
+            # Find all unique submissions
+            subs = set()
+            for sm in submission_matches:
+                subs.add(sm.sub_a)
+                subs.add(sm.sub_b)
 
             # Tokenize all files
             file_tokens = {}
-            for file in files:
-                file_tokens[file] = file.tokens()
+            for sub in subs:
+                for file in sub:
+                    file_tokens[file] = file.tokens()
 
-            return executor.map(self._create_spans(self.k, self.t, ignored_index),
-                                ((fp, file_tokens[fp.file_a], file_tokens[fp.file_b]) for fp in file_pairs))
+            return executor.map(self._create_spans(self.k, self.t, ignored_index, file_tokens), submission_matches)
 
     @attr.s(slots=True)
     class _create_spans:
         k = attr.ib()
         t = attr.ib()
         ignored_index = attr.ib()
+        file_tokens = attr.ib()
 
-        def __call__(self, match):
-            file_pair, original_tokens_a, original_tokens_b = match
+        def __call__(self, submission_match):
+            sub_a = submission_match.sub_a
+            sub_b = submission_match.sub_b
 
-            file_a = file_pair.file_a
-            file_b = file_pair.file_b
+            ignored_spans = []
 
-            # List of list of tokens (each list is uninterupted by ignored content)
-            token_lists_a = self.ignored_index.unignored_tokens(file_a, tokens=original_tokens_a)
-            token_lists_b = self.ignored_index.unignored_tokens(file_b, tokens=original_tokens_b)
+            file_to_token_lists = {}
+            file_to_indices = {}
 
-            indices_a = [CompareIndex(self.k) for ts in token_lists_a]
-            indices_b = [CompareIndex(self.k) for ts in token_lists_b]
+            for file in sub_a.files + sub_b.files:
+                # List of list of tokens (each list is uninterupted by ignored content)
+                token_lists = self.ignored_index.unignored_tokens(file, tokens=self.file_tokens[file])
+                file_to_token_lists[file] = token_lists
 
-            for index_a, tokens_a in zip(indices_a, token_lists_a):
-                index_a.include(file_a, tokens=tokens_a)
+                indices = [CompareIndex(self.k) for ts in token_lists]
+                file_to_indices[file] = indices
 
-            for index_b, tokens_b in zip(indices_b, token_lists_b):
-                index_b.include(file_b, tokens=tokens_b)
+                for index, tokens in zip(indices, token_lists):
+                    index.include(file, tokens=tokens)
 
-            ignored_spans = api.missing_spans(file_a,
-                                              original_tokens=original_tokens_a,
-                                              preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_a))) \
-                          + api.missing_spans(file_b,
-                                              original_tokens=original_tokens_b,
-                                              preprocessed_tokens=list(itertools.chain.from_iterable(token_lists_b)))
+                ignored_spans += api.missing_spans(file,
+                                                   original_tokens=self.file_tokens[file],
+                                                   preprocessed_tokens=list(itertools.chain.from_iterable(token_lists)))
 
-            span_matches = SpanMatches()
-            for index_a, tokens_a in zip(indices_a, token_lists_a):
-                for index_b, tokens_b in zip(indices_b, token_lists_b):
-                    sm = index_a.compare(index_b)
-                    sm.expand(tokens_a, tokens_b)
-                    span_matches += sm
+            span_matches = []
+            for file_a, file_b in itertools.product(sub_a.files, sub_b.files):
+                indices_a = file_to_indices[file_a]
+                indices_b = file_to_indices[file_b]
+
+                token_lists_a = file_to_token_lists[file_a]
+                token_lists_b = file_to_token_lists[file_b]
+
+                for index_a, tokens_a in zip(indices_a, token_lists_a):
+                    for index_b, tokens_b in zip(indices_b, token_lists_b):
+                        matches = index_a.compare(index_b)
+                        matches = api.expand(matches, tokens_a, tokens_b)
+                        span_matches += matches
 
             return span_matches, ignored_spans
 
@@ -274,13 +280,12 @@ class CompareIndex(Index):
         common_hashes = set(self._index) & set(other._index)
         for hash_ in common_hashes:
             # All spans associated with fingerprint in self
-            spans_1 = self._index[hash_]
+            spans_a = self._index[hash_]
             # All spans associated with fingerprint in other
-            spans_2 = other._index[hash_]
-            matches.extend(itertools.product(spans_1, spans_2))
+            spans_b = other._index[hash_]
+            matches.extend(SpanMatch(span_a, span_b) for span_a, span_b in itertools.product(spans_a, spans_b))
 
-        span_matches = SpanMatches(matches)
-        return span_matches
+        return matches
 
     def common_spans(self, other):
         spans = set()

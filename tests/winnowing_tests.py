@@ -31,7 +31,7 @@ class TestCompareIndexIgnoreTokens(TestCase):
     def test_no_ignore(self):
         tokens = list(self.file.tokens())
         ignored_index = winnowing.CompareIndex(k=2)
-        relevant_token_lists = ignored_index.ignore_tokens(self.file, tokens=tokens)
+        relevant_token_lists = ignored_index.unignored_tokens(self.file, tokens=tokens)
         self.assertEqual(len(relevant_token_lists), 1)
         self.assertEqual(relevant_token_lists[0], tokens)
 
@@ -39,7 +39,7 @@ class TestCompareIndexIgnoreTokens(TestCase):
         tokens = list(self.file.tokens())
         ignored_index = winnowing.CompareIndex(k=2)
         ignored_index.include(self.file, tokens=tokens)
-        relevant_token_lists = ignored_index.ignore_tokens(self.file, tokens=tokens)
+        relevant_token_lists = ignored_index.unignored_tokens(self.file, tokens=tokens)
         self.assertEqual(relevant_token_lists, [])
 
     def test_ignore_half(self):
@@ -50,7 +50,7 @@ class TestCompareIndexIgnoreTokens(TestCase):
         ignored_index = winnowing.CompareIndex(k=2)
         ignored_index.include(ignored_file)
 
-        relevant_token_lists = ignored_index.ignore_tokens(self.file)
+        relevant_token_lists = ignored_index.unignored_tokens(self.file)
 
         end = list(ignored_file.tokens())[-1].end
         expected_tokens = [t for t in self.file.tokens() if t.start >= end]

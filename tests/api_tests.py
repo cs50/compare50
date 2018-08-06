@@ -21,43 +21,43 @@ class TestGroupSpans(unittest.TestCase):
 
     def test_single_spanmatches_single_group(self):
         # Generate matches (0,1) (1,2) ... (9,10)
-        span_pairs = []
+        span_matches = []
         spans = [self.span(i) for i in range(11)]
         for i in range(10):
-            span_pairs.append((spans[i], spans[i + 1]))
+            span_matches.append((spans[i], spans[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api._group_span_matches(span_matches)
         groups = list(groups)
         self.assertEqual(list(groups), [data.Group(spans)])
 
     def test_single_group(self):
         # Generate matches (0,1) (1,2) ... (9,10)
-        span_pairs = []
+        span_matches = []
         spans_1 = [self.span(i) for i in range(11)]
         for i in range(10):
-            span_pairs.append((spans_1[i], spans_1[i + 1]))
+            span_matches.append((spans_1[i], spans_1[i + 1]))
 
         # Generate matches (10,11) (11,12) ... (19,20)
         spans_2 = [self.span(10 + i) for i in range(11)]
         for i in range(10):
-            span_pairs.append((spans_2[i], spans_2[i + 1]))
+            span_matches.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api._group_span_matches(span_matches)
         self.assertEqual(list(groups), [data.Group(spans_1 + spans_2)])
 
     def test_multiple_spanmatches_multiple_groups(self):
         # Generate matches (0,1) (1,2) ... (9,10)
-        span_pairs = []
+        span_matches = []
         spans_1 = [self.span(i) for i in range(11)]
         for i in range(10):
-            span_pairs.append((spans_1[i], spans_1[i + 1]))
+            span_matches.append((spans_1[i], spans_1[i + 1]))
 
         # Generate matches (11,12) (12,13) ... (20,21)
         spans_2 = [self.span(11 + i) for i in range(11)]
         for i in range(10):
-            span_pairs.append((spans_2[i], spans_2[i + 1]))
+            span_matches.append((spans_2[i], spans_2[i + 1]))
 
-        groups = api._group_span_pairs(span_pairs)
+        groups = api._group_span_matches(span_matches)
         self.assertEqual(set(groups), {data.Group(spans_1), data.Group(spans_2)})
 
 

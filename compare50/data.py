@@ -8,7 +8,7 @@ import pygments
 import pygments.lexers
 
 
-__all__ = ["Pass", "Comparator", "File", "Submission", "SubmissionMatch", "Pass", "Span", "SpanMatches", "Token"]
+__all__ = ["Pass", "Comparator", "File", "Submission", "SubmissionMatch", "Pass", "Span", "SpanMatch", "Token"]
 
 
 class _PassRegistry(abc.ABCMeta):
@@ -186,90 +186,12 @@ class Span:
 
 
 @attr.s(slots=True, frozen=True, hash=True, cmp=True)
-class FilePair:
-    file_a = attr.ib()
-    file_b = attr.ib()
-
-
-@attr.s(slots=True)
-class SpanMatches:
-    _matches = attr.ib(default=attr.Factory(list), converter=list)
-
-    def add(self, span_a, span_b):
-        if span_a.file.id < span_b.file.id:
-            span_match = (span_a, span_b)
-        else:
-            span_match = (span_b, span_a)
-        self._matches.append(span_match)
-
-    @property
-    def file_a(self):
-        return self._matches[0][0].file
-
-    @property
-    def file_b(self):
-        return self._matches[0][1].file
+class SpanMatch:
+    span_a = attr.ib()
+    span_b = attr.ib()
 
     def __iter__(self):
-        return iter(self._matches)
-
-    def __iadd__(self, other):
-        if not isinstance(other, type(self)):
-            raise TypeError("Can only add SpanMatches to SpanMatches")
-        self._matches.extend(other._matches)
-        return self
-
-    def __bool__(self):
-        return bool(self._matches)
-
-    def expand(self, tokens_a=None, tokens_b=None):
-        """
-        Expand all spans in this SpanMatches.
-        returns a new instance of SpanMatches with maximally extended spans.
-        """
-        if not self._matches:
-            return self
-
-        expanded_span_pairs = set()
-
-        tokens_a = SortedList.from_sorted(tokens_a if tokens_a else self.file_a.tokens(),
-                                          key=lambda tok: tok.start)
-        tokens_b = SortedList.from_sorted(tokens_b if tokens_b else self.file_b.tokens(),
-                                          key=lambda tok: tok.start)
-
-        for span_a, span_b in self._matches:
-            # Expand left
-            start_a = tokens_a.bisect_key_right(span_a.start) - 2
-            start_b = tokens_b.bisect_key_right(span_b.start) - 2
-            while min(start_a, start_b) >= 0 and tokens_a[start_a] == tokens_b[start_b]:
-                start_a -= 1
-                start_b -= 1
-            start_a += 1
-            start_b += 1
-
-            # Expand right
-            end_a = tokens_a.bisect_key_right(span_a.end) - 2
-            end_b = tokens_b.bisect_key_right(span_b.end) - 2
-            try:
-                while tokens_a[end_a] == tokens_b[end_b]:
-                    end_a += 1
-                    end_b += 1
-            except IndexError:
-                pass
-            end_a -= 1
-            end_b -= 1
-
-            new_span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
-            new_span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
-
-            # Add new spans
-            expanded_span_pairs.add((new_span_a, new_span_b))
-
-        self._matches = list(expanded_span_pairs)
-        return self
-
-    def __iter__(self):
-        return iter(self._matches)
+        return iter((self.span_a, self.span_b))
 
 
 @attr.s(slots=True, frozen=True, hash=True)
