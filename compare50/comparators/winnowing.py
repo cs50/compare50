@@ -92,7 +92,7 @@ class Winnowing(Comparator):
                 file_tokens[file] = file.tokens()
 
             return executor.map(self._create_spans(self.k, self.t, ignored_index),
-                                ((fp, file_tokens[fp.file_a], file_tokens[fp.file_b]) for fp in file_pair))
+                                ((fp, file_tokens[fp.file_a], file_tokens[fp.file_b]) for fp in file_pairs))
 
     @attr.s(slots=True)
     class _create_spans:
