@@ -249,12 +249,15 @@ def main():
 #           , data.File.tokens
 #           , comparators.winnowing.Index.create_spans
 #           , data.SpanMatches.expand]
-
+#
 # PROFILE = [ main
 #           , api.create_groups
 #           , comparators.winnowing.Winnowing.cross_compare
 #           , comparators.winnowing.Winnowing.create_spans
-#           , comparators.winnowing.ignore]
+#           , comparators.winnowing.Index.hashes
+#           , comparators.winnowing.CompareIndex.fingerprint
+#           , comparators.winnowing.CrossCompareIndex.fingerprint
+#           , comparators.winnowing.Winnowing._create_spans.__call__]
 
 PROFILE = []
 if __name__ == "__main__":

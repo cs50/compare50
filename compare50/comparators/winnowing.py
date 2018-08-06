@@ -195,9 +195,14 @@ class Index(abc.ABC):
         for hash in other._index:
             self._index.pop(hash, None)
 
+    def kgrams(self, iterable):
+        iters = itertools.tee(iterable, self.k)
+        for i, it in enumerate(iters):
+            next(itertools.islice(it, i, i), None)
+        return zip(*iters)
+
     def hashes(self, tokens):
-        kgrams = zip(*((tok.val for tok in tokens[i:]) for i in range(self.k)))
-        return (hash("".join(kgram)) for kgram in kgrams)
+        return (hash("".join(kgram)) for kgram in self.kgrams((t.val for t in tokens)))
 
     @abc.abstractmethod
     def compare(self, other):
