@@ -83,6 +83,9 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
     if preprocessed_tokens is None:
         preprocessed_tokens = list(file.submission.preprocessor(original_tokens))
 
+    if not original_tokens:
+        return []
+
     file_start = original_tokens[0].start
     file_end = original_tokens[-1].end
 
