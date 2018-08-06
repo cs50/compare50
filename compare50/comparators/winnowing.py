@@ -7,9 +7,8 @@ import concurrent.futures as futures
 import attr
 import numpy as np
 
-from .. import api
-
-from compare50 import (
+from .. import (
+    api,
     preprocessors,
     Comparator,
     File, Submission, SubmissionMatch,
@@ -17,17 +16,6 @@ from compare50 import (
     Span, SpanMatches,
 )
 
-class FauxExecutor:
-    def map(self, fn, *iterables, timeout=None, chunksize=1):
-        for iterable in iterables:
-            for res in map(fn, iterable):
-                yield res
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        return
 
 
 class Winnowing(Comparator):
@@ -55,7 +43,7 @@ class Winnowing(Comparator):
         submissions_index = CrossCompareIndex(self.k, self.t)
         archive_index = CrossCompareIndex(self.k, self.t)
 
-        with futures.ProcessPoolExecutor() as executor:
+        with api.Executor() as executor:
             ignored_index = CrossCompareIndex(self.k, self.t)
             for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), ignored_files):
                 ignored_index.include_all(index)
@@ -74,7 +62,7 @@ class Winnowing(Comparator):
         return submissions_index.compare(archive_index)
 
     def create_spans(self, file_pairs, ignored_files):
-        with futures.ProcessPoolExecutor() as executor:
+        with api.Executor() as executor:
             ignored_index = CompareIndex(self.k)
             for ignored_i in executor.map(self._index_file(CompareIndex, (self.k,)), ignored_files):
                 ignored_index.include_all(ignored_i)
@@ -149,7 +137,7 @@ class Winnowing(Comparator):
 class StripWhitespace(Pass):
     description = "Remove all whitespace, then run Winnowing with k=16, t=32."
     preprocessors = [preprocessors.strip_whitespace, preprocessors.by_character]
-    comparator = Winnowing(k=16, t=32)
+    comparator = Winnowing(k=24, t=36)
 
 
 class StripAll(Pass):

@@ -2,9 +2,15 @@ import collections
 import heapq
 import itertools
 
+import concurrent.futures
 from .data import SubmissionMatch, Submission, Span, Group, FilePair
 
 __all__ = ["rank_submissions", "create_groups", "missing_spans"]
+
+
+# TODO: Remove before we ship
+Executor = concurrent.futures.ProcessPoolExecutor
+
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
@@ -195,3 +201,55 @@ def _is_group_subsumed(group, groups):
 
 def _filter_subsumed_groups(groups):
     return [g for g in groups if not _is_group_subsumed(g, groups)]
+
+
+# TODO: remove before we ship
+class FauxExecutor:
+    class FauxFuture:
+        def __init__(self, result=None, exception=None):
+            self._result = result
+            self._exception = exception
+
+        def cancel(self):
+            return False
+
+        def cancelled(self):
+            return False
+
+        def running(self):
+            return False
+
+        def result(self, timeout=None):
+            if self._exception is not None:
+                raise self._exception
+            return self._result
+
+        def exception(self, timeout=None):
+            return self._exception
+
+        def add_done_callback(fn):
+            fn()
+
+    def __init__(self, *_args, **_kwargs):
+        pass
+
+    def map(self, fn, *iterables, **_kwargs):
+        for iterable in iterables:
+            for res in map(fn, iterable):
+                yield res
+
+    def submit(self, fn, *args, **kwargs):
+        try:
+            result = fn(*args, **kwargs)
+        except BaseException as e:
+            return self.FauxFuture(exception=e)
+        else:
+            return self.FauxFuture(result=result)
+
+
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        return

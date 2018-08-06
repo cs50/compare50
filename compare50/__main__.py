@@ -37,7 +37,7 @@ def excepthook(cls, exc, tb):
 
 # Assume we should print tracebacks until we get command line arguments
 excepthook.verbose = True
-# sys.excepthook = excepthook
+sys.excepthook = excepthook
 
 
 class SubmissionFactory:
@@ -149,6 +149,35 @@ def print_results(submission_matches):
     ascii.write(data, format="fixed_width")
 
 
+#TODO: remove this before we ship
+PROFILE = [ api.create_groups
+          , comparators.winnowing.Winnowing.cross_compare
+          , comparators.winnowing.Winnowing.create_spans
+          , comparators.winnowing.Index.hashes
+          , comparators.winnowing.CompareIndex.fingerprint
+          , comparators.winnowing.CrossCompareIndex.fingerprint
+          , comparators.winnowing.Winnowing._create_spans.__call__
+          ]
+
+@contextlib.contextmanager
+def profile():
+    import termcolor, time
+    from line_profiler import LineProfiler
+
+    epoch = int(time.time())
+    outfile = f"compare50_profile_{epoch}.txt"
+    profiler = LineProfiler()
+    for f in PROFILE:
+        profiler.add_function(f)
+    profiler.enable_by_count()
+    try:
+        yield
+    finally:
+        with open(outfile, "w") as f:
+            profiler.print_stats(stream=f)
+        termcolor.cprint(f"Profiling data written to {outfile}", "yellow")
+
+
 def main():
     parser = ArgParser(prog="compare50")
     submission_factory = SubmissionFactory()
@@ -205,8 +234,20 @@ def main():
                         type=int,
                         help="number of matches to output")
 
+    # TODO: remove these before we ship
+    parser.add_argument("--profile",
+                        action="store_true",
+                        help="profile compare50 (development only, implies serial)")
+
+    parser.add_argument("--serial",
+                        action="store_true",
+                        help="don't run anything in parallel")
+
     args = parser.parse_args()
+
     excepthook.verbose = args.verbose
+    # TODO: remove this before we ship
+    excepthook.verbose = True
 
     if len(args.submissions) == 1:
         raise errors.Error("At least two submissions are required for a comparison.")
@@ -221,67 +262,38 @@ def main():
     comparator = pass_.comparator
     preprocessor = Preprocessor(pass_.preprocessors)
 
-    # Collect all submissions, archive submissions and distro files
-    with lib50.ProgressBar("Preparing"):
-        subs = submission_factory.get_all(args.submissions, preprocessor)
-        archive_subs = submission_factory.get_all(args.archive, preprocessor)
-        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-        ignored_files = [f for sub in ignored_subs for f in sub.files]
+    # TODO: remove this before we ship
+    if args.profile:
+        args.serial = True
+        profiler = profile
+    else:
+        profiler = contextlib.suppress
 
-    # Cross compare and rank all submissions, keep only top `n`
-    with lib50.ProgressBar("Ranking"):
-        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
+    if args.serial:
+        api.Executor = api.FauxExecutor
 
-    # Get the matching spans, group them per submission
-    with lib50.ProgressBar("Comparing"):
-        groups = api.create_groups(submission_matches, comparator, ignored_files)
+    with profiler():
+        # Collect all submissions, archive submissions and distro files
+        with lib50.ProgressBar("Preparing"):
+            subs = submission_factory.get_all(args.submissions, preprocessor)
+            archive_subs = submission_factory.get_all(args.archive, preprocessor)
+            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+            ignored_files = [f for sub in ignored_subs for f in sub.files]
 
-    # Render results
-    with lib50.ProgressBar("Rendering"):
-        html_renderer.render(groups, dest=args.output)
+        # Cross compare and rank all submissions, keep only top `n`
+        with lib50.ProgressBar("Ranking"):
+            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
 
-    print_results(submission_matches)
+        # Get the matching spans, group them per submission
+        with lib50.ProgressBar("Comparing"):
+            groups = api.create_groups(submission_matches, comparator, ignored_files)
 
+        # Render results
+        with lib50.ProgressBar("Rendering"):
+            html_renderer.render(groups, dest=args.output)
 
-PROFILE =[]
-# PROFILE = [ main
-#           , api.rank_submissions
-#           , comparators.misspellings.Misspellings.cross_compare
-#           , comparators.misspellings.Misspellings.create_spans
-#           , api.create_groups]
+        print_results(submission_matches)
 
-# PROFILE = [ main
-#           , comparators.winnowing.Winnowing.cross_compare
-#           , comparators.winnowing.Winnowing.create_spans
-#           , comparators.winnowing.Winnowing._create_spans.__call__
-#           , data.File.tokens
-#           , comparators.winnowing.Index.create_spans
-#           , data.SpanMatches.expand]
-#
-# PROFILE = [ main
-          # , api.create_groups
-          # , comparators.winnowing.Winnowing.cross_compare
-          # , comparators.winnowing.Winnowing.create_spans
-          # , comparators.winnowing.Index.hashes
-          # , comparators.winnowing.CompareIndex.fingerprint
-          # , comparators.winnowing.CrossCompareIndex.fingerprint
-          # , comparators.winnowing.Winnowing._create_spans.__call__
-          # ]
 
 if __name__ == "__main__":
-    if PROFILE:
-        outfile = "profile.txt"
-        import termcolor
-        from line_profiler import LineProfiler
-        profiler = LineProfiler()
-        for f in PROFILE:
-            profiler.add_function(f)
-        profiler.enable_by_count()
-        try:
-            main()
-        finally:
-            with open(outfile, "w") as f:
-                profiler.print_stats(stream=f)
-            termcolor.cprint(f"Profiling data written to {outfile}", "yellow")
-    else:
-        main()
+    main()

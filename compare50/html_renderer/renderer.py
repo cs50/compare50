@@ -1,4 +1,3 @@
-from ..data import IdStore
 import pygments
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
@@ -11,6 +10,7 @@ import concurrent.futures as futures
 
 import jinja2
 
+from .. import data, api
 
 @attr.s(slots=True, frozen=True, hash=True)
 class Fragment:
@@ -19,7 +19,7 @@ class Fragment:
 
 
 def render(submission_groups, dest="html"):
-    with futures.ProcessPoolExecutor() as executor:
+    with api.Executor() as executor:
         for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
@@ -45,8 +45,8 @@ class _RenderFile:
     def __call__(self, args):
         match_id, (sub_a, sub_b, groups, ignored_spans) = args
         frag_id_counter = 0
-        span_ids = IdStore()
-        group_ids = IdStore()
+        span_ids = data.IdStore()
+        group_ids = data.IdStore()
 
         span_to_group = {}
         file_to_spans = collections.defaultdict(list)
