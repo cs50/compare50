@@ -197,6 +197,12 @@ def main():
     parser.add_argument("-v", "--verbose",
                         action="store_true",
                         help="display the full tracebacks of any errors")
+    parser.add_argument("-n",
+                        action="store",
+                        default=50,
+                        metavar="MATCHES",
+                        type=int,
+                        help="number of matches to output")
 
     args = parser.parse_args()
     excepthook.verbose = args.verbose
@@ -223,7 +229,7 @@ def main():
 
     # Cross compare and rank all submissions, keep only top `n`
     with lib50.ProgressBar("Ranking"):
-        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=50)
+        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
 
     # Get the matching spans, group them per submission
     with lib50.ProgressBar("Comparing"):
