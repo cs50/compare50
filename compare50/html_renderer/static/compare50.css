@@ -48,6 +48,7 @@ pre {
     font-weight: bold;
     background-color: #DC3545;
     color: white;
+    cursor: pointer;
 }
 
 /* style code samples */
