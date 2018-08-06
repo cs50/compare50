@@ -2,9 +2,13 @@ import abc
 from collections.abc import Mapping, Sequence
 import os
 import pathlib
+
 import attr
 import pygments
 import pygments.lexers
+
+
+__all__ = ["Pass", "Comparator", "File", "Submission", "SubmissionMatch", "Pass", "Span", "SpanMatches", "Token"]
 
 
 class _PassRegistry(abc.ABCMeta):

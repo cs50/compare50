@@ -4,7 +4,7 @@ import itertools
 
 from .data import SubmissionMatch, Submission, Span, Group, FilePair
 
-__all__ = ["rank_submissions", "create_groups"]
+__all__ = ["rank_submissions", "create_groups", "missing_spans"]
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """"""
