@@ -2,14 +2,12 @@ import collections
 import heapq
 import itertools
 
+import intervaltree
+
 import concurrent.futures
-from .data import SubmissionMatch, Submission, Span, SpanMatch, Group, SortedList
+from .data import SubmissionMatch, Submission, Span, SpanMatch, Group, BisectList
 
 __all__ = ["rank_submissions", "create_groups", "missing_spans", "expand"]
-
-
-# TODO: Remove before we ship
-Executor = concurrent.futures.ProcessPoolExecutor
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
@@ -92,12 +90,14 @@ def expand(span_matches, tokens_a, tokens_b):
     if not span_matches:
         return span_matches
 
+    # expanded_span_matches = intervaltree.IntervalTree()
     expanded_span_matches = set()
 
-    tokens_a = SortedList.from_sorted(tokens_a, key=lambda tok: tok.start)
-    tokens_b = SortedList.from_sorted(tokens_b, key=lambda tok: tok.start)
+    tokens_a = BisectList.from_sorted(tokens_a, key=lambda tok: tok.start)
+    tokens_b = BisectList.from_sorted(tokens_b, key=lambda tok: tok.start)
 
     for span_a, span_b in span_matches:
+
         # Expand left
         start_a = tokens_a.bisect_key_right(span_a.start) - 2
         start_b = tokens_b.bisect_key_right(span_b.start) - 2
@@ -212,7 +212,7 @@ def _is_group_subsumed(group, groups):
             continue
 
         for span in group.spans:
-            if not _is_span_subsumed(span, other_group.spans):
+            if not _is_span_subsumed(span, filter(lambda other: span.file == other.file, other_group.spans)):
                 break
         else:
             return True
@@ -273,3 +273,9 @@ class FauxExecutor:
 
     def __exit__(self, type, value, traceback):
         return
+
+
+# TODO: Remove before we ship
+Executor = concurrent.futures.ProcessPoolExecutor
+
+

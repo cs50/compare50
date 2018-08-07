@@ -272,14 +272,14 @@ class MatchResult:
     spans = attr.ib(repr=False)
 
 
-class SortedList(Sequence):
+class BisectList(Sequence):
     def __init__(self, iter=None, key=lambda x: x):
         self.contents = sorted(iter, key=key) if iter is not None else []
         self.key = key
 
     @classmethod
     def from_sorted(cls, iter=None, key=lambda x: x):
-        s_list = SortedList(key=key)
+        s_list = BisectList(key=key)
         if iter is not None:
             s_list.contents = list(iter)
         return s_list
