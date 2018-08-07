@@ -36,17 +36,14 @@ class _PassRegistry(abc.ABCMeta):
 class Pass(metaclass=_PassRegistry):
     __register = False
 
-    @property
     @abc.abstractmethod
     def description(self):
         pass
 
-    @property
     @abc.abstractmethod
     def preprocessors(self):
         pass
 
-    @property
     @abc.abstractmethod
     def comparator(self):
         pass
