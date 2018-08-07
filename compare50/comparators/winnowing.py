@@ -143,7 +143,7 @@ class Winnowing(Comparator):
 class StripWhitespace(Pass):
     description = "Remove all whitespace, then run Winnowing with k=16, t=32."
     preprocessors = [preprocessors.strip_whitespace, preprocessors.by_character]
-    comparator = Winnowing(k=24, t=36)
+    comparator = Winnowing(k=40, t=60)
 
 
 class StripAll(Pass):
@@ -152,7 +152,7 @@ class StripAll(Pass):
                      preprocessors.strip_comments,
                      preprocessors.normalize_identifiers,
                      preprocessors.normalize_string_literals]
-    comparator = Winnowing(k=16, t=32)
+    comparator = Winnowing(k=25, t=35)
 
 
 class Index(abc.ABC):
