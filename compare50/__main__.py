@@ -9,13 +9,59 @@ import shutil
 import attr
 import sys
 import traceback
+import time
 
 import attr
 import patoolib
 import lib50
+import multiprocessing
 
 from . import html_renderer
 from . import api, errors, data, comparators
+
+
+class ProgressBar:
+    """Show a progress bar starting with message."""
+    DISABLED = False
+    TICKS_PER_SECOND = 2
+    STOP_SIGNAL = None
+
+    def __init__(self, message):
+        self._message = message
+        self._thread = None
+
+    def stop(self):
+        """Stop the progress bar."""
+        self._message_queue.put(ProgressBar.STOP_SIGNAL)
+        self._process.join()
+
+    def new_bar(self, message):
+        self._message_queue.put(message)
+
+    def __enter__(self):
+        def progress_runner(message, message_queue):
+            print(f"{message}...", end="", flush=True)
+
+            while True:
+                if not message_queue.empty():
+                    message = message_queue.get()
+                    print()
+
+                    if message == ProgressBar.STOP_SIGNAL:
+                        break
+
+                    print(f"{message}...", end="", flush=True)
+
+                print(".", end="", flush=True)
+                time.sleep(1 / ProgressBar.TICKS_PER_SECOND if ProgressBar.TICKS_PER_SECOND else 0)
+
+        self._message_queue = multiprocessing.Queue()
+        self._process = multiprocessing.Process(target=progress_runner, args=(self._message, self._message_queue,))
+        self._process.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.stop()
 
 def excepthook(cls, exc, tb):
     if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
@@ -273,26 +319,23 @@ def main():
 
     with profiler():
         # Collect all submissions, archive submissions and distro files
-        #with lib50.ProgressBar("Preparing"):
-        print("Preparing...")
-        subs = submission_factory.get_all(args.submissions, preprocessor)
-        archive_subs = submission_factory.get_all(args.archive, preprocessor)
-        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-        ignored_files = [f for sub in ignored_subs for f in sub.files]
+        with ProgressBar("Preparing") as progress_bar:
+            subs = submission_factory.get_all(args.submissions, preprocessor)
+            archive_subs = submission_factory.get_all(args.archive, preprocessor)
+            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+            ignored_files = [f for sub in ignored_subs for f in sub.files]
 
-        # Cross compare and rank all submissions, keep only top `n`
-        #with lib50.ProgressBar("Ranking"):
-        print("Ranking...")
-        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
+            # Cross compare and rank all submissions, keep only top `n`
+            progress_bar.new_bar("Ranking")
+            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
 
-        # Get the matching spans, group them per submission
-        print("Comparing...")
-        groups = api.create_groups(submission_matches, comparator, ignored_files)
+            # Get the matching spans, group them per submission
+            progress_bar.new_bar("Comparing")
+            groups = api.create_groups(submission_matches, comparator, ignored_files)
 
-        # Render results
-        # with lib50.ProgressBar("Rendering"):
-        print("Rendering...")
-        html_renderer.render(groups, dest=args.output)
+            # Render results
+            progress_bar.new_bar("Rendering")
+            html_renderer.render(groups, dest=args.output)
 
         print_results(submission_matches)
 
