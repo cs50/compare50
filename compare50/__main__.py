@@ -17,7 +17,6 @@ import lib50
 from . import html_renderer
 from . import api, errors, data, comparators
 
-
 def excepthook(cls, exc, tb):
     if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
         termcolor.cprint(str(exc), "red", file=sys.stderr)
@@ -274,23 +273,26 @@ def main():
 
     with profiler():
         # Collect all submissions, archive submissions and distro files
-        with lib50.ProgressBar("Preparing"):
-            subs = submission_factory.get_all(args.submissions, preprocessor)
-            archive_subs = submission_factory.get_all(args.archive, preprocessor)
-            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-            ignored_files = [f for sub in ignored_subs for f in sub.files]
+        #with lib50.ProgressBar("Preparing"):
+        print("Preparing...")
+        subs = submission_factory.get_all(args.submissions, preprocessor)
+        archive_subs = submission_factory.get_all(args.archive, preprocessor)
+        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+        ignored_files = [f for sub in ignored_subs for f in sub.files]
 
         # Cross compare and rank all submissions, keep only top `n`
-        with lib50.ProgressBar("Ranking"):
-            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
+        #with lib50.ProgressBar("Ranking"):
+        print("Ranking...")
+        submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
 
         # Get the matching spans, group them per submission
-        with lib50.ProgressBar("Comparing"):
-            groups = api.create_groups(submission_matches, comparator, ignored_files)
+        print("Comparing...")
+        groups = api.create_groups(submission_matches, comparator, ignored_files)
 
         # Render results
-        with lib50.ProgressBar("Rendering"):
-            html_renderer.render(groups, dest=args.output)
+        # with lib50.ProgressBar("Rendering"):
+        print("Rendering...")
+        html_renderer.render(groups, dest=args.output)
 
         print_results(submission_matches)
 
