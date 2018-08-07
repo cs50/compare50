@@ -27,7 +27,7 @@ class ProgressBar:
 
     def __init__(self, message):
         self._message = message
-        self._thread = None
+        self._process = None
 
     def stop(self):
         """Stop the progress bar."""
@@ -195,8 +195,8 @@ def print_results(submission_matches):
 
 #TODO: remove this before we ship
 PROFILE = [ api.create_groups
-          , comparators.winnowing.Winnowing.cross_compare
-          , comparators.winnowing.Winnowing.create_spans
+          , comparators.winnowing.Winnowing.score
+          , comparators.winnowing.Winnowing.compare
           , comparators.winnowing.Index.hashes
           , comparators.winnowing.CompareIndex.fingerprint
           , comparators.winnowing.CrossCompareIndex.fingerprint
@@ -330,7 +330,7 @@ def main():
 
             # Get the matching spans, group them per submission
             progress_bar.new_bar("Comparing")
-            groups = api.create_groups(submission_matches, comparator, ignored_files)
+            groups = api.create_groups(submission_matches, ignored_files, comparator)
 
             # Render results
             progress_bar.new_bar("Rendering")

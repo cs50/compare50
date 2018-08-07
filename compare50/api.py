@@ -11,19 +11,20 @@ __all__ = ["rank_submissions", "create_groups", "missing_spans", "expand"]
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
-    """"""
-    submission_matches = comparator.cross_compare(submissions, archive_submissions, ignored_files)
+    """Rank all submissions, take the top n."""
+    submission_matches = comparator.score(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
     return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
 
 
-def create_groups(submission_matches, comparator, ignored_files):
+def create_groups(submission_matches, ignored_files, comparator):
+    """Find all shared groups between submission_matches."""
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
     sub_match_to_groups = {}
 
-    for span_matches, ignored_spans in comparator.create_spans(submission_matches, ignored_files):
+    for span_matches, ignored_spans in comparator.compare(submission_matches, ignored_files):
         if not span_matches:
             continue
 

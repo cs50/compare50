@@ -54,11 +54,11 @@ class Pass(metaclass=_PassRegistry):
 
 class Comparator(metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def cross_compare(self, submissions, archive_submissions, ignored_files):
+    def score(self, submissions, archive_submissions, ignored_files):
         pass
 
     @abc.abstractmethod
-    def create_spans(self, matches, ignored_files):
+    def compare(self, matches, ignored_files):
         pass
 
 

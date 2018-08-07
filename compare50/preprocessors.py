@@ -92,12 +92,6 @@ def by_character(tokens):
                         val=c)
 
 
-def buffer(tokens):
-    """Collects all tokens in a list before passing them on. Useful for
-    serializing side effects of previous and subsequent filters."""
-    return list(tokens)
-
-
 def token_printer(tokens):
     """Prints all token data. Useful for debugging."""
     for tok in tokens:
@@ -110,3 +104,26 @@ def text_printer(tokens):
     for tok in tokens:
         print(tok.val, end="")
         yield tok
+
+
+def comments(tokens):
+    """Remove all other tokens except comments."""
+
+    for t in tokens:
+        if t.type == Comment.Single or t.type == Comment.Multiline:
+            return t
+
+def words(tokens):
+    """Split Tokens into Tokens containing just one word."""
+    for t in tokens:
+        start = t.start
+        only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
+        for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
+            yield Token(t.start + start, t.start + end, t.type, val)
+
+
+def lowercase(tokens):
+    """Transform all token.val to lowercase."""
+    for t in tokens:
+        t.val = t.val.lower()
+        yield t

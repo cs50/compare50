@@ -8,20 +8,6 @@ from pygments.token import Comment
 from .. import Comparator, SubmissionMatch, Pass, Span, SpanMatch, Token
 
 
-def words(tokens):
-    for t in tokens:
-        if t.type == Comment.Single or t.type == Comment.Multiline:
-            start = t.start
-            only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
-            for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
-                yield Token(t.start + start, t.start + end, t.type, val)
-
-
-def lowercase(tokens):
-    for t in tokens:
-        t.val = t.val.lower()
-        yield t
-
 class Misspellings(Comparator):
     def __init__(self, dictionary):
         with open(dictionary) as f:
@@ -30,7 +16,7 @@ class Misspellings(Comparator):
     def _misspelled_tokens(self, file):
         return [token for token in file.tokens() if token.val not in self.dictionary]
 
-    def cross_compare(self, submissions, archive_submissions, ignored_files):
+    def score(self, submissions, archive_submissions, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
             ignored_words |= {token.val for token in ignored_file.tokens()}
@@ -55,7 +41,7 @@ class Misspellings(Comparator):
                 sub_matches.append(SubmissionMatch(sub_a, sub_b, len(words_a & words_b)))
         return sub_matches
 
-    def create_spans(self, file_pairs, ignored_files):
+    def compare(self, file_pairs, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
             for token in ignored_file.tokens():
@@ -109,9 +95,3 @@ class Misspellings(Comparator):
                 span_matches_list.append(SpanMatches(matches))
 
         return zip(span_matches_list, ignored_spans_list)
-
-
-class EnglishMisspellings(Pass):
-    description = "Compare for english word misspellings."
-    preprocessors = [words, lowercase]
-    comparator = Misspellings(pathlib.Path(__file__).parent / "english_dictionary.txt")

@@ -17,7 +17,6 @@ from .. import (
 )
 
 
-
 class Winnowing(Comparator):
     """ Comparator utilizing the (robust) Winnowing algorithm as described https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf
 
@@ -33,7 +32,7 @@ class Winnowing(Comparator):
         self.k = k
         self.t = t
 
-    def cross_compare(self, submissions, archive_submissions, ignored_files):
+    def score(self, submissions, archive_submissions, ignored_files):
         """"""
         def iter_files(subs):
             for sub in subs:
@@ -61,7 +60,7 @@ class Winnowing(Comparator):
 
         return submissions_index.compare(archive_index)
 
-    def create_spans(self, submission_matches, ignored_files):
+    def compare(self, submission_matches, ignored_files):
         with api.Executor() as executor:
             ignored_index = CompareIndex(self.k)
             for ignored_i in executor.map(self._index_file(CompareIndex, (self.k,)), ignored_files):
@@ -139,20 +138,6 @@ class Winnowing(Comparator):
             index = self.index(*self.args)
             index.include(file)
             return index
-
-class StripWhitespace(Pass):
-    description = "Remove all whitespace, then run Winnowing with k=16, t=32."
-    preprocessors = [preprocessors.strip_whitespace, preprocessors.by_character]
-    comparator = Winnowing(k=40, t=60)
-
-
-class StripAll(Pass):
-    description = "Remove all whitespace, norm all comments/ids/strings, then run Winnowing with k=10, t=20."
-    preprocessors = [preprocessors.strip_whitespace,
-                     preprocessors.strip_comments,
-                     preprocessors.normalize_identifiers,
-                     preprocessors.normalize_string_literals]
-    comparator = Winnowing(k=25, t=35)
 
 
 class Index(abc.ABC):
