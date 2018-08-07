@@ -97,7 +97,21 @@ def expand(span_matches, tokens_a, tokens_b):
     tokens_a = BisectList.from_sorted(tokens_a, key=lambda tok: tok.start)
     tokens_b = BisectList.from_sorted(tokens_b, key=lambda tok: tok.start)
 
+    span_tree_a = intervaltree.IntervalTree()
+    span_tree_b = intervaltree.IntervalTree()
+
+    def is_subsumed(span, tree):
+        """ Determine if span is strictly smaller than any interval in tree.
+        Assumes that tree contains no intersecting intervals"""
+        intervals = tree[span.start:span.end]
+        for interval in intervals:
+            if span.start >= interval.begin and span.end <= interval.end:
+                return True
+        return False
+
     for span_a, span_b in span_matches:
+        if is_subsumed(span_a, span_tree_a) and is_subsumed(span_b, span_tree_b):
+            continue
 
         # Expand left
         start_a = tokens_a.bisect_key_right(span_a.start) - 2
@@ -122,6 +136,9 @@ def expand(span_matches, tokens_a, tokens_b):
 
         new_span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
         new_span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
+
+        span_tree_a.addi(new_span_a.start, new_span_a.end)
+        span_tree_b.addi(new_span_b.start, new_span_b.end)
 
         # Add new spans
         expanded_span_matches.add(SpanMatch(new_span_a, new_span_b))
