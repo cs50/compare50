@@ -22,7 +22,6 @@ from . import api, errors, data, comparators
 
 class ProgressBar:
     """Show a progress bar starting with message."""
-    DISABLED = False
     TICKS_PER_SECOND = 2
     STOP_SIGNAL = None
 
