@@ -307,7 +307,8 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        help="Specify which passes to use. Compare50 ranks only by the first pass, but will render views for every pass.")
+                        default=["StripAll"],
+                        help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
                         nargs="+",
@@ -384,7 +385,7 @@ def main():
 
     if args.debug:
         api.Executor = api.FauxExecutor
-        ProgressBar.DISABLED = True
+        # ProgressBar.DISABLED = True
 
     with profiler():
         # Collect all submissions, archive submissions and distro files
