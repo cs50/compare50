@@ -20,6 +20,64 @@ from . import html_renderer
 from . import api, errors, data, comparators
 
 
+# import tqdm
+# class ProgressBar:
+#     """Show a progress bar starting with message."""
+#     STOP_SIGNAL = None
+#     UPDATE_SIGNAL = 1
+#
+#     def __init__(self, message, total=None):
+#         self._message = message
+#         self._process = None
+#         self._total = total
+#
+#     def stop(self):
+#         """Stop the progress bar."""
+#         self._message_queue.put(ProgressBar.STOP_SIGNAL)
+#         self._process.join()
+#
+#     def new_bar(self, message, total=None):
+#         self._message_queue.put((message, total))
+#
+#     def update(self, amount=1):
+#         self._message_queue.put((ProgressBar.UPDATE_SIGNAL, amount))
+#
+#     def __enter__(self):
+#         def progress_runner(message, total, message_queue):
+#             bar = tqdm.tqdm(total=total)
+#             bar.write(message)
+#
+#             try:
+#                 while True:
+#                     while not message_queue.empty():
+#                         message = message_queue.get()
+#                         if message == ProgressBar.STOP_SIGNAL:
+#                             print()
+#                             return
+#                         elif message[0] == ProgressBar.UPDATE_SIGNAL:
+#                             bar.update(message[1])
+#                         else:
+#                             bar.close()
+#                             msg, total = message
+#                             bar = tqdm.tqdm(total=total)
+#                             bar.write(msg)
+#
+#                     if total == None:
+#                         time.sleep(.1)
+#                         bar.update()
+#                     else:
+#                         time.sleep(0.01)
+#             finally:
+#                 bar.close()
+#
+#         self._message_queue = multiprocessing.Queue()
+#         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, self._total, self._message_queue,))
+#         self._process.start()
+#         return self
+#
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         self.stop()
+
 class ProgressBar:
     """Show a progress bar starting with message."""
     TICKS_PER_SECOND = 2
@@ -122,6 +180,10 @@ class SubmissionFactory:
         return data.Submission(path, decodable_files, preprocessor=preprocessor)
 
     def get_all(self, paths, preprocessor):
+        """
+        For every path, and every preprocessor, generate a Submission containing that path/preprocessor.
+        Returns a list of lists of Submissions.
+        """
         subs = []
         for sub_path in paths:
             try:
@@ -236,11 +298,11 @@ def main():
                         nargs="+",
                         default=[],
                         help="Paths to distribution files. Contents of these files are stripped from submissions.")
-    parser.add_argument("-p", "--pass",
-                        action="store",
-                        dest="pass_",
-                        metavar="PASS",
-                        help="Specify which pass to use.")
+    parser.add_argument("-p", "--passes",
+                        dest="passes",
+                        nargs="+",
+                        metavar="PASSES",
+                        help="Specify which passes to use. Compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
                         nargs="+",
@@ -298,13 +360,15 @@ def main():
 
     # Extract comparator and preprocessors from pass
     try:
-        pass_ = data.Pass._get(args.pass_)
+        passes = [data.Pass.get(pass_) for pass_ in args.passes]
+        if not passes:
+            passes = [data.Pass.get(None)]
     except KeyError:
         raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(args.pass_, [c.__name__ for c in data.Pass._get_all()]))
+                            .format(args.pass_, [c.__name__ for c in data.Pass.get_all()]))
 
-    comparator = pass_.comparator
-    preprocessor = Preprocessor(pass_.preprocessors)
+    score_func = passes[0].comparator.score
+    preprocessor = Preprocessor(passes[0].preprocessors)
 
     # TODO: remove this before we ship
     if args.profile:
@@ -326,11 +390,15 @@ def main():
 
             # Cross compare and rank all submissions, keep only top `n`
             progress_bar.new_bar("Ranking")
-            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, comparator, n=args.n)
+            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
 
             # Get the matching spans, group them per submission
             progress_bar.new_bar("Comparing")
-            groups = api.create_groups(submission_matches, ignored_files, comparator)
+            for pass_ in passes:
+                preprocessor = Preprocessor(pass_.preprocessors)
+                for sub in subs + archive_subs + ignored_subs:
+                    object.__setattr__(sub, "preprocessor", preprocessor)
+                groups = api.create_groups(submission_matches, ignored_files, pass_.comparator)
 
             # Render results
             progress_bar.new_bar("Rendering")

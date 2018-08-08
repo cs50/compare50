@@ -295,5 +295,3 @@ class FauxExecutor:
 
 # TODO: Remove before we ship
 Executor = concurrent.futures.ProcessPoolExecutor
-
-

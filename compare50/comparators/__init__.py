@@ -7,7 +7,8 @@ from . import misspellings
 
 class StripWhitespace(Pass):
     description = "Remove all whitespace, then run Winnowing with k=40, t=60."
-    preprocessors = [preprocessors.strip_whitespace, preprocessors.by_character]
+    preprocessors = [preprocessors.strip_whitespace,
+                     preprocessors.by_character]
     comparator = winnowing.Winnowing(k=40, t=60)
 
 
@@ -23,6 +24,6 @@ class StripAll(Pass):
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."
     preprocessors = [preprocessors.comments,
-                     preprocessors.words,
-                     preprocessors.lowercase]
+                     preprocessors.lowercase,
+                     preprocessors.words]
     comparator = misspellings.Misspellings(pathlib.Path(__file__).parent / "english_dictionary.txt")

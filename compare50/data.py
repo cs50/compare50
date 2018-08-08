@@ -23,13 +23,13 @@ class _PassRegistry(abc.ABCMeta):
         return cls
 
     @staticmethod
-    def _get(name=None):
+    def get(name=None):
         if name is None:
             name = _PassRegistry.default
         return _PassRegistry.passes[name]
 
     @staticmethod
-    def _get_all():
+    def get_all():
         return list(_PassRegistry.passes.values())
 
 
