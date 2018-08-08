@@ -5,7 +5,7 @@ import re
 
 from pygments.token import Comment
 
-from .. import Comparator, SubmissionMatch, Pass, Span, SpanMatch, Token
+from .. import Comparator, Pass, Span, Token
 
 
 class Misspellings(Comparator):

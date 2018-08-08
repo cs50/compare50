@@ -10,10 +10,9 @@ import numpy as np
 from .. import (
     api,
     preprocessors,
-    Comparator,
-    File, Submission, SubmissionMatch,
-    Pass,
-    Span, SpanMatch,
+    Comparison, Comparator,
+    File, Submission,
+    Pass, Span, Score
 )
 
 
@@ -60,16 +59,16 @@ class Winnowing(Comparator):
 
         return submissions_index.compare(archive_index)
 
-    def compare(self, submission_matches, ignored_files):
+    def compare(self, scores, ignored_files):
         ignored_index = CompareIndex(self.k)
         for ignored_i in map(self._index_file(CompareIndex, (self.k,)), ignored_files):
             ignored_index.include_all(ignored_i)
 
         # Find all unique submissions
         subs = set()
-        for sm in submission_matches:
-            subs.add(sm.sub_a)
-            subs.add(sm.sub_b)
+        for s in scores:
+            subs.add(s.sub_a)
+            subs.add(s.sub_b)
 
         # Tokenize all files
         file_tokens = {}
@@ -77,18 +76,18 @@ class Winnowing(Comparator):
             for file in sub:
                 file_tokens[file] = file.tokens()
 
-        return map(self._create_spans(self.k, self.t, ignored_index, file_tokens), submission_matches)
+        return map(self._compare(self.k, self.t, ignored_index, file_tokens), scores)
 
     @attr.s(slots=True)
-    class _create_spans:
+    class _compare:
         k = attr.ib()
         t = attr.ib()
         ignored_index = attr.ib()
         file_tokens = attr.ib()
 
-        def __call__(self, submission_match):
-            sub_a = submission_match.sub_a
-            sub_b = submission_match.sub_b
+        def __call__(self, score):
+            sub_a = score.sub_a
+            sub_b = score.sub_b
 
             ignored_spans = []
 
@@ -124,7 +123,7 @@ class Winnowing(Comparator):
                         matches = api.expand(matches, tokens_a, tokens_b)
                         span_matches += matches
 
-            return span_matches, ignored_spans
+            return Comparison(sub_a, sub_b, span_matches, ignored_spans)
 
     @attr.s(slots=True)
     class _index_file:
@@ -218,7 +217,7 @@ class CrossCompareIndex(Index):
                 scores[index[:,0], index[:,1]] += 1
 
         # Return only those FileMatches with a score > 0 from different submissions
-        return [SubmissionMatch(Submission.get(id1), Submission.get(id2), scores[id1][id2])
+        return [Score(Submission.get(id1), Submission.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
     def fingerprint(self, file, tokens=None):
@@ -267,7 +266,7 @@ class CompareIndex(Index):
             spans_a = self._index[hash_]
             # All spans associated with fingerprint in other
             spans_b = other._index[hash_]
-            matches.extend(SpanMatch(span_a, span_b) for span_a, span_b in itertools.product(spans_a, spans_b))
+            matches.extend((span_a, span_b) for span_a, span_b in itertools.product(spans_a, spans_b))
 
         return matches
 

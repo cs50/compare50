@@ -2,13 +2,14 @@ import abc
 from collections.abc import Mapping, Sequence
 import os
 import pathlib
+import numbers
 
 import attr
 import pygments
 import pygments.lexers
 
 
-__all__ = ["Pass", "Comparator", "File", "Submission", "SubmissionMatch", "Pass", "Span", "SpanMatch", "Token"]
+__all__ = ["Pass", "Comparator", "File", "Submission", "Pass", "Span", "Score", "Comparison", "Token"]
 
 
 class _PassRegistry(abc.ABCMeta):
@@ -55,7 +56,7 @@ class Comparator(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def compare(self, matches, ignored_files):
+    def compare(self, scores, ignored_files):
         pass
 
 
@@ -182,20 +183,19 @@ class Span:
         return self.file.read()[self.start:self.end]
 
 
-@attr.s(slots=True, frozen=True, hash=True, cmp=True)
-class SpanMatch:
-    span_a = attr.ib()
-    span_b = attr.ib()
+@attr.s(slots=True)
+class Comparison:
+    sub_a = attr.ib(validator=attr.validators.instance_of(Submission))
+    sub_b = attr.ib(validator=attr.validators.instance_of(Submission))
+    span_matches = attr.ib(default=attr.Factory(list))
+    ignored_spans = attr.ib(default=attr.Factory(list))
 
-    def __iter__(self):
-        return iter((self.span_a, self.span_b))
 
-
-@attr.s(slots=True, frozen=True, hash=True)
-class SubmissionMatch:
-    sub_a = attr.ib()
-    sub_b = attr.ib()
-    score = attr.ib()
+@attr.s(slots=True)
+class Score:
+    sub_a = attr.ib(validator=attr.validators.instance_of(Submission))
+    sub_b = attr.ib(validator=attr.validators.instance_of(Submission))
+    score = attr.ib(default=0, validator=attr.validators.instance_of(numbers.Number))
 
 
 def _sorted_subs(group):

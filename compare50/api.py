@@ -5,7 +5,7 @@ import itertools
 import intervaltree
 
 import concurrent.futures
-from .data import SubmissionMatch, Submission, Span, SpanMatch, Group, BisectList
+from .data import Submission, Span, Group, BisectList
 
 __all__ = ["rank_submissions", "create_groups", "missing_spans", "expand", "progress_bar"]
 
@@ -14,32 +14,25 @@ _PROGRESS_BAR = None
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
     """Rank all submissions, take the top n."""
-    submission_matches = comparator.score(submissions, archive_submissions, ignored_files)
+    scores = comparator.score(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
-    return heapq.nlargest(n, submission_matches, lambda sub_match : sub_match.score)
+    return heapq.nlargest(n, scores, lambda sub_match : sub_match.score)
 
 
 def create_groups(submission_matches, ignored_files, comparator):
-    """Find all shared groups between submission_matches."""
-    global Executor
-    Executor = FauxExecutor
+    """Find all shared groups between scores"""
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
     sub_match_to_groups = {}
 
-    for span_matches, ignored_spans in comparator.compare(submission_matches, ignored_files):
-        if not span_matches:
-            continue
-
-        sub_a = span_matches[0].span_a.file.submission
-        sub_b = span_matches[0].span_b.file.submission
+    for comparison in comparator.compare(scores, ignored_files):
 
         new_ignored_spans = []
-        for sub in (sub_a, sub_b):
+        for sub in (comparison.sub_a, comparison.sub_b):
             for file in sub.files:
                 # Divide ignored_spans per file
-                ignored_spans_file = [span for span in ignored_spans if span.file==file]
+                ignored_spans_file = [span for span in comparison.ignored_spans if span.file == file]
 
                 # Find all spans lost by preprocessors for file_a
                 if file not in missing_spans_cache:
@@ -49,14 +42,14 @@ def create_groups(submission_matches, ignored_files, comparator):
                 # Flatten the spans (they could be overlapping)
                 new_ignored_spans += _flatten_spans(ignored_spans_file)
 
-        sub_match_to_ignored_spans[(sub_a, sub_b)] = new_ignored_spans
-        sub_match_to_groups[(sub_a, sub_b)] = _group_span_matches(span_matches)
-    Executor = concurrent.futures.ProcessPoolExecutor
+        sub_match_to_ignored_spans[(comparison.sub_a, comparison.sub_b)] = new_ignored_spans
+        sub_match_to_groups[(comparison.sub_a, comparison.sub_b)] = _group_span_matches(comparison.span_matches)
+
     return [(sm.sub_a,
              sm.sub_b,
-             sub_match_to_groups[(sm.sub_a, sm.sub_b)],
-             sub_match_to_ignored_spans[(sm.sub_a, sm.sub_b)])
-            for sm in submission_matches]
+             sub_match_to_groups.get((sm.sub_a, sm.sub_b), []),
+             sub_match_to_ignored_spans.get((sm.sub_a, sm.sub_b), []))
+            for sm in scores]
 
 
 def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
@@ -91,7 +84,7 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
 def expand(span_matches, tokens_a, tokens_b):
     """
     Expand all span matches.
-    returns a new instance of SpanMatches with maximally extended spans.
+    returns a new list of maximally extended span pairs.
     """
     if not span_matches:
         return span_matches
@@ -114,7 +107,7 @@ def expand(span_matches, tokens_a, tokens_b):
                 return True
         return False
 
-    span_matches = sorted(span_matches, key=lambda match: (match.span_a.start, match.span_b.start))
+    span_matches = sorted(span_matches, key=lambda match: (match[0].start, match[1].start))
 
     for span_a, span_b in span_matches:
         if is_subsumed(span_a, span_tree_a) and is_subsumed(span_b, span_tree_b):
@@ -148,7 +141,7 @@ def expand(span_matches, tokens_a, tokens_b):
         span_tree_b.addi(new_span_b.start, new_span_b.end)
 
         # Add new spans
-        expanded_span_matches.add(SpanMatch(new_span_a, new_span_b))
+        expanded_span_matches.add((new_span_a, new_span_b))
 
     # print(expanded_span_matches)
     return list(expanded_span_matches)
@@ -186,10 +179,13 @@ def _flatten_spans(spans):
 
 def _group_span_matches(span_matches):
     """
-    Transforms a list of SpanMatch into a list of Groups.
+    Transforms a list of span pairs into a list of Groups.
     Finds all spans that share the same content, and groups them in one Group.
     returns a list of Groups.
     """
+    if not span_matches:
+        return []
+
     span_groups = _transitive_closure(span_matches)
     return _filter_subsumed_groups([Group(spans) for spans in span_groups])
 

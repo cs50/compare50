@@ -231,7 +231,7 @@ PROFILE = [ api.create_groups
           , comparators.winnowing.Index.hashes
           , comparators.winnowing.CompareIndex.fingerprint
           , comparators.winnowing.CrossCompareIndex.fingerprint
-          , comparators.winnowing.Winnowing._create_spans.__call__
+          , comparators.winnowing.Winnowing._compare.__call__
           ]
 
 @contextlib.contextmanager
