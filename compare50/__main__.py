@@ -31,7 +31,7 @@ class ProgressBar:
         self._percentage = 0
         self._message_queue = multiprocessing.Queue()
         self._update = 0
-        self._resolution = 4
+        self._resolution = 2
 
     def fill(self):
         self.update(self.remaining_percentage)
@@ -77,7 +77,6 @@ class ProgressBar:
                     while not message_queue.empty():
                         message = message_queue.get()
                         if message == ProgressBar.STOP_SIGNAL:
-                            print()
                             return
                         elif message[0] == ProgressBar.UPDATE_SIGNAL:
                             bar.update(message[1])
@@ -90,7 +89,7 @@ class ProgressBar:
                     time.sleep(0.1)
             finally:
                 bar.close()
-                sys.stdout.flush()
+                print()
 
         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
         self._process.start()
