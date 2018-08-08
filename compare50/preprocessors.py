@@ -111,4 +111,4 @@ def words(tokens):
         start = t.start
         only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
         for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
-Z           yield Token(t.start + start, t.start + end, t.type, val)
+            yield Token(t.start + start, t.start + end, t.type, val)

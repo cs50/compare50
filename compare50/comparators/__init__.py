@@ -27,5 +27,4 @@ class EnglishMisspellings(Pass):
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,
                      preprocessors.words]
->>>>>>> fixed normalize string literals, remove duplicate preprocessor
     comparator = misspellings.Misspellings(pathlib.Path(__file__).parent / "english_dictionary.txt")
