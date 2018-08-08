@@ -59,6 +59,7 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
     """
     Find which spans were not part of tokens (due to a preprocessor stripping them).
     """
+
     if original_tokens is None:
         original_tokens = file.unprocessed_tokens()
     if preprocessed_tokens is None:
@@ -109,6 +110,8 @@ def expand(span_matches, tokens_a, tokens_b):
                 return True
         return False
 
+    span_matches = sorted(span_matches, key=lambda match: (match.span_a.start, match.span_b.start))
+
     for span_a, span_b in span_matches:
         if is_subsumed(span_a, span_tree_a) and is_subsumed(span_b, span_tree_b):
             continue
@@ -143,6 +146,7 @@ def expand(span_matches, tokens_a, tokens_b):
         # Add new spans
         expanded_span_matches.add(SpanMatch(new_span_a, new_span_b))
 
+    # print(expanded_span_matches)
     return list(expanded_span_matches)
 
 
