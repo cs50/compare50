@@ -56,7 +56,7 @@ class ProgressBar:
         self.fill()
         self._message_queue.put(ProgressBar.STOP_SIGNAL)
         self._process.join()
-        
+
     def __enter__(self):
         def progress_runner(message, total, message_queue):
             bar = tqdm.tqdm(total=total)
@@ -353,7 +353,7 @@ def main():
 
     with profiler():
         try:
-            api.__PROGRESS_BAR__ = ProgressBar("Preparing")
+            api._PROGRESS_BAR = ProgressBar("Preparing")
 
             api.progress_bar()._start()
             # Collect all submissions, archive submissions and distro files
@@ -382,7 +382,7 @@ def main():
 
         finally:
             api.progress_bar()._stop()
-            api.__PROGRESS_BAR__ = ProgressBar("Preparing")
+            api.__PROGRESS_BAR__ = None
 
 
         print_results(submission_matches)

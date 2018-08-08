@@ -9,7 +9,7 @@ from .data import SubmissionMatch, Submission, Span, SpanMatch, Group, BisectLis
 
 __all__ = ["rank_submissions", "create_groups", "missing_spans", "expand", "progress_bar"]
 
-__PROGRESS_BAR__ = None
+_PROGRESS_BAR = None
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
@@ -155,7 +155,7 @@ def expand(span_matches, tokens_a, tokens_b):
 
 
 def progress_bar():
-    return __PROGRESS_BAR__
+    return _PROGRESS_BAR
 
 
 def _flatten_spans(spans):
