@@ -82,6 +82,7 @@ class ProgressBar:
     """Show a progress bar starting with message."""
     TICKS_PER_SECOND = 2
     STOP_SIGNAL = None
+    DISABLED = False
 
     def __init__(self, message):
         self._message = message
@@ -90,7 +91,10 @@ class ProgressBar:
     def stop(self):
         """Stop the progress bar."""
         self._message_queue.put(ProgressBar.STOP_SIGNAL)
-        self._process.join()
+        try:
+            self._process.join()
+        except AssertionError:
+            pass
 
     def new_bar(self, message):
         self._message_queue.put(message)
@@ -114,7 +118,8 @@ class ProgressBar:
 
         self._message_queue = multiprocessing.Queue()
         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, self._message_queue,))
-        self._process.start()
+        if not self.DISABLED:
+            self._process.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -343,11 +348,11 @@ def main():
     # TODO: remove these before we ship
     parser.add_argument("--profile",
                         action="store_true",
-                        help="profile compare50 (development only, implies serial)")
+                        help="profile compare50 (development only, implies debug)")
 
-    parser.add_argument("--serial",
+    parser.add_argument("--debug",
                         action="store_true",
-                        help="don't run anything in parallel")
+                        help="don't run anything in parallel, disable progress bar")
 
     args = parser.parse_args()
 
@@ -372,13 +377,14 @@ def main():
 
     # TODO: remove this before we ship
     if args.profile:
-        args.serial = True
+        args.debug = True
         profiler = profile
     else:
         profiler = contextlib.suppress
 
-    if args.serial:
+    if args.debug:
         api.Executor = api.FauxExecutor
+        ProgressBar.DISABLED = True
 
     with profiler():
         # Collect all submissions, archive submissions and distro files
