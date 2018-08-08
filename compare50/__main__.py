@@ -14,88 +14,9 @@ import time
 import attr
 import patoolib
 import lib50
-import multiprocessing
-import tqdm
 
 from . import html_renderer
 from . import api, errors, data, comparators
-
-class ProgressBar:
-    """Show a progress bar starting with message."""
-    STOP_SIGNAL = None
-    UPDATE_SIGNAL = 1
-
-    def __init__(self, message):
-        self._message = message
-        self._process = None
-        self._percentage = 0
-        self._message_queue = multiprocessing.Queue()
-        self._update = 0
-        self._resolution = 2
-
-    def fill(self):
-        self.update(self.remaining_percentage)
-
-    @property
-    def remaining_percentage(self):
-        return 100 - self._percentage
-
-    def new_bar(self, message):
-        self.fill()
-        self._percentage = 0
-        self._message_queue.put((message, 100))
-
-    def update(self, amount=1):
-        self._update += amount
-        if self._update < self._resolution:
-            return
-
-        amount = round(self._update, 0)
-        self._update -= amount
-
-        if self._percentage + amount >= 100:
-            amount = 100 - self._percentage
-        self._percentage += amount
-        self._message_queue.put((ProgressBar.UPDATE_SIGNAL, amount))
-
-    def _start(self):
-        self.__enter__()
-
-    def _stop(self):
-        """Stop the progress bar."""
-        self.fill()
-        self._message_queue.put(ProgressBar.STOP_SIGNAL)
-        self._process.join()
-
-    def __enter__(self):
-        def progress_runner(message, total, message_queue):
-            bar = tqdm.tqdm(total=total)
-            bar.write(message)
-
-            try:
-                while True:
-                    while not message_queue.empty():
-                        message = message_queue.get()
-                        if message == ProgressBar.STOP_SIGNAL:
-                            return
-                        elif message[0] == ProgressBar.UPDATE_SIGNAL:
-                            bar.update(message[1])
-                        else:
-                            bar.close()
-                            msg, total = message
-                            bar = tqdm.tqdm(total=total)
-                            bar.write(msg)
-
-                    time.sleep(0.1)
-            finally:
-                bar.close()
-
-        self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
-        self._process.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
 
 
 def excepthook(cls, exc, tb):
@@ -362,7 +283,7 @@ def main():
 
     with profiler():
         try:
-            api._PROGRESS_BAR = ProgressBar("Preparing")
+            api._PROGRESS_BAR = api._ProgressBar("Preparing")
 
             api.progress_bar()._start()
             # Collect all submissions, archive submissions and distro files
