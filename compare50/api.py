@@ -20,7 +20,7 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     return heapq.nlargest(n, scores, lambda sub_match : sub_match.score)
 
 
-def create_groups(submission_matches, ignored_files, comparator):
+def create_groups(scores, ignored_files, comparator):
     """Find all shared groups between scores"""
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
