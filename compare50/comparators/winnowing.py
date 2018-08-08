@@ -61,24 +61,23 @@ class Winnowing(Comparator):
         return submissions_index.compare(archive_index)
 
     def compare(self, submission_matches, ignored_files):
-        with api.Executor() as executor:
-            ignored_index = CompareIndex(self.k)
-            for ignored_i in executor.map(self._index_file(CompareIndex, (self.k,)), ignored_files):
-                ignored_index.include_all(ignored_i)
+        ignored_index = CompareIndex(self.k)
+        for ignored_i in map(self._index_file(CompareIndex, (self.k,)), ignored_files):
+            ignored_index.include_all(ignored_i)
 
-            # Find all unique submissions
-            subs = set()
-            for sm in submission_matches:
-                subs.add(sm.sub_a)
-                subs.add(sm.sub_b)
+        # Find all unique submissions
+        subs = set()
+        for sm in submission_matches:
+            subs.add(sm.sub_a)
+            subs.add(sm.sub_b)
 
-            # Tokenize all files
-            file_tokens = {}
-            for sub in subs:
-                for file in sub:
-                    file_tokens[file] = file.tokens()
+        # Tokenize all files
+        file_tokens = {}
+        for sub in subs:
+            for file in sub:
+                file_tokens[file] = file.tokens()
 
-            return executor.map(self._create_spans(self.k, self.t, ignored_index, file_tokens), submission_matches)
+        return map(self._create_spans(self.k, self.t, ignored_index, file_tokens), submission_matches)
 
     @attr.s(slots=True)
     class _create_spans:
