@@ -50,7 +50,7 @@ class ProgressBar:
         if self._update < self._resolution:
             return
 
-        amount = round(self._update, 1)
+        amount = round(self._update, 0)
         self._update -= amount
 
         if self._percentage + amount >= 100:
@@ -89,7 +89,6 @@ class ProgressBar:
                     time.sleep(0.1)
             finally:
                 bar.close()
-                print()
 
         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
         self._process.start()
