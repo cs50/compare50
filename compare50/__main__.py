@@ -30,11 +30,14 @@ class ProgressBar:
         self._process = None
         self._percentage = 0
         self._message_queue = multiprocessing.Queue()
+        self._update = 0
+        self._resolution = 4
 
     def fill(self):
-        self.update(self.remaining_percent())
+        self.update(self.remaining_percentage)
 
-    def remaining_percent(self):
+    @property
+    def remaining_percentage(self):
         return 100 - self._percentage
 
     def new_bar(self, message):
@@ -43,6 +46,13 @@ class ProgressBar:
         self._message_queue.put((message, 100))
 
     def update(self, amount=1):
+        self._update += amount
+        if self._update < self._resolution:
+            return
+
+        amount = round(self._update, 1)
+        self._update -= amount
+
         if self._percentage + amount >= 100:
             amount = 100 - self._percentage
         self._percentage += amount
@@ -80,6 +90,7 @@ class ProgressBar:
                     time.sleep(0.1)
             finally:
                 bar.close()
+                sys.stdout.flush()
 
         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
         self._process.start()
@@ -383,7 +394,6 @@ def main():
         finally:
             api.progress_bar()._stop()
             api.__PROGRESS_BAR__ = None
-
 
         print_results(submission_matches)
 
