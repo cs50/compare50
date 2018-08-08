@@ -17,13 +17,15 @@ class StripAll(Pass):
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
                      preprocessors.normalize_identifiers,
-                     preprocessors.normalize_string_literals]
+                     preprocessors.normalize_string_literals,
+                     preprocessors.normalize_numeric_literals]
     comparator = winnowing.Winnowing(k=25, t=35)
 
 
 class EnglishMisspellings(Pass):
     description = "Compare for english word misspellings."
     preprocessors = [preprocessors.comments,
-                     preprocessors.lowercase,
+                     preprocessors.normalize_case,
                      preprocessors.words]
+>>>>>>> fixed normalize string literals, remove duplicate preprocessor
     comparator = misspellings.Misspellings(pathlib.Path(__file__).parent / "english_dictionary.txt")

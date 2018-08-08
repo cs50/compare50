@@ -38,25 +38,17 @@ def normalize_identifiers(tokens):
 
 def normalize_string_literals(tokens):
     """Replaces string literals with empty strings"""
-    # True if last token was changed, used to coalesce adjacent strings
-    normed = False
+    prev_tok = Token(None, None, None, None)
     for tok in tokens:
-        if tok.type in String.Char:
-            if not normed:
-                tok.val = "''"
+        if tok.type in String:
+            if prev_tok.type not in String:
                 yield tok
-                #yield attr.evolve(tok, val="''")
-            normed = True
-        elif tok.type in String:
-            if not normed:
-                tok.val = "''"
-                yield tok
-                #yield attr.evolve(tok, val='""')
-            normed = True
+        elif prev_tok.type in String:
+            yield prev_tok
+            yield tok
         else:
             yield tok
-            normed = False
-
+        prev_tok = tok
 
 def normalize_numeric_literals(tokens):
     """Replaces numeric literals with their types"""
@@ -119,11 +111,4 @@ def words(tokens):
         start = t.start
         only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
         for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
-            yield Token(t.start + start, t.start + end, t.type, val)
-
-
-def lowercase(tokens):
-    """Transform all token.val to lowercase."""
-    for t in tokens:
-        t.val = t.val.lower()
-        yield t
+Z           yield Token(t.start + start, t.start + end, t.type, val)
