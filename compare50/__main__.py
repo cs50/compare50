@@ -15,115 +15,79 @@ import attr
 import patoolib
 import lib50
 import multiprocessing
+import tqdm
 
 from . import html_renderer
 from . import api, errors, data, comparators
 
-
-# import tqdm
-# class ProgressBar:
-#     """Show a progress bar starting with message."""
-#     STOP_SIGNAL = None
-#     UPDATE_SIGNAL = 1
-#
-#     def __init__(self, message, total=None):
-#         self._message = message
-#         self._process = None
-#         self._total = total
-#
-#     def stop(self):
-#         """Stop the progress bar."""
-#         self._message_queue.put(ProgressBar.STOP_SIGNAL)
-#         self._process.join()
-#
-#     def new_bar(self, message, total=None):
-#         self._message_queue.put((message, total))
-#
-#     def update(self, amount=1):
-#         self._message_queue.put((ProgressBar.UPDATE_SIGNAL, amount))
-#
-#     def __enter__(self):
-#         def progress_runner(message, total, message_queue):
-#             bar = tqdm.tqdm(total=total)
-#             bar.write(message)
-#
-#             try:
-#                 while True:
-#                     while not message_queue.empty():
-#                         message = message_queue.get()
-#                         if message == ProgressBar.STOP_SIGNAL:
-#                             print()
-#                             return
-#                         elif message[0] == ProgressBar.UPDATE_SIGNAL:
-#                             bar.update(message[1])
-#                         else:
-#                             bar.close()
-#                             msg, total = message
-#                             bar = tqdm.tqdm(total=total)
-#                             bar.write(msg)
-#
-#                     if total == None:
-#                         time.sleep(.1)
-#                         bar.update()
-#                     else:
-#                         time.sleep(0.01)
-#             finally:
-#                 bar.close()
-#
-#         self._message_queue = multiprocessing.Queue()
-#         self._process = multiprocessing.Process(target=progress_runner, args=(self._message, self._total, self._message_queue,))
-#         self._process.start()
-#         return self
-#
-#     def __exit__(self, exc_type, exc_val, exc_tb):
-#         self.stop()
-
 class ProgressBar:
     """Show a progress bar starting with message."""
-    TICKS_PER_SECOND = 2
     STOP_SIGNAL = None
-    DISABLED = False
+    UPDATE_SIGNAL = 1
 
     def __init__(self, message):
         self._message = message
         self._process = None
+        self._percentage = 0
+        self._message_queue = multiprocessing.Queue()
 
-    def stop(self):
-        """Stop the progress bar."""
-        self._message_queue.put(ProgressBar.STOP_SIGNAL)
-        try:
-            self._process.join()
-        except AssertionError:
-            pass
+    def fill(self):
+        self.update(self.remaining_percent())
+
+    def remaining_percent(self):
+        return 100 - self._percentage
 
     def new_bar(self, message):
-        self._message_queue.put(message)
+        self.fill()
+        self._percentage = 0
+        self._message_queue.put((message, 100))
 
+    def update(self, amount=1):
+        if self._percentage + amount >= 100:
+            amount = 100 - self._percentage
+        self._percentage += amount
+        self._message_queue.put((ProgressBar.UPDATE_SIGNAL, amount))
+
+    def _start(self):
+        self.__enter__()
+
+    def _stop(self):
+        """Stop the progress bar."""
+        self.fill()
+        self._message_queue.put(ProgressBar.STOP_SIGNAL)
+        self._process.join()
+        
     def __enter__(self):
-        def progress_runner(message, message_queue):
-            print(f"{message}...", end="", flush=True)
+        def progress_runner(message, total, message_queue):
+            bar = tqdm.tqdm(total=total)
+            bar.write(message)
 
-            while True:
-                if not message_queue.empty():
-                    message = message_queue.get()
-                    print()
+            try:
+                while True:
+                    while not message_queue.empty():
+                        message = message_queue.get()
+                        if message == ProgressBar.STOP_SIGNAL:
+                            print()
+                            return
+                        elif message[0] == ProgressBar.UPDATE_SIGNAL:
+                            bar.update(message[1])
+                        else:
+                            bar.close()
+                            msg, total = message
+                            bar = tqdm.tqdm(total=total)
+                            bar.write(msg)
 
-                    if message == ProgressBar.STOP_SIGNAL:
-                        break
+                    time.sleep(0.1)
+            finally:
+                bar.close()
 
-                    print(f"{message}...", end="", flush=True)
-
-                print(".", end="", flush=True)
-                time.sleep(1 / ProgressBar.TICKS_PER_SECOND if ProgressBar.TICKS_PER_SECOND else 0)
-
-        self._message_queue = multiprocessing.Queue()
-        self._process = multiprocessing.Process(target=progress_runner, args=(self._message, self._message_queue,))
-        if not self.DISABLED:
-            self._process.start()
+        self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
+        self._process.start()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.stop()
+
 
 def excepthook(cls, exc, tb):
     if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
@@ -388,19 +352,24 @@ def main():
         # ProgressBar.DISABLED = True
 
     with profiler():
-        # Collect all submissions, archive submissions and distro files
-        with ProgressBar("Preparing") as progress_bar:
+        try:
+            api.__PROGRESS_BAR__ = ProgressBar("Preparing")
+
+            api.progress_bar()._start()
+            # Collect all submissions, archive submissions and distro files
             subs = submission_factory.get_all(args.submissions, preprocessor)
+            api.progress_bar().update(33)
             archive_subs = submission_factory.get_all(args.archive, preprocessor)
+            api.progress_bar().update(33)
             ignored_subs = submission_factory.get_all(args.distro, preprocessor)
             ignored_files = [f for sub in ignored_subs for f in sub.files]
 
             # Cross compare and rank all submissions, keep only top `n`
-            progress_bar.new_bar("Ranking")
+            api.progress_bar().new_bar("Ranking")
             submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
 
             # Get the matching spans, group them per submission
-            progress_bar.new_bar("Comparing")
+            api.progress_bar().new_bar("Comparing")
             for pass_ in passes:
                 preprocessor = Preprocessor(pass_.preprocessors)
                 for sub in subs + archive_subs + ignored_subs:
@@ -408,11 +377,15 @@ def main():
                 groups = api.create_groups(submission_matches, ignored_files, pass_.comparator)
 
             # Render results
-            progress_bar.new_bar("Rendering")
+            api.progress_bar().new_bar("Rendering")
             html_renderer.render(groups, dest=args.output)
 
-        print_results(submission_matches)
+        finally:
+            api.progress_bar()._stop()
+            api.__PROGRESS_BAR__ = ProgressBar("Preparing")
 
+
+        print_results(submission_matches)
 
 if __name__ == "__main__":
     main()

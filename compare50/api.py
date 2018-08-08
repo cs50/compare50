@@ -7,7 +7,9 @@ import intervaltree
 import concurrent.futures
 from .data import SubmissionMatch, Submission, Span, SpanMatch, Group, BisectList
 
-__all__ = ["rank_submissions", "create_groups", "missing_spans", "expand"]
+__all__ = ["rank_submissions", "create_groups", "missing_spans", "expand", "progress_bar"]
+
+__PROGRESS_BAR__ = None
 
 
 def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
@@ -20,6 +22,8 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
 
 def create_groups(submission_matches, ignored_files, comparator):
     """Find all shared groups between submission_matches."""
+    global Executor
+    Executor = FauxExecutor
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
     sub_match_to_groups = {}
@@ -47,7 +51,7 @@ def create_groups(submission_matches, ignored_files, comparator):
 
         sub_match_to_ignored_spans[(sub_a, sub_b)] = new_ignored_spans
         sub_match_to_groups[(sub_a, sub_b)] = _group_span_matches(span_matches)
-
+    Executor = concurrent.futures.ProcessPoolExecutor
     return [(sm.sub_a,
              sm.sub_b,
              sub_match_to_groups[(sm.sub_a, sm.sub_b)],
@@ -148,6 +152,10 @@ def expand(span_matches, tokens_a, tokens_b):
 
     # print(expanded_span_matches)
     return list(expanded_span_matches)
+
+
+def progress_bar():
+    return __PROGRESS_BAR__
 
 
 def _flatten_spans(spans):
