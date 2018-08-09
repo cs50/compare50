@@ -68,19 +68,37 @@ class _RenderFile:
         submissions = []
         for submission in (sub_a, sub_b):
             file_list = []
+
+            sub_chars_in_group = 0
+            sub_unignored_chars = 0
+
             for file in submission.files:
                 frag_list = []
+                file_chars_in_group = 0
+                file_unignored_chars = 0
                 for fragment in fragmentize(file, file_to_spans[file]):
+                    frag_bytes = sum(len(line) for line in fragment.content)
                     frag_id = f"frag{frag_id_counter}"
                     frag_id_counter += 1
                     is_ignored = any(span in ignored_spans for span in fragment.spans)
+
+                    if not is_ignored:
+                        file_unignored_chars += frag_bytes
+
                     frag_list.append((frag_id, fragment.content, is_ignored))
 
                     # If span is part of a group, add
                     if any(span not in ignored_spans for span in fragment.spans):
-                        fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans if span not in ignored_spans]
-                file_list.append((str(file.name), frag_list))
-            submissions.append((str(submission.path), file_list))
+                        if not is_ignored:
+                             file_chars_in_group += frag_bytes
+
+                    fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans if span not in ignored_spans]
+
+                sub_chars_in_group += file_chars_in_group
+                sub_unignored_chars += file_unignored_chars
+                file_list.append((str(file.name), frag_list, self._percentage(file_chars_in_group, file_unignored_chars)))
+
+            submissions.append((str(submission.path), file_list, self._percentage(sub_chars_in_group, sub_unignored_chars)))
 
         content = self._read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
 
@@ -100,6 +118,14 @@ class _RenderFile:
     def _read_file(fname):
         with open(fname) as f:
             return f.read()
+
+
+    @staticmethod
+    def _percentage(numerator, denominator, on_error=0):
+        try:
+            return round(numerator / denominator * 100)
+        except ZeroDivisionError:
+            return on_error
 
 
     @staticmethod

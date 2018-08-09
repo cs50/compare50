@@ -14,16 +14,16 @@
             <div class="row sticky-top bg-dark text-light" id="sub_names">
                 {% for sub in sub_a, sub_b %}
                     <div class="col-sm-6 col-2 sub_name">
-                        <h5>{{sub[0]}}</h5>
+                        <h5>{{sub[0]}} ({{sub[2]}}%)</h5>
                     </div>
                 {% endfor %}
             </div>
             <div class="row" id="diff">
                 {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
                     <div class="col-sm-6 col-2" id="{{side}}">
-                        {% for file, frags in sub[1] %}
+                        {% for file, frags, percentage in sub[1] %}
                             <div class="submission-file">
-                                <h4 class="file_name">{{file}}</h4>
+                                <h4 class="file_name">{{file}} <span class="text-secondary small">({{percentage}}%)</span></h4>
                                     <pre>
                                         {%- set ns = namespace(is_newline=true) -%}
                                         {%- for id, contents, is_ignored in frags -%}
