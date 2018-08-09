@@ -268,18 +268,22 @@ class _ProgressBar:
         self._resolution = 2
 
     def fill(self):
+        """Fill the progress bar to 100%."""
         self.update(self.remaining_percentage)
 
     @property
     def remaining_percentage(self):
+        """Percentage remaining on progress bar."""
         return 100 - self._percentage
 
     def new_bar(self, message):
+        """Fill the current bar, and create a new bar with message."""
         self.fill()
         self._percentage = 0
         self._message_queue.put((message, 100))
 
     def update(self, amount=1):
+        """Update the progress bar with amount."""
         self._update += amount
         if self._update < self._resolution:
             return
@@ -293,6 +297,9 @@ class _ProgressBar:
         self._message_queue.put((_ProgressBar.UPDATE_SIGNAL, amount))
 
     def _start(self):
+        """Spawn a new process that runs a progress bar."""
+        if self._process and self._process.is_alive():
+            self._stop()
         self.__enter__()
 
     def _stop(self):
