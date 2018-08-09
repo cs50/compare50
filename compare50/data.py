@@ -80,13 +80,13 @@ class IdStore(Mapping):
         return len(self.objects)
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True, frozen=True)
 class Submission:
     _store = IdStore(key=lambda sub: (sub.path, sub.files))
 
-    path = attr.ib(converter=pathlib.Path, hash=False, cmp=False)
-    files = attr.ib(hash=False, cmp=False)
-    preprocessor = attr.ib(default=lambda tokens: tokens, hash=False, cmp=False, repr=False)
+    path = attr.ib(converter=pathlib.Path, cmp=False)
+    files = attr.ib(cmp=False)
+    preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     id = attr.ib(init=False)
 
     def __attrs_post_init__(self):
@@ -101,13 +101,13 @@ class Submission:
         return cls._store.objects[id]
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True, frozen=True)
 class File:
     _lexer_cache = {}
     _store = IdStore(key=lambda file: file.path)
 
-    name = attr.ib(converter=pathlib.Path, cmp=False, hash=False)
-    submission = attr.ib(cmp=False, hash=False)
+    name = attr.ib(converter=pathlib.Path, cmp=False)
+    submission = attr.ib(cmp=False)
     id = attr.ib(default=attr.Factory(lambda self: self._store[self], takes_self=True), init=False)
 
     @property
@@ -161,7 +161,7 @@ class File:
         return tokens
 
 
-@attr.s(slots=True, frozen=True, hash=True, repr=False)
+@attr.s(slots=True, frozen=True, repr=False)
 class Span:
     """
     Represents a range of characters in a particular file.
@@ -187,14 +187,14 @@ class Span:
 class Comparison:
     sub_a = attr.ib(validator=attr.validators.instance_of(Submission))
     sub_b = attr.ib(validator=attr.validators.instance_of(Submission))
-    span_matches = attr.ib(default=attr.Factory(list))
-    ignored_spans = attr.ib(default=attr.Factory(list))
+    span_matches = attr.ib(factory=list)
+    ignored_spans = attr.ib(factory=list)
 
 
 @attr.s(slots=True)
 class Score:
-    sub_a = attr.ib(validator=attr.validators.instance_of(Submission))
-    sub_b = attr.ib(validator=attr.validators.instance_of(Submission))
+    sub_a = attr.ib(validator=attr.validators.instance_of(Submission), cmp=False)
+    sub_b = attr.ib(validator=attr.validators.instance_of(Submission), cmp=False)
     score = attr.ib(default=0, validator=attr.validators.instance_of(numbers.Number))
 
 
@@ -209,7 +209,7 @@ def _sorted_subs(group):
             return (span.file.submission, sub)
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True, frozen=True)
 class Group:
     spans = attr.ib(converter=frozenset)
     _subs = attr.ib(init=False, default=attr.Factory(_sorted_subs, takes_self=True))
@@ -231,7 +231,7 @@ class Group:
         return {span.file for span in self.spans if span.file.submission == self.sub_b}
 
 
-@attr.s(slots=True, cmp=True)
+@attr.s(slots=True)
 class Token:
     """A result of the lexical analysis of a file. Preprocessors operate
     on Token streams.
@@ -251,7 +251,7 @@ class Token:
         return self.val == other.val and self.type == other.type
 
 
-@attr.s(slots=True, frozen=True, hash=True)
+@attr.s(slots=True, frozen=True)
 class MatchResult:
     """The result of a comparison between two submissions.
 
