@@ -236,11 +236,6 @@ function init_objects() {
 
 document.addEventListener("DOMContentLoaded", event => {
     reverse_maps();
-    console.log("GROUP_TO_SPANS", GROUP_TO_SPANS);
-    console.log("SPAN_TO_FRAGMENTS", SPAN_TO_FRAGMENTS);
-    console.log("SPAN_TO_GROUP", SPAN_TO_GROUP);
-    console.log("FRAGMENT_TO_SPANS", FRAGMENT_TO_SPANS);
-
     let [fragments, spans, groups] = init_objects().map(Object.values)
     add_mouse_over_listeners(fragments);
     add_click_listeners(fragments);
