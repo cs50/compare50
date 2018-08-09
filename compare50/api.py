@@ -310,7 +310,8 @@ class _ProgressBar:
 
     def __enter__(self):
         def progress_runner(message, total, message_queue):
-            bar = tqdm.tqdm(total=total)
+            format = '{l_bar}{bar}|[{elapsed}<{remaining}s]'
+            bar = tqdm.tqdm(total=total, bar_format=format)
             bar.write(message)
 
             try:
@@ -324,7 +325,7 @@ class _ProgressBar:
                         else:
                             bar.close()
                             msg, total = message
-                            bar = tqdm.tqdm(total=total)
+                            bar = tqdm.tqdm(total=total, bar_format=format)
                             bar.write(msg)
 
                     time.sleep(0.1)
