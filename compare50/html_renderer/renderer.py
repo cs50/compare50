@@ -21,7 +21,7 @@ class Fragment:
 def render(submission_groups, dest="html"):
     with api.Executor() as executor:
         update_percentage = api.progress_bar().remaining_percentage / len(submission_groups)
-        for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups)):
+        for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             api.progress_bar().update(update_percentage)

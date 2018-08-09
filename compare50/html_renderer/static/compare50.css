@@ -3,17 +3,13 @@ body, h1, h4, h5 {
     counter-reset: line_numbers;
 }
 
-pre {
-  overflow-y: hidden;
-}
-
 .sub_name {
     height: 2em;
     margin-top: 0.33em;
 }
 
 #diff {
-    height: calc(100% - 2em);
+    height: calc(100% - 2.33em);
 }
 
 #left {
