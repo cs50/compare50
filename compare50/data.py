@@ -246,9 +246,9 @@ class Token:
     type = attr.ib()
     val = attr.ib()
 
-    # def __eq__(self, other):
-        # """Note that there is no sanity checking, sacrificed for performance."""
-        # return self.val == other.val and self.type == other.type
+    def __eq__(self, other):
+        """Note that there is no sanity checking, sacrificed for performance."""
+        return self.val == other.val and self.type == other.type
 
 
 class BisectList(Sequence):
