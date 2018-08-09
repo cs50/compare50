@@ -105,10 +105,10 @@ class ListAction(argparse.Action):
         super().__init__(option_strings, dest=dest, nargs=0, default=default, help=help)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        indentation = "    "
-        for cfg in data.Pass._get_all():
-            print(str(cfg.__name__))
-            for line in textwrap.wrap(cfg.description, 80 - len(indentation)):
+        indentation = " " * 4
+        for pass_ in data.Pass._get_all():
+            print(str(pass_.__name__))
+            for line in textwrap.wrap(pass_.__doc__ or "No description provided", 80 - len(indentation)):
                 print("{}{}".format(indentation, line))
         parser.exit()
 
@@ -260,12 +260,12 @@ def main():
 
     # Extract comparator and preprocessors from pass
     try:
-        passes = [data.Pass.get(pass_) for pass_ in args.passes]
+        passes = [data.Pass._get(pass_) for pass_ in args.passes]
         if not passes:
-            passes = [data.Pass.get(None)]
+            passes = [data.Pass._get(None)]
     except KeyError:
         raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(args.pass_, [c.__name__ for c in data.Pass.get_all()]))
+                            .format(args.pass_, [c.__name__ for c in data.Pass._get_all()]))
 
     score_func = passes[0].comparator.score
     preprocessor = Preprocessor(passes[0].preprocessors)

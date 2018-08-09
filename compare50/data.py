@@ -24,22 +24,18 @@ class _PassRegistry(abc.ABCMeta):
         return cls
 
     @staticmethod
-    def get(name=None):
+    def _get(name=None):
         if name is None:
             name = _PassRegistry.default
         return _PassRegistry.passes[name]
 
     @staticmethod
-    def get_all():
+    def _get_all():
         return list(_PassRegistry.passes.values())
 
 
 class Pass(metaclass=_PassRegistry):
     __register = False
-
-    @abc.abstractmethod
-    def description(self):
-        pass
 
     @abc.abstractmethod
     def preprocessors(self):

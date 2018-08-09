@@ -6,14 +6,15 @@ from . import misspellings
 
 
 class StripWhitespace(Pass):
-    description = "Remove all whitespace, then run Winnowing with k=40, t=60."
+    """Remove all whitespace, then run Winnowing with k=40, t=60."""
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.by_character]
     comparator = winnowing.Winnowing(k=40, t=60)
 
 
 class StripAll(Pass):
-    description = "Remove all whitespace, norm all comments/ids/strings, then run Winnowing with k=25, t=35."
+    """Remove all whitespace, normalize all comments/ids/strings, then run Winnowing with k=25, t=35."""
+
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
                      preprocessors.normalize_identifiers,
@@ -23,7 +24,8 @@ class StripAll(Pass):
 
 
 class EnglishMisspellings(Pass):
-    description = "Compare for english word misspellings."
+    """Compare for English word misspellings."""
+
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,
                      preprocessors.words]
