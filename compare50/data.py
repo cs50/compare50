@@ -251,24 +251,6 @@ class Token:
         # return self.val == other.val and self.type == other.type
 
 
-@attr.s(slots=True, frozen=True)
-class MatchResult:
-    """The result of a comparison between two submissions.
-
-    a - the ID of the first compared submission
-    b - the ID of the second compared submission. Must be greater than `a`.
-    score - bigger means more similar. The exact meaning depends on
-        the comparator used.
-    spans - a list of spans representing fragments that are shared
-        between `a` and `b`.
-    """
-
-    a = attr.ib()
-    b = attr.ib()
-    score = attr.ib()
-    spans = attr.ib(repr=False)
-
-
 class BisectList(Sequence):
     def __init__(self, iter=None, key=lambda x: x):
         self.contents = sorted(iter, key=key) if iter is not None else []
