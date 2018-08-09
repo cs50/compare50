@@ -20,13 +20,30 @@ class Fragment:
 
 def render(submission_groups_list, dest="html"):
     submission_groups = submission_groups_list[-1]
+    dest = pathlib.Path(dest).resolve()
 
     with api.Executor() as executor:
-        update_percentage = api.progress_bar().remaining_percentage / len(submission_groups)
+        update_percentage = api.progress_bar().remaining_percentage / (len(submission_groups) + 1)
+        _render_file = _RenderFile(dest)
         for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             api.progress_bar().update(update_percentage)
+
+
+    src = pathlib.Path(__file__).absolute().parent
+    with open(src / "templates" / "index.html") as f:
+        index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+
+    # Render
+    rendered_html = index_template.render(css=_render_file.css[:-1], scores=[group[0] for group in submission_groups], dest=dest)
+
+    with open(dest / "index.html", "w") as f:
+        f.write(rendered_html)
+    api.progress_bar().update(update_percentage)
+
+
+
 
 
 def fragmentize(file, spans):
@@ -47,7 +64,7 @@ class _RenderFile:
         self.css = (fonts, bootstrap, css)
 
     def __call__(self, args):
-        match_id, (sub_a, sub_b, groups, ignored_spans) = args
+        match_id, (score, groups, ignored_spans) = args
         frag_id_counter = 0
         span_ids = data.IdStore()
         group_ids = data.IdStore()
@@ -68,7 +85,7 @@ class _RenderFile:
         ignored_spans = set(ignored_spans)
 
         submissions = []
-        for submission in (sub_a, sub_b):
+        for submission in (score.sub_a, score.sub_b):
             file_list = []
 
             sub_chars_in_group = 0
@@ -79,12 +96,12 @@ class _RenderFile:
                 file_chars_in_group = 0
                 file_unignored_chars = 0
                 for fragment in fragmentize(file, file_to_spans[file]):
-                    frag_bytes = sum(len(line) for line in fragment.content)
                     frag_id = f"frag{frag_id_counter}"
                     frag_id_counter += 1
                     is_ignored = any(span in ignored_spans for span in fragment.spans)
 
                     if not is_ignored:
+                        frag_bytes = sum(len(line) for line in fragment.content)
                         file_unignored_chars += frag_bytes
 
                     frag_list.append((frag_id, fragment.content, is_ignored))

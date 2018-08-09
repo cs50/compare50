@@ -57,8 +57,7 @@ def create_groups(scores, ignored_files, comparator):
         sub_match = (score.sub_a, score.sub_b)
         if sub_match not in sub_match_to_groups:
             continue
-        result.append((score.sub_a,
-                       score.sub_b,
+        result.append((score,
                        sub_match_to_groups[sub_match],
                        sub_match_to_ignored_spans[sub_match]))
 
