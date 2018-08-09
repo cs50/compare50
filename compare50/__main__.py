@@ -295,7 +295,7 @@ def main():
             ignored_files = [f for sub in ignored_subs for f in sub.files]
 
             # Cross compare and rank all submissions, keep only top `n`
-            api.progress_bar().new_bar("Ranking")
+            api.progress_bar().new_bar("Scoring")
             submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
 
             # Get the matching spans, group them per submission
@@ -314,7 +314,7 @@ def main():
             api.progress_bar()._stop()
             api.__PROGRESS_BAR__ = None
 
-        print_results(submission_matches)
+        # print_results(submission_matches)
 
 if __name__ == "__main__":
     main()
