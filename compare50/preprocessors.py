@@ -38,17 +38,23 @@ def normalize_identifiers(tokens):
 
 def normalize_string_literals(tokens):
     """Replaces string literals with empty strings"""
-    prev_tok = Token(None, None, None, None)
+    string_token = None
     for tok in tokens:
         if tok.type in String:
-            if prev_tok.type not in String:
-                yield tok
-        elif prev_tok.type in String:
-            yield prev_tok
-            yield tok
+            if string_token is None:
+                string_token = attr.evolve(tok, val='""')
+            elif tok.type == string_token.type:
+                string_token.end = tok.end
+            else:
+                yield string_token
+                string_token = attr.evolve(tok, val='""')
         else:
+            if string_token is not None:
+                yield string_token
+                string_token = None
             yield tok
-        prev_tok = tok
+
+
 
 def normalize_numeric_literals(tokens):
     """Replaces numeric literals with their types"""

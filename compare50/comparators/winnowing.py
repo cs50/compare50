@@ -88,7 +88,10 @@ class Winnowing(Comparator):
             for file in sub:
                 file_tokens[file] = file.tokens()
 
-        update_percentage = api.progress_bar().remaining_percentage / len(scores)
+        try:
+            update_percentage = api.progress_bar().remaining_percentage / len(scores)
+        except ZeroDivisionError:
+            pass
 
         comparisons = []
         for comparison in map(self._compare(self.k, self.t, ignored_index, file_tokens), scores):
@@ -222,7 +225,10 @@ class CrossCompareIndex(Index):
         # Find common fingerprints (hashes)
         common_hashes = set(self._index) & set(other._index)
 
-        update_percentage = api.progress_bar().remaining_percentage / len(common_hashes)
+        try:
+            update_percentage = api.progress_bar().remaining_percentage / len(common_hashes)
+        except ZeroDivisionError:
+            pass
 
         for hash_ in common_hashes:
             api.progress_bar().update(update_percentage)
