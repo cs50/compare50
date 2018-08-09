@@ -8,6 +8,10 @@ body, h1, h4, h5 {
     margin-top: 0.33em;
 }
 
+pre {
+    overflow-y: hidden;
+}
+
 #diff {
     height: calc(100% - 2.33em);
 }
