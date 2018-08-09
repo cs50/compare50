@@ -2,12 +2,14 @@ import collections
 import heapq
 import itertools
 import multiprocessing
-import tqdm
 import time
+
 import intervaltree
+import tqdm
 
 import concurrent.futures
 from .data import Submission, Span, Group, BisectList
+
 
 __all__ = ["rank_submissions", "create_groups", "missing_spans", "expand", "progress_bar"]
 
@@ -19,7 +21,7 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     scores = comparator.score(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
-    return heapq.nlargest(n, scores, lambda sub_match : sub_match.score)
+    return heapq.nlargest(n, scores)
 
 
 def create_groups(scores, ignored_files, comparator):
@@ -310,7 +312,7 @@ class _ProgressBar:
 
     def __enter__(self):
         def progress_runner(message, total, message_queue):
-            format = '{l_bar}{bar}|[{elapsed}<{remaining}s]'
+            format = '{l_bar}{bar}|[{elapsed} {remaining}s]'
             bar = tqdm.tqdm(total=total, bar_format=format)
             bar.write(message)
 
