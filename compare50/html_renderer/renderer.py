@@ -18,7 +18,9 @@ class Fragment:
     spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
 
-def render(submission_groups, dest="html"):
+def render(submission_groups_list, dest="html"):
+    submission_groups = submission_groups_list[-1]
+
     with api.Executor() as executor:
         update_percentage = api.progress_bar().remaining_percentage / len(submission_groups)
         for id, html in executor.map(_RenderFile(dest), enumerate(submission_groups, 1)):

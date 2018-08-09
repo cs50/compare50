@@ -31,6 +31,9 @@ def create_groups(scores, ignored_files, comparator):
     sub_match_to_groups = {}
 
     for comparison in comparator.compare(scores, ignored_files):
+        # No matches, skip
+        if not comparison.span_matches:
+            continue
 
         new_ignored_spans = []
         for sub in (comparison.sub_a, comparison.sub_b):
@@ -49,11 +52,17 @@ def create_groups(scores, ignored_files, comparator):
         sub_match_to_ignored_spans[(comparison.sub_a, comparison.sub_b)] = new_ignored_spans
         sub_match_to_groups[(comparison.sub_a, comparison.sub_b)] = _group_span_matches(comparison.span_matches)
 
-    return [(sm.sub_a,
-             sm.sub_b,
-             sub_match_to_groups.get((sm.sub_a, sm.sub_b), []),
-             sub_match_to_ignored_spans.get((sm.sub_a, sm.sub_b), []))
-            for sm in scores]
+    result = []
+    for score in scores:
+        sub_match = (score.sub_a, score.sub_b)
+        if sub_match not in sub_match_to_groups:
+            continue
+        result.append((score.sub_a,
+                       score.sub_b,
+                       sub_match_to_groups[sub_match],
+                       sub_match_to_ignored_spans[sub_match]))
+
+    return result
 
 
 def missing_spans(file, original_tokens=None, preprocessed_tokens=None):

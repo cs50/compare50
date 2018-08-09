@@ -300,11 +300,12 @@ def main():
 
             # Get the matching spans, group them per submission
             api.progress_bar().new_bar("Comparing")
+            groups = []
             for pass_ in passes:
                 preprocessor = Preprocessor(pass_.preprocessors)
                 for sub in subs + archive_subs + ignored_subs:
                     object.__setattr__(sub, "preprocessor", preprocessor)
-                groups = api.create_groups(submission_matches, ignored_files, pass_.comparator)
+                groups.append(api.create_groups(submission_matches, ignored_files, pass_.comparator))
 
             # Render results
             api.progress_bar().new_bar("Rendering")
