@@ -20,7 +20,7 @@
             </div>
             <div class="row" id="diff">
                 {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
-                    <div class="col-sm-6 col-2" id="{{side}}">
+                    <div class="col-sm-6 col-2 side" id="{{side}}">
                         {% for file, frags, percentage in sub[1] %}
                             <div class="submission-file">
                                 <h4 class="file_name">{{file}} <span class="text-secondary small">({{percentage}}%)</span></h4>

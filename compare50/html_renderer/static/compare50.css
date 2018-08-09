@@ -51,7 +51,12 @@ pre {
     cursor: pointer;
 }
 
+
 /* style code samples */
+.side .submission-file:first-child {
+  border-top: none;
+}
+
 .submission-file {
   border-top: 1px solid black;
   white-space: pre-wrap;
