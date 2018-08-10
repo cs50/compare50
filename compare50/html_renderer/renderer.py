@@ -51,7 +51,7 @@ def fragmentize(file, spans):
     return slicer.slice(file)
 
 
-# TODO: CLEAN THIS UP
+# TODO: FIX THIS CODE
 class _RenderFile:
     def __init__(self, dest):
         self._prepare_dest(dest)
