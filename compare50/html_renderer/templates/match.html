@@ -1,55 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        {% for style in css %}
-            <style>
-                {{style|safe}}
-            </style>
-        {% endfor %}
-    </head>
-    <body>
-        <div class="container-fluid h-100">
-            <div class="row sticky-top bg-dark text-light" id="sub_names">
-                {% for sub in sub_a, sub_b %}
-                    <div class="col-sm-6 col-2 sub_name">
-                        <h5>{{sub[0]}} ({{sub[2]}}%)</h5>
-                    </div>
-                {% endfor %}
-            </div>
-            <div class="row" id="diff">
-                {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
-                    <div class="col-sm-6 col-2 side" id="{{side}}">
-                        {% for file, frags, percentage in sub[1] %}
-                            <div class="submission-file">
-                                <h4 class="file_name">{{file}} <span class="text-secondary small">({{percentage}}%)</span></h4>
-                                    <pre>
-                                        {%- set ns = namespace(is_newline=true) -%}
-                                        {%- for id, contents, is_ignored in frags -%}
-                                            <code class="fragment{{' text-muted' if is_ignored else ''}}" id="{{id}}">
-                                                {%- for line in contents -%}
-                                                    <code class="line{{' newline' if ns.is_newline else ''}}">{{line}}</code>
-                                                    {%- set ns.is_newline = line.endswith('\n') -%}
-                                                {%- endfor -%}
-                                            </code>
-                                        {%- endfor -%}
-                                    </pre>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-            </div>
+<div class="row sticky-top bg-dark text-light" id="sub_names">
+    {% for sub in sub_a, sub_b %}
+        <div class="col-sm-6 col-2 sub_name">
+            <h5>{{sub.name}} ({{sub.percentage}}%)</h5>
         </div>
-        <script>
-            var FRAGMENT_TO_SPANS = {{fragment_to_spans|tojson|safe}};
-            var SPAN_TO_GROUP = {{span_to_group|tojson|safe}};
-        </script>
-        {% for script in js %}
-            <script>
-                {{script|safe}}
-            </script>
-        {% endfor %}
-    </body>
-</html>
+    {% endfor %}
+</div>
+<div class="row" id="diff">
+    {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
+        <div class="col-sm-6 col-2 side" id="{{side}}">
+            {% for file in sub.files %}
+                <div class="submission-file">
+                    <h4 class="file_name">{{file.name}} <span class="text-secondary small">({{file.percentage}}%)</span></h4>
+                        <pre>
+                            {%- set ns = namespace(is_newline=true) -%}
+                            {%- for frag in file.fragments -%}
+                                <code class="fragment{{' text-muted' if frag.is_ignored else ''}}" id="{{frag.id}}">
+                                    {%- for line in frag.content -%}
+                                        <code class="line{{' newline' if ns.is_newline else ''}}">{{line}}</code>
+                                        {%- set ns.is_newline = line.endswith('\n') -%}
+                                    {%- endfor -%}
+                                </code>
+                            {%- endfor -%}
+                        </pre>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>

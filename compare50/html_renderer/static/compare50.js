@@ -68,7 +68,7 @@ class Fragment {
       frag.dom_element.classList.add("active_match");
     }
   }
-  
+
   highlight() {
     this.dom_element.classList.add("active_match");
   }
@@ -166,11 +166,10 @@ function reverse_maps() {
 
 function add_mouse_over_listeners(fragments) {
   let highlighted_frags = [];
-
+  
   fragments.filter(frag => frag.group !== null).forEach(frag => {
     frag.dom_element.addEventListener("mouseover", (event) => {
       highlighted_frags.forEach(f => f.unhighlight());
-
       highlighted_frags = frag.matching_fragments;
       highlighted_frags.forEach(f => f.highlight());
     }, false);
@@ -237,6 +236,7 @@ function init_objects() {
 document.addEventListener("DOMContentLoaded", event => {
     reverse_maps();
     let [fragments, spans, groups] = init_objects().map(Object.values)
+
     add_mouse_over_listeners(fragments);
     add_click_listeners(fragments);
 });

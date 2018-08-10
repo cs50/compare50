@@ -1,0 +1,6 @@
+<script>
+    {% for datum in data %}
+        var FRAGMENT_TO_SPANS = {{datum.fragment_to_spans|tojson|safe}};
+        var SPAN_TO_GROUP = {{datum.span_to_group|tojson|safe}};
+    {% endfor %}
+</script>
