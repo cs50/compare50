@@ -1,3 +1,5 @@
+import re
+
 import attr
 from pygments.token import Comment, Name, Number, String, Text
 from .data import Token
@@ -109,7 +111,7 @@ def comments(tokens):
 
     for t in tokens:
         if t.type == Comment.Single or t.type == Comment.Multiline:
-            return t
+            yield t
 
 def words(tokens):
     """Split Tokens into Tokens containing just one word."""

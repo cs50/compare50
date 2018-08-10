@@ -116,7 +116,7 @@ class Winnowing(Comparator):
             file_to_token_lists = {}
             file_to_indices = {}
 
-            for file in sub_a.files + sub_b.files:
+            for file in itertools.chain(sub_a.files, sub_b.files):
                 # List of list of tokens (each list is uninterupted by ignored content)
                 token_lists = self.ignored_index.unignored_tokens(file, tokens=self.file_tokens[file])
                 file_to_token_lists[file] = token_lists

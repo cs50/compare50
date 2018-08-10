@@ -243,11 +243,9 @@ def main():
     # Extract comparator and preprocessors from pass
     try:
         passes = [data.Pass._get(pass_) for pass_ in args.passes]
-        if not passes:
-            passes = [data.Pass._get(None)]
-    except KeyError:
+    except KeyError as e:
         raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(args.pass_, [c.__name__ for c in data.Pass._get_all()]))
+                            .format(e.args[0], [c.__name__ for c in data.Pass._get_all()]))
 
     score_func = passes[0].comparator.score
     preprocessor = Preprocessor(passes[0].preprocessors)
