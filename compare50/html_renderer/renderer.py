@@ -1,14 +1,13 @@
-import pygments
-from pygments.formatters import HtmlFormatter, TerminalFormatter
 import collections
-import attr
 import glob
 import os
-import shutil
 import pathlib
-import concurrent.futures as futures
+import shutil
 
+import attr
 import jinja2
+import pygments
+from pygments.formatters import HtmlFormatter, TerminalFormatter
 
 from .. import data, api
 
@@ -18,7 +17,7 @@ class Fragment:
     spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
 
 
-def render(submission_groups_list, dest="html"):
+def render(submission_groups_list, dest):
     submission_groups = submission_groups_list[-1]
     dest = pathlib.Path(dest)
 
@@ -52,6 +51,7 @@ def fragmentize(file, spans):
     return slicer.slice(file)
 
 
+# TODO: CLEAN THIS UP
 class _RenderFile:
     def __init__(self, dest):
         self._prepare_dest(dest)
@@ -110,7 +110,7 @@ class _RenderFile:
                         if not is_ignored:
                              file_chars_in_group += frag_bytes
 
-                    fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans if span not in ignored_spans]
+                        fragment_to_spans[frag_id] = [span_ids[span] for span in fragment.spans if span not in ignored_spans]
 
                 sub_chars_in_group += file_chars_in_group
                 sub_unignored_chars += file_unignored_chars
