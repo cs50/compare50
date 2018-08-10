@@ -124,6 +124,9 @@ class _RenderTask:
 
     def __call__(self, arg):
         match_id, results = arg
+        data = []
+        match_htmls = []
+
         for result in results:
             score = result.score
             groups = result.groups
@@ -145,24 +148,23 @@ class _RenderTask:
 
             all_html_fragments = [frag for file in sub_a.files for frag in file.fragments] +\
                                  [frag for file in sub_b.files for frag in file.fragments]
-            json_data = renderer.data(all_html_fragments, groups, ignored_spans)
 
-            data_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/data.html")
-            data_template = jinja2.Template(data_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-            data_rendered_html = data_template.render(data=[json_data])
+            data.append(renderer.data(all_html_fragments, groups, ignored_spans))
 
             match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
             match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-            match_rendered_html = match_template.render(sub_a=sub_a, sub_b=sub_b)
+            match_html = match_template.render(sub_a=sub_a, sub_b=sub_b)
+            match_htmls.append(match_html)
 
-            page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
-            page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-            page_rendered_html = page_template.render(match=match_rendered_html,
-                                            data=data_rendered_html,
-                                            js=self.js,
-                                            css=self.css)
+        data_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/data.html")
+        data_template = jinja2.Template(data_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+        data_html = data_template.render(data=data)
 
-            return match_id, page_rendered_html
+        page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
+        page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+        page_html = page_template.render(matches=match_htmls, data=data_html, js=self.js, css=self.css)
+
+        return match_id, page_html
 
     @staticmethod
     def _prepare_dest(dest):

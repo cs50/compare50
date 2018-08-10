@@ -11,8 +11,10 @@
     </head>
     <body>
         <div class="container-fluid h-100">
-            <!-- MATCH -->
-            {{match|safe}}
+            {% for match in matches %}
+                <!-- MATCH -->
+                {{match|safe}}
+            {% endfor %}
         </div>
         <!-- DATA -->
         {{data|safe}}
