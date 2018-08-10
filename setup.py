@@ -11,7 +11,7 @@ setup(
     ],
     license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
-    install_requires=["attrs", "astropy", "intervaltree", "numpy", "pygments", "jinja2", "termcolor", "tqdm"],
+    install_requires=["attrs", "intervaltree", "numpy", "pygments", "jinja2", "termcolor", "tqdm"],
     keywords=["compare", "compare50"],
     name="compare50",
     python_requires=">=3.5",

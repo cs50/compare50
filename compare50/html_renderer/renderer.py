@@ -20,7 +20,7 @@ class Fragment:
 
 def render(submission_groups_list, dest="html"):
     submission_groups = submission_groups_list[-1]
-    dest = pathlib.Path(dest).resolve()
+    dest = pathlib.Path(dest)
 
     with api.Executor() as executor:
         update_percentage = api.progress_bar().remaining_percentage / (len(submission_groups) + 1)
@@ -41,8 +41,7 @@ def render(submission_groups_list, dest="html"):
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
     api.progress_bar().update(update_percentage)
-
-
+    return dest / "index.html"
 
 
 

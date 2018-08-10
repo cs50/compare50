@@ -3,7 +3,6 @@ import contextlib
 import os
 import pathlib
 import tempfile
-import termcolor
 import textwrap
 import shutil
 import attr
@@ -14,6 +13,7 @@ import time
 import attr
 import patoolib
 import lib50
+import termcolor
 
 from . import html_renderer
 from . import api, errors, data, comparators
@@ -134,24 +134,6 @@ class Preprocessor:
         for preprocessor in self.preprocessors:
             tokens = preprocessor(tokens)
         return tokens
-
-
-# Temporary function to print results as an ascii table
-def print_results(submission_matches):
-    from astropy.io import ascii
-    from astropy.table import Table
-
-
-    def fmt_match(arg):
-        id, sm = arg
-        return id, sm.sub_a.path.name, sm.sub_b.path.name, sm.score
-
-    if submission_matches:
-        rows = list(map(fmt_match, enumerate(submission_matches)))
-    else:
-        rows = [("-", "-", "-", "-")]
-    data = Table(rows=rows, names=("id", "Submission A", "Submission B", "Score"))
-    ascii.write(data, format="fixed_width")
 
 
 #TODO: remove this before we ship
@@ -309,13 +291,13 @@ def main():
 
             # Render results
             api.progress_bar().new_bar("Rendering")
-            html_renderer.render(groups, dest=args.output)
+            index = html_renderer.render(groups, dest=args.output)
 
         finally:
             api.progress_bar()._stop()
             api.__PROGRESS_BAR__ = None
 
-        # print_results(submission_matches)
+        termcolor.cprint(f"Done! See {index} for the results.", "green")
 
 if __name__ == "__main__":
     main()
