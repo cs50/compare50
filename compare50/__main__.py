@@ -297,7 +297,7 @@ def main():
             api.progress_bar()._stop()
             api.__PROGRESS_BAR__ = None
 
-        termcolor.cprint(f"Done! See {index} for the results.", "green")
+        termcolor.cprint(f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
 
 if __name__ == "__main__":
     main()

@@ -36,7 +36,7 @@ def render(submission_groups_list, dest="html"):
         index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render
-    rendered_html = index_template.render(css=_render_file.css[:-1], scores=[group[0] for group in submission_groups], dest=dest)
+    rendered_html = index_template.render(css=_render_file.css[:-1], scores=[group[0] for group in submission_groups], dest=dest.resolve())
 
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
