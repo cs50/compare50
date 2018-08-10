@@ -137,7 +137,7 @@ class Preprocessor:
 
 
 #TODO: remove this before we ship
-PROFILE = [ api.create_groups
+PROFILE = [ api.compare
           , comparators.winnowing.Winnowing.score
           , comparators.winnowing.Winnowing.compare
           , comparators.winnowing.Index.hashes
@@ -278,20 +278,21 @@ def main():
 
             # Cross compare and rank all submissions, keep only top `n`
             api.progress_bar().new_bar("Scoring")
-            submission_matches = api.rank_submissions(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
+            scores = api.rank(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
 
             # Get the matching spans, group them per submission
             api.progress_bar().new_bar("Comparing")
             groups = []
+            pass_to_results = {}
             for pass_ in passes:
                 preprocessor = Preprocessor(pass_.preprocessors)
                 for sub in subs + archive_subs + ignored_subs:
                     object.__setattr__(sub, "preprocessor", preprocessor)
-                groups.append(api.create_groups(submission_matches, ignored_files, pass_.comparator))
+                pass_to_results[pass_] = api.compare(scores, ignored_files, pass_.comparator)
 
             # Render results
             api.progress_bar().new_bar("Rendering")
-            index = html_renderer.render(groups, dest=args.output)
+            index = html_renderer.render(pass_to_results, dest=args.output)
 
         finally:
             api.progress_bar()._stop()

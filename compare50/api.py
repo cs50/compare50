@@ -8,15 +8,15 @@ import intervaltree
 import tqdm
 
 import concurrent.futures
-from .data import Submission, Span, Group, BisectList
+from .data import Submission, Span, Group, BisectList, Compare50Result
 
 
-__all__ = ["rank_submissions", "create_groups", "missing_spans", "expand", "progress_bar"]
+__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar"]
 
 _PROGRESS_BAR = None
 
 
-def rank_submissions(submissions, archive_submissions, ignored_files, comparator, n=50):
+def rank(submissions, archive_submissions, ignored_files, comparator, n=50):
     """Rank all submissions, take the top n."""
     scores = comparator.score(submissions, archive_submissions, ignored_files)
 
@@ -24,7 +24,7 @@ def rank_submissions(submissions, archive_submissions, ignored_files, comparator
     return heapq.nlargest(n, scores)
 
 
-def create_groups(scores, ignored_files, comparator):
+def compare(scores, ignored_files, comparator):
     """Find all shared groups between scores"""
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
@@ -52,16 +52,18 @@ def create_groups(scores, ignored_files, comparator):
         sub_match_to_ignored_spans[(comparison.sub_a, comparison.sub_b)] = new_ignored_spans
         sub_match_to_groups[(comparison.sub_a, comparison.sub_b)] = _group_span_matches(comparison.span_matches)
 
-    result = []
+    results = []
     for score in scores:
         sub_match = (score.sub_a, score.sub_b)
         if sub_match not in sub_match_to_groups:
             continue
-        result.append((score,
-                       sub_match_to_groups[sub_match],
-                       sub_match_to_ignored_spans[sub_match]))
+        results.append(Compare50Result(type(comparator).__name__,
+                                       comparator.score.__doc__,
+                                       score,
+                                       sub_match_to_groups[sub_match],
+                                       sub_match_to_ignored_spans[sub_match]))
 
-    return result
+    return results
 
 
 def missing_spans(file, original_tokens=None, preprocessed_tokens=None):

@@ -63,40 +63,44 @@ class HTML_Submission:
             return 0
 
 
-def render(submission_groups_list, dest):
-    submission_groups = submission_groups_list[-1]
+def render(pass_to_results, dest):
     dest = pathlib.Path(dest)
 
-    sub_match_to_submissions_groups = collections.defaultdict(list)
-    for submission_groups in submission_groups_list:
-        for sg in submission_groups:
-            score, groups, ignored_spans = sg
-            sub_match_to_submissions_groups[(score.sub_a, score.sub_b)].append(sg)
+    sub_pair_to_results = collections.defaultdict(list)
+    for results in pass_to_results.values():
+        for result in results:
+            sub_pair_to_results[(result.sub_a, result.sub_b)].append(result)
 
     # Sort by score
-    submission_groups = sorted(sub_match_to_submissions_groups.values(), key=lambda sg: sg[0], reverse=True)
+    results_per_sub_pair = sorted(sub_pair_to_results.values(), key=lambda res: res[0].score, reverse=True)
 
+    # Load static files
+    compare50_js, compare50_css, bootstrap, fonts = \
+        (read_file(pathlib.Path(__file__).absolute().parent / "static" / name)
+         for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
+
+    # Render all matches
     with api.Executor() as executor:
-        update_percentage = api.progress_bar().remaining_percentage / (len(submission_groups) + 1)
-        _render_file = _RenderTask(dest)
-        for id, html in executor.map(_RenderTask(dest), enumerate(submission_groups, 1)):
+        update_percentage = api.progress_bar().remaining_percentage / (len(results_per_sub_pair) + 1)
+        js = (compare50_js,)
+        css = (compare50_css, bootstrap, fonts)
+        for id, html in executor.map(_RenderTask(dest, js, css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             api.progress_bar().update(update_percentage)
 
-
+    # Create index
     src = pathlib.Path(__file__).absolute().parent
     with open(src / "templates" / "index.html") as f:
         index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
-    # Render
-    rendered_html = index_template.render(css=_render_file.css[:-1], scores=[group[0][0] for group in submission_groups], dest=dest.resolve())
-
+    # Render index
+    rendered_html = index_template.render(css=(compare50_css, bootstrap), scores=[result.score for result in results], dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
+
     api.progress_bar().update(update_percentage)
     return dest / "index.html"
-
 
 
 def fragmentize(file, spans):
@@ -106,20 +110,24 @@ def fragmentize(file, spans):
     return slicer.slice(file)
 
 
+def read_file(fname):
+    with open(fname) as f:
+        return f.read()
+
+
 class _RenderTask:
-    def __init__(self, dest):
+    def __init__(self, dest, js, css):
         self._prepare_dest(dest)
         self.dest = dest
-        src = pathlib.Path(__file__).absolute().parent
-        js, css, bootstrap, fonts = (self._read_file(src / "static" / name)
-                                     for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
-        self.js = (js,)
-        self.css = (fonts, bootstrap, css)
+        self.js = js
+        self.css = css
 
-    def __call__(self, args):
-        match_id, (submissions_groups) = args
-        for submission_group in submissions_groups:
-            score, groups, ignored_spans = submission_group
+    def __call__(self, arg):
+        match_id, results = arg
+        for result in results:
+            score = result.score
+            groups = result.groups
+            ignored_spans = result.ignored_spans
             renderer = _Renderer()
 
             file_to_spans = collections.defaultdict(list)
@@ -139,15 +147,15 @@ class _RenderTask:
                                  [frag for file in sub_b.files for frag in file.fragments]
             json_data = renderer.data(all_html_fragments, groups, ignored_spans)
 
-            data_content = self._read_file(pathlib.Path(__file__).absolute().parent / "templates/data.html")
+            data_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/data.html")
             data_template = jinja2.Template(data_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             data_rendered_html = data_template.render(data=[json_data])
 
-            match_content = self._read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
+            match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
             match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             match_rendered_html = match_template.render(sub_a=sub_a, sub_b=sub_b)
 
-            page_content = self._read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
+            page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
             page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             page_rendered_html = page_template.render(match=match_rendered_html,
                                             data=data_rendered_html,
@@ -155,11 +163,6 @@ class _RenderTask:
                                             css=self.css)
 
             return match_id, page_rendered_html
-
-    @staticmethod
-    def _read_file(fname):
-        with open(fname) as f:
-            return f.read()
 
     @staticmethod
     def _prepare_dest(dest):

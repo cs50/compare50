@@ -194,6 +194,23 @@ class Score:
     score = attr.ib(default=0, validator=attr.validators.instance_of(numbers.Number))
 
 
+@attr.s(slots=True)
+class Compare50Result:
+    name = attr.ib()
+    score_description = attr.ib()
+    score = attr.ib()
+    groups = attr.ib()
+    ignored_spans = attr.ib()
+
+    @property
+    def sub_a(self):
+        return self.score.sub_a
+
+    @property
+    def sub_b(self):
+        return self.score.sub_b
+
+
 def _sorted_subs(group):
     sub = None
     for span in group.spans:
