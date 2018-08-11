@@ -113,10 +113,19 @@ def comments(tokens):
         if t.type == Comment.Single or t.type == Comment.Multiline:
             yield t
 
+
 def words(tokens):
     """Split Tokens into Tokens containing just one word."""
     for t in tokens:
         start = t.start
         only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
         for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
+            yield Token(t.start + start, t.start + end, t.type, val)
+
+
+def split_on_whitespace(tokens):
+    """Split values of tokens on whitespace into new tokens"""
+    for t in tokens:
+        start = t.start
+        for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', t.val)]:
             yield Token(t.start + start, t.start + end, t.type, val)

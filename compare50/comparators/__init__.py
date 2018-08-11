@@ -8,7 +8,7 @@ from . import misspellings
 class StripWhitespace(Pass):
     """Remove all whitespace, then run Winnowing with k=40, t=60."""
     preprocessors = [preprocessors.strip_whitespace,
-                     preprocessors.by_character]
+                     preprocessors.split_on_whitespace]
     comparator = winnowing.Winnowing(k=40, t=60)
 
 
