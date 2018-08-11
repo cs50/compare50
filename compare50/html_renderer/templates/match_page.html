@@ -12,12 +12,13 @@
     <body>
         <div class="container-fluid h-100">
             {% for match in matches %}
-                <!-- MATCH -->
                 {{match|safe}}
             {% endfor %}
         </div>
-        <!-- DATA -->
-        {{data|safe}}
+
+        <script>
+            var DATA = {{data|tojson|safe}};
+        </script>
 
         {% for script in js %}
             <script>

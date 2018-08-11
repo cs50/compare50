@@ -137,7 +137,7 @@ class Fragment {
   }
 }
 
-function reverse_maps() {
+function init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP) {
   GROUP_TO_SPANS = {};
   Object.keys(SPAN_TO_GROUP).forEach(span => {
     let group = SPAN_TO_GROUP[span];
@@ -166,7 +166,7 @@ function reverse_maps() {
 
 function add_mouse_over_listeners(fragments) {
   let highlighted_frags = [];
-  
+
   fragments.filter(frag => frag.group !== null).forEach(frag => {
     frag.dom_element.addEventListener("mouseover", (event) => {
       highlighted_frags.forEach(f => f.unhighlight());
@@ -234,7 +234,9 @@ function init_objects() {
 }
 
 document.addEventListener("DOMContentLoaded", event => {
-    reverse_maps();
+    FRAGMENT_TO_SPANS = DATA[0][1]["fragment_to_spans"];
+    SPAN_TO_GROUP = DATA[0][1]["span_to_group"];
+    init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP);
     let [fragments, spans, groups] = init_objects().map(Object.values)
 
     add_mouse_over_listeners(fragments);

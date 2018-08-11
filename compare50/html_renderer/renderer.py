@@ -7,6 +7,7 @@ import shutil
 import attr
 import jinja2
 import pygments
+from json import JSONEncoder
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 
 from .. import api
@@ -19,7 +20,7 @@ class Fragment:
 
 
 @attr.s(slots=True)
-class Data:
+class Data(JSONEncoder):
     span_to_group = attr.ib()
     fragment_to_spans = attr.ib()
 
@@ -149,20 +150,16 @@ class _RenderTask:
             all_html_fragments = [frag for file in sub_a.files for frag in file.fragments] +\
                                  [frag for file in sub_b.files for frag in file.fragments]
 
-            data.append(renderer.data(all_html_fragments, groups, ignored_spans))
+            data.append((result.name, attr.asdict(renderer.data(all_html_fragments, groups, ignored_spans))))
 
             match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
             match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             match_html = match_template.render(sub_a=sub_a, sub_b=sub_b)
             match_htmls.append(match_html)
 
-        data_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/data.html")
-        data_template = jinja2.Template(data_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-        data_html = data_template.render(data=data)
-
         page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
         page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-        page_html = page_template.render(matches=match_htmls, data=data_html, js=self.js, css=self.css)
+        page_html = page_template.render(matches=match_htmls, data=data, js=self.js, css=self.css)
 
         return match_id, page_html
 
