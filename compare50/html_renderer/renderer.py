@@ -7,7 +7,6 @@ import shutil
 import attr
 import jinja2
 import pygments
-from json import JSONEncoder
 from pygments.formatters import HtmlFormatter, TerminalFormatter
 
 from .. import api
@@ -20,7 +19,7 @@ class Fragment:
 
 
 @attr.s(slots=True)
-class Data(JSONEncoder):
+class Data:
     span_to_group = attr.ib()
     fragment_to_spans = attr.ib()
 
