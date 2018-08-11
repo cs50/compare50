@@ -20,6 +20,7 @@ class Fragment:
 
 @attr.s(slots=True)
 class Data:
+    name = attr.ib()
     span_to_group = attr.ib()
     fragment_to_spans = attr.ib()
 
@@ -146,10 +147,8 @@ class _RenderTask:
             sub_a = renderer.html_submission(score.sub_a, file_to_spans, ignored_spans)
             sub_b = renderer.html_submission(score.sub_b, file_to_spans, ignored_spans)
 
-            all_html_fragments = [frag for file in sub_a.files for frag in file.fragments] +\
-                                 [frag for file in sub_b.files for frag in file.fragments]
-
-            data.append((result.name, attr.asdict(renderer.data(all_html_fragments, groups, ignored_spans))))
+            all_html_fragments = [frag for file in sub_a.files + sub_b.files for frag in file.fragments]
+            data.append(renderer.data(result, all_html_fragments, ignored_spans))
 
             match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
             match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
@@ -234,19 +233,19 @@ class _Renderer:
         num_chars = sum(f.num_chars for f in html_files)
         return HTML_Submission(str(submission.path), html_files, num_chars_matched, num_chars)
 
-    def data(self, html_fragments, groups, ignored_spans):
+    def data(self, result, html_fragments, ignored_spans):
         fragment_to_spans = {}
         for fragment in html_fragments:
             if fragment.is_grouped:
                 fragment_to_spans[fragment.id] = [self.span_id(span) for span in fragment.spans if span not in ignored_spans]
 
         span_to_group = {}
-        for group in groups:
+        for group in result.groups:
             group_id = self.group_id(group)
             for span in group.spans:
                 span_to_group[self.span_id(span)] = group_id
 
-        return Data(span_to_group, fragment_to_spans)
+        return attr.asdict(Data(result.name, span_to_group, fragment_to_spans))
 
 
 class _FragmentSlicer:

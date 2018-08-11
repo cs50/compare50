@@ -234,8 +234,9 @@ function init_objects() {
 }
 
 document.addEventListener("DOMContentLoaded", event => {
-    FRAGMENT_TO_SPANS = DATA[0][1]["fragment_to_spans"];
-    SPAN_TO_GROUP = DATA[0][1]["span_to_group"];
+    let name = DATA[0]["name"];
+    FRAGMENT_TO_SPANS = DATA[0]["fragment_to_spans"];
+    SPAN_TO_GROUP = DATA[0]["span_to_group"];
     init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP);
     let [fragments, spans, groups] = init_objects().map(Object.values)
 

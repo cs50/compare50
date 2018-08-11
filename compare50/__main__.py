@@ -275,14 +275,14 @@ def main():
             ignored_files = [f for sub in ignored_subs for f in sub.files]
 
             # Cross compare and rank all submissions, keep only top `n`
-            api.progress_bar().new_bar("Scoring")
+            api.progress_bar().new_bar(f"Scoring ({passes[0].__name__})")
             scores = api.rank(subs, archive_subs, ignored_files, passes[0].comparator, n=args.n)
 
             # Get the matching spans, group them per submission
-            api.progress_bar().new_bar("Comparing")
             groups = []
             pass_to_results = {}
             for pass_ in passes:
+                api.progress_bar().new_bar(f"Comparing ({pass_.__name__})")
                 preprocessor = Preprocessor(pass_.preprocessors)
                 for sub in subs + archive_subs + ignored_subs:
                     object.__setattr__(sub, "preprocessor", preprocessor)
