@@ -11,7 +11,6 @@ import traceback
 import time
 
 import attr
-import patoolib
 import lib50
 import termcolor
 
@@ -183,7 +182,7 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        default=["StripAll"],
+                        default=["Winnowing"],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,

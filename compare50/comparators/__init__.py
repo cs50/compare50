@@ -5,14 +5,14 @@ from . import winnowing
 from . import misspellings
 
 
-class StripWhitespace(Pass):
+class Winnowing_WS(Pass):
     """Remove all whitespace, then run Winnowing with k=40, t=60."""
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.split_on_whitespace]
     comparator = winnowing.Winnowing(k=40, t=60)
 
 
-class StripAll(Pass):
+class Winnowing(Pass):
     """Remove all whitespace, normalize all comments/ids/strings, then run Winnowing with k=25, t=35."""
 
     preprocessors = [preprocessors.strip_whitespace,

@@ -13,7 +13,6 @@ __all__ = ["Pass", "Comparator", "File", "Submission", "Pass", "Span", "Score", 
 
 
 class _PassRegistry(abc.ABCMeta):
-    default = "StripAll"
     passes = {}
     def __new__(mcls, name, bases, attrs):
         cls = abc.ABCMeta.__new__(mcls, name, bases, attrs)
@@ -24,9 +23,7 @@ class _PassRegistry(abc.ABCMeta):
         return cls
 
     @staticmethod
-    def _get(name=None):
-        if name is None:
-            name = _PassRegistry.default
+    def _get(name):
         return _PassRegistry.passes[name]
 
     @staticmethod
