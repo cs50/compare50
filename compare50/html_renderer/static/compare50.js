@@ -28,17 +28,17 @@ class Span {
 }
 
 class Fragment {
-  constructor(id) {
+  constructor(id, datum) {
     this.id = id;
     this.dom_element = document.getElementById(id);
     this.matching_fragments = [];
     this.span = null;
     this.group = null;
-    let left = document.getElementById("left");
+    let left = document.getElementById(DATUM.name + "left");
     if (left.contains(this.dom_element)) {
-        this.submission = left;
+      this.submission = left;
     } else {
-        this.submission = document.getElementById("right");
+      this.submission = document.getElementById(DATUM.name + "right");;
     }
     this.spans = [];
     return this;
@@ -137,7 +137,10 @@ class Fragment {
   }
 }
 
-function init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP) {
+function init_maps(datum) {
+  FRAGMENT_TO_SPANS = datum["fragment_to_spans"];
+  SPAN_TO_GROUP = datum["span_to_group"];
+
   GROUP_TO_SPANS = {};
   Object.keys(SPAN_TO_GROUP).forEach(span => {
     let group = SPAN_TO_GROUP[span];
@@ -162,6 +165,31 @@ function init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP) {
           FRAGMENT_TO_SPANS[frag] = null;
       }
   });
+}
+
+function init_objects() {
+  let frags = document.getElementById(DATUM.name).getElementsByClassName("fragment");
+  let fragments = {};
+  let spans = {};
+  let groups = {};
+
+  for (let frag of frags) {
+    fragments[frag.id] = new Fragment(frag.id);
+  }
+
+  for (let span_id of Object.keys(SPAN_TO_GROUP)) {
+    spans[span_id] = new Span(span_id);
+  }
+
+  for (let group_id of Object.keys(GROUP_TO_SPANS)) {
+    groups[group_id] = new Group(group_id);
+  }
+
+  Object.values(fragments).forEach(frag => frag.init(fragments, spans, groups));
+  Object.values(spans).forEach(span => span.init(fragments, spans, groups));
+  Object.values(groups).forEach(group => group.init(fragments, spans, groups));
+
+  return [fragments, spans, groups];
 }
 
 function add_mouse_over_listeners(fragments) {
@@ -192,7 +220,7 @@ function add_click_listeners(fragments) {
       return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
     });
 
-    let title_height = document.getElementById("sub_names").clientHeight;
+    let title_height = document.getElementById(DATUM.name + "sub_names").clientHeight;
 
     // Jump to next span when clicked
     frag.dom_element.addEventListener("click", event => {
@@ -208,38 +236,22 @@ function add_click_listeners(fragments) {
   });
 }
 
-function init_objects() {
-  let frags = document.getElementsByClassName("fragment");
-  let fragments = {};
-  let spans = {};
-  let groups = {};
+function select_view(datum) {
+  DATUM = datum;
 
-  for (let frag of frags) {
-    fragments[frag.id] = new Fragment(frag.id);
+  let views = document.getElementsByClassName("view");
+  for (let v of views) {
+    v.style.display = "none";
   }
+  let el = document.getElementById(datum.name);
+  el.style.display = "block";
 
-  for (let span_id of Object.keys(SPAN_TO_GROUP)) {
-    spans[span_id] = new Span(span_id);
-  }
-
-  for (let group_id of Object.keys(GROUP_TO_SPANS)) {
-    groups[group_id] = new Group(group_id);
-  }
-
-  Object.values(fragments).forEach(frag => frag.init(fragments, spans, groups));
-  Object.values(spans).forEach(span => span.init(fragments, spans, groups));
-  Object.values(groups).forEach(group => group.init(fragments, spans, groups));
-
-  return [fragments, spans, groups];
+  init_maps(datum);
+  let [fragments, spans, groups] = init_objects().map(Object.values);
+  add_mouse_over_listeners(fragments);
+  add_click_listeners(fragments);
 }
 
 document.addEventListener("DOMContentLoaded", event => {
-    let name = DATA[0]["name"];
-    FRAGMENT_TO_SPANS = DATA[0]["fragment_to_spans"];
-    SPAN_TO_GROUP = DATA[0]["span_to_group"];
-    init_maps(FRAGMENT_TO_SPANS, SPAN_TO_GROUP);
-    let [fragments, spans, groups] = init_objects().map(Object.values)
-
-    add_mouse_over_listeners(fragments);
-    add_click_listeners(fragments);
+  select_view(DATA[0]);
 });

@@ -16,21 +16,21 @@ __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar"]
 _PROGRESS_BAR = None
 
 
-def rank(submissions, archive_submissions, ignored_files, comparator, n=50):
+def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
     """Rank all submissions, take the top n."""
-    scores = comparator.score(submissions, archive_submissions, ignored_files)
+    scores = pass_.comparator.score(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
     return heapq.nlargest(n, scores)
 
 
-def compare(scores, ignored_files, comparator):
+def compare(scores, ignored_files, pass_):
     """Find all shared groups between scores"""
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
     sub_match_to_groups = {}
 
-    for comparison in comparator.compare(scores, ignored_files):
+    for comparison in pass_.comparator.compare(scores, ignored_files):
         # No matches, skip
         if not comparison.span_matches:
             continue
@@ -57,8 +57,8 @@ def compare(scores, ignored_files, comparator):
         sub_match = (score.sub_a, score.sub_b)
         if sub_match not in sub_match_to_groups:
             continue
-        results.append(Compare50Result(type(comparator).__name__,
-                                       comparator.score.__doc__,
+        results.append(Compare50Result(pass_.__name__,
+                                       pass_.comparator.score.__doc__,
                                        score,
                                        sub_match_to_groups[sub_match],
                                        sub_match_to_ignored_spans[sub_match]))

@@ -129,10 +129,10 @@ class _RenderTask:
         match_htmls = []
 
         for result in results:
+            renderer = _Renderer(result.name)
             score = result.score
             groups = result.groups
             ignored_spans = result.ignored_spans
-            renderer = _Renderer()
 
             file_to_spans = collections.defaultdict(list)
 
@@ -152,7 +152,7 @@ class _RenderTask:
 
             match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
             match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-            match_html = match_template.render(sub_a=sub_a, sub_b=sub_b)
+            match_html = match_template.render(name=result.name, sub_a=sub_a, sub_b=sub_b)
             match_htmls.append(match_html)
 
         page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
@@ -184,14 +184,15 @@ class _RenderTask:
 
 
 class _Renderer:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self._frag_id_counter = -1
         self._span_id_store = IdStore()
         self._group_id_store = IdStore()
 
     def frag_id(self, frag):
         self._frag_id_counter += 1
-        return f"frag{self._frag_id_counter}"
+        return f"{self.name}frag{self._frag_id_counter}"
 
     def group_id(self, group):
         return self._group_id_store[group]

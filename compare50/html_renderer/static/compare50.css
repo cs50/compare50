@@ -12,11 +12,11 @@ pre {
     overflow-y: hidden !important;
 }
 
-#diff {
+.diff {
     height: calc(100% - 2.33em);
 }
 
-#left {
+.left {
   overflow-y: scroll;
   left: 0;
   border: 1px solid black;
@@ -25,7 +25,7 @@ pre {
   height: 100%;
 }
 
-#right {
+.right {
   overflow-y: scroll;
   right: 0;
   border: 1px solid black;
