@@ -7,13 +7,7 @@ import concurrent.futures as futures
 import attr
 import numpy as np
 
-from .. import (
-    api,
-    preprocessors,
-    Comparison, Comparator,
-    File, Submission,
-    Pass, Span, Score
-)
+from .. import api, Comparison, Comparator, Submission, Span, Score
 
 
 class Winnowing(Comparator):
@@ -40,36 +34,38 @@ class Winnowing(Comparator):
             total = sum(args)
             return [arg / total * total_percentage for arg in args]
 
-        submissions_index = CrossCompareIndex(self.k, self.t)
+
+        submission_index = CrossCompareIndex(self.k, self.t)
         archive_index = CrossCompareIndex(self.k, self.t)
+        ignored_index = CrossCompareIndex(self.k, self.t)
+
+
+        submission_files = files(submissions)
+        archive_files = files(archive_submissions)
+
+        sub_percent, archive_percent, ignored_percent = part(50,
+                                                             len(submission_files),
+                                                             len(archive_files),
+                                                             len(ignored_files))
+
+        tasks = ((submission_index, submission_files, sub_percent),
+                 (archive_index, archive_files, archive_percent),
+                 (ignored_index, ignored_files, ignored_percent))
 
         with api.Executor() as executor:
-            submission_files = files(submissions)
-            archive_files = files(archive_submissions)
-            sub_percent, archive_percent, ignored_percent = part(50, len(submission_files), len(archive_files), len(ignored_files))
+            for index, files, percent in tasks:
+                update_percentage = percent / len(files) if files else percent
+                for idx in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), files):
+                    api.progress_bar().update(update_percentage)
+                    index.include_all(idx)
 
-            ignored_index = CrossCompareIndex(self.k, self.t)
-            update_percentage = ignored_percent / len(ignored_files) if ignored_files else ignored_percent
-            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), ignored_files):
-                api.progress_bar().update(update_percentage)
-                ignored_index.include_all(index)
-
-            update_percentage = sub_percent / len(submission_files) if submission_files else sub_percent
-            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), submission_files):
-                api.progress_bar().update(update_percentage)
-                submissions_index.include_all(index)
-            submissions_index.ignore_all(ignored_index)
-
-            update_percentage = archive_percent / len(archive_files) if archive_files else archive_percent
-            for index in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), archive_files):
-                api.progress_bar().update(update_percentage)
-                archive_index.include_all(index)
-            archive_index.ignore_all(ignored_index)
+        submission_index.ignore_all(ignored_index)
+        archive_index.ignore_all(ignored_index)
 
         # Add submissions to archive (the Index we're going to compare against)
-        archive_index.include_all(submissions_index)
+        archive_index.include_all(submission_index)
 
-        return submissions_index.compare(archive_index)
+        return submission_index.compare(archive_index)
 
     def compare(self, scores, ignored_files):
         ignored_index = CompareIndex(self.k)
@@ -118,7 +114,8 @@ class Winnowing(Comparator):
 
             for file in itertools.chain(sub_a.files, sub_b.files):
                 # List of list of tokens (each list is uninterupted by ignored content)
-                token_lists = self.ignored_index.unignored_tokens(file, tokens=self.file_tokens[file])
+                token_lists = self.ignored_index.unignored_tokens(
+                    file, tokens=self.file_tokens[file])
                 file_to_token_lists[file] = token_lists
 
                 indices = [CompareIndex(self.k) for ts in token_lists]
@@ -244,9 +241,9 @@ class CrossCompareIndex(Index):
                                              [id for id in index2])).T.reshape(-1, 2)
 
                 # Add 1 to all combo's (the product) of file_ids from self and other
-                scores[index[:,0], index[:,1]] += 1
+                scores[index[:, 0], index[:, 1]] += 1
 
-        # Return only those FileMatches with a score > 0 from different submissions
+        # Return only those Scores with a score > 0 from different submissions
         return [Score(Submission.get(id1), Submission.get(id2), scores[id1][id2])
                 for id1, id2 in zip(*np.where(np.triu(scores, 1) > 0))]
 
@@ -296,7 +293,8 @@ class CompareIndex(Index):
             spans_a = self._index[hash_]
             # All spans associated with fingerprint in other
             spans_b = other._index[hash_]
-            matches.extend((span_a, span_b) for span_a, span_b in itertools.product(spans_a, spans_b))
+            matches.extend((span_a, span_b)
+                           for span_a, span_b in itertools.product(spans_a, spans_b))
 
         return matches
 
