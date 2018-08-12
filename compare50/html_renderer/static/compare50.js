@@ -236,34 +236,45 @@ function add_click_listeners(fragments) {
   });
 }
 
-function select_view(datum) {
+function select_view(name) {
   if (select_view._cache === undefined) {
     select_view._cache = {};
   }
 
-  DATUM = datum;
+  // Find view with name
+  for (let datum of DATA) {
+    if (datum.name === name) {
+      DATUM = datum;
+      break;
+    }
+  }
 
   // Activate new view
   let views = document.getElementsByClassName("view");
   for (let v of views) {
-    v.style.display = v.id === datum.name ? "block" : "none";
+    v.style.display = v.id === DATUM.name ? "block" : "none";
   }
 
   // If cached, nothing to do here, return
-  if (datum.name in select_view._cache) {
+  if (DATUM.name in select_view._cache) {
     return;
   }
 
   // Add all mouselisteners
-  init_maps(datum);
+  init_maps(DATUM);
   let [fragments, spans, groups] = init_objects().map(Object.values);
   add_mouse_over_listeners(fragments);
   add_click_listeners(fragments);
 
   // Cache this view
-  select_view._cache[datum.name] = true;
+  select_view._cache[DATUM.name] = true;
 }
 
 document.addEventListener("DOMContentLoaded", event => {
-  select_view(DATA[0]);
+  let selectors = document.getElementsByClassName("view_selector");
+  for (let selector of selectors) {
+    selector.addEventListener("click", (event) => select_view(selector.id.replace("selector", "")))
+  }
+
+  select_view(DATA[0].name);
 });

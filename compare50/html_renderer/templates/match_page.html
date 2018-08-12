@@ -10,6 +10,9 @@
         {% endfor %}
     </head>
     <body>
+        {% for name in names %}
+            <button type="button" class="btn btn-outline-dark view_selector" id="{{name}}selector">{{name}}</button>
+        {% endfor %}
         <div class="container-fluid h-100">
             {% for match in matches %}
                 {{match|safe}}
