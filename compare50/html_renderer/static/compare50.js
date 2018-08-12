@@ -273,8 +273,14 @@ function select_view(name) {
 document.addEventListener("DOMContentLoaded", event => {
   let selectors = document.getElementsByClassName("view_selector");
   for (let selector of selectors) {
-    selector.addEventListener("click", (event) => select_view(selector.id.replace("selector", "")))
+    selector.addEventListener("click", (event) => {
+      for (let s of selectors) {
+        s.classList.remove("active");
+      }
+      selector.classList.add("active");
+      select_view(selector.id.replace("selector", ""));
+    })
   }
 
-  select_view(DATA[0].name);
+  selectors[0].click();
 });

@@ -12,8 +12,13 @@ pre {
     overflow-y: hidden !important;
 }
 
+#page {
+    overflow-y: hidden !important;
+    height: 100%;
+}
+
 .diff {
-    height: calc(100% - 2.33em);
+    height: calc(100% - 5% - 2.33em);
 }
 
 .left {
