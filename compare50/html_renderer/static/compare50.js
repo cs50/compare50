@@ -237,19 +237,31 @@ function add_click_listeners(fragments) {
 }
 
 function select_view(datum) {
+  if (select_view._cache === undefined) {
+    select_view._cache = {};
+  }
+
   DATUM = datum;
 
+  // Activate new view
   let views = document.getElementsByClassName("view");
   for (let v of views) {
-    v.style.display = "none";
+    v.style.display = v.id === datum.name ? "block" : "none";
   }
-  let el = document.getElementById(datum.name);
-  el.style.display = "block";
 
+  // If cached, nothing to do here, return
+  if (datum.name in select_view._cache) {
+    return;
+  }
+
+  // Add all mouselisteners
   init_maps(datum);
   let [fragments, spans, groups] = init_objects().map(Object.values);
   add_mouse_over_listeners(fragments);
   add_click_listeners(fragments);
+
+  // Cache this view
+  select_view._cache[datum.name] = true;
 }
 
 document.addEventListener("DOMContentLoaded", event => {
