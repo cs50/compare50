@@ -96,7 +96,7 @@ def render(pass_to_results, dest):
         index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render index
-    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[result.score for result in results], dest=dest.resolve())
+    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[result.score for result in next(iter(pass_to_results.values()))], dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
