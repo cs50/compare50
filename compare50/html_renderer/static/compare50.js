@@ -260,7 +260,7 @@ function select_view(name) {
     if (v.style.display === "block") {
         // TODO: get these by id instead of assuming structure
         leftScroll = v.children[1].children[0].scrollTop;
-        rightScroll = v.children[1].children[1].scrolltop
+        rightScroll = v.children[1].cHildren[1].scrollTop
     }
 
     if (v.id === DATUM.name) {
