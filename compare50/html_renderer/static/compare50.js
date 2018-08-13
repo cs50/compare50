@@ -251,9 +251,29 @@ function select_view(name) {
 
   // Activate new view
   let views = document.getElementsByClassName("view");
+  
+  let leftScroll = 0;
+  let rightScroll = 0;
+  let curView = undefined;
+
   for (let v of views) {
-    v.style.display = v.id === DATUM.name ? "block" : "none";
+    if (v.style.display === "block") {
+        // TODO: get these by id instead of assuming structure
+        leftScroll = v.children[1].children[0].scrollTop;
+        rightScroll = v.children[1].children[1].scrolltop
+    }
+
+    if (v.id === DATUM.name) {
+        v.style.display = "block";
+        curView = v;
+    } else {
+        v.style.display = "none";
+    }
   }
+  
+  curView.children[1].children[0].scrollTop = leftScroll;
+  curView.children[1].children[1].scrollTop = rightScroll;
+
 
   // If cached, nothing to do here, return
   if (DATUM.name in select_view._cache) {
