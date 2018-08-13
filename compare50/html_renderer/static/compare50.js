@@ -275,7 +275,7 @@ function select_view(name) {
   curView.children[1].children[1].scrollTop = rightScroll;
 
   var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + (DATUM !== DATA[0] ? `?pass=${DATUM.name}` : "")
-  window.history.pushState({path:newurl}, '', newurl)
+  window.history.replaceState({path:newurl}, '', newurl)
 
   // If cached, nothing to do here, return
   if (DATUM.name in select_view._cache) {
