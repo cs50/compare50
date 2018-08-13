@@ -274,6 +274,8 @@ function select_view(name) {
   curView.children[1].children[0].scrollTop = leftScroll;
   curView.children[1].children[1].scrollTop = rightScroll;
 
+  var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + (DATUM !== DATA[0] ? `?pass=${DATUM.name}` : "")
+  window.history.pushState({path:newurl}, '', newurl)
 
   // If cached, nothing to do here, return
   if (DATUM.name in select_view._cache) {
@@ -290,8 +292,10 @@ function select_view(name) {
   select_view._cache[DATUM.name] = true;
 }
 
+
 document.addEventListener("DOMContentLoaded", event => {
   let selectors = document.getElementsByClassName("view_selector");
+  let selector_map = {}
   for (let selector of selectors) {
     selector.addEventListener("click", (event) => {
       for (let s of selectors) {
@@ -300,7 +304,11 @@ document.addEventListener("DOMContentLoaded", event => {
       selector.classList.add("active");
       select_view(selector.id.replace("selector", ""));
     })
+    selector_map[selector.id.replace("selector", "")] = selector;
   }
-
-  selectors[0].click();
+    
+  let url = new URL(window.location);
+  (selector_map[url.searchParams.get("pass")] || selectors[0]).click()
+  
 });
+
