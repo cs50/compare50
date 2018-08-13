@@ -6,14 +6,14 @@ from . import misspellings
 
 
 class winnowing_ws(Pass):
-    """Remove all whitespace, then run Winnowing with k=40, t=60."""
+    """Removes all whitespace and runs Winnowing with k=40, t=60."""
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.split_on_whitespace]
     comparator = winnowing.Winnowing(k=40, t=60)
 
 
-class winnowing(Pass):
-    """Remove all whitespace, normalize all comments/ids/strings, then run Winnowing with k=25, t=35."""
+class winnowing_all(Pass):
+    """Removes all whitespace, normalizes all comments/ids/strings, and runs Winnowing with k=25, t=35."""
 
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
@@ -24,7 +24,7 @@ class winnowing(Pass):
 
 
 class misspellings_en(Pass):
-    """Compare for English word misspellings."""
+    """Compares comments for identical English word misspellings."""
 
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,

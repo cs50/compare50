@@ -85,7 +85,7 @@ def render(pass_to_results, dest):
         update_percentage = api.progress_bar().remaining_percentage / (len(results_per_sub_pair) + 1)
         js = (compare50_js,)
         css = (compare50_css, bootstrap, fonts)
-        for id, html in executor.map(_RenderTask(dest, js, css), enumerate(results_per_sub_pair, 1)):
+        for id, html in enumerate(executor.map(_RenderTask(dest, js, css), results_per_sub_pair), 1):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             api.progress_bar().update(update_percentage)
@@ -123,8 +123,7 @@ class _RenderTask:
         self.js = js
         self.css = css
 
-    def __call__(self, arg):
-        match_id, results = arg
+    def __call__(self, results):
         data = []
         match_htmls = []
 
@@ -161,7 +160,7 @@ class _RenderTask:
         page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
         page_html = page_template.render(names=names, matches=match_htmls, data=data, js=self.js, css=self.css)
 
-        return match_id, page_html
+        return page_html
 
     @staticmethod
     def _prepare_dest(dest):

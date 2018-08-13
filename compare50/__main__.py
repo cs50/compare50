@@ -1,11 +1,11 @@
 import argparse
 import contextlib
+import itertools
 import os
 import pathlib
 import tempfile
 import textwrap
 import shutil
-import attr
 import sys
 import traceback
 import time
@@ -182,7 +182,7 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        default=["Winnowing"],
+                        default=["winnowing_all", "misspellings_en"],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
@@ -283,7 +283,7 @@ def main():
             for pass_ in passes:
                 api.progress_bar().new_bar(f"Comparing ({pass_.__name__})")
                 preprocessor = Preprocessor(pass_.preprocessors)
-                for sub in subs + archive_subs + ignored_subs:
+                for sub in itertools.chain(subs, archive_subs, ignored_subs):
                     object.__setattr__(sub, "preprocessor", preprocessor)
                 pass_to_results[pass_] = api.compare(scores, ignored_files, pass_)
 
