@@ -13,7 +13,6 @@ from .data import Submission, Span, Group, BisectList, Compare50Result
 
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar"]
 
-_PROGRESS_BAR = None
 
 
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
@@ -161,13 +160,6 @@ def expand(span_matches, tokens_a, tokens_b):
     return list(expanded_span_matches)
 
 
-def progress_bar():
-    """
-    Get the currently active _ProgressBar
-    """
-    return _PROGRESS_BAR
-
-
 def _flatten_spans(spans):
     """
     Flatten a collection of spans.
@@ -266,7 +258,14 @@ def _filter_subsumed_groups(groups):
     return [g for g in groups if not _is_group_subsumed(g, groups)]
 
 
-class _ProgressBar:
+class _Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class _ProgressBar(metaclass=_Singleton):
     """Show a progress bar starting with message."""
     STOP_SIGNAL = None
     UPDATE_SIGNAL = 1
@@ -288,11 +287,13 @@ class _ProgressBar:
         """Percentage remaining on progress bar."""
         return 100 - self._percentage
 
-    def new_bar(self, message):
+    def new(self, message):
         """Fill the current bar, and create a new bar with message."""
+        self._message = message
         self.fill()
         self._percentage = 0
         self._message_queue.put((message, 100))
+        return self
 
     def update(self, amount=1):
         """Update the progress bar with amount."""
@@ -349,7 +350,10 @@ class _ProgressBar:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.stop()
+        self._stop()
+
+
+progress_bar = None
 
 
 # TODO: remove before we ship

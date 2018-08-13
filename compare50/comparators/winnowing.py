@@ -56,7 +56,7 @@ class Winnowing(Comparator):
             for index, files, percent in tasks:
                 update_percentage = percent / len(files) if files else percent
                 for idx in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), files):
-                    api.progress_bar().update(update_percentage)
+                    api.progress_bar.update(update_percentage)
                     index.include_all(idx)
 
         submission_index.ignore_all(ignored_index)
@@ -85,13 +85,13 @@ class Winnowing(Comparator):
                 file_tokens[file] = file.tokens()
 
         try:
-            update_percentage = api.progress_bar().remaining_percentage / len(scores)
+            update_percentage = api.progress_bar.remaining_percentage / len(scores)
         except ZeroDivisionError:
             pass
 
         comparisons = []
         for comparison in map(self._compare(self.k, self.t, ignored_index, file_tokens), scores):
-            api.progress_bar().update(update_percentage)
+            api.progress_bar.update(update_percentage)
             comparisons.append(comparison)
 
         return comparisons
@@ -223,12 +223,12 @@ class CrossCompareIndex(Index):
         common_hashes = set(self._index) & set(other._index)
 
         try:
-            update_percentage = api.progress_bar().remaining_percentage / len(common_hashes)
+            update_percentage = api.progress_bar.remaining_percentage / len(common_hashes)
         except ZeroDivisionError:
             pass
 
         for hash_ in common_hashes:
-            api.progress_bar().update(update_percentage)
+            api.progress_bar.update(update_percentage)
 
             # All file_ids associated with fingerprint in self
             index1 = self._index[hash_]

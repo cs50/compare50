@@ -260,42 +260,34 @@ def main():
         api.Executor = api.FauxExecutor
         # ProgressBar.DISABLED = True
 
-    with profiler():
-        try:
-            api._PROGRESS_BAR = api._ProgressBar("Preparing")
+    with profiler(), api._ProgressBar("Preparing") as api.progress_bar:
+        # Collect all submissions, archive submissions and distro files
+        subs = submission_factory.get_all(args.submissions, preprocessor)
+        api.progress_bar.update(33)
+        archive_subs = submission_factory.get_all(args.archive, preprocessor)
+        api.progress_bar.update(33)
+        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+        ignored_files = [f for sub in ignored_subs for f in sub.files]
 
-            api.progress_bar()._start()
-            # Collect all submissions, archive submissions and distro files
-            subs = submission_factory.get_all(args.submissions, preprocessor)
-            api.progress_bar().update(33)
-            archive_subs = submission_factory.get_all(args.archive, preprocessor)
-            api.progress_bar().update(33)
-            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-            ignored_files = [f for sub in ignored_subs for f in sub.files]
+        # Cross compare and rank all submissions, keep only top `n`
+        api.progress_bar.new(f"Scoring ({passes[0].__name__})")
+        scores = api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
 
-            # Cross compare and rank all submissions, keep only top `n`
-            api.progress_bar().new_bar(f"Scoring ({passes[0].__name__})")
-            scores = api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+        # Get the matching spans, group them per submission
+        groups = []
+        pass_to_results = {}
+        for pass_ in passes:
+            api.progress_bar.new(f"Comparing ({pass_.__name__})")
+            preprocessor = Preprocessor(pass_.preprocessors)
+            for sub in itertools.chain(subs, archive_subs, ignored_subs):
+                object.__setattr__(sub, "preprocessor", preprocessor)
+            pass_to_results[pass_] = api.compare(scores, ignored_files, pass_)
 
-            # Get the matching spans, group them per submission
-            groups = []
-            pass_to_results = {}
-            for pass_ in passes:
-                api.progress_bar().new_bar(f"Comparing ({pass_.__name__})")
-                preprocessor = Preprocessor(pass_.preprocessors)
-                for sub in itertools.chain(subs, archive_subs, ignored_subs):
-                    object.__setattr__(sub, "preprocessor", preprocessor)
-                pass_to_results[pass_] = api.compare(scores, ignored_files, pass_)
+        # Render results
+        api.progress_bar.new("Rendering")
+        index = html_renderer.render(pass_to_results, dest=args.output)
 
-            # Render results
-            api.progress_bar().new_bar("Rendering")
-            index = html_renderer.render(pass_to_results, dest=args.output)
-
-        finally:
-            api.progress_bar()._stop()
-            api.__PROGRESS_BAR__ = None
-
-        termcolor.cprint(f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
+    termcolor.cprint(f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
 
 if __name__ == "__main__":
     main()

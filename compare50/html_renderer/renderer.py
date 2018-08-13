@@ -82,13 +82,13 @@ def render(pass_to_results, dest):
 
     # Render all matches
     with api.Executor() as executor:
-        update_percentage = api.progress_bar().remaining_percentage / (len(results_per_sub_pair) + 1)
+        update_percentage = api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
         js = (compare50_js,)
         css = (compare50_css, bootstrap, fonts)
         for id, html in enumerate(executor.map(_RenderTask(dest, js, css), results_per_sub_pair), 1):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
-            api.progress_bar().update(update_percentage)
+            api.progress_bar.update(update_percentage)
 
     # Create index
     src = pathlib.Path(__file__).absolute().parent
@@ -100,7 +100,7 @@ def render(pass_to_results, dest):
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
-    api.progress_bar().update(update_percentage)
+    api.progress_bar.update(update_percentage)
     return dest / "index.html"
 
 
