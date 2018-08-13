@@ -78,7 +78,7 @@ def render(pass_to_results, dest):
     # Load static files
     compare50_js, compare50_css, bootstrap, fonts = \
         (read_file(pathlib.Path(__file__).absolute().parent / "static" / name)
-         for name in ("compare50.js", "compare50.css", "bootstrap.min.css", "fonts.css"))
+         for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
 
     # Render all matches
     with api.Executor() as executor:
@@ -96,7 +96,7 @@ def render(pass_to_results, dest):
         index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render index
-    rendered_html = index_template.render(css=(compare50_css, bootstrap), scores=[result.score for result in results], dest=dest.resolve())
+    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[result.score for result in results], dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
