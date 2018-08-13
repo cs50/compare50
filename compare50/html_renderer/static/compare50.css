@@ -12,13 +12,24 @@ pre {
     overflow-y: hidden !important;
 }
 
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
 #page {
     overflow-y: hidden !important;
     height: 100%;
 }
 
+#sidebar {
+    padding-left:5px;
+    padding-right:5px;
+}
+
 .diff {
-    height: calc(100% - 5% - 2.33em);
+    height: calc(100% - 2.33em);
 }
 
 .left {

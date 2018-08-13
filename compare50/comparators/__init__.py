@@ -23,7 +23,7 @@ class Winnowing(Pass):
     comparator = winnowing.Winnowing(k=25, t=35)
 
 
-class EnglishMisspellings(Pass):
+class Misspellings_EN(Pass):
     """Compare for English word misspellings."""
 
     preprocessors = [preprocessors.comments,

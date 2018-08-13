@@ -10,17 +10,19 @@
         {% endfor %}
     </head>
     <body>
-        <div id="page">
-            <div class="bg-dark text-center" id="top_bar">
-                <div class="btn-group" role="group" aria-label="Basic example">
+        <div class="wrapper" id="page">
+            <nav class="bg-dark text-center" id="sidebar">
+                <div class="btn-group-vertical" role="group" aria-label="Basic example">
                     {% for name in names %}
                         <button type="button" class="btn btn-outline-light view_selector" id="{{name}}selector">{{name}}</button>
                     {% endfor %}
                 </div>
+            </nav>
+            <div id="content">
+                {% for match in matches %}
+                    {{match|safe}}
+                {% endfor %}
             </div>
-            {% for match in matches %}
-                {{match|safe}}
-            {% endfor %}
         </div>
 
         <script>
