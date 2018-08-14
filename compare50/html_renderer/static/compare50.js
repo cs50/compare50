@@ -141,12 +141,8 @@ class Fragment {
 function init_navigation(id) {
     let prev = document.getElementById("prev_match");
     let next = document.getElementById("next_match");
-    if (prev) {
-        prev.addEventListener("click", (event) => window.location.href = "match_" + (id - 1) + ".html");
-    }
-    if (next) {
-        next.addEventListener("click", (event) => window.location.href = "match_" + (id + 1) + ".html");
-    }
+    prev.addEventListener("click", (event) => window.location.href = "match_" + (id - 1) + ".html");
+    next.addEventListener("click", (event) => window.location.href = "match_" + (id + 1) + ".html");
 }
 
 function init_maps(datum) {
