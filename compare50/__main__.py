@@ -15,11 +15,11 @@ import lib50
 import termcolor
 
 from . import html_renderer
-from . import api, errors, data, comparators
+from . import api, data, comparators
 
 
 def excepthook(cls, exc, tb):
-    if (issubclass(cls, errors.Error) or issubclass(cls, lib50.Error)) and exc.args:
+    if (issubclass(cls, api.Error) or issubclass(cls, lib50.Error)) and exc.args:
         termcolor.cprint(str(exc), "red", file=sys.stderr)
     elif cls is FileNotFoundError:
         termcolor.cprint("{} not found".format(exc.filename), "red", file=sys.stderr)
@@ -74,7 +74,7 @@ class SubmissionFactory:
                 decodable_files.append(file_path)
 
         if not decodable_files:
-            raise errors.Error("Empty submission.")
+            raise api.Error("Empty submission.")
 
         return data.Submission(path, decodable_files, preprocessor=preprocessor)
 
@@ -87,7 +87,7 @@ class SubmissionFactory:
         for sub_path in paths:
             try:
                 subs.append(self._get(sub_path, preprocessor))
-            except errors.Error:
+            except api.Error:
                 pass
         return subs
 
@@ -120,7 +120,7 @@ class IncludeExcludeAction(argparse.Action):
     def __init__(self, option_strings, callback=None, **kwargs):
         super().__init__(option_strings, **kwargs)
         if not callback:
-            raise errors.Error("IncludeExcludeAction requires a callback.")
+            raise api.Error("IncludeExcludeAction requires a callback.")
         self.callback = callback
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -237,13 +237,13 @@ def main():
     excepthook.verbose = True
 
     if len(args.submissions) == 1:
-        raise errors.Error("At least two submissions are required for a comparison.")
+        raise api.Error("At least two submissions are required for a comparison.")
 
     # Extract comparator and preprocessors from pass
     try:
         passes = [data.Pass._get(pass_) for pass_ in args.passes]
     except KeyError as e:
-        raise errors.Error("{} is not a pass, try one of these: {}"
+        raise api.Error("{} is not a pass, try one of these: {}"
                            .format(e.args[0], [c.__name__ for c in data.Pass._get_all()]))
 
     preprocessor = Preprocessor(passes[0].preprocessors)

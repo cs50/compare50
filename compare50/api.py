@@ -11,7 +11,11 @@ import concurrent.futures
 from .data import Submission, Span, Group, BisectList, Compare50Result
 
 
-__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar"]
+__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]
+
+
+class Error(Exception):
+    pass
 
 
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
