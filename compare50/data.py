@@ -197,7 +197,6 @@ class Score:
 @attr.s(slots=True)
 class Compare50Result:
     name = attr.ib()
-    score_description = attr.ib()
     score = attr.ib()
     groups = attr.ib()
     ignored_spans = attr.ib()

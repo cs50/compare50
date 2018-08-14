@@ -13,7 +13,6 @@ from .data import Submission, Span, Group, BisectList, Compare50Result
 
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]
 
-
 class Error(Exception):
     pass
 
@@ -62,7 +61,6 @@ def compare(scores, ignored_files, pass_):
         if sub_match not in sub_match_to_groups:
             continue
         results.append(Compare50Result(pass_.__name__,
-                                       pass_.comparator.score.__doc__,
                                        score,
                                        sub_match_to_groups[sub_match],
                                        sub_match_to_ignored_spans[sub_match]))
