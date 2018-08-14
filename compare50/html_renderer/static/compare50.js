@@ -138,6 +138,17 @@ class Fragment {
     }
 }
 
+function init_navigation(id) {
+    let prev = document.getElementById("prev_match");
+    let next = document.getElementById("next_match");
+    if (prev) {
+        prev.addEventListener("click", (event) => window.location.href = "match_" + (id - 1) + ".html");
+    }
+    if (next) {
+        next.addEventListener("click", (event) => window.location.href = "match_" + (id + 1) + ".html");
+    }
+}
+
 function init_maps(datum) {
     FRAGMENT_TO_SPANS = datum["fragment_to_spans"];
     SPAN_TO_GROUP = datum["span_to_group"];
@@ -298,6 +309,9 @@ function select_view(name) {
 
 
 document.addEventListener("DOMContentLoaded", event => {
+    let id = parseInt(document.getElementsByClassName("id")[0].id);
+    init_navigation(id);
+
     let selectors = document.getElementsByClassName("view_selector");
     let selector_map = {}
     for (let selector of selectors) {
