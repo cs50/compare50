@@ -15,10 +15,15 @@
                 <div class="brand text-light">
                     <h4><a href="index.html" class="index-link">compare50</a></h4>
                 </div>
+                <div class="btn-group" role="group" aria-label="NextPrev">
+                    <button type="button" class="btn btn-outline-light next_match" id="next_match"><<</button>
+                    <button type="button" class="btn btn-outline-light prev_match" id="prev_match">>></button>
+                </div>
+                <br/><br/>
                 <div class="btn-group-vertical" role="group" aria-label="Views">
-                    {% for name in names %}
-                        <button type="button" class="btn btn-outline-light view_selector" id="{{name}}selector">{{name}}</button>
-                    {% endfor %}
+                {% for name in names %}
+                    <button type="button" class="btn btn-outline-light view_selector" id="{{name}}selector">{{name}}</button>
+                {% endfor %}
                 </div>
             </nav>
             <div id="content">
