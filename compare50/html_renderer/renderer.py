@@ -12,6 +12,7 @@ from pygments.formatters import HtmlFormatter, TerminalFormatter
 from .. import api
 from ..data import IdStore
 
+
 @attr.s(slots=True)
 class Fragment:
     content = attr.ib(convert=lambda c: tuple(c.splitlines(True)))
@@ -73,7 +74,8 @@ def render(pass_to_results, dest):
             sub_pair_to_results[(result.sub_a, result.sub_b)].append(result)
 
     # Sort by score
-    results_per_sub_pair = sorted(sub_pair_to_results.values(), key=lambda res: res[0].score, reverse=True)
+    results_per_sub_pair = sorted(sub_pair_to_results.values(),
+                                  key=lambda res: res[0].score, reverse=True)
 
     # Load static files
     compare50_js, compare50_css, bootstrap, fonts = \
@@ -93,10 +95,12 @@ def render(pass_to_results, dest):
     # Create index
     src = pathlib.Path(__file__).absolute().parent
     with open(src / "templates" / "index.html") as f:
-        index_template = jinja2.Template(f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+        index_template = jinja2.Template(
+            f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render index
-    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[result.score for result in next(iter(pass_to_results.values()))], dest=dest.resolve())
+    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[
+                                          result.score for result in next(iter(pass_to_results.values()))], dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
@@ -146,19 +150,25 @@ class _RenderTask:
             sub_a = renderer.html_submission(score.sub_a, file_to_spans, ignored_spans)
             sub_b = renderer.html_submission(score.sub_b, file_to_spans, ignored_spans)
 
-            all_html_fragments = [frag for file in sub_a.files + sub_b.files for frag in file.fragments]
+            all_html_fragments = [frag for file in sub_a.files +
+                                  sub_b.files for frag in file.fragments]
             data.append(renderer.data(result, all_html_fragments, ignored_spans))
 
-            match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match.html")
-            match_template = jinja2.Template(match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+            match_content = read_file(pathlib.Path(
+                __file__).absolute().parent / "templates/match.html")
+            match_template = jinja2.Template(
+                match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             match_html = match_template.render(name=result.name, sub_a=sub_a, sub_b=sub_b)
             match_htmls.append(match_html)
 
         names = [result.name for result in results]
 
-        page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates/match_page.html")
-        page_template = jinja2.Template(page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-        page_html = page_template.render(names=names, matches=match_htmls, data=data, js=self.js, css=self.css)
+        page_content = read_file(pathlib.Path(
+            __file__).absolute().parent / "templates/match_page.html")
+        page_template = jinja2.Template(
+            page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+        page_html = page_template.render(
+            names=names, matches=match_htmls, data=data, js=self.js, css=self.css)
 
         return page_html
 
@@ -207,7 +217,8 @@ class _Renderer:
             frag_id = self.frag_id(fragment)
             is_ignored = any(span in ignored_spans for span in fragment.spans)
             is_grouped = any(span not in ignored_spans for span in fragment.spans)
-            frags.append(HTML_Fragment(frag_id, fragment.content, is_ignored, is_grouped, fragment.spans))
+            frags.append(HTML_Fragment(frag_id, fragment.content,
+                                       is_ignored, is_grouped, fragment.spans))
         return frags
 
     def html_files(self, submission, file_to_spans, ignored_spans):
@@ -239,7 +250,8 @@ class _Renderer:
         fragment_to_spans = {}
         for fragment in html_fragments:
             if fragment.is_grouped:
-                fragment_to_spans[fragment.id] = [self.span_id(span) for span in fragment.spans if span not in ignored_spans]
+                fragment_to_spans[fragment.id] = [self.span_id(
+                    span) for span in fragment.spans if span not in ignored_spans]
 
         span_to_group = {}
         for group in result.groups:
@@ -287,7 +299,8 @@ class _FragmentSlicer:
         fragments = []
         start_mark = 0
         for fragment_spans, mark in zip(spans, slicing_marks):
-            fragments.append(Fragment(content[start_mark:mark], sorted(fragment_spans, key=lambda span: span.end - span.start, reverse=True)))
+            fragments.append(Fragment(content[start_mark:mark], sorted(
+                fragment_spans, key=lambda span: span.end - span.start, reverse=True)))
             start_mark = mark
 
         return fragments

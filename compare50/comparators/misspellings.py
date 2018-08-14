@@ -29,7 +29,8 @@ class Misspellings(Comparator):
         archive_sub_to_words = collections.defaultdict(set)
         for sub in archive_submissions:
             for file in sub.files:
-                archive_sub_to_words[sub] |= {t.val for t in self._misspelled_tokens(file)} - ignored_words
+                archive_sub_to_words[sub] |= {
+                    t.val for t in self._misspelled_tokens(file)} - ignored_words
 
         archive_sub_to_words.update(sub_to_words)
 
@@ -80,14 +81,15 @@ class Misspellings(Comparator):
                         for token in word_to_tokens_b[word]:
                             ignored_spans.add(Span(file_b, token.start, token.end))
 
-                common_misspellings = ({t.val for t in tokens_a} & {t.val for t in tokens_b}) - ignored_words
+                common_misspellings = ({t.val for t in tokens_a} & {
+                                       t.val for t in tokens_b}) - ignored_words
 
                 for misspelling in common_misspellings:
                     ts_a = word_to_tokens_a[misspelling]
                     ts_b = word_to_tokens_b[misspelling]
                     for token_a, token_b in itertools.product(ts_a, ts_b):
                         comparison.span_matches.append((Span(file_a, token_a.start, token_a.end),
-                                                   Span(file_b, token_b.start, token_b.end)))
+                                                        Span(file_b, token_b.start, token_b.end)))
             comparisons.append(comparison)
 
         return comparisons

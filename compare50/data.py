@@ -9,11 +9,13 @@ import pygments
 import pygments.lexers
 
 
-__all__ = ["Pass", "Comparator", "File", "Submission", "Pass", "Span", "Score", "Comparison", "Token"]
+__all__ = ["Pass", "Comparator", "File", "Submission",
+           "Pass", "Span", "Score", "Comparison", "Token"]
 
 
 class _PassRegistry(abc.ABCMeta):
     passes = {}
+
     def __new__(mcls, name, bases, attrs):
         cls = abc.ABCMeta.__new__(mcls, name, bases, attrs)
 
@@ -83,7 +85,8 @@ class Submission:
     id = attr.ib(init=False)
 
     def __attrs_post_init__(self):
-        object.__setattr__(self, "files", tuple([File(pathlib.Path(path), self) for path in self.files]))
+        object.__setattr__(self, "files", tuple(
+            [File(pathlib.Path(path), self) for path in self.files]))
         object.__setattr__(self, "id", Submission._store[self])
 
     def __iter__(self):

@@ -14,7 +14,6 @@ from .data import Submission, Span, Group, BisectList, Compare50Result
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar"]
 
 
-
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
     """Rank all submissions, take the top n."""
     scores = pass_.comparator.score(submissions, archive_submissions, ignored_files)
@@ -38,7 +37,8 @@ def compare(scores, ignored_files, pass_):
         for sub in (comparison.sub_a, comparison.sub_b):
             for file in sub.files:
                 # Divide ignored_spans per file
-                ignored_spans_file = [span for span in comparison.ignored_spans if span.file == file]
+                ignored_spans_file = [
+                    span for span in comparison.ignored_spans if span.file == file]
 
                 # Find all spans lost by preprocessors for file_a
                 if file not in missing_spans_cache:
@@ -49,7 +49,8 @@ def compare(scores, ignored_files, pass_):
                 new_ignored_spans += _flatten_spans(ignored_spans_file)
 
         sub_match_to_ignored_spans[(comparison.sub_a, comparison.sub_b)] = new_ignored_spans
-        sub_match_to_groups[(comparison.sub_a, comparison.sub_b)] = _group_span_matches(comparison.span_matches)
+        sub_match_to_groups[(comparison.sub_a, comparison.sub_b)
+                            ] = _group_span_matches(comparison.span_matches)
 
     results = []
     for score in scores:
@@ -260,10 +261,12 @@ def _filter_subsumed_groups(groups):
 
 class _Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class _ProgressBar(metaclass=_Singleton):
     """Show a progress bar starting with message."""
@@ -345,7 +348,8 @@ class _ProgressBar(metaclass=_Singleton):
             finally:
                 bar.close()
 
-        self._process = multiprocessing.Process(target=progress_runner, args=(self._message, 100, self._message_queue,))
+        self._process = multiprocessing.Process(
+            target=progress_runner, args=(self._message, 100, self._message_queue,))
         self._process.start()
         return self
 
@@ -398,8 +402,6 @@ class FauxExecutor:
             return self.FauxFuture(exception=e)
         else:
             return self.FauxFuture(result=result)
-
-
 
     def __enter__(self):
         return self

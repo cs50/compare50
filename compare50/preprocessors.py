@@ -4,6 +4,7 @@ import attr
 from pygments.token import Comment, Name, Number, String, Text
 from .data import Token
 
+
 def strip_whitespace(tokens):
     for tok in tokens:
         val = tok.val
@@ -12,7 +13,7 @@ def strip_whitespace(tokens):
         if val:
             tok.val = val
             yield tok
-            #yield attr.evolve(tok, val=val)
+
 
 def strip_comments(tokens):
     for tok in tokens:
@@ -24,7 +25,6 @@ def normalize_case(tokens):
     for tok in tokens:
         tok.val = tok.val.lower()
         yield tok
-        #yield attr.evolve(tok, tok.val.lower())
 
 
 def normalize_identifiers(tokens):
@@ -33,7 +33,6 @@ def normalize_identifiers(tokens):
         if tok.type in Name:
             tok.val = "v"
             yield tok
-            #yield attr.evolve(tok, val="v")
         else:
             yield tok
 
@@ -57,22 +56,18 @@ def normalize_string_literals(tokens):
             yield tok
 
 
-
 def normalize_numeric_literals(tokens):
     """Replaces numeric literals with their types"""
     for tok in tokens:
         if tok.type in Number.Integer:
             tok.val = "INT"
             yield tok
-            #yield attr.evolve(tok, val="INT")
         elif tok.type in Number.Float:
             tok.val = "FLOAT"
             yield tok
-            #yield attr.evolve(tok, val="FLOAT")
         elif tok.type in Number:
             tok.val = "NUM"
             yield tok
-            #yield attr.evolve(tok, val="NUM")
         else:
             yield tok
 
@@ -82,6 +77,7 @@ def extract_identifiers(tokens):
     for tok in tokens:
         if tok.type in Name:
             yield tok
+
 
 def by_character(tokens):
     for tok in tokens:

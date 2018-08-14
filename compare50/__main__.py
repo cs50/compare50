@@ -27,7 +27,8 @@ def excepthook(cls, exc, tb):
         # Class is some other BaseException, better just let it go
         return
     else:
-        termcolor.cprint("Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "red", file=sys.stderr)
+        termcolor.cprint(
+            "Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "red", file=sys.stderr)
 
     if excepthook.verbose:
         traceback.print_exception(cls, exc, tb)
@@ -100,6 +101,7 @@ class ArgParser(argparse.ArgumentParser):
 
 class ListAction(argparse.Action):
     """Hook into argparse to allow a list flag."""
+
     def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help="List all available passes and exit."):
         super().__init__(option_strings, dest=dest, nargs=0, default=default, help=help)
 
@@ -114,6 +116,7 @@ class ListAction(argparse.Action):
 
 class IncludeExcludeAction(argparse.Action):
     """Hook into argparse to allow ordering of include/exclude."""
+
     def __init__(self, option_strings, callback=None, **kwargs):
         super().__init__(option_strings, **kwargs)
         if not callback:
@@ -123,6 +126,7 @@ class IncludeExcludeAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         for v in values:
             self.callback(v)
+
 
 @attr.s(slots=True)
 class Preprocessor:
@@ -135,7 +139,7 @@ class Preprocessor:
         return tokens
 
 
-#TODO: remove this before we ship
+# TODO: remove this before we ship
 PROFILE = [ api.compare
           , comparators.winnowing.Winnowing.score
           , comparators.winnowing.Winnowing.compare
@@ -145,9 +149,11 @@ PROFILE = [ api.compare
           , comparators.winnowing.Winnowing._compare.__call__
           ]
 
+
 @contextlib.contextmanager
 def profile():
-    import termcolor, time
+    import termcolor
+    import time
     from line_profiler import LineProfiler
 
     epoch = int(time.time())
@@ -237,10 +243,9 @@ def main():
     try:
         passes = [data.Pass._get(pass_) for pass_ in args.passes]
     except KeyError as e:
-        raise errors.Error("{} is not a pass, try one of these: {}"\
-                            .format(e.args[0], [c.__name__ for c in data.Pass._get_all()]))
+        raise errors.Error("{} is not a pass, try one of these: {}"
+                           .format(e.args[0], [c.__name__ for c in data.Pass._get_all()]))
 
-    score_func = passes[0].comparator.score
     preprocessor = Preprocessor(passes[0].preprocessors)
 
     # TODO: remove this before we ship
@@ -281,7 +286,9 @@ def main():
         api.progress_bar.new("Rendering")
         index = html_renderer.render(pass_to_results, dest=args.output)
 
-    termcolor.cprint(f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
+    termcolor.cprint(
+        f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
+
 
 if __name__ == "__main__":
     main()

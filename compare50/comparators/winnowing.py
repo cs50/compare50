@@ -34,11 +34,9 @@ class Winnowing(Comparator):
             total = sum(args)
             return [arg / total * total_percentage for arg in args]
 
-
         submission_index = CrossCompareIndex(self.k, self.t)
         archive_index = CrossCompareIndex(self.k, self.t)
         ignored_index = CrossCompareIndex(self.k, self.t)
-
 
         submission_files = files(submissions)
         archive_files = files(archive_submissions)
