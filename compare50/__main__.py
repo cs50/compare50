@@ -198,12 +198,6 @@ def main():
                         help="Globbing patterns to exclude from every submission."
                              " Nothing is excluded by default."
                              " Make sure to quote your patterns to escape any shell globbing!")
-    parser.add_argument("--hidden",
-                        action="store_true",
-                        help="also include hidden files and directories.")
-    parser.add_argument("--log",
-                        action="store_true",
-                        help="display more detailed information about comparison process.")
     parser.add_argument("--list",
                         action=ListAction)
     parser.add_argument("-o", "--output",
