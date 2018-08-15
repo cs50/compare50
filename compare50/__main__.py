@@ -187,7 +187,7 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        default=["winnowing", "misspellings"],
+                        default=[pass_.__name__ for pass_ in data.Pass._get_all()],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
