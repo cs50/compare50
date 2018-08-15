@@ -175,7 +175,7 @@ class Index(abc.ABC):
         return zip(*iters)
 
     def hashes(self, tokens):
-        return (hash("".join(kgram)) for kgram in self.kgrams((t.val for t in tokens)))
+        return (hash("".join(kgram)) for kgram in self.kgrams(t.val for t in tokens))
 
     @abc.abstractmethod
     def compare(self, other):
@@ -192,7 +192,6 @@ class Index(abc.ABC):
 class CrossCompareIndex(Index):
     def __init__(self, k, t):
         super().__init__(k)
-        self.t = t
         self.w = t - k + 1
         self._max_id = 0
 
