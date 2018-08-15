@@ -32,10 +32,6 @@ def compare(scores, ignored_files, pass_):
     sub_match_to_groups = {}
 
     for comparison in pass_.comparator.compare(scores, ignored_files):
-        # No matches, skip
-        if not comparison.span_matches:
-            continue
-
         new_ignored_spans = []
         for sub in (comparison.sub_a, comparison.sub_b):
             for file in sub.files:
@@ -52,17 +48,17 @@ def compare(scores, ignored_files, pass_):
                 new_ignored_spans += _flatten_spans(ignored_spans_file)
 
         sub_match_to_ignored_spans[(comparison.sub_a, comparison.sub_b)] = new_ignored_spans
-        sub_match_to_groups[(comparison.sub_a, comparison.sub_b)
-                            ] = _group_span_matches(comparison.span_matches)
+
+        sub_match_to_groups[(comparison.sub_a, comparison.sub_b)] = _group_span_matches(comparison.span_matches)
 
     results = []
     for score in scores:
         sub_match = (score.sub_a, score.sub_b)
-        if sub_match not in sub_match_to_groups:
-            continue
+        # if sub_match not in sub_match_to_groups:
+            # continue
         results.append(Compare50Result(pass_.__name__,
                                        score,
-                                       sub_match_to_groups[sub_match],
+                                       sub_match_to_groups.get(sub_match, []),
                                        sub_match_to_ignored_spans[sub_match]))
 
     return results

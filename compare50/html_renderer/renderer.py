@@ -27,7 +27,7 @@ class Data:
 
 
 @attr.s(slots=True)
-class HTML_Fragment:
+class HTMLFragment:
     id = attr.ib()
     content = attr.ib()
     is_ignored = attr.ib()
@@ -36,7 +36,7 @@ class HTML_Fragment:
 
 
 @attr.s(slots=True)
-class HTML_File:
+class HTMLFile:
     name = attr.ib()
     fragments = attr.ib()
     num_chars_matched = attr.ib()
@@ -220,7 +220,7 @@ class _Renderer:
             frag_id = self.frag_id(fragment)
             is_ignored = any(span in ignored_spans for span in fragment.spans)
             is_grouped = any(span not in ignored_spans for span in fragment.spans)
-            frags.append(HTML_Fragment(frag_id, fragment.content,
+            frags.append(HTMLFragment(frag_id, fragment.content,
                                        is_ignored, is_grouped, fragment.spans))
         return frags
 
@@ -240,7 +240,7 @@ class _Renderer:
                     if frag.is_grouped:
                         num_chars_matched += num_frag_chars
 
-            files.append(HTML_File(str(file.name), html_frags, num_chars_matched, num_chars))
+            files.append(HTMLFile(str(file.name), html_frags, num_chars_matched, num_chars))
         return files
 
     def html_submission(self, submission, file_to_spans, ignored_spans):

@@ -141,11 +141,11 @@ class Preprocessor:
 
 # TODO: remove this before we ship
 PROFILE = [ api.compare
-          , comparators.winnowing.Winnowing.score
-          , comparators.winnowing.Winnowing.compare
-          , comparators.winnowing.Index.hashes
-          , comparators.winnowing.CompareIndex.fingerprint
-          , comparators.winnowing.CrossCompareIndex.fingerprint
+          , comparators._winnowing.Winnowing.score
+          , comparators._winnowing.Winnowing.compare
+          , comparators._winnowing.Index.hashes
+          , comparators._winnowing.CompareIndex.fingerprint
+          , comparators._winnowing.CrossCompareIndex.fingerprint
           ]
 
 
@@ -187,7 +187,7 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        default=["winnowing_all", "misspellings_en"],
+                        default=["winnowing", "misspellings"],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
