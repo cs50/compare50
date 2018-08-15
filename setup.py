@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(
     author="CS50",
@@ -15,8 +15,9 @@ setup(
     keywords=["compare", "compare50"],
     name="compare50",
     python_requires=">=3.5",
-    packages=["compare50"],
+    packages=find_packages(exclude=["tests"]),
     scripts=["bin/compare50"],
     url="https://github.com/cs50/compare50",
-    version="1.0.0"
+    version="1.0.0",
+    include_package_data=True,
 )
