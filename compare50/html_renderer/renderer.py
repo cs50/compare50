@@ -100,8 +100,9 @@ def render(pass_to_results, dest):
             f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render index
-    rendered_html = index_template.render(css=(bootstrap, compare50_css), scores=[
-                                          result.score for result in next(iter(pass_to_results.values()))], dest=dest.resolve())
+    rendered_html = index_template.render(css=(bootstrap, compare50_css),
+                                          scores=[result.score for result in next(iter(pass_to_results.values()))],
+                                          dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
@@ -157,8 +158,7 @@ class _RenderTask:
                                   sub_b.files for frag in file.fragments]
             data.append(renderer.data(result, all_html_fragments, ignored_spans))
 
-            match_content = read_file(pathlib.Path(
-                __file__).absolute().parent / "templates/match.html")
+            match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates" / "match.html")
             match_template = jinja2.Template(
                 match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             match_html = match_template.render(name=result.name, sub_a=sub_a, sub_b=sub_b)
@@ -166,12 +166,12 @@ class _RenderTask:
 
         names = [result.name for result in results]
 
-        page_content = read_file(pathlib.Path(
-            __file__).absolute().parent / "templates/match_page.html")
+        page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates" / "match_page.html")
         page_template = jinja2.Template(
             page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
-        page_html = page_template.render(
-            id=id, max_id=self.max_id, names=names, matches=match_htmls, data=data, js=self.js, css=self.css)
+        page_html = page_template.render(id=id, max_id=self.max_id,
+                                         names=names, matches=match_htmls,
+                                         data=data, js=self.js, css=self.css)
 
         return id, page_html
 

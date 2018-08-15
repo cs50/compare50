@@ -146,7 +146,6 @@ PROFILE = [ api.compare
           , comparators.winnowing.Index.hashes
           , comparators.winnowing.CompareIndex.fingerprint
           , comparators.winnowing.CrossCompareIndex.fingerprint
-          , comparators.winnowing.Winnowing._compare.__call__
           ]
 
 

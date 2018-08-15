@@ -66,9 +66,10 @@ class Winnowing(Comparator):
         return submission_index.compare(archive_index)
 
     def compare(self, scores, ignored_files):
+        # Create index of ignored_files
         ignored_index = CompareIndex(self.k)
-        for ignored_i in map(self._index_file(CompareIndex, (self.k,)), ignored_files):
-            ignored_index.include_all(ignored_i)
+        for ignored_file in ignored_files:
+            ignored_index.include(ignored_file)
 
         # Find all unique submissions
         subs = set()
@@ -76,71 +77,65 @@ class Winnowing(Comparator):
             subs.add(s.sub_a)
             subs.add(s.sub_b)
 
-        # Tokenize all files
-        file_tokens = {}
+        # TODO: Rename me
+        # Basically a named tuple of information we need to keep around for each file
+        @attr.s(slots=True)
+        class FileCache:
+            # List of tokens (and their corresponding indices) that can be matched.
+            # Name is slightly misleading since it is a list of (token, index) pairs
+            unignored_tokens = attr.ib(factory=list)
+            ignored_spans = attr.ib(factory=list)
+
+
+        file_cache = {}
         for sub in subs:
             for file in sub:
-                file_tokens[file] = file.tokens()
+                tokens = file.tokens()
+                cache = FileCache()
+
+                # Get list of unignored tokens
+                token_lists = ignored_index.unignored_tokens(file, tokens=tokens)
+                # Index each stretch of unignored tokens, index and add to the cache
+                for tokens in token_lists:
+                    index = CompareIndex(self.k)
+                    index.include(file, tokens=tokens)
+                    cache.unignored_tokens.append((tokens, index))
+
+                cache.ignored_spans = api.missing_spans(file,
+                                                        original_tokens=tokens,
+                                                        preprocessed_tokens=list(itertools.chain.from_iterable(token_lists)))
+                file_cache[file] = cache
+
 
         try:
             update_percentage = api.progress_bar.remaining_percentage / len(scores)
         except ZeroDivisionError:
+            # If len(scores) == 0, we don't need to give update_percentage a value since the loop will never execute
             pass
 
         comparisons = []
-        for comparison in map(self._compare(self.k, self.t, ignored_index, file_tokens), scores):
-            api.progress_bar.update(update_percentage)
+        for score in scores:
+            comparison = Comparison(score.sub_a, score.sub_b)
+
+            # We already have the ignored spans for every file cached, so we just need to get the list
+            # for each file in this submission pair.
+            for file in itertools.chain(score.sub_a.files, score.sub_b.files):
+                comparison.ignored_spans += file_cache[file].ignored_spans
+
+            # Compare each pair of files in the submission pair
+            for file_a, file_b in itertools.product(score.sub_a.files, score.sub_b.files):
+                cache_a = file_cache[file_a]
+                cache_b = file_cache[file_b]
+                # For each pair of unignored regions in the file pair, find the matching spans
+                # (by comparing their indices) and expand them as much as possible
+                for (tokens_a, index_a), (tokens_b, index_b) in itertools.product(cache_a.unignored_tokens, cache_b.unignored_tokens):
+                    comparison.span_matches += api.expand(index_a.compare(index_b), tokens_a, tokens_b)
+
             comparisons.append(comparison)
+            api.progress_bar.update(update_percentage)
 
         return comparisons
 
-    @attr.s(slots=True)
-    class _compare:
-        k = attr.ib()
-        t = attr.ib()
-        ignored_index = attr.ib()
-        file_tokens = attr.ib()
-
-        def __call__(self, score):
-            sub_a = score.sub_a
-            sub_b = score.sub_b
-
-            ignored_spans = []
-
-            file_to_token_lists = {}
-            file_to_indices = {}
-
-            for file in itertools.chain(sub_a.files, sub_b.files):
-                # List of list of tokens (each list is uninterupted by ignored content)
-                token_lists = self.ignored_index.unignored_tokens(
-                    file, tokens=self.file_tokens[file])
-                file_to_token_lists[file] = token_lists
-
-                indices = [CompareIndex(self.k) for ts in token_lists]
-                file_to_indices[file] = indices
-
-                for index, tokens in zip(indices, token_lists):
-                    index.include(file, tokens=tokens)
-
-                ignored_spans += api.missing_spans(file,
-                                                   original_tokens=self.file_tokens[file],
-                                                   preprocessed_tokens=list(itertools.chain.from_iterable(token_lists)))
-
-            span_matches = []
-            for file_a, file_b in itertools.product(sub_a.files, sub_b.files):
-                indices_a = file_to_indices[file_a]
-                indices_b = file_to_indices[file_b]
-
-                token_lists_a = file_to_token_lists[file_a]
-                token_lists_b = file_to_token_lists[file_b]
-
-                for index_a, tokens_a in zip(indices_a, token_lists_a):
-                    for index_b, tokens_b in zip(indices_b, token_lists_b):
-                        matches = index_a.compare(index_b)
-                        matches = api.expand(matches, tokens_a, tokens_b)
-                        span_matches += matches
-
-            return Comparison(sub_a, sub_b, span_matches, ignored_spans)
 
     @attr.s(slots=True)
     class _index_file:
