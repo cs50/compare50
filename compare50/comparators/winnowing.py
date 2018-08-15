@@ -205,10 +205,6 @@ class CrossCompareIndex(Index):
         self._max_id = max(self._max_id, other._max_id)
 
     def compare(self, other):
-        # Validate other index
-        if self.k != other.k:
-            raise RuntimeError("comparison with different n-gram lengths")
-
         # Keep a self.max_file_id by other.max_file_id matrix for counting score
         scores = np.zeros((self._max_id + 1, other._max_id + 1))
 
