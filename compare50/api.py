@@ -101,14 +101,20 @@ def expand(span_matches, tokens_a, tokens_b):
     if not span_matches:
         return span_matches
 
-    # expanded_span_matches = intervaltree.IntervalTree()
     expanded_span_matches = set()
 
+    # Keep a list of tokens, sorted by the start (BisectList facilitates binary search)
     tokens_a = BisectList.from_sorted(tokens_a, key=lambda tok: tok.start)
     tokens_b = BisectList.from_sorted(tokens_b, key=lambda tok: tok.start)
 
+    # Keep track of the intervals of the file covered by spans so that we can
+    # avoid expanding span pairs that are already subsumed
     span_tree_a = intervaltree.IntervalTree()
     span_tree_b = intervaltree.IntervalTree()
+
+    # Sort span matches first, to ensure that, if there are contiguous identical spans, we
+    # start expanding the earliest span first.
+    span_matches = sorted(span_matches, key=lambda match: (match[0].start, match[1].start))
 
     def is_subsumed(span, tree):
         """ Determine if span is strictly smaller than any interval in tree.
@@ -119,32 +125,38 @@ def expand(span_matches, tokens_a, tokens_b):
                 return True
         return False
 
-    span_matches = sorted(span_matches, key=lambda match: (match[0].start, match[1].start))
+
+    def _expand_side(cursor_a, cursor_b, step):
+        """One-sided expansion. Given the start/end indices of a span pair,
+        expand token-wise moving along the list of tokens according to ``step``.
+
+        Returns a pair of indices corresponding to the new tokens"""
+
+        tok_idx_a = tokens_a.bisect_key_right(cursor_a) - 2
+        tok_idx_b = tokens_b.bisect_key_right(cursor_b) - 2
+
+        try:
+            while min(tok_idx_a, tok_idx_b) >= 0 and tokens_a[tok_idx_a] == tokens_b[tok_idx_b]:
+                tok_idx_a += step
+                tok_idx_b += step
+        except IndexError:
+            pass
+
+        tok_idx_a -= step
+        tok_idx_b -= step
+
+        return tok_idx_a, tok_idx_b
+
 
     for span_a, span_b in span_matches:
         if is_subsumed(span_a, span_tree_a) and is_subsumed(span_b, span_tree_b):
             continue
 
         # Expand left
-        start_a = tokens_a.bisect_key_right(span_a.start) - 2
-        start_b = tokens_b.bisect_key_right(span_b.start) - 2
-        while min(start_a, start_b) >= 0 and tokens_a[start_a] == tokens_b[start_b]:
-            start_a -= 1
-            start_b -= 1
-        start_a += 1
-        start_b += 1
+        start_a, start_b = _expand_side(span_a.start, span_b.start, -1)
 
         # Expand right
-        end_a = tokens_a.bisect_key_right(span_a.end) - 2
-        end_b = tokens_b.bisect_key_right(span_b.end) - 2
-        try:
-            while tokens_a[end_a] == tokens_b[end_b]:
-                end_a += 1
-                end_b += 1
-        except IndexError:
-            pass
-        end_a -= 1
-        end_b -= 1
+        end_a, end_b = _expand_side(span_a.end, span_b.end, 1)
 
         new_span_a = Span(span_a.file, tokens_a[start_a].start, tokens_a[end_a].end)
         new_span_b = Span(span_b.file, tokens_b[start_b].start, tokens_b[end_b].end)
