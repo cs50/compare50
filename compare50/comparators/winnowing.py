@@ -268,10 +268,6 @@ class CrossCompareIndex(Index):
 
 class CompareIndex(Index):
     def compare(self, other):
-        # Validate other index
-        if self.k != other.k:
-            raise RuntimeError("comparison with different n-gram lengths")
-
         matches = []
 
         # Find common fingerprints (hashes)
