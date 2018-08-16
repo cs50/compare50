@@ -1,1 +1,1 @@
-from .renderer import *
+from .renderer import render

@@ -146,6 +146,8 @@ PROFILE = [ api.compare
           , comparators._winnowing.Index.hashes
           , comparators._winnowing.CompareIndex.fingerprint
           , comparators._winnowing.CrossCompareIndex.fingerprint
+          , html_renderer.render
+          , html_renderer.renderer._RenderTask.__call__
           ]
 
 
@@ -170,8 +172,9 @@ def profile():
 
 
 def main():
-    parser = ArgParser(prog="compare50")
     submission_factory = SubmissionFactory()
+
+    parser = ArgParser(prog="compare50")
     parser.add_argument("submissions",
                         nargs="+",
                         help="Paths to submissions to compare")

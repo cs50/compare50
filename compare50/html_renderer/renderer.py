@@ -2,16 +2,19 @@ import collections
 import glob
 import os
 import pathlib
+import pkg_resources
 import shutil
 
 import attr
 import jinja2
 import pygments
-from pygments.formatters import HtmlFormatter, TerminalFormatter
+from pygments.formatters import HtmlFormatter
 
 from .. import api
 from ..data import IdStore
 
+STATIC = pathlib.Path(pkg_resources.resource_filename("compare50.html_renderer", "static"))
+TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50.html_renderer", "templates"))
 
 @attr.s(slots=True)
 class Fragment:
@@ -37,7 +40,7 @@ class HTMLFragment:
 
 @attr.s(slots=True)
 class HTMLFile:
-    name = attr.ib()
+    name = attr.ib(converter=str)
     fragments = attr.ib()
     num_chars_matched = attr.ib()
     num_chars = attr.ib()
@@ -51,8 +54,8 @@ class HTMLFile:
 
 
 @attr.s(slots=True)
-class HTML_Submission:
-    name = attr.ib()
+class HTMLSubmission:
+    name = attr.ib(converter=str)
     files = attr.ib()
     num_chars_matched = attr.ib()
     num_chars = attr.ib()
@@ -78,9 +81,8 @@ def render(pass_to_results, dest):
                                   key=lambda res: res[0].score, reverse=True)
 
     # Load static files
-    compare50_js, compare50_css, bootstrap, fonts = \
-        (read_file(pathlib.Path(__file__).absolute().parent / "static" / name)
-         for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
+    compare50_js, compare50_css, bootstrap, fonts = (read_file(STATIC / name)
+            for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
 
     # Render all matches
     with api.Executor() as executor:
@@ -94,8 +96,7 @@ def render(pass_to_results, dest):
             api.progress_bar.update(update_percentage)
 
     # Create index
-    src = pathlib.Path(__file__).absolute().parent
-    with open(src / "templates" / "index.html") as f:
+    with open(TEMPLATES / "index.html") as f:
         index_template = jinja2.Template(
             f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
@@ -158,7 +159,7 @@ class _RenderTask:
                                   sub_b.files for frag in file.fragments]
             data.append(renderer.data(result, all_html_fragments, ignored_spans))
 
-            match_content = read_file(pathlib.Path(__file__).absolute().parent / "templates" / "match.html")
+            match_content = read_file(TEMPLATES / "match.html")
             match_template = jinja2.Template(
                 match_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
             match_html = match_template.render(name=result.name, sub_a=sub_a, sub_b=sub_b)
@@ -166,7 +167,7 @@ class _RenderTask:
 
         names = [result.name for result in results]
 
-        page_content = read_file(pathlib.Path(__file__).absolute().parent / "templates" / "match_page.html")
+        page_content = read_file(TEMPLATES / "match_page.html")
         page_template = jinja2.Template(
             page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
         page_html = page_template.render(id=id, max_id=self.max_id,
@@ -240,14 +241,14 @@ class _Renderer:
                     if frag.is_grouped:
                         num_chars_matched += num_frag_chars
 
-            files.append(HTMLFile(str(file.name), html_frags, num_chars_matched, num_chars))
+            files.append(HTMLFile(file.name, html_frags, num_chars_matched, num_chars))
         return files
 
     def html_submission(self, submission, file_to_spans, ignored_spans):
         html_files = self.html_files(submission, file_to_spans, ignored_spans)
         num_chars_matched = sum(f.num_chars_matched for f in html_files)
         num_chars = sum(f.num_chars for f in html_files)
-        return HTML_Submission(str(submission.path), html_files, num_chars_matched, num_chars)
+        return HTMLSubmission(submission.path, html_files, num_chars_matched, num_chars)
 
     def data(self, result, html_fragments, ignored_spans):
         fragment_to_spans = {}
