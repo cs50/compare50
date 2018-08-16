@@ -54,8 +54,6 @@ def compare(scores, ignored_files, pass_):
     results = []
     for score in scores:
         sub_match = (score.sub_a, score.sub_b)
-        # if sub_match not in sub_match_to_groups:
-            # continue
         results.append(Compare50Result(pass_.__name__,
                                        score,
                                        sub_match_to_groups.get(sub_match, []),
@@ -117,7 +115,7 @@ def expand(span_matches, tokens_a, tokens_b):
     span_matches = sorted(span_matches, key=lambda match: (match[0].start, match[1].start))
 
     def is_subsumed(span, tree):
-        """ Determine if span is strictly smaller than any interval in tree.
+        """Determine if span is contained by any interval in the tree.
         Assumes that tree contains no intersecting intervals"""
         intervals = tree[span.start:span.end]
         for interval in intervals:
