@@ -34,9 +34,9 @@ class Winnowing(Comparator):
             total = sum(args)
             return [arg / total * total_percentage for arg in args]
 
-        submission_index = CrossCompareIndex(self.k, self.t)
-        archive_index = CrossCompareIndex(self.k, self.t)
-        ignored_index = CrossCompareIndex(self.k, self.t)
+        submission_index = ScoreIndex(self.k, self.t)
+        archive_index = ScoreIndex(self.k, self.t)
+        ignored_index = ScoreIndex(self.k, self.t)
 
         submission_files = files(submissions)
         archive_files = files(archive_submissions)
@@ -53,7 +53,7 @@ class Winnowing(Comparator):
         with api.Executor() as executor:
             for index, files, percent in tasks:
                 update_percentage = percent / len(files) if files else percent
-                for idx in executor.map(self._index_file(CrossCompareIndex, (self.k, self.t)), files):
+                for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), files):
                     api.progress_bar.update(update_percentage)
                     index.include_all(idx)
 
@@ -189,7 +189,7 @@ class Index(abc.ABC):
         return bool(self._index)
 
 
-class CrossCompareIndex(Index):
+class ScoreIndex(Index):
     def __init__(self, k, t):
         super().__init__(k)
         self.w = t - k + 1
