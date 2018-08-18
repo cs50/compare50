@@ -151,30 +151,44 @@ class Winnowing(Comparator):
 
 
 class Index(abc.ABC):
+    """Abstract base class for a map between (hashed) fingerprints (k-grams) and the Spans
+    they come from.
+    :param k: the size of the fingerprints, or equivalently the "noise threshold", the \
+              number of tokens that must be identical between two files for us to consider
+              it a match.
+    """
     def __init__(self, k):
         self.k = k
         self._index = collections.defaultdict(set)
 
     def include(self, file, tokens=None):
+        """Fingerprint a file and add it too the index."""
         for hash, val in self.fingerprint(file, tokens):
             self._index[hash].add(val)
 
     def include_all(self, other):
+        """Add all fingerprints from another index into this one."""
         for hash, vals in other._index.items():
             self._index[hash] |= vals
         return self
 
     def ignore_all(self, other):
+        """Remove all fingerprints in another index from this one."""
         for hash in other._index:
             self._index.pop(hash, None)
 
     def kgrams(self, iterable):
+        """
+        Create an iterator over all contiguous sequences of k items (kgrams) from
+        ``iterable``.
+        """
         iters = itertools.tee(iterable, self.k)
         for i, it in enumerate(iters):
             next(itertools.islice(it, i, i), None)
         return zip(*iters)
 
     def hashes(self, tokens):
+        """Hash each contiguous sequence of k tokens in ``tokens``."""
         return (hash("".join(kgram)) for kgram in self.kgrams(t.val for t in tokens))
 
     @abc.abstractmethod
