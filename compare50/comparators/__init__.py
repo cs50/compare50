@@ -1,11 +1,11 @@
 from pkg_resources import resource_filename
 
-from ..data import Pass
+from .._data import Pass
 from .. import preprocessors
 
-from . import winnowing as _winnowing
-from . import misspellings as _misspellings
+from . import _winnowing, _misspellings
 
+__all__ = ["winnowing", "winnowing_exact", "misspellings"]
 
 class winnowing(Pass):
     """Removes all whitespace, normalizes all comments/ids/strings, and runs Winnowing with k=25, t=35."""

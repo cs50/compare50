@@ -1,4 +1,3 @@
-graft compare50/html_renderer/static 
-graft compare50/html_renderer/templates
+graft compare50/_renderer/static 
+graft compare50/_renderer/templates
 include compare50/comparators/english_dictionary.txt
-

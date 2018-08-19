@@ -7,7 +7,7 @@ import concurrent.futures as futures
 import attr
 import numpy as np
 
-from .. import api, Comparison, Comparator, Submission, Span, Score
+from .. import _api, Comparison, Comparator, Submission, Span, Score
 
 
 class Winnowing(Comparator):
@@ -50,11 +50,11 @@ class Winnowing(Comparator):
                  (archive_index, archive_files, archive_percent),
                  (ignored_index, ignored_files, ignored_percent))
 
-        with api.Executor() as executor:
+        with _api.Executor() as executor:
             for index, files, percent in tasks:
                 update_percentage = percent / len(files) if files else percent
                 for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), files):
-                    api.progress_bar.update(update_percentage)
+                    _api.progress_bar.update(update_percentage)
                     index.include_all(idx)
 
         submission_index.ignore_all(ignored_index)
@@ -101,14 +101,14 @@ class Winnowing(Comparator):
                     index.include(file, tokens=tokens)
                     cache.unignored_tokens.append((tokens, index))
 
-                cache.ignored_spans = api.missing_spans(file,
+                cache.ignored_spans = _api.missing_spans(file,
                                                         original_tokens=tokens,
                                                         preprocessed_tokens=list(itertools.chain.from_iterable(token_lists)))
                 file_cache[file] = cache
 
 
         try:
-            update_percentage = api.progress_bar.remaining_percentage / len(scores)
+            update_percentage = _api.progress_bar.remaining_percentage / len(scores)
         except ZeroDivisionError:
             # If len(scores) == 0, we don't need to give update_percentage a value since the loop will never execute
             pass
@@ -129,10 +129,10 @@ class Winnowing(Comparator):
                 # For each pair of unignored regions in the file pair, find the matching spans
                 # (by comparing their indices) and expand them as much as possible
                 for (tokens_a, index_a), (tokens_b, index_b) in itertools.product(cache_a.unignored_tokens, cache_b.unignored_tokens):
-                    comparison.span_matches += api.expand(index_a.compare(index_b), tokens_a, tokens_b)
+                    comparison.span_matches += _api.expand(index_a.compare(index_b), tokens_a, tokens_b)
 
             comparisons.append(comparison)
-            api.progress_bar.update(update_percentage)
+            _api.progress_bar.update(update_percentage)
 
         return comparisons
 
@@ -225,12 +225,12 @@ class ScoreIndex(Index):
         common_hashes = set(self._index) & set(other._index)
 
         try:
-            update_percentage = api.progress_bar.remaining_percentage / len(common_hashes)
+            update_percentage = _api.progress_bar.remaining_percentage / len(common_hashes)
         except ZeroDivisionError:
             pass
 
         for hash_ in common_hashes:
-            api.progress_bar.update(update_percentage)
+            _api.progress_bar.update(update_percentage)
 
             # All file_ids associated with fingerprint in self
             index1 = self._index[hash_]

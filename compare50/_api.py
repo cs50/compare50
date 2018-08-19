@@ -8,7 +8,7 @@ import intervaltree
 import tqdm
 
 import concurrent.futures
-from .data import Submission, Span, Group, BisectList, Compare50Result
+from ._data import Submission, Span, Group, BisectList, Compare50Result
 
 
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]

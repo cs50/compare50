@@ -10,11 +10,11 @@ import jinja2
 import pygments
 from pygments.formatters import HtmlFormatter
 
-from .. import api
-from ..data import IdStore
+from .. import _api
+from .._data import IdStore
 
-STATIC = pathlib.Path(pkg_resources.resource_filename("compare50.html_renderer", "static"))
-TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50.html_renderer", "templates"))
+STATIC = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "static"))
+TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "templates"))
 
 @attr.s(slots=True)
 class Fragment:
@@ -85,15 +85,15 @@ def render(pass_to_results, dest):
             for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
 
     # Render all matches
-    with api.Executor() as executor:
-        update_percentage = api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
+    with _api.Executor() as executor:
+        update_percentage = _api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
         js = (compare50_js,)
         css = (compare50_css, bootstrap, fonts)
         max_id = len(results_per_sub_pair)
         for id, html in executor.map(_RenderTask(dest, max_id, js, css), zip(results_per_sub_pair, range(1, max_id + 1))):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
-            api.progress_bar.update(update_percentage)
+            _api.progress_bar.update(update_percentage)
 
     # Create index
     with open(TEMPLATES / "index.html") as f:
@@ -107,7 +107,7 @@ def render(pass_to_results, dest):
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
-    api.progress_bar.update(update_percentage)
+    _api.progress_bar.update(update_percentage)
     return dest / "index.html"
 
 

@@ -14,12 +14,11 @@ import attr
 import lib50
 import termcolor
 
-from . import html_renderer
-from . import api, data, comparators
+from . import comparators, _api, _data, _renderer
 
 
 def excepthook(cls, exc, tb):
-    if (issubclass(cls, api.Error) or issubclass(cls, lib50.Error)) and exc.args:
+    if (issubclass(cls, _api.Error) or issubclass(cls, lib50.Error)) and exc.args:
         termcolor.cprint(str(exc), "red", file=sys.stderr)
     elif cls is FileNotFoundError:
         termcolor.cprint("{} not found".format(exc.filename), "red", file=sys.stderr)
@@ -74,9 +73,9 @@ class SubmissionFactory:
                 decodable_files.append(file_path)
 
         if not decodable_files:
-            raise api.Error("Empty submission.")
+            raise _api.Error("Empty submission.")
 
-        return data.Submission(path, decodable_files, preprocessor=preprocessor)
+        return _data.Submission(path, decodable_files, preprocessor=preprocessor)
 
     def get_all(self, paths, preprocessor):
         """
@@ -87,7 +86,7 @@ class SubmissionFactory:
         for sub_path in paths:
             try:
                 subs.append(self._get(sub_path, preprocessor))
-            except api.Error:
+            except _api.Error:
                 pass
         return subs
 
@@ -107,7 +106,7 @@ class ListAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = " " * 4
-        for pass_ in data.Pass._get_all():
+        for pass_ in _data.Pass._get_all():
             print(str(pass_.__name__))
             for line in textwrap.wrap(pass_.__doc__ or "No description provided", 80 - len(indentation)):
                 print("{}{}".format(indentation, line))
@@ -120,7 +119,7 @@ class IncludeExcludeAction(argparse.Action):
     def __init__(self, option_strings, callback=None, **kwargs):
         super().__init__(option_strings, **kwargs)
         if not callback:
-            raise api.Error("IncludeExcludeAction requires a callback.")
+            raise _api.Error("IncludeExcludeAction requires a callback.")
         self.callback = callback
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -140,14 +139,13 @@ class Preprocessor:
 
 
 # TODO: remove this before we ship
-PROFILE = [ api.compare
+PROFILE = [ _api.compare
           , comparators._winnowing.Winnowing.score
           , comparators._winnowing.Winnowing.compare
           , comparators._winnowing.Index.hashes
           , comparators._winnowing.CompareIndex.fingerprint
-          , comparators._winnowing.CrossCompareIndex.fingerprint
-          , html_renderer.render
-          , html_renderer.renderer._RenderTask.__call__
+          , comparators._winnowing.ScoreIndex.fingerprint
+          , _renderer.render
           ]
 
 
@@ -190,7 +188,7 @@ def main():
                         dest="passes",
                         nargs="+",
                         metavar="PASSES",
-                        default=[pass_.__name__ for pass_ in data.Pass._get_all()],
+                        default=[pass_.__name__ for pass_ in _data.Pass._get_all()],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
@@ -239,14 +237,14 @@ def main():
     excepthook.verbose = True
 
     if len(args.submissions) == 1:
-        raise api.Error("At least two submissions are required for a comparison.")
+        raise _api.Error("At least two submissions are required for a comparison.")
 
     # Extract comparator and preprocessors from pass
     try:
-        passes = [data.Pass._get(pass_) for pass_ in args.passes]
+        passes = [_data.Pass._get(pass_) for pass_ in args.passes]
     except KeyError as e:
-        raise api.Error("{} is not a pass, try one of these: {}"
-                           .format(e.args[0], [c.__name__ for c in data.Pass._get_all()]))
+        raise _api.Error("{} is not a pass, try one of these: {}"
+                           .format(e.args[0], [c.__name__ for c in _data.Pass._get_all()]))
 
     preprocessor = Preprocessor(passes[0].preprocessors)
 
@@ -258,35 +256,35 @@ def main():
         profiler = contextlib.suppress
 
     if args.debug:
-        api.Executor = api.FauxExecutor
+        _api.Executor = _api.FauxExecutor
         # ProgressBar.DISABLED = True
 
-    with profiler(), api._ProgressBar("Preparing") as api.progress_bar:
+    with profiler(), _api._ProgressBar("Preparing") as _api.progress_bar:
         # Collect all submissions, archive submissions and distro files
         subs = submission_factory.get_all(args.submissions, preprocessor)
-        api.progress_bar.update(33)
+        _api.progress_bar.update(33)
         archive_subs = submission_factory.get_all(args.archive, preprocessor)
-        api.progress_bar.update(33)
+        _api.progress_bar.update(33)
         ignored_subs = submission_factory.get_all(args.distro, preprocessor)
         ignored_files = [f for sub in ignored_subs for f in sub.files]
 
         # Cross compare and rank all submissions, keep only top `n`
-        api.progress_bar.new(f"Scoring ({passes[0].__name__})")
-        scores = api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+        _api.progress_bar.new(f"Scoring ({passes[0].__name__})")
+        scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
 
         # Get the matching spans, group them per submission
         groups = []
         pass_to_results = {}
         for pass_ in passes:
-            api.progress_bar.new(f"Comparing ({pass_.__name__})")
+            _api.progress_bar.new(f"Comparing ({pass_.__name__})")
             preprocessor = Preprocessor(pass_.preprocessors)
             for sub in itertools.chain(subs, archive_subs, ignored_subs):
                 object.__setattr__(sub, "preprocessor", preprocessor)
-            pass_to_results[pass_] = api.compare(scores, ignored_files, pass_)
+            pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
 
         # Render results
-        api.progress_bar.new("Rendering")
-        index = html_renderer.render(pass_to_results, dest=args.output)
+        _api.progress_bar.new("Rendering")
+        index = _renderer.render(pass_to_results, dest=args.output)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
