@@ -140,8 +140,8 @@ class Preprocessor:
 
 # TODO: remove this before we ship
 PROFILE = [ _api.compare
-          , comparators._winnowing.Winnowing.score
-          , comparators._winnowing.Winnowing.compare
+          , comparators.Winnowing.score
+          , comparators.Winnowing.compare
           , comparators._winnowing.Index.hashes
           , comparators._winnowing.CompareIndex.fingerprint
           , comparators._winnowing.ScoreIndex.fingerprint
