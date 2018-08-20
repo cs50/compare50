@@ -90,20 +90,20 @@ class Winnowing(Comparator):
         file_cache = {}
         for sub in subs:
             for file in sub:
-                tokens = file.tokens()
+                file_tokens = file.tokens()
                 cache = FileCache()
 
                 # Get list of unignored tokens
-                token_lists = ignored_index.unignored_tokens(file, tokens=tokens)
+                token_lists = ignored_index.unignored_tokens(file, tokens=file_tokens)
                 # Index each stretch of unignored tokens, index and add to the cache
-                for tokens in token_lists:
+                for token_list in token_lists:
                     index = CompareIndex(self.k)
-                    index.include(file, tokens=tokens)
-                    cache.unignored_tokens.append((tokens, index))
+                    index.include(file, tokens=token_list)
+                    cache.unignored_tokens.append((token_list, index))
 
                 cache.ignored_spans = _api.missing_spans(file,
-                                                        original_tokens=tokens,
-                                                        preprocessed_tokens=list(itertools.chain.from_iterable(token_lists)))
+                                                         original_tokens=file_tokens,
+                                                         processed_tokens=list(itertools.chain.from_iterable(token_lists)))
                 file_cache[file] = cache
 
 
@@ -296,13 +296,6 @@ class CompareIndex(Index):
 
         return matches
 
-    def common_spans(self, other):
-        spans = set()
-        for hash_ in set(self._index) & set(other._index):
-            spans |= self._index[hash_]
-            spans |= other._index[hash_]
-        return spans
-
     def unignored_tokens(self, file, tokens=None):
         if tokens is None:
             tokens = file.tokens()
@@ -312,12 +305,15 @@ class CompareIndex(Index):
             return [tokens]
 
         # Create an index of file with same settings as self
-        index = CompareIndex(k=self.k)
-        index.include(file, tokens=tokens)
+        file_index = CompareIndex(k=self.k)
+        file_index.include(file, tokens=tokens)
 
         # Figure out spans (regions) of the file to ignore
         # Note: these can overlap!
-        ignored_spans = sorted(self.common_spans(index), key=lambda span: span.start)
+        ignored_spans = []
+        for hash, spans in file_index._index.items():
+            if hash in self._index:
+                ignored_spans.extend(spans)
 
         # Nothing to ignore
         if not ignored_spans:
@@ -326,7 +322,7 @@ class CompareIndex(Index):
         # Find relevant tokens (any token not completely in an ignored_span)
         relevant_token_lists = []
         relevant_tokens = []
-        span_iter = iter(ignored_spans)
+        span_iter = iter(sorted(ignored_spans, key=lambda span: span.start))
         span = next(span_iter)
         for i, token in enumerate(tokens):
             # If token comes after span, move on to next span

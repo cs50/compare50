@@ -62,15 +62,15 @@ def compare(scores, ignored_files, pass_):
     return results
 
 
-def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
+def missing_spans(file, original_tokens=None, processed_tokens=None):
     """
     Find which spans were not part of tokens (due to a preprocessor stripping them).
     """
 
     if original_tokens is None:
         original_tokens = file.unprocessed_tokens()
-    if preprocessed_tokens is None:
-        preprocessed_tokens = list(file.submission.preprocessor(original_tokens))
+    if processed_tokens is None:
+        processed_tokens = list(file.submission.preprocessor(original_tokens))
 
     if not original_tokens:
         return []
@@ -80,7 +80,7 @@ def missing_spans(file, original_tokens=None, preprocessed_tokens=None):
 
     spans = []
     start = file_start
-    for token in preprocessed_tokens:
+    for token in processed_tokens:
         if token.start != start:
             spans.append(Span(file, start, token.start))
         start = token.end
