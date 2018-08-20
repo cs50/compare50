@@ -75,6 +75,7 @@ class SubmissionFactory:
         if not decodable_files:
             raise _api.Error("Empty submission.")
 
+        decodable_files = sorted(decodable_files)
         return _data.Submission(path, decodable_files, preprocessor=preprocessor)
 
     def get_all(self, paths, preprocessor):
