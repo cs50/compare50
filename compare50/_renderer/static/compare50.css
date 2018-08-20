@@ -4,9 +4,8 @@ body, h1, h4, h5 {
 }
 
 .wrapper {
-    display: flex;
     width: 100%;
-    align-items: stretch;
+    padding-left: 175px;
 }
 
 #page {
@@ -98,6 +97,12 @@ pre {
 #sidebar {
     padding-left:5px;
     padding-right:5px;
+    margin-left: -175px;
+    left: 175px;
+    width: 175px;
+    position: fixed;
+    height: 100%;
+    z-index: 1000;
 }
 
 .brand {
