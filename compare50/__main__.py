@@ -83,10 +83,10 @@ class SubmissionFactory:
         For every path, and every preprocessor, generate a Submission containing that path/preprocessor.
         Returns a list of lists of Submissions.
         """
-        subs = []
+        subs = set()
         for sub_path in paths:
             try:
-                subs.append(self._get(sub_path, preprocessor))
+                subs.add(self._get(sub_path, preprocessor))
             except _api.Error:
                 pass
         return subs
@@ -237,8 +237,6 @@ def main():
     # TODO: remove this before we ship
     excepthook.verbose = True
 
-    if len(args.submissions) + len(args.archive) < 2:
-        raise _api.Error("At least two submissions are required for a comparison.")
 
     # Extract comparator and preprocessors from pass
     try:
@@ -258,7 +256,6 @@ def main():
 
     if args.debug:
         _api.Executor = _api.FauxExecutor
-        # ProgressBar.DISABLED = True
 
     with profiler(), _api._ProgressBar("Preparing") as _api.progress_bar:
         # Collect all submissions, archive submissions and distro files
@@ -267,7 +264,10 @@ def main():
         archive_subs = submission_factory.get_all(args.archive, preprocessor)
         _api.progress_bar.update(33)
         ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-        ignored_files = [f for sub in ignored_subs for f in sub.files]
+        ignored_files = {f for sub in ignored_subs for f in sub.files}
+
+        if len(subs) + len(archive_subs) < 2:
+            raise _api.Error("At least two non-empty submissions are required for a comparison.")
 
         # Cross compare and rank all submissions, keep only top `n`
         _api.progress_bar.new(f"Scoring ({passes[0].__name__})")
