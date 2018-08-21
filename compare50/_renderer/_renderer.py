@@ -68,7 +68,7 @@ class HTMLSubmission:
             return 0
 
 
-def render(ranker_pass, pass_to_results, dest):
+def render(pass_to_results, dest):
     dest = pathlib.Path(dest)
 
     sub_pair_to_results = collections.defaultdict(list)
@@ -100,10 +100,12 @@ def render(ranker_pass, pass_to_results, dest):
         index_template = jinja2.Template(
             f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
+    ranking_pass, ranking_results = next(iter(pass_to_results.items()))
+
     # Render index
     rendered_html = index_template.render(css=(bootstrap, fonts, compare50_css),
-                                          score_description=ranker_pass.comparator.score.__doc__,
-                                          scores=[result.score for result in next(iter(pass_to_results.values()))],
+                                          score_description=ranking_pass.comparator.score.__doc__,
+                                          scores=[result.score for result in ranking_results],
                                           dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
