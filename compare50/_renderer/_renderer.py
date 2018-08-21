@@ -165,13 +165,13 @@ class _RenderTask:
             match_html = match_template.render(name=result.name, sub_a=sub_a, sub_b=sub_b)
             match_htmls.append(match_html)
 
-        names = [result.name for result in results]
+        passes = [result.pass_ for result in results]
 
         page_content = read_file(TEMPLATES / "match_page.html")
         page_template = jinja2.Template(
             page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
         page_html = page_template.render(id=id, max_id=self.max_id,
-                                         names=names, matches=match_htmls,
+                                         passes=passes, matches=match_htmls,
                                          data=data, js=self.js, css=self.css)
 
         return id, page_html

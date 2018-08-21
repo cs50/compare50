@@ -23,8 +23,8 @@
                 </div>
                 <br/><br/>
                 <div class="btn-group-vertical" role="group" aria-label="Views">
-                {% for name in names %}
-                    <button type="button" class="btn btn-outline-light view_selector" id="{{name}}selector">{{name}}</button>
+                {% for pass_ in passes %}
+                    <button type="button" class="btn btn-outline-light view_selector" id="{{pass_.__name__}}selector" title="{{pass_.__doc__}}">{{pass_.__name__}}</button>
                 {% endfor %}
                 </div>
             </nav>

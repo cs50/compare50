@@ -35,7 +35,7 @@ class _PassRegistry(abc.ABCMeta):
 
 class Pass(metaclass=_PassRegistry):
     __register = False
-
+    
     @abc.abstractmethod
     def preprocessors(self):
         pass
@@ -196,10 +196,14 @@ class Score:
 
 @attr.s(slots=True)
 class Compare50Result:
-    name = attr.ib()
+    pass_ = attr.ib()
     score = attr.ib()
     groups = attr.ib()
     ignored_spans = attr.ib()
+
+    @property
+    def name(self):
+        return self.pass_.__name__
 
     @property
     def sub_a(self):

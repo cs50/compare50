@@ -54,7 +54,7 @@ def compare(scores, ignored_files, pass_):
     results = []
     for score in scores:
         sub_match = (score.sub_a, score.sub_b)
-        results.append(Compare50Result(pass_.__name__,
+        results.append(Compare50Result(pass_,
                                        score,
                                        sub_match_to_groups.get(sub_match, []),
                                        sub_match_to_ignored_spans[sub_match]))
