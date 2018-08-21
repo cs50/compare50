@@ -88,7 +88,7 @@ def render(ranker_pass, pass_to_results, dest):
     with _api.Executor() as executor:
         update_percentage = _api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
         js = (compare50_js,)
-        css = (compare50_css, bootstrap, fonts)
+        css = (bootstrap, fonts, compare50_css)
         max_id = len(results_per_sub_pair)
         for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
@@ -101,7 +101,7 @@ def render(ranker_pass, pass_to_results, dest):
             f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
     # Render index
-    rendered_html = index_template.render(css=(compare50_css, bootstrap, fonts),
+    rendered_html = index_template.render(css=(bootstrap, fonts, compare50_css),
                                           score_description=ranker_pass.comparator.score.__doc__,
                                           scores=[result.score for result in next(iter(pass_to_results.values()))],
                                           dest=dest.resolve())
