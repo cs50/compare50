@@ -120,7 +120,7 @@ class IncludeExcludeAction(argparse.Action):
     def __init__(self, option_strings, callback=None, **kwargs):
         super().__init__(option_strings, **kwargs)
         if not callback:
-            raise _api.Error("IncludeExcludeAction requires a callback.")
+            raise RuntimeError("IncludeExcludeAction requires a callback.")
         self.callback = callback
 
     def __call__(self, parser, namespace, values, option_string=None):
