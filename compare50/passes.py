@@ -17,7 +17,7 @@ class winnowing(Pass):
     comparator = comparators.Winnowing(k=25, t=35)
 
 
-class winnowing_exact(Pass):
+class exact(Pass):
     """Removes all whitespace, then uses the winnowing algorithm to compare submissions."""
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.split_on_whitespace]
