@@ -237,7 +237,7 @@ def main():
     # TODO: remove this before we ship
     excepthook.verbose = True
 
-    if len(args.submissions) < 1 or len(args.submissions) + len(args.archive) < 2:
+    if len(args.submissions) + len(args.archive) < 2:
         raise _api.Error("At least two submissions are required for a comparison.")
 
     # Extract comparator and preprocessors from pass
