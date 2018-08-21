@@ -90,7 +90,7 @@ def render(pass_to_results, dest):
         js = (compare50_js,)
         css = (compare50_css, bootstrap, fonts)
         max_id = len(results_per_sub_pair)
-        for id, html in executor.map(_RenderTask(dest, max_id, js, css), zip(results_per_sub_pair, range(1, max_id + 1))):
+        for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             _api.progress_bar.update(update_percentage)
@@ -132,7 +132,7 @@ class _RenderTask:
         self.css = css
 
     def __call__(self, arg):
-        results, id = arg
+        id, results = arg
         data = []
         match_htmls = []
 

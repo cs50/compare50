@@ -7,7 +7,9 @@ __all__ = ["winnowing", "winnowing_exact", "misspellings"]
 
 
 class winnowing(Pass):
-    """Removes all whitespace, normalizes all comments/ids/strings, and runs Winnowing with k=25, t=35."""
+    """
+    Removes all whitespace, normalizes all comments, variable names, and string literals, then uses the winnowing algorithm to compare submissions.
+    """
 
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
@@ -18,14 +20,14 @@ class winnowing(Pass):
 
 
 class winnowing_exact(Pass):
-    """Only removes whitespace and runs Winnowing with k=25, t=35."""
+    """Removes all whitespace, then uses the winnowing algorithm to compare submissions."""
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.split_on_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
 
 
 class misspellings(Pass):
-    """Compares comments for identical English word misspellings."""
+    """Compares comments for identically misspelled English words."""
 
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,

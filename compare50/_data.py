@@ -35,7 +35,7 @@ class _PassRegistry(abc.ABCMeta):
 
 class Pass(metaclass=_PassRegistry):
     __register = False
-    
+
     @abc.abstractmethod
     def preprocessors(self):
         pass
