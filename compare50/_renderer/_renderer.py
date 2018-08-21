@@ -68,7 +68,7 @@ class HTMLSubmission:
             return 0
 
 
-def render(ranker_pass_, pass_to_results, dest):
+def render(ranker_pass, pass_to_results, dest):
     dest = pathlib.Path(dest)
 
     sub_pair_to_results = collections.defaultdict(list)
@@ -102,7 +102,7 @@ def render(ranker_pass_, pass_to_results, dest):
 
     # Render index
     rendered_html = index_template.render(css=(compare50_css, bootstrap, fonts),
-                                          score_description=ranker_pass_.comparator.score.__doc__,
+                                          score_description=ranker_pass.comparator.score.__doc__,
                                           scores=[result.score for result in next(iter(pass_to_results.values()))],
                                           dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
