@@ -65,7 +65,9 @@
                 }
             }
             for (let row of document.getElementById("results").rows) {
-                row.addEventListener("click", rowListenerFactory(row));
+                if (row.getElementsByTagName("td").length > 0) {
+                    row.addEventListener("click", rowListenerFactory(row));
+                }
             }
         </script>
     </body>
