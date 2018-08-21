@@ -26,7 +26,7 @@ class Winnowing(Comparator):
         self.t = t
 
     def score(self, submissions, archive_submissions, ignored_files):
-        """"""
+        """Number of matching k-grams."""
         def files(subs):
             return [f for sub in subs for f in sub]
 

@@ -285,7 +285,7 @@ def main():
 
         # Render results
         _api.progress_bar.new("Rendering")
-        index = _renderer.render(pass_to_results, dest=args.output)
+        index = _renderer.render(passes[0], pass_to_results, dest=args.output)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")

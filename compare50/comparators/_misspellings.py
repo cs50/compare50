@@ -17,6 +17,7 @@ class Misspellings(Comparator):
         return [token for token in file.tokens() if token.val not in self.dictionary]
 
     def score(self, submissions, archive_submissions, ignored_files):
+        """Number of matching misspelled words."""
         ignored_words = set()
         for ignored_file in ignored_files:
             ignored_words |= {token.val for token in ignored_file.tokens()}
