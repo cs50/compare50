@@ -7,9 +7,7 @@ __all__ = ["winnowing", "winnowing_exact", "misspellings"]
 
 
 class winnowing(Pass):
-    """
-    Removes all whitespace, normalizes all comments, variable names, and string literals, then uses the winnowing algorithm to compare submissions.
-    """
+    """Removes all whitespace, normalizes all comments, variable names, and string literals, then uses the winnowing algorithm to compare submissions. """
 
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
