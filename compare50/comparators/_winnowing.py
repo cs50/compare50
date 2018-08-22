@@ -219,7 +219,7 @@ class ScoreIndex(Index):
 
     def compare(self, other):
         # Keep a self.max_file_id by other.max_file_id matrix for counting score
-        scores = np.zeros((self._max_id + 1, other._max_id + 1))
+        scores = np.zeros((self._max_id + 1, other._max_id + 1), dtype=np.int64)
 
         # Find common fingerprints (hashes)
         common_hashes = set(self._index) & set(other._index)

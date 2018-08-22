@@ -238,14 +238,6 @@ class Group:
     def sub_b(self):
         return self._subs[1]
 
-    @property
-    def sub_a_files(self):
-        return {span.file for span in self.spans if span.file.submission == self.sub_a}
-
-    @property
-    def sub_b_files(self):
-        return {span.file for span in self.spans if span.file.submission == self.sub_b}
-
 
 @attr.s(slots=True)
 class Token:
