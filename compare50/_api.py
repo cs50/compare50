@@ -36,8 +36,8 @@ def compare(scores, ignored_files, pass_):
         for sub in (comparison.sub_a, comparison.sub_b):
             for file in sub.files:
                 # Divide ignored_spans per file
-                ignored_spans_file = [
-                    span for span in comparison.ignored_spans if span.file == file]
+                ignored_spans_file = [span for span in comparison.ignored_spans
+                                           if span.file == file]
 
                 # Find all spans lost by preprocessors for file_a
                 if file not in missing_spans_cache:
