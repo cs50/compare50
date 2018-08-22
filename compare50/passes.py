@@ -7,7 +7,7 @@ __all__ = ["winnowing", "winnowing_exact", "misspellings"]
 
 
 class structure(Pass):
-    """Compares code structure by removing all whitespace, normalizing all comments, variable names, and string literals, and running the winnowing algorithm."""
+    """Compares code structure by removing whitespace and comments; normalizing variable names, string literals, and numeric literals; and then running the winnowing algorithm."""
 
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
