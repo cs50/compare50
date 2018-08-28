@@ -175,7 +175,8 @@ class _RenderTask:
             page_content, autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
         page_html = page_template.render(id=id, max_id=self.max_id,
                                          passes=passes, matches=match_htmls,
-                                         data=data, js=self.js, css=self.css)
+                                         data=[attr.asdict(datum) for datum in data],
+                                         js=self.js, css=self.css)
 
         return id, page_html
 
@@ -266,7 +267,7 @@ class _Renderer:
             for span in group.spans:
                 span_to_group[self.span_id(span)] = group_id
 
-        return attr.asdict(Data(result.name, span_to_group, fragment_to_spans))
+        return Data(result.name, span_to_group, fragment_to_spans)
 
 
 class _FragmentSlicer:

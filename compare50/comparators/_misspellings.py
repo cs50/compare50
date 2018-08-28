@@ -13,8 +13,8 @@ class Misspellings(Comparator):
         with open(dictionary) as f:
             self.dictionary = {s.strip() for s in f.readlines()}
 
-    def _misspelled_tokens(self, file):
-        return [token for token in file.tokens() if token.val not in self.dictionary]
+    def _misspelled(self, tokens):
+        return filter(lambda tok: tok.val not in self.dictionary, tokens)
 
     def score(self, submissions, archive_submissions, ignored_files):
         """Number of identically misspelled words."""
@@ -25,13 +25,12 @@ class Misspellings(Comparator):
         sub_to_words = collections.defaultdict(set)
         for sub in submissions:
             for file in sub.files:
-                sub_to_words[sub] |= {t.val for t in self._misspelled_tokens(file)} - ignored_words
+                sub_to_words[sub] |= {t.val for t in self._misspelled(file.tokens())} - ignored_words
 
         archive_sub_to_words = collections.defaultdict(set)
         for sub in archive_submissions:
             for file in sub.files:
-                archive_sub_to_words[sub] |= {
-                    t.val for t in self._misspelled_tokens(file)} - ignored_words
+                archive_sub_to_words[sub] |= {t.val for t in self._misspelled(file.tokens())} - ignored_words
 
         archive_sub_to_words.update(sub_to_words)
 
@@ -57,11 +56,10 @@ class Misspellings(Comparator):
         file_tokens = {}
         for sub in subs:
             for file in sub:
-                file_tokens[file] = self._misspelled_tokens(file)
+                file_tokens[file] = file.tokens()
 
         comparisons = []
         for score in scores:
-            ignored_spans = set()
             comparison = Comparison(score.sub_a, score.sub_b)
             for file_a, file_b in itertools.product(score.sub_a.files, score.sub_b.files):
                 tokens_a, tokens_b = file_tokens[file_a], file_tokens[file_b]
@@ -75,15 +73,13 @@ class Misspellings(Comparator):
                     word_to_tokens_b[token.val].append(token)
 
                 for word in ignored_words:
-                    if word in word_to_tokens_a:
-                        for token in word_to_tokens_a[word]:
-                            ignored_spans.add(Span(file_a, token.start, token.end))
-                    if word in word_to_tokens_b:
-                        for token in word_to_tokens_b[word]:
-                            ignored_spans.add(Span(file_b, token.start, token.end))
+                    for token in word_to_tokens_a.get(word, []):
+                        comparison.ignored_spans.append(Span(file_a, token.start, token.end))
+                    for token in word_to_tokens_b.get(word, []):
+                        comparison.ignored_spans.append(Span(file_b, token.start, token.end))
 
-                common_misspellings = ({t.val for t in tokens_a} & {
-                                       t.val for t in tokens_b}) - ignored_words
+                common_misspellings = ({t.val for t in self._misspelled(tokens_a)}
+                                        & {t.val for t in self._misspelled(tokens_b)}) - ignored_words
 
                 for misspelling in common_misspellings:
                     ts_a = word_to_tokens_a[misspelling]
