@@ -1,8 +1,10 @@
 import collections
+import contextlib
 import itertools
 import pathlib
 import re
 
+import attr
 from pygments.token import Comment
 
 from .. import Comparator, Span, Comparison, Score
@@ -13,95 +15,89 @@ class Misspellings(Comparator):
         with open(dictionary) as f:
             self.dictionary = {s.strip() for s in f.readlines()}
 
-    def _misspelled(self, tokens):
-        return filter(lambda tok: tok.val not in self.dictionary, tokens)
+    def _misspelled(self, *files):
+        """Returns a set containing all of the words in each file that are not in the dictionary"""
+        return set().union(*({tok.val for tok in file.tokens() if tok.val not in self.dictionary} for file in files))
 
     def score(self, submissions, archive_submissions, ignored_files):
         """Number of identically misspelled words."""
-        ignored_words = set()
-        for ignored_file in ignored_files:
-            ignored_words |= {token.val for token in ignored_file.tokens()}
+        ignored_words = self._misspelled(*ignored_files)
 
-        sub_to_words = collections.defaultdict(set)
-        for sub in submissions:
-            for file in sub.files:
-                sub_to_words[sub] |= {t.val for t in self._misspelled(file.tokens())} - ignored_words
+        # Map each submission to its misspelled words
+        sub_to_words = {sub: self._misspelled(*sub) - ignored_words for sub in submissions}
 
-        archive_sub_to_words = collections.defaultdict(set)
-        for sub in archive_submissions:
-            for file in sub.files:
-                archive_sub_to_words[sub] |= {t.val for t in self._misspelled(file.tokens())} - ignored_words
+        # For each pair of submissions, assign a score based upon number of misspelled words
+        scores = [Score(sub_a, sub_b, _intersect_size(words_a, words_b))
+                    for (sub_a, words_a), (sub_b, words_b) in itertools.combinations(sub_to_words.items(), r=2)]
 
-        archive_sub_to_words.update(sub_to_words)
+        # Compare each archive submission against each regular submission
+        for archive_sub in archive_submissions:
+            # Find all misspelled words in archive
+            archive_words = self._misspelled(*archive_sub) - ignored_words
+            scores.extend(Score(sub, archive_sub, _intersect_size(words, archive_words))
+                            for sub, words in sub_to_words.items())
 
-        scores = []
-        for sub_a, words_a in sub_to_words.items():
-            for sub_b, words_b in archive_sub_to_words.items():
-                if sub_a == sub_b:
-                    continue
-                scores.append(Score(sub_a, sub_b, len(words_a & words_b)))
         return scores
 
     def compare(self, scores, ignored_files):
-        ignored_words = set()
-        for ignored_file in ignored_files:
-            ignored_words |= {token.val for token in self._misspelled(ignored_file.tokens())}
+        ignored_words = self._misspelled(*ignored_files)
 
-        subs = set()
-        for s in scores:
-            subs.add(s.sub_a)
-            subs.add(s.sub_b)
+        # Get all unique submissions to compare
+        subs = set().union(*((s.sub_a, s.sub_b) for s in scores))
 
         # Spellcheck each file exactly once
-        spellcheck_results = {file: self._spellcheck(file, ignored_words) for sub in subs for file in sub}
-
+        spellcheck_results = {file: self._spellcheck(file, ignored_words)
+                                for sub in subs
+                                    for file in sub}
         comparisons = []
         for score in scores:
             span_matches = []
             ignored_spans = set()
             for file_a, file_b in itertools.product(score.sub_a.files, score.sub_b.files):
-                misspelled_a, ignored_spans_a = spellcheck_results[file_a]
-                misspelled_b, ignored_spans_b = spellcheck_results[file_b]
-                ignored_spans.update(ignored_spans_a, ignored_spans_b)
+                results_a, results_b = spellcheck_results[file_a], spellcheck_results[file_b]
 
-                for word, (tokens_a, tokens_b) in _dict_intersect(misspelled_a, misspelled_b).items():
-                    for token_a, token_b in itertools.product(tokens_a, tokens_b):
-                        span_matches.append((Span(file_a, token_a.start, token_a.end),
-                                             Span(file_b, token_b.start, token_b.end)))
+                ignored_spans.update(results_a.correct, results_b.correct)
+                span_matches.extend(results_a.match_misspellings(results_b))
 
-            comparisons.append(Comparison(score.sub_a, score.sub_b, span_matches, list(ignored_spans)))
+            comparisons.append(Comparison(score.sub_a, score.sub_b,
+                                          span_matches, list(ignored_spans)))
         return comparisons
 
-
     def _spellcheck(self, file, ignored_words):
-        word_to_tokens = collections.defaultdict(list)
+        word_to_spans = collections.defaultdict(list)
         for token in file.tokens():
-            word_to_tokens[token.val].append(token)
+            word_to_spans[token.val].append(Span(file, token.start, token.end))
 
-        ignored_spans = []
-        misspelled = {}
+        result = SpellcheckResult()
 
-        for word, tokens in word_to_tokens.items():
+        for word, spans in word_to_spans.items():
             if word in ignored_words or word in self.dictionary:
-                ignored_spans.extend(Span(file, token.start, token.end) for token in tokens)
+                result.correct.extend(spans)
             else:
-                misspelled[word] = tokens
+                result.misspelled[word] = spans
 
-        return misspelled, ignored_spans
+        return result
 
 
-def _dict_intersect(a, b):
-    """Construct a dict c such that for each key that a and b have in common, c[key] = (a[key], b[key])
-    """
+@attr.s(slots=True)
+class SpellcheckResult:
+    # List of spans corresponding to correctly spelled words
+    correct = attr.ib(factory=list)
 
-    # We are iterating over all keys in 'a', so let's make it the smaller one
+    # Dict mapping misspelled words to spans
+    misspelled = attr.ib(factory=dict)
+
+    def match_misspellings(self, other):
+        """Find all misspellings that self and other have in common and yield an iterable over all pairs of identical misspellings"""
+        # Iterate over all keys of smaller dictionary for minor efficiency gain
+        for word in min(self.misspelled, other.misspelled, key=len):
+            with contextlib.suppress(KeyError):
+                yield from itertools.product(self.misspelled[word], other.misspelled[word])
+
+
+def _intersect_size(a, b):
+    """Equivalent to len(a & b) but more efficient"""
     if len(b) < len(a):
         a, b = b, a
 
-    intersection = {}
-    for key, value in a.items():
-        try:
-            intersection[key] = (value, b[key])
-        except KeyError:
-            pass
-    return intersection
+    return sum(item in b for item in a)
