@@ -115,12 +115,13 @@ class Winnowing(Comparator):
 
         comparisons = []
         for score in scores:
-            comparison = Comparison(score.sub_a, score.sub_b)
+            ignored_spans = set()
+            span_matches = []
 
             # We already have the ignored spans for every file cached, so we just need to get the list
             # for each file in this submission pair.
             for file in itertools.chain(score.sub_a.files, score.sub_b.files):
-                comparison.ignored_spans += file_cache[file].ignored_spans
+                ignored_spans.update(file_cache[file].ignored_spans)
 
             # Compare each pair of files in the submission pair
             for file_a, file_b in itertools.product(score.sub_a.files, score.sub_b.files):
@@ -129,9 +130,9 @@ class Winnowing(Comparator):
                 # For each pair of unignored regions in the file pair, find the matching spans
                 # (by comparing their indices) and expand them as much as possible
                 for (tokens_a, index_a), (tokens_b, index_b) in itertools.product(cache_a.unignored_tokens, cache_b.unignored_tokens):
-                    comparison.span_matches += _api.expand(index_a.compare(index_b), tokens_a, tokens_b)
+                    span_matches += _api.expand(index_a.compare(index_b), tokens_a, tokens_b)
 
-            comparisons.append(comparison)
+            comparisons.append(Comparison(score.sub_a, score.sub_b, span_matches, list(ignored_spans)))
             _api.progress_bar.update(update_percentage)
 
         return comparisons

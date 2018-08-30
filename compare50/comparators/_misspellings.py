@@ -45,48 +45,63 @@ class Misspellings(Comparator):
     def compare(self, scores, ignored_files):
         ignored_words = set()
         for ignored_file in ignored_files:
-            for token in ignored_file.tokens():
-                ignored_words.add(token.val)
+            ignored_words |= {token.val for token in self._misspelled(ignored_file.tokens())}
 
         subs = set()
         for s in scores:
             subs.add(s.sub_a)
             subs.add(s.sub_b)
 
-        file_tokens = {}
-        for sub in subs:
-            for file in sub:
-                file_tokens[file] = file.tokens()
+        # Spellcheck each file exactly once
+        spellcheck_results = {file: self._spellcheck(file, ignored_words) for sub in subs for file in sub}
 
         comparisons = []
         for score in scores:
-            comparison = Comparison(score.sub_a, score.sub_b)
+            span_matches = []
+            ignored_spans = set()
             for file_a, file_b in itertools.product(score.sub_a.files, score.sub_b.files):
-                tokens_a, tokens_b = file_tokens[file_a], file_tokens[file_b]
+                misspelled_a, ignored_spans_a = spellcheck_results[file_a]
+                misspelled_b, ignored_spans_b = spellcheck_results[file_b]
+                ignored_spans.update(ignored_spans_a, ignored_spans_b)
 
-                word_to_tokens_a = collections.defaultdict(list)
-                for token in tokens_a:
-                    word_to_tokens_a[token.val].append(token)
+                for word, (tokens_a, tokens_b) in _dict_intersect(misspelled_a, misspelled_b).items():
+                    for token_a, token_b in itertools.product(tokens_a, tokens_b):
+                        span_matches.append((Span(file_a, token_a.start, token_a.end),
+                                             Span(file_b, token_b.start, token_b.end)))
 
-                word_to_tokens_b = collections.defaultdict(list)
-                for token in tokens_b:
-                    word_to_tokens_b[token.val].append(token)
-
-                for word in ignored_words:
-                    for token in word_to_tokens_a.get(word, []):
-                        comparison.ignored_spans.append(Span(file_a, token.start, token.end))
-                    for token in word_to_tokens_b.get(word, []):
-                        comparison.ignored_spans.append(Span(file_b, token.start, token.end))
-
-                common_misspellings = ({t.val for t in self._misspelled(tokens_a)}
-                                        & {t.val for t in self._misspelled(tokens_b)}) - ignored_words
-
-                for misspelling in common_misspellings:
-                    ts_a = word_to_tokens_a[misspelling]
-                    ts_b = word_to_tokens_b[misspelling]
-                    for token_a, token_b in itertools.product(ts_a, ts_b):
-                        comparison.span_matches.append((Span(file_a, token_a.start, token_a.end),
-                                                        Span(file_b, token_b.start, token_b.end)))
-            comparisons.append(comparison)
-
+            comparisons.append(Comparison(score.sub_a, score.sub_b, span_matches, list(ignored_spans)))
         return comparisons
+
+
+    def _spellcheck(self, file, ignored_words):
+        word_to_tokens = collections.defaultdict(list)
+        for token in file.tokens():
+            word_to_tokens[token.val].append(token)
+
+        ignored_spans = []
+        misspelled = {}
+
+        for word, tokens in word_to_tokens.items():
+            if word in ignored_words or word in self.dictionary:
+                ignored_spans.extend(Span(file, token.start, token.end) for token in tokens)
+            else:
+                misspelled[word] = tokens
+
+        return misspelled, ignored_spans
+
+
+def _dict_intersect(a, b):
+    """Construct a dict c such that for each key that a and b have in common, c[key] = (a[key], b[key])
+    """
+
+    # We are iterating over all keys in 'a', so let's make it the smaller one
+    if len(b) < len(a):
+        a, b = b, a
+
+    intersection = {}
+    for key, value in a.items():
+        try:
+            intersection[key] = (value, b[key])
+        except KeyError:
+            pass
+    return intersection
