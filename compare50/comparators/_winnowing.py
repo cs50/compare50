@@ -1,11 +1,12 @@
 import abc
 import collections
-import math
 import itertools
-import concurrent.futures as futures
+import math
+import sys
 
 import attr
 import numpy as np
+
 
 from .. import _api, Comparison, Comparator, Submission, Span, Score
 
