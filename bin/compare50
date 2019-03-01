@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
 # set python hash seed to a deterministic value to ensure identical results across independent runs
-PYTHONHASHSEED=50 python -m compare50 "$@"
+PYTHONHASHSEED=50 python3 -m compare50 "$@"
