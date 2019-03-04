@@ -5,7 +5,7 @@ import sys
 
 from compare50.__main__ import Preprocessor
 import compare50.comparators._winnowing as winnowing
-import compare50.data as data
+import compare50._data as data
 
 class TestCase(unittest.TestCase):
     def setUp(self):

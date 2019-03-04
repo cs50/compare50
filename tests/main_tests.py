@@ -3,8 +3,6 @@ import tempfile
 import zipfile
 import os
 import compare50.__main__ as main
-import compare50.errors
-import compare50.data
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -29,7 +27,7 @@ class TestSubmissionFactory(TestCase):
         preprocessor = lambda tokens : tokens
         os.mkdir("foo")
         subs = self.factory.get_all(["foo"], preprocessor)
-        self.assertEqual(subs, [])
+        self.assertEqual(subs, set())
 
     def test_one_submission(self):
         preprocessor = lambda tokens : tokens
@@ -38,11 +36,11 @@ class TestSubmissionFactory(TestCase):
         with open("foo/bar/baz.txt", "w") as f:
             pass
 
-        subs = self.factory.get_all(["foo"], preprocessor)
+        subs = list(self.factory.get_all(["foo"], preprocessor))
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].path.name, "foo")
 
-        subs = self.factory.get_all(["foo/bar"], preprocessor)
+        subs = list(self.factory.get_all(["foo/bar"], preprocessor))
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].path.parent.name, "foo")
         self.assertEqual(subs[0].path.name, "bar")
@@ -54,7 +52,7 @@ class TestSubmissionFactory(TestCase):
         with open("foo/bar/baz.txt", "w") as f:
             pass
 
-        subs = self.factory.get_all(["foo"], preprocessor)
+        subs = list(self.factory.get_all(["foo"], preprocessor))
         self.assertEqual(subs[0].preprocessor(""), ["foo"])
 
     def test_single_file_submission(self):
@@ -63,7 +61,7 @@ class TestSubmissionFactory(TestCase):
         with open("foo/bar.py", "w") as f:
             pass
 
-        subs = self.factory.get_all(["foo/bar.py"], preprocessor)
+        subs = list(self.factory.get_all(["foo/bar.py"], preprocessor))
         self.assertEqual(len(subs), 1)
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
@@ -76,7 +74,7 @@ class TestSubmissionFactory(TestCase):
 
         self.factory.exclude("*")
         subs = self.factory.get_all(["foo"], preprocessor)
-        self.assertEquals(subs, [])
+        self.assertEquals(subs, set())
 
     def test_include_pattern(self):
         preprocessor = lambda tokens : tokens
@@ -86,7 +84,7 @@ class TestSubmissionFactory(TestCase):
 
         self.factory.exclude("*")
         self.factory.include("bar.py")
-        subs = self.factory.get_all(["foo"], preprocessor)
+        subs = list(self.factory.get_all(["foo"], preprocessor))
         self.assertEqual(len(subs), 1)
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
@@ -98,7 +96,7 @@ class TestSubmissionFactory(TestCase):
             f.write(b'\x80abc')
 
         subs = self.factory.get_all(["foo"], preprocessor)
-        self.assertEqual(subs, [])
+        self.assertEqual(subs, set())
 
 
 if __name__ == "__main__":
