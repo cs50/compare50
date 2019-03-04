@@ -128,7 +128,7 @@ def read_file(fname):
 
 class _RenderTask:
     def __init__(self, dest, max_id, js, css):
-        self._prepare_dest(dest)
+        dest.mkdir(exist_ok=True)
         self.dest = dest
         self.max_id = max_id
         self.js = js

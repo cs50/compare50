@@ -3,7 +3,7 @@ from pkg_resources import resource_filename
 from . import comparators, preprocessors
 from ._data import Pass
 
-__all__ = ["winnowing", "winnowing_exact", "misspellings"]
+__all__ = ["structure", "exact", "misspellings"]
 
 
 class structure(Pass):

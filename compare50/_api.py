@@ -7,18 +7,37 @@ import time
 import intervaltree
 import tqdm
 
+
 import concurrent.futures
 from ._data import Submission, Span, Group, BisectList, Compare50Result
 
 
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]
 
+
 class Error(Exception):
+    """Base class for compare50 errors."""
     pass
 
 
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
-    """Rank all submissions, take the top n."""
+    """
+    :param submissions: submissions to be ranked
+    :type submissions: [:class:`compare50.Submission`]
+    :param archive_submissions: archive submissions to be ranked
+    :type archive_submissions: [:class:`compare50.Submission`]
+    :param ignored_files: files containing distro code
+    :type ignored_files: {:class:`compare50.File`}
+    :param pass_: pass whose comparator should be use to rank the submissions
+    :type pass_: :class:`compare50.Pass`
+    :param n: number of submission pairs to return
+    :type n: int
+    :returns: the top ``n`` submission pairs
+    :rtype: [:class:`compare50.Score`]
+
+
+    Rank submissions, return the top ``n`` most similar pairs
+    """
     scores = pass_.comparator.score(submissions, archive_submissions, ignored_files)
 
     # Keep only top `n` submission matches
@@ -26,7 +45,21 @@ def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
 
 
 def compare(scores, ignored_files, pass_):
-    """Find all shared groups between scores"""
+    """
+    :param scores: Scored submission pairs to be compared more granularly
+    :type scores: [:class:`compare50.Score`]
+    :param ignored_files: files containing distro code
+    :type ignored_files: {:class:`compare50.File`}
+    :param pass_: pass whose comparator should be use to compare the submissions
+    :type pass_: :class:`compare50.Pass`
+    :returns: :class:`Compare50Result`\ s corresponding to each of the given scores
+    :rtype: [:class:`compare50.Compare50Result`]
+
+
+    Performs an in-depth comparison of each submission pair and returns a corresponding
+    list of :class:`compare50.compare50Result`\ s.
+    """
+
     missing_spans_cache = {}
     sub_match_to_ignored_spans = {}
     sub_match_to_groups = {}
@@ -64,7 +97,19 @@ def compare(scores, ignored_files, pass_):
 
 def missing_spans(file, original_tokens=None, processed_tokens=None):
     """
-    Find which spans were not part of tokens (due to a preprocessor stripping them).
+    :param file: file to be examined
+    :type file: :class:`compare50.File`
+    :param original_tokens: the unprocessed tokens of ``file``. May be \
+            optionally specified if ``file`` has been tokenized elsewhere to avoid \
+            tokenizing it again.
+    :param processed_tokens: the result of preprocessing the tokens of ``file``. \
+            May optionally be specified if ``file`` has been preprocessed elsewhere \
+            to avoid doing so again.
+    :returns: The spans of ``file`` that were stripped by the preprocessor.
+    :rtype: [:class:`compare50.Span`]
+
+
+    Determine which parts of ``file`` were stripped out by the preprocessor.
     """
 
     if original_tokens is None:
@@ -93,8 +138,23 @@ def missing_spans(file, original_tokens=None, processed_tokens=None):
 
 def expand(span_matches, tokens_a, tokens_b):
     """
-    Expand all span matches.
-    returns a new list of maximally extended span pairs.
+    :param span_matches: span pairs to be expanded wherein the first element of every \
+            pair is from the same file and the second element of every pair is from the \
+            same file
+    :type span_matches: [(:class:`compare50.Span`, :class:`compare50.Span`)]
+    :param tokens_a: the tokens of the file corresponding to the first element of each \
+            ``span_match``
+    :type tokens_a: [:class:`compare50.Token`]
+    :param tokens_b: :param tokens_a: the tokens of the file corresponding to the first \
+            element of each ``span_match``
+    :type tokens_b: [:class:`compare50.Token`]
+    :returns: A new list of maximially expanded span pairs
+    :rtype: [(:class:`compare50.Span`, :class:`compare50.Span`)]
+
+    Expand all span matches. This is useful when e.g. two spans in two different files
+    are identical, but there are tokens before/after these spans that are also identical
+    between the files. This function expands each of these spans to include these
+    additional tokens.
     """
     if not span_matches:
         return span_matches
@@ -277,7 +337,7 @@ class _Singleton(type):
 
 
 class _ProgressBar(metaclass=_Singleton):
-    """Show a progress bar starting with message."""
+    """ANSI progress bar with message"""
     STOP_SIGNAL = None
     UPDATE_SIGNAL = 1
 
@@ -365,12 +425,19 @@ class _ProgressBar(metaclass=_Singleton):
         self._stop()
 
 
+#: Global progress bar used by compare50
 progress_bar = None
 
 
-# TODO: remove before we ship
 class FauxExecutor:
+    """
+    Executor (a la concurrent.futures.ProcessPoolExecutor) that runs tasks synchronously.
+    Allows us to quickly deparallelize compare50 when debugging
+    """
     class FauxFuture:
+        """
+        As above. A fake 'future' that wraps an already completed, synchronously executed task.
+        """
         def __init__(self, result=None, exception=None):
             self._result = result
             self._exception = exception
@@ -418,5 +485,5 @@ class FauxExecutor:
         return
 
 
-# TODO: Remove before we ship
+#: Executor used for concurrency
 Executor = concurrent.futures.ProcessPoolExecutor

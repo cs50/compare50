@@ -34,6 +34,13 @@ class _PassRegistry(abc.ABCMeta):
 
 
 class Pass(metaclass=_PassRegistry):
+    """
+    Abstract base class for ``compare50`` passes, which are essentially ways for
+    ``compare50`` to compare submissions. Subclasses must define a list of preprocessors
+    (functions from tokens to tokens which will be run on every file ``compare50``
+    recieves) as well as a comparator (used to score and compare the preprocessed
+    submissions).
+    """
     __register = False
 
     @abc.abstractmethod
@@ -46,16 +53,33 @@ class Pass(metaclass=_PassRegistry):
 
 
 class Comparator(metaclass=abc.ABCMeta):
+    """
+    Abstract base class for ``compare50`` comparators which specify how submissions
+    should be scored and compared.
+    """
     @abc.abstractmethod
     def score(self, submissions, archive_submissions, ignored_files):
+        """
+        Given a list of submissions, a list of archive submissions, and a set of distro
+        files, return a list of :class:`compare50.Score`\ s for each submission pair.
+        """
         pass
 
     @abc.abstractmethod
     def compare(self, scores, ignored_files):
+        """
+        Given a list of scores and a list of distro files, perform an in-depth
+        comparison of each submission pair and return a corresponding list of
+        :class:`compare50.Comparison`\ s
+        """
         pass
 
 
 class IdStore(Mapping):
+    """
+    Mapping from objects to IDs. If object has not been added to the store,
+    a new id is generated for it.
+    """
     def __init__(self, key=lambda obj: obj):
         self.objects = []
         self._key = key
@@ -77,6 +101,17 @@ class IdStore(Mapping):
 
 @attr.s(slots=True, frozen=True)
 class Submission:
+    """
+    :ivar path: the file path of the submission
+    :ivar files: list of :class:`compare50.File` objects contained in the submission
+    :ivar preprocessor: A function from tokens to tokens that will be run on \
+            each file in the submission
+    :ivar id: integer that uniquely identifies this submission \
+            (submissions with the same path will always have the same id).
+
+    Represents a single submission. Submissions may either be single files or
+    directories containing many files.
+    """
     _store = IdStore(key=lambda sub: (sub.path, sub.files))
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
@@ -94,11 +129,21 @@ class Submission:
 
     @classmethod
     def get(cls, id):
+        """Retrieve submission corresponding to specified id"""
         return cls._store.objects[id]
 
 
 @attr.s(slots=True, frozen=True)
 class File:
+    """
+    :ivar name: file name (path relative to the submission path)
+    :ivar submission: submission containing this file
+    :ivar id: integer that uniquely identifies this file (files with the same path \
+            will always have the same id)
+
+
+    Represents a single file from a submission.
+    """
     _lexer_cache = {}
     _store = IdStore(key=lambda file: file.path)
 
@@ -108,16 +153,20 @@ class File:
 
     @property
     def path(self):
+        """The full path of the file"""
         return self.submission.path / self.name
 
     def read(self, size=-1):
+        """Open file, read ``size`` bytes from it, then close it."""
         with open(self.path) as f:
             return f.read(size)
 
     def tokens(self):
+        """Returns the preprpocessed tokens of the file."""
         return list(self.submission.preprocessor(self.unprocessed_tokens()))
 
     def lexer(self):
+        """Determine which Pygments lexer should be used."""
         ext = self.name.suffix
         try:
             return self._lexer_cache[ext]
@@ -137,9 +186,11 @@ class File:
 
     @classmethod
     def get(cls, id):
+        """Find File with given id"""
         return cls._store.objects[id]
 
     def unprocessed_tokens(self):
+        """Get the raw tokens of the file."""
         text = self.read()
         lexer_tokens = self.lexer().get_tokens_unprocessed(text)
         tokens = []
@@ -160,10 +211,12 @@ class File:
 @attr.s(slots=True, frozen=True, repr=False)
 class Span:
     """
+    :ivar file: the ID of the File containing the span
+    :ivar start: the character index of the first character in the span
+    :ivar end: the character index one past the end of the span
+
+
     Represents a range of characters in a particular file.
-    file - the ID of the File containing the span
-    start - the character index of the first character in the span
-    end - the character index one past the end of the span
     """
     file = attr.ib()
     start = attr.ib()
@@ -181,6 +234,17 @@ class Span:
 
 @attr.s(slots=True)
 class Comparison:
+    """
+    :ivar sub_a: the first submission
+    :ivar sub_b: the second submission
+    :ivar span_matches: a list of pairs of matching :class:`compare50.Span`\ s, wherein \
+            the first element of each pair is from ``sub_a`` and the second is from \
+            ``sub_b``.
+    :ivar ignored_spans: a list of :class:`compare50.Span`\ s which were ignored \
+            (e.g. because they matched distro files)
+
+    Represents an in-depth comparison of two submissions.
+    """
     sub_a = attr.ib(validator=attr.validators.instance_of(Submission))
     sub_b = attr.ib(validator=attr.validators.instance_of(Submission))
     span_matches = attr.ib(factory=list)
@@ -189,6 +253,14 @@ class Comparison:
 
 @attr.s(slots=True)
 class Score:
+    """
+    :ivar sub_a: the first submission
+    :ivar sub_b: the second submission
+    :ivar score: a number indicating the similarity between ``sub_a`` and ``sub_b``\
+            (higher meaning more similar)
+
+    A score representing the similarity of two submissions.
+    """
     sub_a = attr.ib(validator=attr.validators.instance_of(Submission), cmp=False)
     sub_b = attr.ib(validator=attr.validators.instance_of(Submission), cmp=False)
     score = attr.ib(default=0, validator=attr.validators.instance_of(numbers.Number))
@@ -196,6 +268,14 @@ class Score:
 
 @attr.s(slots=True)
 class Compare50Result:
+    """
+    :ivar pass_: the pass that was used to compare the two submissions
+    :ivar score: the :class:`compare50.Score` generated when the subimssions were scored
+    :ivar groups: a list of groups of matching spans
+    :ivar ignored_spans: a list of spans that were ignored during the comparison
+
+    The final result of comparing two submissions that is passed to the renderer.
+    """
     pass_ = attr.ib()
     score = attr.ib()
     groups = attr.ib()
@@ -203,14 +283,17 @@ class Compare50Result:
 
     @property
     def name(self):
+        """The name of the pass that was run to compare the submissions."""
         return self.pass_.__name__
 
     @property
     def sub_a(self):
+        """The 'first' (left) submission"""
         return self.score.sub_a
 
     @property
     def sub_b(self):
+        """The 'second' (right) submission"""
         return self.score.sub_b
 
 
@@ -227,27 +310,37 @@ def _sorted_subs(group):
 
 @attr.s(slots=True, frozen=True)
 class Group:
+    """
+    :ivar spans: spans with identical contents
+
+    A group of spans with matching contents
+    """
     spans = attr.ib(converter=frozenset)
     _subs = attr.ib(init=False, default=attr.Factory(_sorted_subs, takes_self=True))
 
     @property
     def sub_a(self):
+        """The 'first' submission represented in the group (i.e. the one with
+        the smaller identifier)"""
         return self._subs[0]
 
     @property
     def sub_b(self):
+        """The 'second' submission represented in the group (i.e. the one with
+        the larger identifier)"""
         return self._subs[1]
 
 
 @attr.s(slots=True)
 class Token:
-    """A result of the lexical analysis of a file. Preprocessors operate
-    on Token streams.
+    """
+    :ivar start: the character index of the beginning of the token
+    :ivar end: the character index one past the end of the token
+    :ivar type: the Pygments token type
+    :ivar val: the string contents of the token
 
-    start - the character index of the beginning of the token
-    end - the character index one past the end of the token
-    type - the Pygments token type
-    val - the string contents of the token
+    A result of the lexical analysis of a file. Preprocessors operate
+    on Token streams.
     """
     start = attr.ib(cmp=False)
     end = attr.ib(cmp=False)
@@ -255,11 +348,15 @@ class Token:
     val = attr.ib()
 
     def __eq__(self, other):
-        """Note that there is no sanity checking, sacrificed for performance."""
+        # Note that there is no sanity checking. Sacrificed for performance.
         return self.val == other.val and self.type == other.type
 
 
 class BisectList(Sequence):
+    """
+    A sorted list allowing for easy binary seaching. This exists because Python's
+    bisect does not allow you to compare objects via a key function.
+    """
     def __init__(self, iter=None, key=lambda x: x):
         self.contents = sorted(iter, key=key) if iter is not None else []
         self.key = key

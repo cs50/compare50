@@ -7,6 +7,7 @@ from ._data import Token
 
 
 def strip_whitespace(tokens):
+    """Remove all whitespace from tokens."""
     for tok in tokens:
         val = tok.val
         if tok.type in Text:
@@ -17,19 +18,21 @@ def strip_whitespace(tokens):
 
 
 def strip_comments(tokens):
+    """Remove all comments from tokens."""
     for tok in tokens:
         if tok.type not in (Comment.Multiline, Comment.Single, Comment.Hashbang):
             yield tok
 
 
 def normalize_case(tokens):
+    """Make all tokens lower case."""
     for tok in tokens:
         tok.val = tok.val.lower()
         yield tok
 
 
 def normalize_identifiers(tokens):
-    """Replaces all identifiers with `v`"""
+    """Replace all identifiers with ``v``"""
     for tok in tokens:
         if tok.type in Name:
             tok.val = "v"
@@ -39,7 +42,7 @@ def normalize_identifiers(tokens):
 
 
 def normalize_string_literals(tokens):
-    """Replaces string literals with empty strings"""
+    """Replace string literals with empty strings."""
     string_token = None
     for tok in tokens:
         if tok.type in String:
@@ -58,7 +61,7 @@ def normalize_string_literals(tokens):
 
 
 def normalize_numeric_literals(tokens):
-    """Replaces numeric literals with their types"""
+    """Replace numeric literals with their types."""
     for tok in tokens:
         if tok.type in Number.Integer:
             tok.val = "INT"
@@ -74,13 +77,14 @@ def normalize_numeric_literals(tokens):
 
 
 def extract_identifiers(tokens):
-    """Keeps only the first instance of each identifier used"""
+    """Remove all tokens that don't represent identifiers."""
     for tok in tokens:
         if tok.type in Name:
             yield tok
 
 
 def by_character(tokens):
+    """Make a token for each character."""
     for tok in tokens:
         for i, c in enumerate(tok.val):
             yield Token(start=tok.start + i,
@@ -90,33 +94,32 @@ def by_character(tokens):
 
 
 def token_printer(tokens):
-    """Prints all token data. Useful for debugging."""
+    """Print each token. Useful for debugging."""
     for tok in tokens:
         print(tok)
         yield tok
 
 
 def text_printer(tokens):
-    """Prints token values. Useful for debugging."""
+    """Print token values. Useful for debugging."""
     for tok in tokens:
         print(tok.val, end="")
         yield tok
 
 
 def comments(tokens):
-    """Remove all other tokens except comments."""
-
+    """Remove all tokens that aren't comments."""
     for t in tokens:
         if t.type == Comment.Single or t.type == Comment.Multiline:
             yield t
 
 
 def words(tokens):
-    """Split Tokens into Tokens containing just one word."""
+    """Split tokens into tokens containing just one word."""
     for t in tokens:
         start = t.start
         only_alpha = re.sub("[^a-zA-Z'_-]", " ", t.val)
-        for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)]:
+        for val, (start, end) in ((m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', only_alpha)):
             yield Token(t.start + start, t.start + end, t.type, val)
 
 
@@ -124,5 +127,5 @@ def split_on_whitespace(tokens):
     """Split values of tokens on whitespace into new tokens"""
     for t in tokens:
         start = t.start
-        for val, (start, end) in [(m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', t.val)]:
+        for val, (start, end) in ((m.group(0), (m.start(), m.end())) for m in re.finditer(r'\S+', t.val)):
             yield Token(t.start + start, t.start + end, t.type, val)

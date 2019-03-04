@@ -139,7 +139,6 @@ class Preprocessor:
         return tokens
 
 
-# TODO: remove this before we ship
 PROFILE = [ _api.compare
           , comparators.Winnowing.score
           , comparators.Winnowing.compare
@@ -209,7 +208,7 @@ def main():
                         action=ListAction)
     parser.add_argument("-o", "--output",
                         action="store",
-                        default="html",
+                        default="results",
                         type=pathlib.Path,
                         help="location of compare50's output")
     parser.add_argument("-v", "--verbose",
@@ -222,10 +221,9 @@ def main():
                         type=int,
                         help="number of matches to output")
 
-    # TODO: remove these before we ship
     parser.add_argument("--profile",
                         action="store_true",
-                        help="profile compare50 (development only, implies debug)")
+                        help="profile compare50 (development only, requires line_profiler, implies debug)")
 
     parser.add_argument("--debug",
                         action="store_true",
@@ -234,8 +232,6 @@ def main():
     args = parser.parse_args()
 
     excepthook.verbose = args.verbose
-    # TODO: remove this before we ship
-    excepthook.verbose = True
 
 
     # Extract comparator and preprocessors from pass
@@ -247,7 +243,6 @@ def main():
 
     preprocessor = Preprocessor(passes[0].preprocessors)
 
-    # TODO: remove this before we ship
     if args.profile:
         args.debug = True
         profiler = profile
@@ -256,6 +251,25 @@ def main():
 
     if args.debug:
         _api.Executor = _api.FauxExecutor
+
+    if args.output.exists():
+        try:
+            resp = input(f"File path {termcolor.colored(args.output, None, attrs=['underline'])}"
+                          " already exists. Do you want to remove it? [Y/n] ")
+        except EOFError:
+            resp = "n"
+            print()
+
+        if not resp or resp.lower().startswith("y"):
+            try:
+                os.remove(args.output)
+            except IsADirectoryError:
+                shutil.rmtree(args.output)
+        else:
+            print("Quitting...")
+            sys.exit(1)
+
+
 
     with profiler(), _api._ProgressBar("Preparing") as _api.progress_bar:
         # Collect all submissions, archive submissions and distro files

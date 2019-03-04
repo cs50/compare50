@@ -1,4 +1,8 @@
 /* Make text more readable */
+body {
+    font-family: Roboto-Regular
+}
+
 body, h1, h4, h5 {
     counter-reset: line_numbers;
 }
@@ -91,7 +95,7 @@ pre {
 
 .line {
     line-height: 1em;
-    font-family: Inconsolata, monospace;
+    font-family: Inconsolata-Regular, monospace;
 }
 
 #sidebar {
