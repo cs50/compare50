@@ -3,7 +3,7 @@ python: 3.6
 branches:
   except: "/^v\\.\\d\\.\\d\\.\\d/"
 install: pip intsall .
-script: compare50 --version
+script: python -m tests
 before_deploy: |
   version="v$(compare50 --version | cut --delimiter ' ' --fields 2)"
   if [ -z "$(git tag --list "$version")" ]; then \
