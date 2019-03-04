@@ -14,7 +14,7 @@ import attr
 import lib50
 import termcolor
 
-from . import comparators, _api, _data, _renderer
+from . import comparators, _api, _data, _renderer, __version__
 
 
 def excepthook(cls, exc, tb):
@@ -220,14 +220,15 @@ def main():
                         metavar="MATCHES",
                         type=int,
                         help="number of matches to output")
-
     parser.add_argument("--profile",
                         action="store_true",
                         help="profile compare50 (development only, requires line_profiler, implies debug)")
-
     parser.add_argument("--debug",
                         action="store_true",
                         help="don't run anything in parallel, disable progress bar")
+    parser.add_argument("-V", "--version",
+                        action="version",
+                        version=f"%(prog)s {__version__}")
 
     args = parser.parse_args()
 
