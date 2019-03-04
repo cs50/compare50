@@ -5,11 +5,11 @@ def _set_version():
     import os
     # https://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
     try:
-        dist = get_distribution("check50")
+        dist = get_distribution("compare50")
         # Normalize path for cross-OS compatibility.
         dist_loc = os.path.normcase(dist.location)
         here = os.path.normcase(__file__)
-        if not here.startswith(os.path.join(dist_loc, "check50")):
+        if not here.startswith(os.path.join(dist_loc, "compare50")):
             # This version is not installed, but another version is.
             raise DistributionNotFound
     except DistributionNotFound:
