@@ -1,5 +1,5 @@
-compare50
-=========
+``compare50``
+=============
 
 .. toctree::
    :hidden:
