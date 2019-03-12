@@ -271,8 +271,7 @@ def main():
             sys.exit(1)
 
 
-
-    with profiler(), _api._ProgressBar("Preparing") as _api.progress_bar:
+    with profiler(), _api._ProgressBar("Preparing", enabled=not args.debug) as _api.progress_bar:
         # Collect all submissions, archive submissions and distro files
         subs = submission_factory.get_all(args.submissions, preprocessor)
         _api.progress_bar.update(33)
@@ -287,7 +286,6 @@ def main():
         # Cross compare and rank all submissions, keep only top `n`
         _api.progress_bar.new(f"Scoring ({passes[0].__name__})")
         scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
-
         # Get the matching spans, group them per submission
         groups = []
         pass_to_results = {}
