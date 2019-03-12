@@ -60,7 +60,10 @@
         <script>
             function rowListenerFactory(row) {
                 return event => {
-                    window.location = `file://{{dest}}/match_${row.cells[0].textContent}.html`
+                    const newLocation = window.location.pathname.split('/')
+                    newLocation.pop()
+                    newLocation.push(`match_${row.cells[0].textContent}.html`)
+                    window.location = `file://${newLocation.join('/')}`
                 }
             }
             for (let row of document.getElementById("results").rows) {
