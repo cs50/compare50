@@ -60,7 +60,7 @@
         <script>
             function rowListenerFactory(row) {
                 return event => {
-                    window.location = `file://{{dest}}/match_${row.cells[0].textContent}.html`
+                    window.location.href = `match_${row.cells[0].textContent}.html`
                 }
             }
             for (let row of document.getElementById("results").rows) {
