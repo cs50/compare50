@@ -341,7 +341,8 @@ class _ProgressBar(metaclass=_Singleton):
     STOP_SIGNAL = None
     UPDATE_SIGNAL = 1
 
-    def __init__(self, message):
+    def __init__(self, message, enabled=True):
+        self.enabled = enabled
         self._message = message
         self._process = None
         self._percentage = 0
@@ -360,14 +361,18 @@ class _ProgressBar(metaclass=_Singleton):
 
     def new(self, message):
         """Fill the current bar, and create a new bar with message."""
-        self._message = message
-        self.fill()
-        self._percentage = 0
-        self._message_queue.put((message, 100))
+        if self.enabled:
+            self._message = message
+            self.fill()
+            self._percentage = 0
+            self._message_queue.put((message, 100))
         return self
 
     def update(self, amount=1):
         """Update the progress bar with amount."""
+        if not self.enabled:
+            return
+
         self._update += amount
         if self._update < self._resolution:
             return
@@ -393,6 +398,9 @@ class _ProgressBar(metaclass=_Singleton):
         self._process.join()
 
     def __enter__(self):
+        if not self.enabled:
+            return self
+
         def progress_runner(message, total, message_queue):
             format = '{l_bar}{bar}|[{elapsed} {remaining}s]'
             bar = tqdm.tqdm(total=total, bar_format=format)
@@ -422,7 +430,8 @@ class _ProgressBar(metaclass=_Singleton):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self._stop()
+        if self.enabled:
+            self._stop()
 
 
 #: Global progress bar used by compare50
