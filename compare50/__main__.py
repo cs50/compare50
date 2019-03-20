@@ -230,6 +230,7 @@ def main():
                         action="version",
                         version=f"%(prog)s {__version__}")
 
+    breakpoint()
     args = parser.parse_args()
 
     excepthook.verbose = args.verbose
