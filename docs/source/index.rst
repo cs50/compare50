@@ -6,7 +6,7 @@
    :maxdepth: 3
    :caption: Contents:
 
-   dev
+   api
 
 .. Indices and tables
 .. ==================

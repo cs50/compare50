@@ -1,4 +1,4 @@
-.. _devel:
+.. _api:
 
 API docs
 ========
