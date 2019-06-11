@@ -46,12 +46,12 @@ class SubmissionFactory:
         self.submissions = {}
 
     def include(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.PatternType.Included, pattern)
-        self.patterns.append(fp)
+        pattern = lib50.config.TaggedValue(pattern, "include")
+        self.patterns.append(pattern)
 
     def exclude(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.PatternType.Excluded, pattern)
-        self.patterns.append(fp)
+        pattern = lib50.config.TaggedValue(pattern, "exclude")
+        self.patterns.append(pattern)
 
     def _get(self, path, preprocessor):
         path = pathlib.Path(path)
@@ -60,7 +60,10 @@ class SubmissionFactory:
             included, excluded = [path.name], []
             path = path.parent
         else:
-            included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
+            included, excluded = lib50.files(self.patterns,
+                                             require_tags=[],
+                                             root=path,
+                                             always_exclude=[])
 
         decodable_files = []
         for file_path in included:

@@ -11,7 +11,7 @@ setup(
     ],
     license="GPLv3",
     description="This is compare50, with which you can compare files for similarities.",
-    install_requires=["attrs>=18", "intervaltree", "lib50", "numpy", "pygments", "jinja2", "termcolor", "tqdm"],
+    install_requires=["attrs>=18,<19", "intervaltree>=2.1.0,<3", "lib50>=1.1.0,<2", "numpy>=1.15.0,<2", "pygments>=2.2.0,<3", "jinja2>=2.10,<3", "termcolor>=1.1.0,<2", "tqdm>=4.25.0,<5"],
     extras_require = {
         "develop": ["sphinx", "sphinx_rtd_theme", "line_profiler"]
     },
@@ -21,6 +21,6 @@ setup(
     packages=find_packages(exclude=["tests"]),
     scripts=["bin/compare50"],
     url="https://github.com/cs50/compare50",
-    version="1.0.2",
+    version="1.0.3",
     include_package_data=True,
 )
