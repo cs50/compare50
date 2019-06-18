@@ -62,8 +62,7 @@ class SubmissionFactory:
         else:
             included, excluded = lib50.files(self.patterns,
                                              require_tags=[],
-                                             root=path,
-                                             always_exclude=[])
+                                             root=path)
 
         decodable_files = []
         for file_path in included:
@@ -272,7 +271,6 @@ def main():
         else:
             print("Quitting...")
             sys.exit(1)
-
 
     with profiler(), _api._ProgressBar("Preparing", enabled=not args.debug) as _api.progress_bar:
         # Collect all submissions, archive submissions and distro files
