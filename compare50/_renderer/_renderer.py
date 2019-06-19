@@ -69,6 +69,7 @@ class HTMLSubmission:
 
 
 def render(pass_to_results, dest):
+    bar = _api.get_progress_bar()
     dest = pathlib.Path(dest)
 
     sub_pair_to_results = collections.defaultdict(list)
@@ -76,6 +77,7 @@ def render(pass_to_results, dest):
         for result in results:
             sub_pair_to_results[(result.sub_a, result.sub_b)].append(result)
 
+    bar.reset(total=len(sub_pair_to_results) + 1)
     # Sort by score
     results_per_sub_pair = sorted(sub_pair_to_results.values(),
                                   key=lambda res: res[0].score, reverse=True)
@@ -86,14 +88,13 @@ def render(pass_to_results, dest):
 
     # Render all matches
     with _api.Executor() as executor:
-        update_percentage = _api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
         js = (compare50_js,)
         css = (bootstrap, fonts, compare50_css)
         max_id = len(results_per_sub_pair)
         for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
-            _api.progress_bar.update(update_percentage)
+            bar.update()
 
     # Create index
     with open(TEMPLATES / "index.html") as f:
@@ -110,7 +111,7 @@ def render(pass_to_results, dest):
     with open(dest / "index.html", "w") as f:
         f.write(rendered_html)
 
-    _api.progress_bar.update(update_percentage)
+    bar.update()
     return dest / "index.html"
 
 

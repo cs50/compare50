@@ -7,6 +7,7 @@ import tempfile
 import textwrap
 import shutil
 import sys
+import string
 import traceback
 import time
 
@@ -25,6 +26,8 @@ def excepthook(cls, exc, tb):
     elif not issubclass(cls, Exception) and not isinstance(exc, KeyboardInterrupt):
         # Class is some other BaseException, better just let it go
         return
+    elif isinstance(exc, KeyboardInterrupt):
+        print()
     else:
         termcolor.cprint(
             "Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "red", file=sys.stderr)
@@ -91,6 +94,8 @@ class SubmissionFactory:
                 subs.add(self._get(sub_path, preprocessor))
             except _api.Error:
                 pass
+            else:
+                _api.get_progress_bar().update()
         return subs
 
 
@@ -169,6 +174,27 @@ def profile():
         with open(outfile, "w") as f:
             profiler.print_stats(stream=f)
         termcolor.cprint(f"Profiling data written to {outfile}", "yellow")
+
+
+# https://stackoverflow.com/questions/21872366/plural-string-formatting
+class PluralDict(dict):
+    def __missing__(self, key):
+        if '(' in key and key.endswith(')'):
+            key, rest = key.split('(', 1)
+            value = super().__getitem__(key)
+            suffix = rest.rstrip(')').split(',')
+            if len(suffix) == 1:
+                suffix.insert(0, '')
+            return suffix[0] if value == 1 else suffix[1]
+        raise KeyError(key)
+
+def print_stats(subs, archives, distro_files):
+    avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (len(subs) + len(archives)), 2)
+    data = PluralDict(subs=len(subs), archives=len(archives), distro=len(distro_files), avg=avg)
+    fmt = "Found {subs} submission{subs(s)}, {archives} archive submission{archives(s)}, and " \
+          "{distro} distro file{distro(s)} with an average of {avg} file{avg(s)} per submission"
+    termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
+
 
 
 def main():
@@ -272,34 +298,38 @@ def main():
             print("Quitting...")
             sys.exit(1)
 
-    with profiler(), _api._ProgressBar("Preparing", enabled=not args.debug) as _api.progress_bar:
-        # Collect all submissions, archive submissions and distro files
-        subs = submission_factory.get_all(args.submissions, preprocessor)
-        _api.progress_bar.update(33)
-        archive_subs = submission_factory.get_all(args.archive, preprocessor)
-        _api.progress_bar.update(33)
-        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-        ignored_files = {f for sub in ignored_subs for f in sub.files}
+    with profiler():
+        total = len(args.submissions) + len(args.archive) + len(args.distro)
+        with _api.progress_bar("Preparing", total=total, disable=args.debug) as bar:
+            # Collect all submissions, archive submissions and distro files
+            subs = submission_factory.get_all(args.submissions, preprocessor)
+            archive_subs = submission_factory.get_all(args.archive, preprocessor)
+            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+            ignored_files = {f for sub in ignored_subs for f in sub.files}
 
-        if len(subs) + len(archive_subs) < 2:
-            raise _api.Error("At least two non-empty submissions are required for a comparison.")
 
-        # Cross compare and rank all submissions, keep only top `n`
-        _api.progress_bar.new(f"Scoring ({passes[0].__name__})")
-        scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+            if len(subs) + len(archive_subs) < 2:
+                raise _api.Error("At least two non-empty submissions are required for a comparison.")
+
+        print_stats(subs, archive_subs, ignored_files)
+
+        with _api.progress_bar(f"Scoring ({passes[0].__name__})", disable=args.debug) as bar:
+            # Cross compare and rank all submissions, keep only top `n`
+            scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+
         # Get the matching spans, group them per submission
         groups = []
         pass_to_results = {}
         for pass_ in passes:
-            _api.progress_bar.new(f"Comparing ({pass_.__name__})")
-            preprocessor = Preprocessor(pass_.preprocessors)
-            for sub in itertools.chain(subs, archive_subs, ignored_subs):
-                object.__setattr__(sub, "preprocessor", preprocessor)
-            pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
+            with _api.progress_bar(f"Comparing ({pass_.__name__})", disable=args.debug):
+                preprocessor = Preprocessor(pass_.preprocessors)
+                for sub in itertools.chain(subs, archive_subs, ignored_subs):
+                    object.__setattr__(sub, "preprocessor", preprocessor)
+                pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
 
         # Render results
-        _api.progress_bar.new("Rendering")
-        index = _renderer.render(pass_to_results, dest=args.output)
+        with _api.progress_bar("Rendering", disable=args.debug):
+            index = _renderer.render(pass_to_results, dest=args.output)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")

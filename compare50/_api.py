@@ -1,12 +1,13 @@
 import collections
+import contextlib
 import heapq
+import io
 import itertools
 import multiprocessing
 import time
 
 import intervaltree
 import tqdm
-
 
 import concurrent.futures
 from ._data import Submission, Span, Group, BisectList, Compare50Result
@@ -18,6 +19,12 @@ __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"
 class Error(Exception):
     """Base class for compare50 errors."""
     pass
+
+
+@contextlib.contextmanager
+def _nullcontext(enter_result=None):
+    """Reimplementation of contextlib.nullcontext which is only available in 3.7"""
+    yield enter_result
 
 
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
@@ -336,106 +343,32 @@ class _Singleton(type):
         return cls._instances[cls]
 
 
-class _ProgressBar(metaclass=_Singleton):
-    """ANSI progress bar with message"""
-    STOP_SIGNAL = None
-    UPDATE_SIGNAL = 1
-
-    def __init__(self, message, enabled=True):
-        self.enabled = enabled
-        self._message = message
-        self._process = None
-        self._percentage = 0
-        self._message_queue = multiprocessing.Queue()
-        self._update = 0
-        self._resolution = 2
-
-    def fill(self):
-        """Fill the progress bar to 100%."""
-        self.update(self.remaining_percentage)
-
-    @property
-    def remaining_percentage(self):
-        """Percentage remaining on progress bar."""
-        return 100 - self._percentage
-
-    def new(self, message):
-        """Fill the current bar, and create a new bar with message."""
-        if self.enabled:
-            self._message = message
-            self.fill()
-            self._percentage = 0
-            self._message_queue.put((message, 100))
-        return self
-
-    def update(self, amount=1):
-        """Update the progress bar with amount."""
-        if not self.enabled:
-            return
-
-        self._update += amount
-        if self._update < self._resolution:
-            return
-
-        amount = round(self._update, 0)
-        self._update -= amount
-
-        if self._percentage + amount >= 100:
-            amount = 100 - self._percentage
-        self._percentage += amount
-        self._message_queue.put((_ProgressBar.UPDATE_SIGNAL, amount))
-
-    def _start(self):
-        """Spawn a new process that runs a progress bar."""
-        if self._process and self._process.is_alive():
-            self._stop()
-        self.__enter__()
-
-    def _stop(self):
-        """Stop the progress bar."""
-        self.fill()
-        self._message_queue.put(_ProgressBar.STOP_SIGNAL)
-        self._process.join()
-
-    def __enter__(self):
-        if not self.enabled:
-            return self
-
-        def progress_runner(message, total, message_queue):
-            format = '{l_bar}{bar}|[{elapsed} {remaining}s]'
-            bar = tqdm.tqdm(total=total, bar_format=format)
-            bar.write(message)
-
-            try:
-                while True:
-                    while not message_queue.empty():
-                        message = message_queue.get()
-                        if message == _ProgressBar.STOP_SIGNAL:
-                            return
-                        elif message[0] == _ProgressBar.UPDATE_SIGNAL:
-                            bar.update(message[1])
-                        else:
-                            bar.close()
-                            msg, total = message
-                            bar = tqdm.tqdm(total=total, bar_format=format)
-                            bar.write(msg)
-
-                    time.sleep(0.1)
-            finally:
-                bar.close()
-
-        self._process = multiprocessing.Process(
-            target=progress_runner, args=(self._message, 100, self._message_queue,))
-        self._process.start()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.enabled:
-            self._stop()
+_progress_bar = None
 
 
-#: Global progress bar used by compare50
-progress_bar = None
+@contextlib.contextmanager
+def progress_bar(msg, total=100, disable=False):
+    global _progress_bar
+    try:
+        with (io.StringIO() if disable else _nullcontext()) as file:
+            _progress_bar = tqdm.tqdm(
+                    total=total,
+                    dynamic_ncols=True,
+                    bar_format="{l_bar}{bar}|[{elapsed} {remaining}s]",
+                    file=file)
+            _progress_bar.write(msg)
+            yield _progress_bar
+    finally:
+        # Fill bar automatically
+        _progress_bar.update(_progress_bar.total - _progress_bar.n)
+        _progress_bar.close()
+        _progress_bar = None
+
+    return _progress_bar
+
+
+def get_progress_bar():
+    return _progress_bar
 
 
 class FauxExecutor:

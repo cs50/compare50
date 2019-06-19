@@ -31,10 +31,6 @@ class Winnowing(Comparator):
         def files(subs):
             return [f for sub in subs for f in sub]
 
-        def part(total_percentage, *args):
-            total = sum(args)
-            return [arg / total * total_percentage for arg in args]
-
         submission_index = ScoreIndex(self.k, self.t)
         archive_index = ScoreIndex(self.k, self.t)
         ignored_index = ScoreIndex(self.k, self.t)
@@ -42,21 +38,18 @@ class Winnowing(Comparator):
         submission_files = files(submissions)
         archive_files = files(archive_submissions)
 
-        sub_percent, archive_percent, ignored_percent = part(50,
-                                                             len(submission_files),
-                                                             len(archive_files),
-                                                             len(ignored_files))
+        bar = _api.get_progress_bar()
+        bar.reset(total=math.ceil((len(submission_files) + len(archive_files) + len(ignored_files)) / 0.9))
 
-        tasks = ((submission_index, submission_files, sub_percent),
-                 (archive_index, archive_files, archive_percent),
-                 (ignored_index, ignored_files, ignored_percent))
+        tasks = ((submission_index, submission_files),
+                 (archive_index, archive_files),
+                 (ignored_index, ignored_files))
 
         with _api.Executor() as executor:
-            for index, files, percent in tasks:
-                update_percentage = percent / len(files) if files else percent
+            for index, files in tasks:
                 for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), files):
-                    _api.progress_bar.update(update_percentage)
                     index.include_all(idx)
+                    bar.update()
 
         submission_index.ignore_all(ignored_index)
         archive_index.ignore_all(ignored_index)
@@ -67,6 +60,12 @@ class Winnowing(Comparator):
         return submission_index.compare(archive_index)
 
     def compare(self, scores, ignored_files):
+
+        bar = _api.get_progress_bar()
+        bar.reset(total=len(scores) if scores else 1)
+        if not scores:
+            return []
+
         # Create index of ignored_files
         ignored_index = CompareIndex(self.k)
         for ignored_file in ignored_files:
@@ -108,11 +107,6 @@ class Winnowing(Comparator):
                 file_cache[file] = cache
 
 
-        try:
-            update_percentage = _api.progress_bar.remaining_percentage / len(scores)
-        except ZeroDivisionError:
-            # If len(scores) == 0, we don't need to give update_percentage a value since the loop will never execute
-            pass
 
         comparisons = []
         for score in scores:
@@ -134,7 +128,7 @@ class Winnowing(Comparator):
                     span_matches += _api.expand(index_a.compare(index_b), tokens_a, tokens_b)
 
             comparisons.append(Comparison(score.sub_a, score.sub_b, span_matches, list(ignored_spans)))
-            _api.progress_bar.update(update_percentage)
+            bar.update()
 
         return comparisons
 
@@ -226,13 +220,14 @@ class ScoreIndex(Index):
         # Find common fingerprints (hashes)
         common_hashes = set(self._index) & set(other._index)
 
+        bar = _api.get_progress_bar()
         try:
-            update_percentage = _api.progress_bar.remaining_percentage / len(common_hashes)
+            update_amount = (bar.total - bar.n - 1) / len(common_hashes)
         except ZeroDivisionError:
             pass
 
         for hash_ in common_hashes:
-            _api.progress_bar.update(update_percentage)
+            bar.update(update_amount)
 
             # All file_ids associated with fingerprint in self
             index1 = self._index[hash_]
