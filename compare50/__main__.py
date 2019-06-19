@@ -292,7 +292,7 @@ def main():
         if not resp or resp.lower().startswith("y"):
             try:
                 os.remove(args.output)
-            except IsADirectoryError:
+            except (IsADirectoryError, PermissionError):
                 shutil.rmtree(args.output)
         else:
             print("Quitting...")
