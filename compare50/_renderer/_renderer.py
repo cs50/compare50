@@ -105,7 +105,6 @@ def render(pass_to_results, dest):
 
     # Render index
     rendered_html = index_template.render(css=(bootstrap, fonts, compare50_css),
-                                          score_description=ranking_pass.comparator.score.__doc__,
                                           scores=[result.score for result in ranking_results],
                                           dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
