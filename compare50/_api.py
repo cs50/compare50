@@ -334,36 +334,72 @@ def _filter_subsumed_groups(groups):
     return [g for g in groups if not _is_group_subsumed(g, groups)]
 
 
-class _Singleton(type):
-    _instances = {}
+class _ProgressBar:
+    def __init__(self, msg="", total=100, disable=False, **kwargs):
+        self.msg = msg
+        self.disable = disable
+        if not disable:
+            self._bar = tqdm.tqdm(total=total, dynamic_ncols=True, bar_format="{l_bar}{bar}|[{elapsed} {remaining}s]", **kwargs)
+            self._bar.write(msg)
+        else:
+            self._n = 0
+            self._total = total
 
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
+    @property
+    def n(self):
+        try:
+            return self._bar.n
+        except AttributeError:
+            return self._n
+
+    @property
+    def total(self):
+        try:
+            return self._bar.total
+        except AttributeError:
+            return self._n
+
+    def reset(self, total=100):
+        try:
+            self._bar.reset(total=total)
+        except AttributeError:
+            self._n = 0
+            self._total = total
+
+    def update(self, amount=1):
+        try:
+            self._bar.update(amount)
+        except AttributeError:
+            self._n += amount
+
+    def close(self, leave=True):
+        try:
+            self._bar.close(leave)
+        except AttributeError:
+            pass
 
 
-_progress_bar = None
+    def __enter__(self):
+        try:
+            self._bar.__enter__()
+        except AttributeError:
+            pass
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.update(self.total - self.n)
+        try:
+            self._bar.__exit__(exc_type, exc_val, exc_tb)
+        except AttributeError:
+            pass
 
 
-@contextlib.contextmanager
-def progress_bar(msg, total=100, disable=False):
+_progress_bar = _ProgressBar(disable=True)
+
+
+def progress_bar(*args, **kwargs):
     global _progress_bar
-    try:
-        with (io.StringIO() if disable else _nullcontext()) as file:
-            _progress_bar = tqdm.tqdm(
-                    total=total,
-                    dynamic_ncols=True,
-                    bar_format="{l_bar}{bar}|[{elapsed} {remaining}s]",
-                    file=file)
-            _progress_bar.write(msg)
-            yield _progress_bar
-    finally:
-        # Fill bar automatically
-        _progress_bar.update(_progress_bar.total - _progress_bar.n)
-        _progress_bar.close()
-        _progress_bar = None
-
+    _progress_bar = _ProgressBar(*args, **kwargs)
     return _progress_bar
 
 
