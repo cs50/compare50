@@ -83,12 +83,12 @@ def render(pass_to_results, dest):
                                   key=lambda res: res[0].score, reverse=True)
 
     # Load static files
-    compare50_js, bootstrap, fonts, compare50_css = (read_file(STATIC / name)
-            for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
+    compare50_js, split_js, bootstrap, fonts, compare50_css = (read_file(STATIC / name)
+            for name in ("compare50.js", "split.min.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
 
     # Render all matches
     with _api.Executor() as executor:
-        js = (compare50_js,)
+        js = (compare50_js, split_js)
         css = (bootstrap, fonts, compare50_css)
         max_id = len(results_per_sub_pair)
         for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):

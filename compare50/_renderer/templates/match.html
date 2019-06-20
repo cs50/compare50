@@ -1,3 +1,5 @@
+
+
 <div id="{{name}}" class="container-fluid h-100 view {{name}}">
     <div class="row sticky-top bg-dark text-light" id="{{name}}sub_names">
         {% for sub in sub_a, sub_b %}
@@ -29,3 +31,19 @@
         {% endfor %}
     </div>
 </div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", (event) => {
+    Split(["#{{ name }}left","#{{ name }}right"], {
+      elementStyle: function (dimension, size, gutterSize) {
+          window.dispatchEvent(new Event('resize'));
+          return {'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)'}
+      },
+      gutterStyle: function (dimension, gutterSize) { return {'flex-basis':  gutterSize + 'px'} },
+      sizes: [50, 50],
+      minSize: 100,
+      gutterSize: 6,
+      cursor: 'col-resize'
+    });
+  });
+</script>
