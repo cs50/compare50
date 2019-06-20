@@ -10,6 +10,7 @@ import sys
 import string
 import traceback
 import time
+import tempfile
 
 import attr
 import lib50
@@ -60,12 +61,12 @@ class SubmissionFactory:
         path = pathlib.Path(path)
 
         if path.is_file():
-            included, excluded = [path.name], []
+            with tempfile.TemporaryDirectory() as dir:
+                (pathlib.Path(dir) / path.name).touch()
+                included, excluded = lib50.files(self.patterns, root=dir)
             path = path.parent
         else:
-            included, excluded = lib50.files(self.patterns,
-                                             require_tags=[],
-                                             root=path)
+            included, excluded = lib50.files(self.patterns, require_tags=[], root=path)
 
         decodable_files = []
         for file_path in included:
@@ -306,7 +307,6 @@ def main():
             archive_subs = submission_factory.get_all(args.archive, preprocessor)
             ignored_subs = submission_factory.get_all(args.distro, preprocessor)
             ignored_files = {f for sub in ignored_subs for f in sub.files}
-
 
             if len(subs) + len(archive_subs) < 2:
                 raise _api.Error("At least two non-empty submissions are required for a comparison.")
