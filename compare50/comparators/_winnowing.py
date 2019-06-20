@@ -40,16 +40,20 @@ class Winnowing(Comparator):
 
         bar = _api.get_progress_bar()
         bar.reset(total=math.ceil((len(submission_files) + len(archive_files) + len(ignored_files)) / 0.9))
-
-        tasks = ((submission_index, submission_files),
-                 (archive_index, archive_files),
-                 (ignored_index, ignored_files))
-
+        frequency_map = collections.Counter()
         with _api.Executor() as executor:
-            for index, files in tasks:
+            # Subs and archive subs
+            for index, files in ((submission_index, submission_files), (archive_index, archive_files)):
                 for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), files):
+                    for hash_ in idx.keys():
+                        frequency_map[hash_] += 1
                     index.include_all(idx)
                     bar.update()
+            # Ignored files
+            for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), ignored_files):
+                index.include_all(idx)
+                bar.update()
+
 
         submission_index.ignore_all(ignored_index)
         archive_index.ignore_all(ignored_index)
@@ -57,7 +61,8 @@ class Winnowing(Comparator):
         # Add submissions to archive (the Index we're going to compare against)
         archive_index.include_all(submission_index)
 
-        return submission_index.compare(archive_index)
+        N = len(submissions) + len(archive_submissions)
+        return submission_index.compare(archive_index, score=lambda h: 1 + math.log(N / (1 + frequency_map[h])))
 
     def compare(self, scores, ignored_files):
 
@@ -157,6 +162,12 @@ class Index(abc.ABC):
         self.k = k
         self._index = collections.defaultdict(set)
 
+    def keys(self):
+        return self._index.keys()
+
+    def values(self):
+        return self._index.values()
+
     def include(self, file, tokens=None):
         """Fingerprint a file and add it too the index."""
         for hash, val in self.fingerprint(file, tokens):
@@ -213,9 +224,9 @@ class ScoreIndex(Index):
         super().include_all(other)
         self._max_id = max(self._max_id, other._max_id)
 
-    def compare(self, other):
+    def compare(self, other, score=lambda _: 1):
         # Keep a self.max_file_id by other.max_file_id matrix for counting score
-        scores = np.zeros((self._max_id + 1, other._max_id + 1), dtype=np.uint64)
+        scores = np.zeros((self._max_id + 1, other._max_id + 1), dtype=np.float64)
 
         # Find common fingerprints (hashes)
         common_hashes = set(self._index) & set(other._index)
@@ -240,7 +251,7 @@ class ScoreIndex(Index):
                                              [id for id in index2])).T.reshape(-1, 2)
 
                 # Add 1 to all combo's (the product) of file_ids from self and other
-                scores[index[:, 0], index[:, 1]] += 1
+                scores[index[:, 0], index[:, 1]] += score(hash_)
 
         # Return only those Scores with a score > 0 from different submissions
         return [Score(Submission.get(id1), Submission.get(id2), scores[id1][id2])
