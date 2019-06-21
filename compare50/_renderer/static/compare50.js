@@ -42,6 +42,10 @@ class Fragment {
             this.submission = document.getElementById(view_name + "right");;
         }
         this.spans = [];
+
+        // all spans grouped with this span in the other file
+        this.other_spans = [];
+
         return this;
     }
 
@@ -62,6 +66,29 @@ class Fragment {
                 this.matching_fragments.push(fragments[frag_id])
             }
         }
+
+        // Find all matching spans in the other file
+        this.other_spans = this.group.spans.filter(span => span.submission !== this.submission);
+
+        // Sort by position in document
+        this.other_spans.sort((span_a, span_b) => {
+            let res = span_a.fragments[0].dom_element.compareDocumentPosition(
+                span_b.fragments[0].dom_element)
+            return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+        });
+    }
+
+    // align this fragment with a matching fragment in the other file
+    align() {
+        let title_height = document.getElementById(CURRENT_VIEW + "sub_names").clientHeight;
+        let frag_offset = Math.max(this._highlight_offset(), title_height);
+        let next_fragment = this.other_spans.map(span => span.fragments[0]).find(
+            fragment => fragment._highlight_offset() > frag_offset);
+
+        if (next_fragment === undefined) {
+            next_fragment = this.other_spans[0].fragments[0];
+        }
+        next_fragment.scroll_to(frag_offset);
     }
 
     highlight_match() {
@@ -160,7 +187,17 @@ function init_group_button(groups, view_name) {
         if (CURRENT_VIEW === view_name) {
             update_group_counter();
         }
-    })
+    });
+
+    // If a fragment is clicked, change group to fragments group
+    document.addEventListener("fragment_clicked", (event) => {
+        if (CURRENT_VIEW !== view_name) {
+            return;
+        }
+        let group = event.detail.fragment.span.group;
+        group_index = sorted_groups.indexOf(group);
+        update_group_counter();
+    });
 
     // Sort all spans that are grouped by id
     let grouped_spans = [];
@@ -185,7 +222,7 @@ function init_group_button(groups, view_name) {
     let next_group_button = document.getElementById("next_group");
     next_group_button.addEventListener("click", (event) => {
         // if view is not active (current), nothing to do here
-        if (CURRENT_VIEW != view_name) {
+        if (CURRENT_VIEW !== view_name) {
             return;
         }
 
@@ -194,9 +231,9 @@ function init_group_button(groups, view_name) {
         // find first fragment of group
         let frag = sorted_groups[group_index].spans[0].fragments[0];
 
-        // move to matching span (in the other file) once we've finished scrolling
+        // align matching span (in the other file) once we've finished scrolling
         function callback(event) {
-            frag.dom_element.click();
+            frag.align();
             frag.dom_element.removeEventListener("finished_scrolling", callback);
         }
         frag.dom_element.addEventListener("finished_scrolling", callback);
@@ -260,9 +297,9 @@ function init_objects() {
         groups[group_id] = new Group(group_id);
     }
 
-    Object.values(fragments).forEach(frag => frag.init(fragments, spans, groups));
-    Object.values(spans).forEach(span => span.init(fragments, spans, groups));
     Object.values(groups).forEach(group => group.init(fragments, spans, groups));
+    Object.values(spans).forEach(span => span.init(fragments, spans, groups));
+    Object.values(fragments).forEach(frag => frag.init(fragments, spans, groups));
 
     return [fragments, spans, groups];
 }
@@ -286,28 +323,14 @@ function add_mouse_over_listeners(fragments) {
 
 function add_click_listeners(fragments) {
     fragments.filter(frag => frag.group !== null).forEach(frag => {
-        // Find all matching spans in the other file
-        let other_spans = frag.group.spans.filter(span => span.submission !== frag.submission);
-
-        // Sort by position in document
-        other_spans.sort((span_a, span_b) => {
-            let res = span_a.fragments[0].dom_element.compareDocumentPosition(
-                span_b.fragments[0].dom_element)
-            return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-        });
-
-        let title_height = document.getElementById(CURRENT_VIEW + "sub_names").clientHeight;
-
         // Jump to next span when clicked
         frag.dom_element.addEventListener("click", event => {
-            let frag_offset = Math.max(frag._highlight_offset(), title_height);
-            let next_fragment = other_spans.map(span => span.fragments[0]).find(
-                fragment => fragment._highlight_offset() > frag_offset);
-
-            if (next_fragment === undefined) {
-                next_fragment = other_spans[0].fragments[0];
-            }
-            next_fragment.scroll_to(frag_offset);
+            frag.align();
+            let frag_event = new CustomEvent("fragment_clicked", {
+                bubbles: true,
+                detail: {fragment: frag}
+            });
+            document.dispatchEvent(frag_event);
         });
     });
 }
