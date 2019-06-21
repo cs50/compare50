@@ -17,18 +17,18 @@
                 </div>
                 <br/>
                 <div class="text-light id" id="{{id}}">{{id}} / {{max_id}}</div>
-                <div class="btn-group" role="group" aria-label="NextPrev">
+                <div class="btn-group" role="group" aria-label="NextPrev" id="next_prev_match">
                     <button type="button" class="btn btn-outline-light prev_match" id="prev_match" {{'disabled' if id <= 1 else ''}}><<</button>
                     <button type="button" class="btn btn-outline-light next_match" id="next_match" {{'disabled' if id >= max_id else ''}}>>></button>
                 </div>
-                <br/><br/>
-                <div class="text-light" id="group_counter"></div>
-                <button type="button" class="btn btn-outline-light next_group" id="next_group">next</button>
-                <br/><br/>
-                <div class="btn-group-vertical" role="group" aria-label="Views">
+                <div class="btn-group-vertical" role="group" aria-label="Views" id="passes">
                 {% for pass_ in passes %}
                     <button type="button" class="btn btn-outline-light view_selector" id="{{pass_.__name__}}selector" title="{{pass_.__doc__}}">{{pass_.__name__}}</button>
                 {% endfor %}
+                </div>
+                <div id="group_nav">
+                  <button type="button" class="btn btn-outline-light next_group" id="next_group">next</button>
+                  <div class="text-light" id="group_counter"></div>
                 </div>
             </nav>
             <div id="content">
