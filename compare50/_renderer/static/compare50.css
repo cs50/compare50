@@ -12,6 +12,7 @@ body, h1, h4, h5 {
 }
 
 .view {
+    padding-left: 0px;
     padding-right: 0px;
 }
 
@@ -27,6 +28,11 @@ body, h1, h4, h5 {
 .sub_name {
     margin-top: 0.33em;
     padding-right: 0px;
+}
+
+.row {
+    margin-left: 0px;
+    margin-right: 0px;
 }
 
 pre {
@@ -185,4 +191,3 @@ a.index-link:hover {
     height: 100%;
     float: left;
 }
-
