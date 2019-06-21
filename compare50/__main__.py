@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import glob
 import itertools
 import os
 import pathlib
@@ -189,6 +190,7 @@ class PluralDict(dict):
             return suffix[0] if value == 1 else suffix[1]
         raise KeyError(key)
 
+
 def print_stats(subs, archives, distro_files):
     avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (len(subs) + len(archives)), 2)
     data = PluralDict(subs=len(subs), archives=len(archives), distro=len(distro_files), avg=avg)
@@ -196,6 +198,13 @@ def print_stats(subs, archives, distro_files):
           "{distro} distro file{distro(s)} with an average of {avg} file{avg(s)} per submission"
     termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
 
+
+def expand_patterns(patterns):
+    """
+    Given a list of glob patterns, return a flat list containing the result
+    of globbing all of them.
+    """
+    return list(itertools.chain.from_iterable(map(glob.glob, patterns)))
 
 
 def main():
@@ -262,6 +271,10 @@ def main():
     args = parser.parse_args()
 
     excepthook.verbose = args.verbose
+
+    for attrib in ("submissions", "archive", "distro"):
+        # Expand all patterns found in args.{submissions,archive,distro}
+        setattr(args, attrib, expand_patterns(getattr(args, attrib)))
 
 
     # Extract comparator and preprocessors from pass
