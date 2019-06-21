@@ -218,9 +218,7 @@ function init_group_button(groups, view_name) {
     let group_index = 0;
     update_group_counter();
 
-    // On click move to next group from sorted_groups
-    let next_group_button = document.getElementById("next_group");
-    next_group_button.addEventListener("click", (event) => {
+    function go_to_next_group(event) {
         // if view is not active (current), nothing to do here
         if (CURRENT_VIEW !== view_name) {
             return;
@@ -246,6 +244,16 @@ function init_group_button(groups, view_name) {
 
         // increment index
         group_index = (group_index + 1) % sorted_groups.length;
+
+    }
+    // On click move to next group from sorted_groups
+    let next_group_button = document.getElementById("next_group");
+    next_group_button.addEventListener("click", go_to_next_group);
+    document.addEventListener("keyup", (event) =>  {
+        if (event.key === ' ') {
+            event.preventDefault()
+            go_to_next_group(event); 
+        }
     });
 }
 
