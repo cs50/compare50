@@ -22,6 +22,8 @@
                     <button type="button" class="btn btn-outline-light next_match" id="next_match" {{'disabled' if id >= max_id else ''}}>>></button>
                 </div>
                 <br/><br/>
+                <button type="button" class="btn btn-outline-light next_group" id="next_group">next</button>
+                <br/><br/>
                 <div class="btn-group-vertical" role="group" aria-label="Views">
                 {% for pass_ in passes %}
                     <button type="button" class="btn btn-outline-light view_selector" id="{{pass_.__name__}}selector" title="{{pass_.__doc__}}">{{pass_.__name__}}</button>

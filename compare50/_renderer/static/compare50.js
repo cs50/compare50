@@ -108,6 +108,7 @@ class Fragment {
     // Because safari does not support smooth scrolling @ 27th July 2018
     // Feel free to replace once it does:
     //     this.dom_element.scrollIntoView({"behavior":"smooth"});
+    // Also see: https://github.com/iamdustan/smoothscroll
     // Credits: https://gist.github.com/andjosh/6764939
     scroll_to(offset = 200) {
         let easeInOutQuad = (t, b, c, d) => {
@@ -133,6 +134,10 @@ class Fragment {
             if (currentTime < duration) {
                 setTimeout(animateScroll, increment);
             }
+            else {
+                let event = new Event("finishedScrolling");
+                this.dom_element.dispatchEvent(event);
+            }
         };
         animateScroll();
     }
@@ -143,6 +148,44 @@ function init_navigation(id) {
     let next = document.getElementById("next_match");
     prev.addEventListener("click", (event) => window.location.href = "match_" + (id - 1) + ".html");
     next.addEventListener("click", (event) => window.location.href = "match_" + (id + 1) + ".html");
+}
+
+function init_group_button(groups) {
+    // Sort all spans that are grouped by id
+    let grouped_spans = [];
+    groups.forEach((group) => group.spans.forEach((span) => grouped_spans.push(span)));
+    grouped_spans = grouped_spans.sort((a, b) => parseInt(a.id) < parseInt(b.id) ? -1 : 1);
+
+    // Sort groups by spans with the lowest id
+    let _groups_set = new Set([]);
+    let sorted_groups = [];
+    for (let span of grouped_spans) {
+        if (!_groups_set.has(span.group)) {
+            _groups_set.add(span.group);
+            sorted_groups.push(span.group);
+        }
+    }
+
+    // On click move to next group from sorted_groups
+    let group_index = 0;
+    let next_group_button = document.getElementById("next_group");
+    next_group_button.addEventListener("click", (event) => {
+        let frag = sorted_groups[group_index].spans[0].fragments[0];
+
+        function callback(event) {
+            frag.dom_element.click();
+
+            frag.dom_element.dispatchEvent(new Event("mouseover"))
+
+            frag.dom_element.removeEventListener("finishedScrolling", callback);
+        }
+
+        frag.dom_element.addEventListener("finishedScrolling", callback)
+
+        frag.scroll_to()
+
+        group_index = (group_index + 1) % sorted_groups.length
+    });
 }
 
 function init_maps(datum) {
@@ -298,6 +341,7 @@ function select_view(name) {
     let [fragments, spans, groups] = init_objects().map(Object.values);
     add_mouse_over_listeners(fragments);
     add_click_listeners(fragments);
+    init_group_button(groups);
 
     // Cache this view
     select_view._cache[DATUM.name] = true;
@@ -321,7 +365,6 @@ function make_split(name) {
 
 document.addEventListener("DOMContentLoaded", event => {
     let id = parseInt(document.getElementsByClassName("id")[0].id);
-    init_navigation(id);
 
     let split_info = {
         sizes: [50, 50],
@@ -353,4 +396,5 @@ document.addEventListener("DOMContentLoaded", event => {
     let url = new URL(window.location);
     (selector_map[url.searchParams.get("pass")] || selectors[0]).click()
 
+    init_navigation(id);
 });
