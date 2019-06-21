@@ -82,14 +82,12 @@ def render(pass_to_results, dest):
     results_per_sub_pair = sorted(sub_pair_to_results.values(),
                                   key=lambda res: res[0].score, reverse=True)
 
-    # Load static files
-    compare50_js, split_js, bootstrap, fonts, compare50_css = (read_file(STATIC / name)
-            for name in ("compare50.js", "split.min.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
-
     # Render all matches
     with _api.Executor() as executor:
-        js = (compare50_js, split_js)
-        css = (bootstrap, fonts, compare50_css)
+        # Load static files
+        js = [read_file(STATIC / name) for name in ("split.min.js", "compare50.js")]
+        css = [read_file(STATIC / name) for name in ("bootstrap.min.css", "fonts.css", "compare50.css")]
+
         max_id = len(results_per_sub_pair)
         for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
@@ -104,7 +102,7 @@ def render(pass_to_results, dest):
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
     # Render index
-    rendered_html = index_template.render(css=(bootstrap, fonts, compare50_css),
+    rendered_html = index_template.render(css=css,
                                           scores=[result.score for result in ranking_results],
                                           dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
