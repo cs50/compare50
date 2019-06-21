@@ -29,17 +29,17 @@ class Span {
 }
 
 class Fragment {
-    constructor(id, datum) {
+    constructor(id, view_name) {
         this.id = id;
         this.dom_element = document.getElementById(id);
         this.matching_fragments = [];
         this.span = null;
         this.group = null;
-        let left = document.getElementById(DATUM.name + "left");
+        let left = document.getElementById(view_name + "left");
         if (left.contains(this.dom_element)) {
             this.submission = left;
         } else {
-            this.submission = document.getElementById(DATUM.name + "right");;
+            this.submission = document.getElementById(view_name + "right");;
         }
         this.spans = [];
         return this;
@@ -135,7 +135,7 @@ class Fragment {
                 setTimeout(animateScroll, increment);
             }
             else {
-                let event = new Event("finishedScrolling");
+                let event = new Event("finished_scrolling");
                 this.dom_element.dispatchEvent(event);
             }
         };
@@ -150,7 +150,18 @@ function init_navigation(id) {
     next.addEventListener("click", (event) => window.location.href = "match_" + (id + 1) + ".html");
 }
 
-function init_group_button(groups) {
+function init_group_button(groups, view_name) {
+    function update_group_counter() {
+        document.getElementById("group_counter").innerHTML = (group_index + 1) + " / " + groups.length;
+    }
+
+    // If view changed, update group counter
+    document.addEventListener("view_changed", (event) => {
+        if (CURRENT_VIEW === view_name) {
+            update_group_counter();
+        }
+    })
+
     // Sort all spans that are grouped by id
     let grouped_spans = [];
     groups.forEach((group) => group.spans.forEach((span) => grouped_spans.push(span)));
@@ -166,19 +177,29 @@ function init_group_button(groups) {
         }
     }
 
-    // On click move to next group from sorted_groups
+    // init group counter
     let group_index = 0;
+    update_group_counter();
+
+    // On click move to next group from sorted_groups
     let next_group_button = document.getElementById("next_group");
     next_group_button.addEventListener("click", (event) => {
+        // if view is not active (current), nothing to do here
+        if (CURRENT_VIEW != view_name) {
+            return;
+        }
+
+        update_group_counter();
+
         // find first fragment of group
         let frag = sorted_groups[group_index].spans[0].fragments[0];
 
         // move to matching span (in the other file) once we've finished scrolling
         function callback(event) {
             frag.dom_element.click();
-            frag.dom_element.removeEventListener("finishedScrolling", callback);
+            frag.dom_element.removeEventListener("finished_scrolling", callback);
         }
-        frag.dom_element.addEventListener("finishedScrolling", callback);
+        frag.dom_element.addEventListener("finished_scrolling", callback);
 
         // highlight group
         frag.dom_element.dispatchEvent(new Event("mouseover"));
@@ -186,6 +207,7 @@ function init_group_button(groups) {
         // scroll to frag
         frag.scroll_to();
 
+        // increment index
         group_index = (group_index + 1) % sorted_groups.length;
     });
 }
@@ -221,13 +243,13 @@ function init_maps(datum) {
 }
 
 function init_objects() {
-    let frags = document.getElementById(DATUM.name).getElementsByClassName("fragment");
+    let frags = document.getElementById(CURRENT_VIEW).getElementsByClassName("fragment");
     let fragments = {};
     let spans = {};
     let groups = {};
 
     for (let frag of frags) {
-        fragments[frag.id] = new Fragment(frag.id);
+        fragments[frag.id] = new Fragment(frag.id, CURRENT_VIEW);
     }
 
     for (let span_id of Object.keys(SPAN_TO_GROUP)) {
@@ -274,11 +296,10 @@ function add_click_listeners(fragments) {
             return res & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
         });
 
-        let title_height = document.getElementById(DATUM.name + "sub_names").clientHeight;
+        let title_height = document.getElementById(CURRENT_VIEW + "sub_names").clientHeight;
 
         // Jump to next span when clicked
         frag.dom_element.addEventListener("click", event => {
-            //let frag_offset = frag.find_pos();
             let frag_offset = Math.max(frag._highlight_offset(), title_height);
             let next_fragment = other_spans.map(span => span.fragments[0]).find(
                 fragment => fragment._highlight_offset() > frag_offset);
@@ -297,9 +318,10 @@ function select_view(name) {
     }
 
     // Find view with name
-    for (let datum of DATA) {
+    for (var datum of DATA) {
         if (datum.name === name) {
-            DATUM = datum;
+            CURRENT_VIEW = datum.name
+            document.dispatchEvent(new Event("view_changed"));
             break;
         }
     }
@@ -318,7 +340,7 @@ function select_view(name) {
             rightScroll = v.children[1].children[1].scrollTop
         }
 
-        if (v.id === DATUM.name) {
+        if (v.id === CURRENT_VIEW) {
             v.style.display = "block";
             curView = v;
         } else {
@@ -330,23 +352,23 @@ function select_view(name) {
     curView.children[1].children[1].scrollTop = rightScroll;
 
     var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname +
-        (DATUM !== DATA[0] ? `?pass=${DATUM.name}` : "")
+        (datum !== DATA[0] ? `?pass=${CURRENT_VIEW}` : "")
     window.history.replaceState({ path: newurl }, '', newurl)
 
     // If cached, nothing to do here, return
-    if (DATUM.name in select_view._cache) {
+    if (CURRENT_VIEW in select_view._cache) {
         return;
     }
 
     // Add all mouselisteners
-    init_maps(DATUM);
+    init_maps(datum);
     let [fragments, spans, groups] = init_objects().map(Object.values);
     add_mouse_over_listeners(fragments);
     add_click_listeners(fragments);
-    init_group_button(groups);
+    init_group_button(groups, CURRENT_VIEW);
 
     // Cache this view
-    select_view._cache[DATUM.name] = true;
+    select_view._cache[CURRENT_VIEW] = true;
 }
 
 
