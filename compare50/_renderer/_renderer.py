@@ -89,7 +89,7 @@ def render(pass_to_results, dest):
         css = [read_file(STATIC / name) for name in ("bootstrap.min.css", "fonts.css", "compare50.css")]
 
         max_id = len(results_per_sub_pair)
-        for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
+        for id, html in executor.map(_RenderTask(dest, max_id, js, css + [read_file(STATIC / "match.css")]), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             bar.update()
