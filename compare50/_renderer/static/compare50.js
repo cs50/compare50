@@ -146,8 +146,8 @@ function init_navigation(id) {
 }
 
 function init_maps(datum) {
-    FRAGMENT_TO_SPANS = datum["fragment_to_spans"];
-    SPAN_TO_GROUP = datum["span_to_group"];
+    FRAGMENT_TO_SPANS = datum.fragment_to_spans;
+    SPAN_TO_GROUP = datum.span_to_group;
 
     GROUP_TO_SPANS = {};
     Object.keys(SPAN_TO_GROUP).forEach(span => {
@@ -304,20 +304,49 @@ function select_view(name) {
 }
 
 
+function make_split(name) {
+    return Split([`#${name}left`,`#${name}right`], {
+        elementStyle: function (dimension, size, gutterSize) {
+            window.dispatchEvent(new Event('resize'));
+            return {'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)'}
+        },
+        gutterStyle: function (dimension, gutterSize) { return {'flex-basis':  gutterSize + 'px'} },
+        sizes: [50, 50],
+        minSize: 100,
+        gutterSize: 6,
+        cursor: 'col-resize'
+    });
+}
+
+
 document.addEventListener("DOMContentLoaded", event => {
     let id = parseInt(document.getElementsByClassName("id")[0].id);
     init_navigation(id);
 
+    let split_info = {
+        sizes: [50, 50],
+        objs: {}
+    }
+
     let selectors = document.getElementsByClassName("view_selector");
     let selector_map = {}
     for (let selector of selectors) {
+        let pass_name = selector.firstChild.nodeValue;
+        split_info.objs[pass_name] = make_split(pass_name);
+
         selector.addEventListener("click", (event) => {
             for (let s of selectors) {
-                s.classList.remove("active");
+                if (s.classList.contains("active")) {
+                    split_info.sizes = split_info.objs[s.firstChild.nodeValue].getSizes();
+                    s.classList.remove("active");
+                }
+
             }
             selector.classList.add("active");
+            split_info.objs[selector.firstChild.nodeValue].setSizes(split_info.sizes);
             select_view(selector.id.replace("selector", ""));
-        })
+        });
+
         selector_map[selector.id.replace("selector", "")] = selector;
     }
 
