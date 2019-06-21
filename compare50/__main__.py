@@ -225,7 +225,6 @@ def main():
     parser.add_argument("-p", "--passes",
                         dest="passes",
                         nargs="+",
-                        metavar="PASSES",
                         default=[pass_.__name__ for pass_ in _data.Pass._get_all()],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
