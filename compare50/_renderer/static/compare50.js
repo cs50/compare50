@@ -170,21 +170,23 @@ function init_group_button(groups) {
     let group_index = 0;
     let next_group_button = document.getElementById("next_group");
     next_group_button.addEventListener("click", (event) => {
+        // find first fragment of group
         let frag = sorted_groups[group_index].spans[0].fragments[0];
 
+        // move to matching span (in the other file) once we've finished scrolling
         function callback(event) {
             frag.dom_element.click();
-
-            frag.dom_element.dispatchEvent(new Event("mouseover"))
-
             frag.dom_element.removeEventListener("finishedScrolling", callback);
         }
+        frag.dom_element.addEventListener("finishedScrolling", callback);
 
-        frag.dom_element.addEventListener("finishedScrolling", callback)
+        // highlight group
+        frag.dom_element.dispatchEvent(new Event("mouseover"));
 
-        frag.scroll_to()
+        // scroll to frag
+        frag.scroll_to();
 
-        group_index = (group_index + 1) % sorted_groups.length
+        group_index = (group_index + 1) % sorted_groups.length;
     });
 }
 
