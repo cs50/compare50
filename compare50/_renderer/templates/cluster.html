@@ -375,8 +375,6 @@ var g_link = svg.append("g").attr("class", "links");
 
 var g_node = svg.append("g").attr("class", "nodes");
 
-
-
 function ticked(links, nodes) {
   nodes
       .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
@@ -448,9 +446,11 @@ function update(link_data, node_data) {
   simulation.force("link")
       .links(link_data)
       .distance(d => (+d.value) * 10);
+
+  simulation.alphaTarget(0.3).restart();
+  setTimeout(() => simulation.alphaTarget(0).restart(), 1000);
 }
 
 update(graph.links, graph.nodes)
-  // d => console.log(d));
 
 </script>
