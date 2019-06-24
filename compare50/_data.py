@@ -118,6 +118,7 @@ class Submission:
     files = attr.ib(cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     id = attr.ib(init=False)
+    cluster = attr.ib(default=0, init=False, cmp=False)
 
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(

@@ -94,6 +94,7 @@ def render(pass_to_results, dest):
                 f.write(html)
             bar.update()
 
+
     # Create index
     with open(TEMPLATES / "index.html") as f:
         index_template = jinja2.Template(
@@ -102,11 +103,36 @@ def render(pass_to_results, dest):
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
     # Render index
-    rendered_html = index_template.render(css=css,
-                                          scores=[result.score for result in ranking_results],
-                                          dest=dest.resolve())
+    rendered_index = index_template.render(css=css,
+                                           scores=[result.score for result in ranking_results],
+                                           dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
-        f.write(rendered_html)
+        f.write(rendered_index)
+
+    max_score = max((result.score.score for result in ranking_results))
+    # Create cluster template
+    with open(TEMPLATES / "cluster.html") as f:
+        cluster_template = jinja2.Template(
+            f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
+
+    subs = set()
+    graph_info = {"nodes": [], "links": []}
+    for result in ranking_results:
+        graph_info["links"].append({"source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 - 10 * result.score.score/max_score + 1})
+        subs.add(result.sub_a)
+        subs.add(result.sub_b)
+
+    for sub in subs:
+        graph_info["nodes"].append({"id": str(sub.path), "group": sub.cluster})
+    bar._bar.write(str(graph_info["nodes"]))
+
+    # Render cluster
+    rendered_cluster = cluster_template.render(graph_info=graph_info)
+
+    with open(dest / "cluster.html", "w") as f:
+        f.write(rendered_cluster)
+
+
 
     bar.update()
     return dest / "index.html"

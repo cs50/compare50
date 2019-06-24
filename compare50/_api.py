@@ -13,6 +13,9 @@ import concurrent.futures
 from ._data import Submission, Span, Group, BisectList, Compare50Result
 
 
+import numpy as np
+from sklearn import cluster
+
 __all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "get_progress_bar", "Error"]
 
 
@@ -40,9 +43,20 @@ def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
     Rank submissions, return the top ``n`` most similar pairs
     """
     scores = pass_.comparator.score(submissions, archive_submissions, ignored_files)
+    scores = heapq.nlargest(n, scores)
+
+    # max_id = max((max(score.sub_a.id, score.sub_b.id) for score in scores))
+    # matrix = np.zeros((max_id+1, max_id+1))
+    # for score in scores:
+        # matrix[score.sub_b.id][score.sub_a.id] = matrix[score.sub_a.id][score.sub_b.id] = 1 / (score.score + 1)
+    # labels = cluster.SpectralClustering(affinity="precomputed").fit_predict(matrix)
+
+    # for submission in itertools.chain(submissions, archive_submissions):
+        # object.__setattr__(submission, "cluster", int(labels[submission.id]))
+
 
     # Keep only top `n` submission matches
-    return heapq.nlargest(n, scores)
+    return scores
 
 
 def compare(scores, ignored_files, pass_):
