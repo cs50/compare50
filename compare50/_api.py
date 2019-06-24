@@ -13,18 +13,12 @@ import concurrent.futures
 from ._data import Submission, Span, Group, BisectList, Compare50Result
 
 
-__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]
+__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "get_progress_bar", "Error"]
 
 
 class Error(Exception):
     """Base class for compare50 errors."""
     pass
-
-
-@contextlib.contextmanager
-def _nullcontext(enter_result=None):
-    """Reimplementation of contextlib.nullcontext which is only available in 3.7"""
-    yield enter_result
 
 
 def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
