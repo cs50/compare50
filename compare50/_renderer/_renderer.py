@@ -124,7 +124,6 @@ def render(pass_to_results, dest):
 
     for sub in subs:
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
-    bar._bar.write(str(graph_info["nodes"]))
 
     # Render cluster
     rendered_cluster = cluster_template.render(graph_info=graph_info)
