@@ -62,7 +62,7 @@ class Winnowing(Comparator):
         archive_index.include_all(submission_index)
 
         N = len(submissions) + len(archive_submissions)
-        return submission_index.compare(archive_index, score=lambda h: 0 if frequency_map[h] > N//10 else math.log(N / (1 + frequency_map[h])))
+        return submission_index.compare(archive_index, score=lambda h: math.log(N / (1 + frequency_map[h])))
 
     def compare(self, scores, ignored_files):
 
