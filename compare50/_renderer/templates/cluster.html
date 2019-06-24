@@ -355,6 +355,7 @@ var graph =  {
     ]
   };
 
+var radius = 5;
 
 var svg = d3.select("svg"),
     width = +svg.attr("width"),
@@ -374,7 +375,8 @@ var link = svg.append("g")
     .attr("class", "links")
   .selectAll("line")
   .data(graph.links)
-  .enter().append("line");
+  .enter().append("line")
+    .attr("stroke-width", 2);
 
 var node = svg.append("g")
     .attr("class", "nodes")
@@ -382,7 +384,7 @@ var node = svg.append("g")
   .data(graph.nodes)
   .enter().append("circle")
     .style("fill", d => color(+d.group))
-    .attr("r", 5)
+    .attr("r", radius)
     .call(d3.drag()
         .on("start", dragstarted)
         .on("drag", dragged)
@@ -401,15 +403,15 @@ simulation.force("link")
     .distance(d => (+d.value) * 10);
 
 function ticked() {
+  node
+      .attr("cx", function(d) { return d.x = Math.max(radius, Math.min(width - radius, d.x)); })
+      .attr("cy", function(d) { return d.y = Math.max(radius, Math.min(height - radius, d.y)); });
+
   link
       .attr("x1", function(d) { return d.source.x; })
       .attr("y1", function(d) { return d.source.y; })
       .attr("x2", function(d) { return d.target.x; })
       .attr("y2", function(d) { return d.target.y; });
-
-  node
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
 };
 
 function dragstarted(d) {
@@ -428,5 +430,33 @@ function dragended(d) {
   d.fx = null;
   d.fy = null;
 }
+
+function cutoff(n) {
+  let new_links_data = graph.links.filter(d => (+d.value) > n)
+
+  link = link.data(new_links_data);
+  link.exit().remove();
+  link.enter().append("line")
+    .attr("stroke-width", 2);
+
+  let new_nodes_ids = new Set(new_links_data.map(d => d.source.id).concat(new_links_data.map(d => d.target.id)));
+  let new_nodes_data = graph.nodes.filter(d => new_nodes_ids.has(d.id));
+
+  node = node.data(new_nodes_data);
+  node.exit().remove();
+  node.enter().append("circle")
+    .style("fill", d => color(+d.group))
+    .attr("r", radius)
+    .call(d3.drag()
+        .on("start", dragstarted)
+        .on("drag", dragged)
+        .on("end", dragended))
+    .on("click", (d) => console.log(d.id));
+  simulation.nodes(new_nodes_data);
+  simulation.force("link").links(new_links_data);
+}
+
+
+  // d => console.log(d));
 
 </script>
