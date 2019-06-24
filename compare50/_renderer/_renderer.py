@@ -123,7 +123,7 @@ def render(pass_to_results, dest):
         subs.add(result.sub_b)
 
     for sub in subs:
-        graph_info["nodes"].append({"id": str(sub.path), "group": sub.cluster})
+        graph_info["nodes"].append({"id": str(sub.path), "group": 0})
     bar._bar.write(str(graph_info["nodes"]))
 
     # Render cluster
