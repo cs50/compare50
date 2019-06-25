@@ -27,7 +27,7 @@ var svg = d3.select("svg"),
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody())
+    .force("charge", d3.forceManyBody().strength(-140).distanceMax(50).distanceMin(10))
     .force("center", d3.forceCenter(width / 2, height / 2));
 
 
@@ -123,7 +123,7 @@ function set_groups(link_data, node_data) {
 
   // update color selecter and number of groups
   n_groups = Math.max.apply(0, node_data.map(node => +node.group));
-  color = d3.scaleSequential().domain([0, n_groups]).interpolator(d3.interpolateRainbow);
+  color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
 }
 
 function cutoff(n) {
