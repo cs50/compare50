@@ -5,24 +5,28 @@ var HEIGHT = null;
 function init() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
+    let slider_start = Math.floor(Math.min(...GRAPH.links.map(d => 11 - d.value)))
+
     // Slider
     SLIDER = d3
         .sliderBottom()
-        .min(0)
+        .min(slider_start)
         .max(10)
-        .ticks(5)
-        .default(10)
-        .fill("#2196f3")
-        .on("onchange", val => {
-            cutoff(val);
+        .tickFormat(d => {
+            let num = d3.format(".1f")(d)
+            let [whole, fraction] = num.split(".");
+            return fraction === "0" ? whole : num;
         })
+        .ticks(10 - slider_start + 1)
+        .default(0)
+        .fill("#2196f3")
+        .on("onchange", cutoff)
         .handle(
             d3
               .symbol()
               .type(d3.symbolCircle)
               .size(200)()
         );
-
     d3.select("div#slider")
       .append("svg")
         .attr("height", 100)
@@ -177,7 +181,7 @@ function set_groups(link_data, node_data) {
 }
 
 function cutoff(n) {
-    let link_data = GRAPH.links.filter(d => (+d.value) <= n);
+    let link_data = GRAPH.links.filter(d => (11 - +d.value) >= n);
     let node_ids = new Set(link_data.map(d => d.source.id).concat(link_data.map(d => d.target.id)));
     let node_data = GRAPH.nodes.filter(d => node_ids.has(d.id));
 
