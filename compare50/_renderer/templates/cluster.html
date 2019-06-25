@@ -27,9 +27,9 @@ var svg = d3.select("svg"),
 
 var simulation = d3.forceSimulation()
     .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(-140).distanceMax(50).distanceMin(10))
-    .force("center", d3.forceCenter(width / 2, height / 2));
-
+    .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
+    .force("center", d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide().radius(d => radius * 2));
 
 var g_link = svg.append("g").attr("class", "links");
 
@@ -150,10 +150,8 @@ function update(link_data, node_data) {
         .on("start", dragstarted)
         .on("drag", dragged)
         .on("end", dragended))
-    .on("click", (d) => console.log(d.id));
-
-  nodes.enter().append("title")
-      .text(function(d) { return d.id; });
+    .on("click", (d) => console.log(d.id))
+    .append("title").text(d => d.id);
 
   nodes.exit().remove();
 
