@@ -7,7 +7,10 @@
         {% for style in css %}
             <style>{{style | safe}}</style>
         {% endfor %}
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
         <style>
+            /* index */
             #results {
                 margin: 0 auto;
             }
@@ -20,6 +23,17 @@
                 font-weight: bold;
             }
 
+            /* cluster */
+            .links line {
+              stroke: #aaa;
+            }
+
+            .nodes circle {
+              pointer-events: all;
+              stroke: none;
+              stroke-width: 40px;
+            }
+
         </style>
     </head>
     <body>
@@ -28,6 +42,9 @@
                 <div id="title" class="col bg-dark sticky-top text-light no-gutter">
                     <h4 class="align-text-bottom">compare50 results</h4>
                 </div>
+            </div>
+            <div class="row">
+              <svg width="900" height="900"></svg>
             </div>
             <div class="row">
                 <div class="col table-responsive">
@@ -64,6 +81,13 @@
                     row.addEventListener("click", rowListenerFactory(row));
                 }
             }
+
+            var graph = {{graph_info|tojson}};
         </script>
+        {% for script in js %}
+            <script>
+                {{script|safe}}
+            </script>
+        {% endfor %}
     </body>
 </html>

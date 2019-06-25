@@ -102,19 +102,10 @@ def render(pass_to_results, dest):
 
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
-    # Render index
-    rendered_index = index_template.render(css=css,
-                                           scores=[result.score for result in ranking_results],
-                                           dest=dest.resolve())
-    with open(dest / "index.html", "w") as f:
-        f.write(rendered_index)
 
     max_score = max((result.score.score for result in ranking_results))
-    # Create cluster template
-    with open(TEMPLATES / "cluster.html") as f:
-        cluster_template = jinja2.Template(
-            f.read(), autoescape=jinja2.select_autoescape(enabled_extensions=("html",)))
 
+    # Generate cluster data
     subs = set()
     graph_info = {"nodes": [], "links": []}
     for result in ranking_results:
@@ -125,11 +116,14 @@ def render(pass_to_results, dest):
     for sub in subs:
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
 
-    # Render cluster
-    rendered_cluster = cluster_template.render(graph_info=graph_info)
-
-    with open(dest / "cluster.html", "w") as f:
-        f.write(rendered_cluster)
+    # Render index
+    rendered_index = index_template.render(js=[read_file(STATIC / "cluster.js")],
+                                           css=css,
+                                           graph_info=graph_info,
+                                           scores=[result.score for result in ranking_results],
+                                           dest=dest.resolve())
+    with open(dest / "index.html", "w") as f:
+        f.write(rendered_index)
 
 
 

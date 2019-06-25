@@ -1,23 +1,3 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-
-.links line {
-  stroke: #aaa;
-}
-
-.nodes circle {
-  pointer-events: all;
-  stroke: none;
-  stroke-width: 40px;
-}
-
-</style>
-<script src="https://d3js.org/d3.v4.min.js"></script>
-<script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
-<script>
-
-var graph = {{graph_info|tojson}};
 var radius = 10;
 
 var svg = d3.select("svg"),
@@ -175,5 +155,3 @@ function update(link_data, node_data) {
 }
 
 update(graph.links, graph.nodes)
-
-</script>
