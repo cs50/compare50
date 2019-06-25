@@ -1,9 +1,10 @@
-var SVG = d3.select("div#cluster_graph").append("svg");
 var RADIUS = 10;
 var WIDTH = null;
 var HEIGHT = null;
 
 function init() {
+    SVG = d3.select("div#cluster_graph").append("svg");
+
     // Slider
     SLIDER = d3
         .sliderBottom()
@@ -29,19 +30,25 @@ function init() {
       .append("g")
         .attr("transform", "translate(30,30)");
 
-    // figure out screen width
-    onResize();
-
     // simulation
     SIMULATION = d3.forceSimulation()
         .force("link", d3.forceLink().id(function(d) { return d.id; }))
         .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
-        .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
         .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
 
     G_LINK = SVG.append("g").attr("class", "links");
 
     G_NODE = SVG.append("g").attr("class", "nodes");
+
+    // scale graph and slider
+    onResize();
+
+    // add data to graph
+    update(GRAPH.links, GRAPH.nodes);
+
+    // Don't move this up, this needs to be after simulation.force!!!
+    set_groups(GRAPH.links, GRAPH.nodes);
+    color_groups();
 }
 
 function onResize() {
@@ -69,6 +76,8 @@ function onResize() {
                               - header_size;
 
   SVG.attr("width", WIDTH).attr("height", HEIGHT);
+
+  SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
 }
 
 function getRealWidth(elem) {
@@ -219,7 +228,4 @@ function color_groups() {
 }
 
 init();
-update(GRAPH.links, GRAPH.nodes);
-// Don't move this up, this needs to be after simulation.force!!!
-set_groups(GRAPH.links, GRAPH.nodes);
-color_groups();
+window.addEventListener("resize", onResize);
