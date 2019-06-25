@@ -1,68 +1,80 @@
+var SVG = d3.select("div#cluster_graph").append("svg");
+var RADIUS = 10;
+var WIDTH = null;
+var HEIGHT = null;
+
+function init() {
+    // Slider
+    SLIDER = d3
+        .sliderBottom()
+        .min(0)
+        .max(10)
+        .ticks(5)
+        .default(10)
+        .fill("#2196f3")
+        .on("onchange", val => {
+            cutoff(val);
+        })
+        .handle(
+            d3
+              .symbol()
+              .type(d3.symbolCircle)
+              .size(200)()
+        );
+
+    d3.select("div#slider")
+      .append("svg")
+        .attr("height", 100)
+        .attr("class", "mx-auto d-block")
+      .append("g")
+        .attr("transform", "translate(30,30)");
+
+    // figure out screen width
+    onResize();
+
+    // simulation
+    SIMULATION = d3.forceSimulation()
+        .force("link", d3.forceLink().id(function(d) { return d.id; }))
+        .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
+        .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
+        .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
+
+    G_LINK = SVG.append("g").attr("class", "links");
+
+    G_NODE = SVG.append("g").attr("class", "nodes");
+}
+
+function onResize() {
+  var cluster_div = document.getElementById("cluster");
+  var header_size = document.querySelector("thead").clientHeight;
+  cluster_div.style.paddingTop = `${header_size}px`;
+
+  WIDTH = getRealWidth(document.getElementById("cluster"));
+
+  SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+  d3.select("div#slider")
+    .attr("width", WIDTH)
+    .select("svg")
+    .attr("width", Math.floor(0.8 * WIDTH))
+
+  d3.select("div#slider")
+    .attr("width", WIDTH)
+    .select("svg")
+    .attr("width", Math.floor(0.8 * WIDTH))
+    .select("g")
+    .call(SLIDER);
+
+  HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
+                              - document.getElementById("slider").clientHeight
+                              - header_size;
+
+  SVG.attr("width", WIDTH).attr("height", HEIGHT);
+}
+
 function getRealWidth(elem) {
     let style = getComputedStyle(elem);
     return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
 }
-
-var CLUSTER_DIV = document.getElementById("cluster");
-var HEADER_SIZE = document.querySelector("thead").clientHeight;
-CLUSTER_DIV.style.paddingTop = `${HEADER_SIZE}px`;
-
-
-var WIDTH = getRealWidth(document.getElementById("cluster"));
-
-
-// Slider
-var SLIDER = d3
-    .sliderBottom()
-    .min(0)
-    .max(10)
-    .width(Math.floor(0.8 * WIDTH) - 60)
-    .ticks(5)
-    .default(10)
-    .fill("#2196f3")
-    .on("onchange", val => {
-        cutoff(val);
-    })
-    .handle(
-        d3
-          .symbol()
-          .type(d3.symbolCircle)
-          .size(200)()
-    );
-
-
-d3.select("div#slider")
-  .attr("width", WIDTH)
-  .append("svg")
-  .attr("width", Math.floor(0.8 * WIDTH))
-  .attr("height", 100)
-  .attr("class", "mx-auto d-block")
-  .append("g")
-  .attr("transform", "translate(30,30)")
-  .call(SLIDER);
-
-
-var RADIUS = 10;
-
-var SVG = d3.select("div#cluster_graph").append("svg");
-    HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
-                                - document.getElementById("slider").clientHeight
-                                - HEADER_SIZE;
-
-SVG.attr("width", WIDTH).attr("height", HEIGHT);
-
-console.log(WIDTH)
-console.log(HEIGHT)
-
-var SIMULATION = d3.forceSimulation()
-    .force("link", d3.forceLink().id(function(d) { return d.id; }))
-    .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
-    .force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2))
-    .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
-
-var G_LINK = SVG.append("g").attr("class", "links");
-
-var G_NODE = SVG.append("g").attr("class", "nodes");
 
 function ticked(links, nodes) {
     nodes
@@ -206,7 +218,8 @@ function color_groups() {
     G_NODE.selectAll("circle").style("fill", d => color(+d.group))
 }
 
-update(GRAPH.links, GRAPH.nodes)
+init();
+update(GRAPH.links, GRAPH.nodes);
 // Don't move this up, this needs to be after simulation.force!!!
 set_groups(GRAPH.links, GRAPH.nodes);
 color_groups();
