@@ -68,21 +68,20 @@ function init() {
     set_color();
     color_groups();
 
-    let choseX = d3.randomUniform(0, WIDTH);
-    let choseY = d3.randomUniform(0, HEIGHT);
-    let pos_map = []
-    NODE_DATA.forEach(d => {
-        if (pos_map[d.id] === undefined) {
-            pos_map[d.id] = { x: choseX(), y: choseY()};
-        }
-    });
-    console.log(pos_map);
+    // let choseX = d3.randomUniform(0, WIDTH);
+    // let choseY = d3.randomUniform(0, HEIGHT);
+    // let pos_map = []
+    // NODE_DATA.forEach(d => {
+    //     if (pos_map[d.id] === undefined) {
+    //         pos_map[d.id] = { x: choseX(), y: choseY()};
+    //     }
+    // });
+    // console.log(pos_map);
 
     //SIMULATION.force("x", d3.forceX(d => pos_map[d.id].x).strength(0.2))
               //.force("y", d3.forceY(d => pos_map[d.id].y).strength(0.2));
-            
-    //setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
 
+    //setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
 }
 
 function on_resize() {
@@ -112,12 +111,7 @@ function on_resize() {
   SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
   SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
-<<<<<<< HEAD
-  //jiggle();
-
-=======
   jiggle();
->>>>>>> highlight rows
 }
 
 function get_real_width(elem) {
