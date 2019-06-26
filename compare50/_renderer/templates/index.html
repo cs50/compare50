@@ -83,7 +83,7 @@
         <script>
             function rowListenerFactory(row) {
                 return event => {
-                    window.location.href = `match_${row.cells[0].textContent}.html`
+                    window.open(`match_${row.cells[0].textContent}.html`, "_blank");
                 }
             }
             for (let row of document.getElementById("results").rows) {
