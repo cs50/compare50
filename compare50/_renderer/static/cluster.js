@@ -43,10 +43,6 @@ function init() {
       .append("g")
         .attr("transform", "translate(30,30)");
 
-
-
-
-
     // simulation
     SIMULATION = d3.forceSimulation()
         .force("link", d3.forceLink().id(d => d.id))
@@ -315,6 +311,16 @@ function cutoff(n) {
     LINK_DATA = GRAPH.links.filter(d => (11 - +d.value) >= n);
     let node_ids = new Set(LINK_DATA.map(d => d.source.id).concat(LINK_DATA.map(d => d.target.id)));
     NODE_DATA = GRAPH.nodes.filter(d => node_ids.has(d.id));
+
+    let rows = document.querySelector("#results tbody").children;
+    for (let row of rows) {
+        let score = parseFloat(row.querySelector(".score").innerHTML);
+        if (score < n) {
+            row.style.display = "none";
+        } else {
+            row.style.display = "";
+        }
+    }
 
     update();
     color_groups();
