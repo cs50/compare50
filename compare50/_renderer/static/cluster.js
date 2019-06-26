@@ -2,6 +2,7 @@ var RADIUS = 10;
 var WIDTH = null;
 var HEIGHT = null;
 
+
 function init() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
@@ -36,7 +37,7 @@ function init() {
 
     // simulation
     SIMULATION = d3.forceSimulation()
-        .force("link", d3.forceLink().id(function(d) { return d.id; }))
+        .force("link", d3.forceLink().id(d => d.id))
         .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
         .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
 
@@ -56,8 +57,8 @@ function init() {
 }
 
 function on_resize() {
-  var cluster_div = document.getElementById("cluster");
-  var header_size = document.querySelector("thead").clientHeight;
+  let cluster_div = document.getElementById("cluster");
+  let header_size = document.querySelector("thead").clientHeight;
   cluster_div.style.paddingTop = `${header_size}px`;
 
   WIDTH = get_real_width(document.getElementById("cluster"));
@@ -82,6 +83,8 @@ function on_resize() {
   SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
   SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
+  jiggle();
+
 }
 
 function get_real_width(elem) {
@@ -243,12 +246,16 @@ function update(link_data, node_data) {
         .links(link_data)
         .distance(d => (+d.value) * 10);
 
-    SIMULATION.alphaTarget(0.3).restart();
-    setTimeout(() => SIMULATION.alphaTarget(0).restart(), 1000);
+    jiggle();
 }
 
 function color_groups() {
     G_NODE.selectAll("circle").style("fill", d => color(+d.group))
+}
+
+function jiggle(alpha=0.3, duration=1000) {
+  SIMULATION.alphaTarget(alpha).restart();
+  setTimeout(() => SIMULATION.alphaTarget(0).restart(), duration);
 }
 
 init();
