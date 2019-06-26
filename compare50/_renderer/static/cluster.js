@@ -45,7 +45,7 @@ function init() {
     G_NODE = SVG.append("g").attr("class", "nodes");
 
     // scale graph and slider
-    onResize();
+    on_resize();
 
     // add data to graph
     update(GRAPH.links, GRAPH.nodes);
@@ -55,7 +55,7 @@ function init() {
     color_groups();
 }
 
-function onResize() {
+function on_resize() {
   var cluster_div = document.getElementById("cluster");
   var header_size = document.querySelector("thead").clientHeight;
   cluster_div.style.paddingTop = `${header_size}px`;
@@ -232,4 +232,4 @@ function color_groups() {
 }
 
 init();
-window.addEventListener("resize", onResize);
+window.addEventListener("resize", on_resize);
