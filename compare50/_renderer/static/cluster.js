@@ -112,8 +112,12 @@ function on_resize() {
   SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
   SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
+<<<<<<< HEAD
   //jiggle();
 
+=======
+  jiggle();
+>>>>>>> highlight rows
 }
 
 function get_real_width(elem) {
@@ -162,6 +166,10 @@ function dragended(d) {
     on_mouseout_node(drag_target);
 }
 
+function get_grouped_nodes(node) {
+    return NODE_DATA.filter(other_node => other_node.group === node.group);
+}
+
 function on_mouseover_node(d) {
     if (DRAG_TARGET !== null) {
       return;
@@ -171,6 +179,8 @@ function on_mouseover_node(d) {
       .attr("stroke", function(d) {
         return d3.select(this).style("fill");
       });
+
+    color_grouped_rows(d, "#ECECEC");
 }
 
 function on_mouseout_node(d) {
@@ -180,17 +190,41 @@ function on_mouseout_node(d) {
 
     G_NODE.selectAll("circle").filter(node => node.group === d.group)
       .attr("stroke", "none");
+
+    color_grouped_rows(d, "");
+}
+
+function on_click_node(d) {
+    select_group(d);
+    color_grouped_rows(d, "#ECECEC");
+    d3.event.stopPropagation();
+}
+
+function color_grouped_rows(node, color) {
+    let grouped_nodes = get_grouped_nodes(node);
+
+    for (let grouped_node of grouped_nodes) {
+        let row_elements = get_rows(grouped_node);
+
+        for (let row_element of row_elements) {
+            row_element.parentNode.style.backgroundColor = color;
+        }
+    }
+}
+
+function get_rows(node) {
+    return document.getElementsByClassName(`${node.id}_index`);
 }
 
 function select_group(node=null) {
     // find all nodes that are grouped with node
-    let grouped_nodes = node === null ? NODE_DATA : NODE_DATA.filter(other_node => other_node.group === node.group);
+    let grouped_nodes = node === null ? NODE_DATA : get_grouped_nodes(node);
     grouped_nodes = new Set(grouped_nodes);
 
     // for every node in graph
     NODE_DATA.forEach(other_node => {
         // find all dom elems in the index for node
-        let index_elems = document.getElementsByClassName(`${other_node.id}_index`);
+        let index_elems = get_rows(other_node);
 
         // if node is not grouped with selected node, make it invisible
         for (let index_elem of index_elems) {
@@ -308,10 +342,7 @@ function update() {
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended))
-        .on("click", d => {
-          select_group(d);
-          d3.event.stopPropagation();
-        })
+        .on("click", on_click_node)
         .on("mouseover", on_mouseover_node)
         .on("mouseout", on_mouseout_node)
         .append("title")
@@ -339,8 +370,8 @@ function color_groups() {
 }
 
 function jiggle(alpha=0.3, duration=1000) {
-  SIMULATION.alphaTarget(alpha).restart();
-  setTimeout(() => SIMULATION.alphaTarget(0).restart(), duration);
+    SIMULATION.alphaTarget(alpha).restart();
+    setTimeout(() => SIMULATION.alphaTarget(0).restart(), duration);
 }
 
 init();
