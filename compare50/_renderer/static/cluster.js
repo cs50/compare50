@@ -2,13 +2,21 @@ var RADIUS = 10;
 var WIDTH = null;
 var HEIGHT = null;
 
+var NODE_DATA = null;
+var LINK_DATA = null;
 
 function init() {
+    NODE_DATA = GRAPH.nodes;
+    LINK_DATA = GRAPH.links;
+
     SVG = d3.select("div#cluster_graph").append("svg");
 
-    let slider_start = Math.floor(Math.min(...GRAPH.links.map(d => 11 - d.value)))
+    // If svg is clicked, unselect node
+    SVG.on("click", () => select_node());
 
     // Slider
+    let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => 11 - d.value)))
+
     SLIDER = d3
         .sliderBottom()
         .min(slider_start)
@@ -49,10 +57,10 @@ function init() {
     on_resize();
 
     // add data to graph
-    update(GRAPH.links, GRAPH.nodes);
+    update();
 
     // Don't move this up, this needs to be after simulation.force!!!
-    set_groups(GRAPH.links, GRAPH.nodes);
+    set_groups();
     color_groups();
 }
 
@@ -121,16 +129,17 @@ function dragended(d) {
     d.fy = null;
 }
 
-function select(node, node_data) {
-    // find all nodes that are grouped with d
-    let grouped_nodes = new Set(node_data.filter(other_node => other_node.group === node.group));
+function select_node(node=null) {
+    // find all nodes that are grouped with node
+    let grouped_nodes = node === null ? NODE_DATA : NODE_DATA.filter(other_node => other_node.group === node.group);
+    grouped_nodes = new Set(grouped_nodes);
 
     // for every node in graph
-    node_data.forEach(other_node => {
+    NODE_DATA.forEach(other_node => {
         // find all dom elems in the index for node
         let index_elems = document.getElementsByClassName(`${other_node.id}_index`);
 
-        // if node is not grouped with clicked node d, make it invisible
+        // if node is not grouped with selected node, make it invisible
         for (let index_elem of index_elems) {
             if (grouped_nodes.has(other_node)) {
               index_elem.parentNode.style.display = "";
@@ -141,17 +150,17 @@ function select(node, node_data) {
     });
 }
 
-function set_groups(link_data, node_data) {
+function set_groups() {
     // create a map from node_id to node
     let node_map = {};
-    node_data.forEach(d => {
+    NODE_DATA.forEach(d => {
         d.group = null;
         node_map[d.id] = d;
     });
 
     // create a map from node.id to directly connected node.ids
     let link_map = {};
-    link_data.forEach(d => {
+    LINK_DATA.forEach(d => {
         if (d.source.id in link_map) {
             link_map[d.source.id].push(d.target.id);
         } else {
@@ -196,31 +205,31 @@ function set_groups(link_data, node_data) {
         group_id++;
     }
 
-    node_data.forEach(d => d.group = node_map[d.id].group);
+    NODE_DATA.forEach(d => d.group = node_map[d.id].group);
 
     // update color selecter and number of groups
-    n_groups = Math.max.apply(0, node_data.map(node => +node.group));
-    color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+    let n_groups = Math.max.apply(0, NODE_DATA.map(node => +node.group));
+    COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
 }
 
 function cutoff(n) {
-    let link_data = GRAPH.links.filter(d => (11 - +d.value) >= n);
-    let node_ids = new Set(link_data.map(d => d.source.id).concat(link_data.map(d => d.target.id)));
-    let node_data = GRAPH.nodes.filter(d => node_ids.has(d.id));
+    LINK_DATA = GRAPH.links.filter(d => (11 - +d.value) >= n);
+    let node_ids = new Set(LINK_DATA.map(d => d.source.id).concat(LINK_DATA.map(d => d.target.id)));
+    NODE_DATA = GRAPH.nodes.filter(d => node_ids.has(d.id));
 
-    update(link_data, node_data);
+    update();
     color_groups();
 }
 
-function update(link_data, node_data) {
-    let links = G_LINK.selectAll("line").data(link_data);
+function update() {
+    let links = G_LINK.selectAll("line").data(LINK_DATA);
 
     links.enter().append("line")
         .attr("stroke-width", 2);
 
     links.exit().remove();
 
-    let nodes = G_NODE.selectAll("circle").data(node_data);
+    let nodes = G_NODE.selectAll("circle").data(NODE_DATA);
 
     nodes.enter().append("circle")
         .attr("r", RADIUS)
@@ -228,7 +237,10 @@ function update(link_data, node_data) {
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended))
-        .on("click", d => select(d, node_data))
+        .on("click", d => {
+          select_node(d);
+          d3.event.stopPropagation();
+        })
         .append("title")
           .text(d => d.id);
 
@@ -239,18 +251,18 @@ function update(link_data, node_data) {
 
     // don't swap simulation.nodes and simulation.force
     SIMULATION
-        .nodes(node_data)
+        .nodes(NODE_DATA)
         .on("tick", () => ticked(all_links, all_nodes));
 
     SIMULATION.force("link")
-        .links(link_data)
+        .links(LINK_DATA)
         .distance(d => (+d.value) * 10);
 
     jiggle();
 }
 
 function color_groups() {
-    G_NODE.selectAll("circle").style("fill", d => color(+d.group))
+    G_NODE.selectAll("circle").style("fill", d => COLOR(+d.group))
 }
 
 function jiggle(alpha=0.3, duration=1000) {
