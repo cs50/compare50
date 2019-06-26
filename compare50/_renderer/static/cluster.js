@@ -60,7 +60,7 @@ function on_resize() {
   var header_size = document.querySelector("thead").clientHeight;
   cluster_div.style.paddingTop = `${header_size}px`;
 
-  WIDTH = getRealWidth(document.getElementById("cluster"));
+  WIDTH = get_real_width(document.getElementById("cluster"));
 
   SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
   d3.select("div#slider")
@@ -84,7 +84,7 @@ function on_resize() {
   SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
 }
 
-function getRealWidth(elem) {
+function get_real_width(elem) {
     let style = getComputedStyle(elem);
     return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
 }
@@ -99,7 +99,7 @@ function ticked(links, nodes) {
         .attr("y1", function(d) { return d.source.y; })
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
-};
+}
 
 function dragstarted(d) {
     if (!d3.event.active) SIMULATION.alphaTarget(0.3).restart();
@@ -116,6 +116,26 @@ function dragended(d) {
     if (!d3.event.active) SIMULATION.alphaTarget(0);
     d.fx = null;
     d.fy = null;
+}
+
+function select(node, node_data) {
+    // find all nodes that are grouped with d
+    let grouped_nodes = new Set(node_data.filter(other_node => other_node.group === node.group));
+
+    // for every node in graph
+    node_data.forEach(other_node => {
+        // find all dom elems in the index for node
+        let index_elems = document.getElementsByClassName(`${other_node.id}_index`);
+
+        // if node is not grouped with clicked node d, make it invisible
+        for (let index_elem of index_elems) {
+            if (grouped_nodes.has(other_node)) {
+              index_elem.parentNode.style.display = "";
+            } else {
+              index_elem.parentNode.style.display = "none";
+            }
+        }
+    });
 }
 
 function set_groups(link_data, node_data) {
@@ -202,11 +222,12 @@ function update(link_data, node_data) {
     nodes.enter().append("circle")
         .attr("r", RADIUS)
         .call(d3.drag()
-            .on("start", dragstarted)
-            .on("drag", dragged)
-            .on("end", dragended))
-        .on("click", (d) => console.log(d.id))
-        .append("title").text(d => d.id);
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended))
+        .on("click", d => select(d, node_data))
+        .append("title")
+          .text(d => d.id);
 
     nodes.exit().remove();
 
@@ -224,7 +245,6 @@ function update(link_data, node_data) {
 
     SIMULATION.alphaTarget(0.3).restart();
     setTimeout(() => SIMULATION.alphaTarget(0).restart(), 1000);
-
 }
 
 function color_groups() {

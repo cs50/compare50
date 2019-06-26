@@ -66,8 +66,8 @@
                             {% for score in scores %}
                                   <tr>
                                       <th scope="row">{{loop.index}}</th>
-                                      <td>{{score.sub_a.path}}</td>
-                                      <td>{{score.sub_b.path}}</td>
+                                      <td class="{{ score.sub_a.path }}_index">{{score.sub_a.path}}</td>
+                                      <td class="{{ score.sub_b.path }}_index">{{score.sub_b.path}}</td>
                                       <td>{{((score.score / scores[0].score) * 10) | round(1)}}</td>
                                   </tr>
                             {% endfor %}
