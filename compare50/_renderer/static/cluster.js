@@ -75,15 +75,15 @@ function on_resize() {
   SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
   d3.select("div#slider")
     .attr("width", WIDTH)
-    .select("svg")
-    .attr("width", Math.floor(0.8 * WIDTH))
+      .select("svg")
+        .attr("width", Math.floor(0.8 * WIDTH))
 
   d3.select("div#slider")
     .attr("width", WIDTH)
     .select("svg")
-    .attr("width", Math.floor(0.8 * WIDTH))
-    .select("g")
-    .call(SLIDER);
+      .attr("width", Math.floor(0.8 * WIDTH))
+      .select("g")
+        .call(SLIDER);
 
   HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
                               - document.getElementById("slider").clientHeight
@@ -113,10 +113,17 @@ function ticked(links, nodes) {
         .attr("y2", function(d) { return d.target.y; });
 }
 
+
+
+
+let DRAG_TARGET = null;
+
 function dragstarted(d) {
     if (!d3.event.active) SIMULATION.alphaTarget(0.3).restart();
     d.fx = d.x;
     d.fy = d.y;
+
+    DRAG_TARGET = d;
 }
 
 function dragged(d) {
@@ -128,6 +135,31 @@ function dragended(d) {
     if (!d3.event.active) SIMULATION.alphaTarget(0);
     d.fx = null;
     d.fy = null;
+
+    let drag_target = DRAG_TARGET;
+    DRAG_TARGET = null;
+
+    on_mouseout_node(drag_target);
+}
+
+function on_mouseover_node(d) {
+    if (DRAG_TARGET !== null) {
+      return;
+    }
+
+    G_NODE.selectAll("circle").filter(node => node.group === d.group)
+      .attr("stroke", function(d) {
+        return d3.select(this).style("fill");
+      });
+}
+
+function on_mouseout_node(d) {
+    if (DRAG_TARGET !== null) {
+      return;
+    }
+
+    G_NODE.selectAll("circle").filter(node => node.group === d.group)
+      .attr("stroke", "none");
 }
 
 function select_group(node=null) {
@@ -143,20 +175,27 @@ function select_group(node=null) {
         // if node is not grouped with selected node, make it invisible
         for (let index_elem of index_elems) {
             if (grouped_nodes.has(other_node)) {
-              index_elem.parentNode.style.display = "";
+                index_elem.parentNode.style.display = "";
             } else {
-              index_elem.parentNode.style.display = "none";
+                index_elem.parentNode.style.display = "none";
+            }
+
+            // make the clicked node bold in the index
+            if (node !== null && other_node.id === node.id) {
+                index_elem.style.fontFamily = "Roboto-Bold";
+            } else {
+                index_elem.style.removeProperty("font-family");
             }
         }
     });
 
-    if (node === null) {
-        set_color();
-    } else {
-        set_color();
+    set_color();
+
+    if (node !== null) {
         let node_color = COLOR(node.group);
         COLOR = (group_id) => group_id === node.group ? node_color : "grey";
     }
+
     color_groups();
 }
 
@@ -253,6 +292,8 @@ function update() {
           select_group(d);
           d3.event.stopPropagation();
         })
+        .on("mouseover", on_mouseover_node)
+        .on("mouseout", on_mouseout_node)
         .append("title")
           .text(d => d.id);
 
