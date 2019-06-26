@@ -12,7 +12,7 @@ function init() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
     // If svg is clicked, unselect node
-    SVG.on("click", () => select_node());
+    SVG.on("click", () => select_group());
 
     // Slider
     let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => 11 - d.value)))
@@ -61,6 +61,7 @@ function init() {
 
     // Don't move this up, this needs to be after simulation.force!!!
     set_groups();
+    set_color();
     color_groups();
 }
 
@@ -129,7 +130,7 @@ function dragended(d) {
     d.fy = null;
 }
 
-function select_node(node=null) {
+function select_group(node=null) {
     // find all nodes that are grouped with node
     let grouped_nodes = node === null ? NODE_DATA : NODE_DATA.filter(other_node => other_node.group === node.group);
     grouped_nodes = new Set(grouped_nodes);
@@ -148,6 +149,15 @@ function select_node(node=null) {
             }
         }
     });
+
+    if (node === null) {
+        set_color();
+    } else {
+        set_color();
+        let node_color = COLOR(node.group);
+        COLOR = (group_id) => group_id === node.group ? node_color : "grey";
+    }
+    color_groups();
 }
 
 function set_groups() {
@@ -206,7 +216,9 @@ function set_groups() {
     }
 
     NODE_DATA.forEach(d => d.group = node_map[d.id].group);
+}
 
+function set_color() {
     // update color selecter and number of groups
     let n_groups = Math.max.apply(0, NODE_DATA.map(node => +node.group));
     COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
@@ -238,7 +250,7 @@ function update() {
           .on("drag", dragged)
           .on("end", dragended))
         .on("click", d => {
-          select_node(d);
+          select_group(d);
           d3.event.stopPropagation();
         })
         .append("title")
@@ -262,7 +274,7 @@ function update() {
 }
 
 function color_groups() {
-    G_NODE.selectAll("circle").style("fill", d => COLOR(+d.group))
+    G_NODE.selectAll("circle").style("fill", d => COLOR(+d.group));
 }
 
 function jiggle(alpha=0.3, duration=1000) {
