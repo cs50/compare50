@@ -419,7 +419,7 @@ function jiggle(alpha=0.3, duration=1000) {
 }
 
 
-document.addEventListener("DOMContentLoaded", event =>  {
+document.addEventListener("DOMContentLoaded", event => {
     // Make table rows links
     document.querySelectorAll("#results tr").forEach(row => {
         if (!row.querySelectorAll("td").length) return;
