@@ -1,0 +1,31 @@
+body {
+    font-family: Roboto-Regular
+}
+
+#results {
+    margin: 0 auto;
+}
+
+#results tbody tr {
+    cursor: pointer;
+}
+
+h4 {
+    font-weight: bold;
+}
+
+/* cluster */
+.links line {
+    stroke: #aaa;
+}
+
+.nodes circle {
+    pointer-events: all;
+    /* stroke: none; */
+    stroke-width: 3px;
+}
+
+#cluster {
+    position: fixed;
+    right: 0;
+}

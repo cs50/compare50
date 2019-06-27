@@ -82,14 +82,14 @@ def render(pass_to_results, dest):
     results_per_sub_pair = sorted(sub_pair_to_results.values(),
                                   key=lambda res: res[0].score, reverse=True)
 
+    common_css = [read_file(STATIC / f) for f in  ("bootstrap.min.css", "fonts.css")]
+    match_css = common_css + [read_file(STATIC / "match.css")]
+    match_js = [read_file(STATIC / f) for f in ("split.min.js", "match.js")]
     # Render all matches
     with _api.Executor() as executor:
         # Load static files
-        js = [read_file(STATIC / name) for name in ("split.min.js", "compare50.js")]
-        css = [read_file(STATIC / name) for name in ("bootstrap.min.css", "fonts.css", "compare50.css")]
-
         max_id = len(results_per_sub_pair)
-        for id, html in executor.map(_RenderTask(dest, max_id, js, css + [read_file(STATIC / "match.css")]), enumerate(results_per_sub_pair, 1)):
+        for id, html in executor.map(_RenderTask(dest, max_id, match_js, match_css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             bar.update()
@@ -116,9 +116,11 @@ def render(pass_to_results, dest):
     for sub in subs:
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
 
+    index_css = common_css + [read_file(STATIC / "index.css")]
+    index_js = [read_file(STATIC / "index.js")]
     # Render index
-    rendered_index = index_template.render(js=[read_file(STATIC / "cluster.js")],
-                                           css=css,
+    rendered_index = index_template.render(js=index_js,
+                                           css=index_css,
                                            graph_info=graph_info,
                                            scores=[result.score for result in ranking_results],
                                            dest=dest.resolve())

@@ -12,38 +12,6 @@
         <script src="https://d3js.org/d3.v4.min.js"></script>
         <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
         <script src="https://unpkg.com/d3-simple-slider"></script>
-
-        <style>
-            /* index */
-            #results {
-                margin: 0 auto;
-            }
-
-            #results tbody tr {
-                cursor: pointer;
-            }
-
-            h4 {
-                font-weight: bold;
-            }
-
-            /* cluster */
-            .links line {
-              stroke: #aaa;
-            }
-
-            .nodes circle {
-              pointer-events: all;
-              /* stroke: none; */
-              stroke-width: 3px;
-            }
-
-            #cluster {
-                position: fixed;
-                right: 0;
-            }
-
-        </style>
     </head>
     <body>
         <div class="container-fluid">
@@ -81,17 +49,6 @@
             </div>
         </div>
         <script>
-            function rowListenerFactory(row) {
-                return event => {
-                    window.open(`match_${row.cells[0].textContent}.html`, "_blank");
-                }
-            }
-            for (let row of document.getElementById("results").rows) {
-                if (row.getElementsByTagName("td").length > 0) {
-                    row.addEventListener("click", rowListenerFactory(row));
-                }
-            }
-
             var GRAPH = {{graph_info|tojson}};
         </script>
         {% for script in js %}

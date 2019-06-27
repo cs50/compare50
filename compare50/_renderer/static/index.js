@@ -5,7 +5,7 @@ var HEIGHT = null;
 var NODE_DATA = null;
 var LINK_DATA = null;
 
-function init() {
+function init_graph() {
     NODE_DATA = GRAPH.nodes;
     LINK_DATA = GRAPH.links;
 
@@ -57,7 +57,7 @@ function init() {
     on_resize();
 
     // add data to graph
-    update();
+    update_graph();
 
     // Don't move this up, this needs to be after simulation.force!!!
     set_groups();
@@ -322,11 +322,11 @@ function cutoff(n) {
         }
     }
 
-    update();
+    update_graph();
     color_groups();
 }
 
-function update() {
+function update_graph() {
     let links = G_LINK.selectAll("line").data(LINK_DATA);
 
     links.enter().append("line")
@@ -374,5 +374,19 @@ function jiggle(alpha=0.3, duration=1000) {
     setTimeout(() => SIMULATION.alphaTarget(0).restart(), duration);
 }
 
-init();
-window.addEventListener("resize", on_resize);
+
+document.addEventListener("DOMContentLoaded", event =>  {
+    // Make table rows links
+    document.querySelectorAll("#results tr").forEach(row => {
+        if (!row.querySelectorAll("td").length) return;
+
+        row.addEventListener("click", (event) => {
+            window.open(`match_${row.cells[0].textContent}.html`, "_blank");
+        });
+    });
+
+    init_graph();
+
+    window.addEventListener("resize", on_resize);
+});
+
