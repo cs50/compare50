@@ -2,8 +2,39 @@ var RADIUS = 10;
 var WIDTH = null;
 var HEIGHT = null;
 
+var SVG = null
+var SLIDER = null;
+var G_NODE = null;
+var G_LINK = null;
+
 var NODE_DATA = null;
 var LINK_DATA = null;
+
+var FOCUSED_NODE_ID = null;
+var FOCUSED_GROUP_ID = null;
+
+
+function focus(node={}) {
+    if (node.id !== undefined) {
+        FOCUSED_NODE_ID = node.id
+    }
+
+    if (node.group !== undefined) {
+        FOCUSED_GROUP_ID = node.group;
+    }
+
+    G_NODE
+      .selectAll("circle")
+      .attr("stroke-width", d => d.id === FOCUSED_NODE_ID || d.group === FOCUSED_GROUP_ID ? "5px" : "")
+      .attr("stroke", function(d) {
+            if (d.id === FOCUSED_NODE_ID)
+                return "black";
+            else if (d.group === FOCUSED_GROUP_ID)
+                return  d3.select(this).style("fill");
+            else 
+                return "none";
+        });
+}
 
 function init_graph() {
     NODE_DATA = GRAPH.nodes;
@@ -12,7 +43,10 @@ function init_graph() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
     // If svg is clicked, unselect node
-    SVG.on("click", () => select_group());
+    SVG.on("click", () => {
+        focus({ id: null, group: null });
+        select_group();
+    });
 
     // Slider
     let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => 11 - d.value)))
@@ -69,10 +103,12 @@ function init_graph() {
     let pos_map = []
     NODE_DATA.forEach(d => {
         if (pos_map[d.group] === undefined) {
-            pos_map[d.group] = { x: choseX(), y: choseY()};
+            pos_map[d.group] = { 
+                x: choseX(),
+                y: choseY()
+            };
         }
     });
-    console.log(pos_map);
 
     SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
@@ -167,30 +203,17 @@ function on_mouseover_node(d) {
       return;
     }
 
-    let g_nodes = G_NODE.selectAll("circle");
-
-    g_nodes.filter(node => node.group === d.group && node !== d)
-      .attr("stroke", function(d) {
-        return d3.select(this).style("fill");
-      });
+    focus(d);
 
     color_grouped_rows(d, "#ECECEC");
 
     if (MOUSE_NODE !== null) {
-        g_nodes.filter(node => node === MOUSE_NODE)
-          .attr("stroke-width", "")
-          .attr("stroke", "");
-
         for (let td of get_tds(MOUSE_NODE)) {
             td.style.backgroundColor = "";
         }
     }
 
     MOUSE_NODE = d;
-
-    g_nodes.filter(node => node === d)
-      .attr("stroke-width", "5px")
-      .attr("stroke", "black");
 
     for (let td of get_tds(d)) {
         td.style.backgroundColor = "#CCCCCC";
@@ -204,8 +227,7 @@ function on_mouseout_node(d) {
         return;
     }
 
-    G_NODE.selectAll("circle").filter(node => node.group === d.group && node !== d)
-        .attr("stroke", "none");
+    focus({ group: null });
 
     color_grouped_rows(d, "");
     //
@@ -392,6 +414,7 @@ function update_graph() {
         .links(LINK_DATA)
         .distance(d => (+d.value) * 10);
 
+    focus();
     jiggle();
 }
 
