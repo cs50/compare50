@@ -160,28 +160,58 @@ function get_grouped_nodes(node) {
     return NODE_DATA.filter(other_node => other_node.group === node.group);
 }
 
+var MOUSE_NODE = null;
+
 function on_mouseover_node(d) {
     if (DRAG_TARGET !== null) {
       return;
     }
 
-    G_NODE.selectAll("circle").filter(node => node.group === d.group)
+    let g_nodes = G_NODE.selectAll("circle");
+
+    g_nodes.filter(node => node.group === d.group && node !== d)
       .attr("stroke", function(d) {
         return d3.select(this).style("fill");
       });
 
     color_grouped_rows(d, "#ECECEC");
+
+    if (MOUSE_NODE !== null) {
+        g_nodes.filter(node => node === MOUSE_NODE)
+          .attr("stroke-width", "")
+          .attr("stroke", "");
+
+        for (let td of get_tds(MOUSE_NODE)) {
+            td.style.backgroundColor = "";
+        }
+    }
+
+    MOUSE_NODE = d;
+
+    g_nodes.filter(node => node === d)
+      .attr("stroke-width", "5px")
+      .attr("stroke", "black");
+
+    for (let td of get_tds(d)) {
+        td.style.backgroundColor = "#CCCCCC";
+    }
+
+
 }
 
 function on_mouseout_node(d) {
     if (DRAG_TARGET !== null) {
-      return;
+        return;
     }
 
-    G_NODE.selectAll("circle").filter(node => node.group === d.group)
-      .attr("stroke", "none");
+    G_NODE.selectAll("circle").filter(node => node.group === d.group && node !== d)
+        .attr("stroke", "none");
 
     color_grouped_rows(d, "");
+    //
+    // for (let td of get_tds(d)) {
+    //     td.style.backgroundColor = "";
+    // }
 }
 
 function on_click_node(d) {
@@ -194,7 +224,7 @@ function color_grouped_rows(node, color) {
     let grouped_nodes = get_grouped_nodes(node);
 
     for (let grouped_node of grouped_nodes) {
-        let row_elements = get_rows(grouped_node);
+        let row_elements = get_tds(grouped_node);
 
         for (let row_element of row_elements) {
             row_element.parentNode.style.backgroundColor = color;
@@ -202,7 +232,7 @@ function color_grouped_rows(node, color) {
     }
 }
 
-function get_rows(node) {
+function get_tds(node) {
     return document.getElementsByClassName(`${node.id}_index`);
 }
 
@@ -214,7 +244,7 @@ function select_group(node=null) {
     // for every node in graph
     NODE_DATA.forEach(other_node => {
         // find all dom elems in the index for node
-        let index_elems = get_rows(other_node);
+        let index_elems = get_tds(other_node);
 
         // if node is not grouped with selected node, make it invisible
         for (let index_elem of index_elems) {
@@ -366,7 +396,21 @@ function update_graph() {
 }
 
 function color_groups() {
-    G_NODE.selectAll("circle").style("fill", d => COLOR(+d.group));
+    let g_nodes = G_NODE.selectAll("circle")
+
+    g_nodes.style("fill", d => COLOR(+d.group));
+
+    // color right border of index
+    g_nodes.each(function(d) {
+        let color = COLOR(+d.group);
+
+        let tds = get_tds(d);
+        for (let td of tds) {
+            let siblings = td.parentNode.children;
+            let last_sibling = siblings[siblings.length - 1];
+            last_sibling.style.borderRight = `10px solid ${color}`;
+        }
+    })
 }
 
 function jiggle(alpha=0.3, duration=1000) {
