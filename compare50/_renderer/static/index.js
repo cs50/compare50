@@ -64,20 +64,20 @@ function init_graph() {
     set_color();
     color_groups();
 
-    // let choseX = d3.randomUniform(0, WIDTH);
-    // let choseY = d3.randomUniform(0, HEIGHT);
-    // let pos_map = []
-    // NODE_DATA.forEach(d => {
-    //     if (pos_map[d.id] === undefined) {
-    //         pos_map[d.id] = { x: choseX(), y: choseY()};
-    //     }
-    // });
-    // console.log(pos_map);
+    let choseX = d3.randomUniform(WIDTH / 4, 3 * WIDTH / 4);
+    let choseY = d3.randomUniform(HEIGHT / 4, 3 * HEIGHT / 4);
+    let pos_map = []
+    NODE_DATA.forEach(d => {
+        if (pos_map[d.group] === undefined) {
+            pos_map[d.group] = { x: choseX(), y: choseY()};
+        }
+    });
+    console.log(pos_map);
 
-    //SIMULATION.force("x", d3.forceX(d => pos_map[d.id].x).strength(0.2))
-              //.force("y", d3.forceY(d => pos_map[d.id].y).strength(0.2));
+    SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
+              .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
-    //setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
+    setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
 }
 
 function on_resize() {
@@ -433,4 +433,3 @@ document.addEventListener("DOMContentLoaded", event =>  {
 
     window.addEventListener("resize", on_resize);
 });
-
