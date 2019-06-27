@@ -12,10 +12,7 @@ function init_graph() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
     // If svg is clicked, unselect node
-    SVG.on("click", () => {
-        NODE_DATA.forEach(n => n.groupFocused = n.nodeFocused = false);
-        select_group();
-    });
+    SVG.on("click", () => select_group());
 
     // Slider
     let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => 11 - d.value)))
@@ -70,15 +67,12 @@ function init_graph() {
     let choseX = d3.randomUniform(WIDTH / 4, 3 * WIDTH / 4);
     let choseY = d3.randomUniform(HEIGHT / 4, 3 * HEIGHT / 4);
     let pos_map = []
-
     NODE_DATA.forEach(d => {
         if (pos_map[d.group] === undefined) {
-            pos_map[d.group] = { 
-                x: choseX(), 
-                y: choseY()
-            };
+            pos_map[d.group] = { x: choseX(), y: choseY()};
         }
     });
+    console.log(pos_map);
 
     SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
@@ -124,16 +118,7 @@ function get_real_width(elem) {
 function ticked(links, nodes) {
     nodes
         .attr("cx", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS, d.x)); })
-        .attr("cy", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS, d.y)); })
-        .attr("stroke-width", d => d.nodeFocused || d.groupFocused ? "5px" : null)
-        .attr("stroke", function(d) { 
-            if (d.nodeFocused)
-                return "black";
-            else if (d.groupFocused)
-                return d3.select(this).style("fill");
-            else
-                return "none";
-        });
+        .attr("cy", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS, d.y)); });
 
     links
         .attr("x1", function(d) { return d.source.x; })
@@ -184,16 +169,18 @@ function on_mouseover_node(d) {
 
     let g_nodes = G_NODE.selectAll("circle");
 
-    g_nodes.filter(node => node.group === d.group && node !== d).each(node => {
-        node.groupFocused = true;
-        node.nodeFocused = false;
-    });
-
+    g_nodes.filter(node => node.group === d.group && node !== d)
+      .attr("stroke", function(d) {
+        return d3.select(this).style("fill");
+      });
 
     color_grouped_rows(d, "#ECECEC");
 
     if (MOUSE_NODE !== null) {
-        g_nodes.filter(node => node === MOUSE_NODE).each(n => n.groupFocused = false);
+        g_nodes.filter(node => node === MOUSE_NODE)
+          .attr("stroke-width", "")
+          .attr("stroke", "");
+
         for (let td of get_tds(MOUSE_NODE)) {
             td.style.backgroundColor = "";
         }
@@ -201,11 +188,15 @@ function on_mouseover_node(d) {
 
     MOUSE_NODE = d;
 
-    g_nodes.each(node => node.nodeFocused = node === d);
+    g_nodes.filter(node => node === d)
+      .attr("stroke-width", "5px")
+      .attr("stroke", "black");
 
     for (let td of get_tds(d)) {
         td.style.backgroundColor = "#CCCCCC";
     }
+
+
 }
 
 function on_mouseout_node(d) {
@@ -213,7 +204,9 @@ function on_mouseout_node(d) {
         return;
     }
 
-    G_NODE.selectAll("circle").filter(node => node.group === d.group && node !== d).each(node => node.groupFocused = false);
+    G_NODE.selectAll("circle").filter(node => node.group === d.group && node !== d)
+        .attr("stroke", "none");
+
     color_grouped_rows(d, "");
     //
     // for (let td of get_tds(d)) {
@@ -419,7 +412,6 @@ function color_groups() {
         }
     })
 }
-
 
 function jiggle(alpha=0.3, duration=1000) {
     SIMULATION.alphaTarget(alpha).restart();
