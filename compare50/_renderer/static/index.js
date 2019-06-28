@@ -12,6 +12,7 @@ var LINK_DATA = null;
 
 var FOCUSED_NODE_ID = null;
 var FOCUSED_GROUP_ID = null;
+var SELECTED_GROUP = null;
 
 
 function focus(node={}) {
@@ -205,7 +206,9 @@ function on_mouseover_node(d) {
 
     focus(d);
 
-    color_grouped_rows(d, "#ECECEC");
+    if (SELECTED_GROUP === null) {
+        color_grouped_rows(d, "#ECECEC");
+    }
 
     if (MOUSE_NODE !== null) {
         for (let td of get_tds(MOUSE_NODE)) {
@@ -227,13 +230,13 @@ function on_mouseout_node(d) {
         return;
     }
 
-    focus({ group: null });
+    focus({ id: null, group: null });
 
     color_grouped_rows(d, "");
-    //
-    // for (let td of get_tds(d)) {
-    //     td.style.backgroundColor = "";
-    // }
+    
+     for (let td of get_tds(d)) {
+         td.style.backgroundColor = "";
+     }
 }
 
 function on_click_node(d) {
@@ -243,6 +246,7 @@ function on_click_node(d) {
 }
 
 function color_grouped_rows(node, color) {
+    console.log(node, color);
     let grouped_nodes = get_grouped_nodes(node);
 
     for (let grouped_node of grouped_nodes) {
@@ -259,6 +263,7 @@ function get_tds(node) {
 }
 
 function select_group(node=null) {
+    SELECTED_GROUP = node === null ? null : node.group;
     // find all nodes that are grouped with node
     let grouped_nodes = node === null ? NODE_DATA : get_grouped_nodes(node);
     grouped_nodes = new Set(grouped_nodes);
@@ -290,7 +295,12 @@ function select_group(node=null) {
     if (node !== null) {
         let node_color = COLOR(node.group);
         COLOR = (group_id) => group_id === node.group ? node_color : "grey";
+        color_grouped_rows(node, "");
+        for (let td of get_tds(node)) {
+            td.style.backgroundColor = "#CCCCCC";
+        }
     }
+
 
     color_groups();
 }
