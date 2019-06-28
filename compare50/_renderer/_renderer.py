@@ -108,8 +108,8 @@ def render(pass_to_results, dest):
     # Generate cluster data
     subs = set()
     graph_info = {"nodes": [], "links": []}
-    for result in ranking_results:
-        graph_info["links"].append({"source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 - 10 * result.score.score/max_score + 1})
+    for i, result in enumerate(ranking_results):
+        graph_info["links"].append({"index":i, "source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 * result.score.score/max_score})
         subs.add(result.sub_a)
         subs.add(result.sub_b)
 
@@ -117,17 +117,14 @@ def render(pass_to_results, dest):
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
 
     index_css = common_css + [read_file(STATIC / "index.css")]
-    index_js = [read_file(STATIC / "index.js")]
+    index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
     # Render index
     rendered_index = index_template.render(js=index_js,
                                            css=index_css,
                                            graph_info=graph_info,
-                                           scores=[result.score for result in ranking_results],
                                            dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_index)
-
-
 
     bar.update()
     return dest / "index.html"
