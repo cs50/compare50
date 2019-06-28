@@ -117,17 +117,14 @@ def render(pass_to_results, dest):
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
 
     index_css = common_css + [read_file(STATIC / "index.css")]
-    index_js = [read_file(STATIC / "index.js")]
+    index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
     # Render index
     rendered_index = index_template.render(js=index_js,
                                            css=index_css,
                                            graph_info=graph_info,
-                                           scores=[result.score for result in ranking_results],
                                            dest=dest.resolve())
     with open(dest / "index.html", "w") as f:
         f.write(rendered_index)
-
-
 
     bar.update()
     return dest / "index.html"
