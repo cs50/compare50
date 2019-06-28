@@ -325,7 +325,9 @@ function update() {
 function update_index() {
     let table_data = INDEX.selectAll("tr").data(LINK_DATA);
 
-    let new_trs = table_data.enter().append("tr");
+    let new_trs = table_data.enter()
+                            .append("tr")
+                            .on("click", d => window.open(`match_${d.index + 1}.html`));
     new_trs.append("th");
     for (let i = 0; i != 3; i++) {
         new_trs.append("td");
