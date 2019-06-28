@@ -374,7 +374,8 @@ function update_index() {
         })
         .on("mouseover", link => {
             GRAPH.nodes.forEach(node => {
-                node.is_group_focused = node.group === link.source.group;
+                node.is_group_focused = false;
+                node.is_group_selected = node.group === link.source.group;
                 node.is_node_focused = node.id === link.source.id || node.id === link.target.id;
                 update_graph();
             });
