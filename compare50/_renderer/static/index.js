@@ -241,7 +241,6 @@ function on_mouseout_node(d) {
 
 function on_click_node(d) {
     select_group(d);
-    color_grouped_rows(d, "#ECECEC");
     d3.event.stopPropagation();
 }
 
