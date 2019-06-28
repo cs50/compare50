@@ -559,7 +559,7 @@ function update_graph() {
             if (d.is_node_focused)
                 return "black";
             else if (d.is_group_focused)
-                return  d3.select(this).style("fill");
+                return d3.select(this).style("fill");
             else
                 return "none";
         })
@@ -583,7 +583,10 @@ function update_graph() {
 }
 
 function color_groups() {
-    G_NODE.selectAll("circle").style("fill", d => COLOR(+d.group));
+    let group_selected = undefined;
+    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+
+    G_NODE.selectAll("circle").style("fill", d => group_selected === undefined || group_selected === d.group ? COLOR(d.group) : "grey");
 }
 
 function jiggle(alpha=0.3, duration=300) {
