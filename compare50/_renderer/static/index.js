@@ -118,11 +118,11 @@ function init_graph() {
 }
 
 function init_index() {
-    TABLE = d3.select("div#index").append("table")
+    let table = d3.select("div#index").append("table")
         .attr("class", "table table-hover w-100")
         .attr("id", "results");
 
-    let thead_tr = TABLE.append("thead").append("tr");
+    let thead_tr = table.append("thead").append("tr");
     thead_tr.append("td")
         .attr("scope", "col")
         .text("#");
@@ -134,9 +134,9 @@ function init_index() {
         .attr("scope", "col")
         .text("Score");
 
-    let tbody = TABLE.append("tbody");
+    INDEX = table.append("tbody");
 
-    let trs = tbody.selectAll("tr").data(LINK_DATA).enter().append("tr");
+    let trs = INDEX.selectAll("tr").data(LINK_DATA).enter().append("tr");
 
     trs.append("th")
         .attr("scope", "row")
@@ -432,6 +432,19 @@ function cutoff(n) {
 
     update_graph();
     color_groups();
+}
+
+function update() {
+    update_index();
+    update_graph();
+}
+
+function update_index() {
+    update_selection = INDEX.selectAll("tr").data(LINK_DATA);
+    exit_selection = update_selection.exit();
+    enter_selection = update_selection.enter();
+
+    exit_selection.remove();
 }
 
 function update_graph() {
