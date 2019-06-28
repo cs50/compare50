@@ -7,8 +7,8 @@ var SLIDER = null;
 var G_NODE = null;
 var G_LINK = null;
 
-var NODE_DATA = null;
-var LINK_DATA = null;
+var NODE_DATA = GRAPH.nodes;
+var LINK_DATA = GRAPH.links;
 
 var FOCUSED_NODE_ID = null;
 var FOCUSED_GROUP_ID = null;
@@ -32,7 +32,7 @@ function focus(node={}) {
                 return "black";
             else if (d.group === FOCUSED_GROUP_ID)
                 return  d3.select(this).style("fill");
-            else 
+            else
                 return "none";
         });
 }
@@ -104,7 +104,7 @@ function init_graph() {
     let pos_map = []
     NODE_DATA.forEach(d => {
         if (pos_map[d.group] === undefined) {
-            pos_map[d.group] = { 
+            pos_map[d.group] = {
                 x: choseX(),
                 y: choseY()
             };
@@ -116,6 +116,42 @@ function init_graph() {
 
     setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
 }
+
+function init_index() {
+    TABLE = d3.select("div#index").append("table")
+        .attr("class", "table table-hover w-100")
+        .attr("id", "results");
+
+    let thead_tr = TABLE.append("thead").append("tr");
+    thead_tr.append("td")
+        .attr("scope", "col")
+        .text("#");
+    thead_tr.append("td")
+        .attr("scope", "col")
+        .attr("colspan", 2)
+        .text("Submissions");
+    thead_tr.append("td")
+        .attr("scope", "col")
+        .text("Score");
+
+    let tbody = TABLE.append("tbody");
+
+    let trs = tbody.selectAll("tr").data(LINK_DATA).enter().append("tr");
+
+    trs.append("th")
+        .attr("scope", "row")
+        .text((d, i) => i + 1);
+    trs.append("td")
+        .attr("class", d => `${d.source}_index`)
+        .text(d => d.source);
+    trs.append("td")
+        .attr("class", d => `${d.target}_index`)
+        .text(d => d.target);
+    trs.append("td")
+        .attr("class", "score")
+        .text(d => d.value);
+}
+
 
 function on_resize() {
   let cluster_div = document.getElementById("cluster");
@@ -233,7 +269,7 @@ function on_mouseout_node(d) {
     focus({ id: null, group: null });
 
     color_grouped_rows(d, "");
-    
+
      for (let td of get_tds(d)) {
          td.style.backgroundColor = "";
      }
@@ -463,6 +499,8 @@ function jiggle(alpha=0.3, duration=1000) {
 
 
 document.addEventListener("DOMContentLoaded", event => {
+    init_index();
+
     // Make table rows links
     document.querySelectorAll("#results tr").forEach(row => {
         if (!row.querySelectorAll("td").length) return;
