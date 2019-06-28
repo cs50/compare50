@@ -199,7 +199,7 @@ function ticked(links, nodes) {
 let DRAG_TARGET = null;
 
 function dragstarted(d) {
-    if (!d3.event.active) SIMULATION.alphaTarget(0.3).restart();
+    if (!d3.event.active) SIMULATION.alphaTarget(0.15).restart();
     d.fx = d.x;
     d.fy = d.y;
 
@@ -573,9 +573,14 @@ function update_graph() {
         .nodes(NODE_DATA)
         .on("tick", () => ticked(all_links, all_nodes));
 
+    // scale the distance (inverse of similarity) to 10 to 50
+    let min_score = Math.min.apply(null, GRAPH.links.map(link => link.value));
+    let max_score = 10;
+    let delta_score = max_score - min_score;
+
     SIMULATION.force("link")
         .links(LINK_DATA)
-        .distance(d => 11 - d.value);
+        .distance(d => 50 - (d.value - min_score) / delta_score * 40);
 
     if (COLOR !== null) {
         color_groups();
