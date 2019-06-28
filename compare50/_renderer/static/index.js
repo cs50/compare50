@@ -136,20 +136,7 @@ function init_index() {
 
     INDEX = table.append("tbody");
 
-    let trs = INDEX.selectAll("tr").data(LINK_DATA).enter().append("tr");
-
-    trs.append("th")
-        .attr("scope", "row")
-        .text((d, i) => i + 1);
-    trs.append("td")
-        .attr("class", d => `${d.source}_index`)
-        .text(d => d.source);
-    trs.append("td")
-        .attr("class", d => `${d.target}_index`)
-        .text(d => d.target);
-    trs.append("td")
-        .attr("class", "score")
-        .text(d => d.value);
+    update_index();
 }
 
 
@@ -440,11 +427,42 @@ function update() {
 }
 
 function update_index() {
-    update_selection = INDEX.selectAll("tr").data(LINK_DATA);
-    exit_selection = update_selection.exit();
-    enter_selection = update_selection.enter();
+    table_data = INDEX.selectAll("tr").data(LINK_DATA);
 
-    exit_selection.remove();
+    new_trs = table_data.enter().append("tr");
+    new_trs.append("th");
+    for (let i = 0; i != 3; i++) {
+        new_trs.append("td");
+    }
+
+    all_data = table_data.merge(new_trs)
+        .each(function (d) {
+            let tr = d3.select(this);
+            tr.select("th").attr("scope", "row").text(d => d.index);
+
+            // I HATE IT
+            let tds = tr.selectAll("td");
+            let source = d.source.id === undefined ? d.source : d.source.id;
+            let target = d.target.id === undefined ? d.target : d.target.id;
+            tds.filter((d,i) => i == 0)
+                .attr("class", d => `${source}_index`)
+                .text(d => source);
+            tds.filter((d,i) => i == 1)
+                .attr("class", d => `${target}_index`)
+                .text(d => target);
+            tds.filter((d, i) => i == 2)
+                .attr("class", "score")
+                .text(d => d.value.toFixed(1));
+        })
+        .style("background-color", link => {
+            if (link.source.is_group_focused && !link.source.is_group_selected) {
+                return "#ECECEC";
+            } else {
+                return "";
+            }
+        });
+
+    table_data.exit().remove();
 }
 
 function update_graph() {

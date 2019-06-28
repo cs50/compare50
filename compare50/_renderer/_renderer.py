@@ -108,8 +108,8 @@ def render(pass_to_results, dest):
     # Generate cluster data
     subs = set()
     graph_info = {"nodes": [], "links": []}
-    for result in ranking_results:
-        graph_info["links"].append({"source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 - 10 * result.score.score/max_score + 1})
+    for i, result in enumerate(ranking_results, 1):
+        graph_info["links"].append({"index":i, "source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 * result.score.score/max_score})
         subs.add(result.sub_a)
         subs.add(result.sub_b)
 
