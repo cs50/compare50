@@ -141,37 +141,39 @@ function init_index() {
         .text("Score");
 
     INDEX = table.append("tbody");
+
+    update_index();
 }
 
 
 function on_resize() {
-  let cluster_div = document.getElementById("cluster");
-  let header_size = document.querySelector("thead").clientHeight;
-  cluster_div.style.paddingTop = `${header_size}px`;
+    let cluster_div = document.getElementById("cluster");
+    let header_size = document.querySelector("thead").clientHeight;
+    cluster_div.style.paddingTop = `${header_size}px`;
 
-  WIDTH = get_real_width(document.getElementById("cluster"));
+    WIDTH = get_real_width(document.getElementById("cluster"));
 
-  SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-  d3.select("div#slider")
-    .attr("width", WIDTH)
+    SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+    d3.select("div#slider")
+      .attr("width", WIDTH)
+        .select("svg")
+          .attr("width", Math.floor(0.8 * WIDTH))
+
+    d3.select("div#slider")
+      .attr("width", WIDTH)
       .select("svg")
         .attr("width", Math.floor(0.8 * WIDTH))
+        .select("g")
+          .call(SLIDER);
 
-  d3.select("div#slider")
-    .attr("width", WIDTH)
-    .select("svg")
-      .attr("width", Math.floor(0.8 * WIDTH))
-      .select("g")
-        .call(SLIDER);
+    HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
+                                - document.getElementById("slider").clientHeight
+                                - header_size;
 
-  HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
-                              - document.getElementById("slider").clientHeight
-                              - header_size;
+    SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
-  SVG.attr("width", WIDTH).attr("height", HEIGHT);
-
-  SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
-  jiggle();
+    SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
+    jiggle();
 }
 
 function get_real_width(elem) {
@@ -447,6 +449,8 @@ function cutoff(n) {
 
     update();
 
+    jiggle(.1);
+
     //color_groups();
 }
 
@@ -470,7 +474,7 @@ function update_index() {
     let all_data = table_data.merge(new_trs)
         .each(function (d) {
             let tr = d3.select(this);
-            tr.select("th").attr("scope", "row").text(d => d.index);
+            tr.select("th").attr("scope", "row").text(d => d.index + 1);
 
             // I HATE IT
             let tds = tr.selectAll("td");
@@ -488,7 +492,8 @@ function update_index() {
                 .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
             tds.filter((d, i) => i == 2)
                 .attr("class", "score")
-                .text(d => d.value.toFixed(1));
+                .text(d => d.value.toFixed(1))
+                .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
         })
         .style("background-color", link => {
             if (link.source.is_group_focused && !link.source.is_group_selected) {
@@ -503,7 +508,22 @@ function update_index() {
             } else {
                 return "";
             }
-        });
+        })
+        .on("mouseover", link => {
+            GRAPH.nodes.forEach(node => {
+                node.is_group_focused = node.group === link.source.group;
+                node.is_node_focused = node.id === link.source.id || node.id === link.target.id;
+                node.reflect_focus_in_index = false;
+                update_graph();
+            });
+        })
+        .on("mouseout", link => {
+          GRAPH.nodes.forEach(node => {
+            node.is_group_focused = false;
+            node.is_node_focused = false;
+         })
+         update_graph();
+       });
 
     table_data.exit().remove();
 }
@@ -518,7 +538,9 @@ function update_graph() {
 
     let nodes = G_NODE.selectAll("circle").data(NODE_DATA);
 
-    nodes.enter().append("circle")
+    let new_nodes = nodes.enter().append("circle");
+
+    new_nodes
         .attr("r", RADIUS)
         .call(d3.drag()
           .on("start", dragstarted)
@@ -531,6 +553,17 @@ function update_graph() {
           .text(d => d.id);
 
     nodes.exit().remove();
+
+    nodes.merge(new_nodes)
+        .attr("stroke", function(d) {
+            if (d.is_node_focused)
+                return "black";
+            else if (d.is_group_focused)
+                return  d3.select(this).style("fill");
+            else
+                return "none";
+        })
+        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused ? "5px" : "");
 
     let all_links = G_LINK.selectAll("line");
     let all_nodes = G_NODE.selectAll("circle");
@@ -563,7 +596,6 @@ document.addEventListener("DOMContentLoaded", event => {
     window.addEventListener("resize", on_resize);
 
     init_index();
-    update_index();
     // // Make table rows links
     // document.querySelectorAll("#results tr").forEach(row => {
     //     if (!row.querySelectorAll("td").length) return;
@@ -585,6 +617,7 @@ document.addEventListener("DOMContentLoaded", event => {
     // });
 
     init_graph();
-    update_graph();
+
+    update();
     jiggle();
 });
