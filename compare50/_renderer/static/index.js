@@ -10,27 +10,35 @@ var G_LINK = null;
 var NODE_DATA = null;
 var LINK_DATA = null;
 
-var FOCUSED_NODE_ID = null;
-var FOCUSED_GROUP_ID = null;
+var FOCUSED_NODE_IDS = [];
+var FOCUSED_GROUP_IDS = [];
 var HIGHLIGHTED_GROUP = null;
 
 
-function focus(node={}) {
-    if (node.id !== undefined) {
-        FOCUSED_NODE_ID = node.id
+function focus() {
+    let given_node_ids = [];
+    let given_group_ids = [];
+
+    for (let node of arguments) {
+        if (node.id !== undefined)
+            given_node_ids.push(node.id);
+        if (node.group !== undefined)
+            given_group_ids.push(node.group);
     }
 
-    if (node.group !== undefined) {
-        FOCUSED_GROUP_ID = node.group;
-    }
+    if (given_node_ids.length) 
+        FOCUSED_NODE_IDS = given_node_ids;
+
+    if (given_group_ids.length) 
+        FOCUSED_GROUP_IDS = given_group_ids; 
 
     G_NODE
       .selectAll("circle")
-      .attr("stroke-width", d => d.id === FOCUSED_NODE_ID || d.group === FOCUSED_GROUP_ID ? "5px" : "")
+      .attr("stroke-width", d => FOCUSED_NODE_IDS.includes(d.id) || FOCUSED_GROUP_IDS.includes(d.group) ? "5px" : "")
       .attr("stroke", function(d) {
-            if (d.id === FOCUSED_NODE_ID)
+            if (FOCUSED_NODE_IDS.includes(d.id))
                 return "black";
-            else if (d.group === FOCUSED_GROUP_ID)
+            else if (FOCUSED_GROUP_IDS.includes(d.group))
                 return  d3.select(this).style("fill");
             else 
                 return "none";
@@ -311,7 +319,6 @@ function highlight_group(node=null, grouped_nodes=null) {
         HIGHLIGHTED_GROUP = null;
     }
 
-
     color_groups();
 }
 
@@ -474,7 +481,7 @@ document.addEventListener("DOMContentLoaded", event => {
         row.addEventListener("mouseover", (event) => {
             let [node_a, node_b] = Array.from(row.querySelectorAll("td")).map(td => NODE_DATA.find(n => n.id == td.textContent));
             highlight_group(node_a);
-            focus(node_a);
+            focus(node_a, node_b);
         });
 
         row.addEventListener("mouseout", (event) => {
