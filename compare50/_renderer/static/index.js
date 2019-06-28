@@ -16,28 +16,6 @@ var HIGHLIGHTED_GROUP = null;
 
 var COLOR = null;
 
-function focus(node={}) {
-    if (node.id !== undefined) {
-        FOCUSED_NODE_ID = node.id
-    }
-
-    if (node.group !== undefined) {
-        FOCUSED_GROUP_ID = node.group;
-    }
-
-    G_NODE
-      .selectAll("circle")
-      .attr("stroke-width", d => d.id === FOCUSED_NODE_ID || d.group === FOCUSED_GROUP_ID ? "5px" : "")
-      .attr("stroke", function(d) {
-            if (d.id === FOCUSED_NODE_ID)
-                return "black";
-            else if (d.group === FOCUSED_GROUP_ID)
-                return  d3.select(this).style("fill");
-            else
-                return "none";
-        });
-}
-
 function init_graph() {
     NODE_DATA = GRAPH.nodes;
     LINK_DATA = GRAPH.links;
@@ -46,11 +24,9 @@ function init_graph() {
 
     // If svg is clicked, unselect node
     SVG.on("click", () => {
-        GRAPH.nodes.forEach(node => node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
-
+        GRAPH.nodes.forEach(node => 
+            node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
         update();
-        //  focus({ id: null, group: null });
-        // select_node();
     });
 
     // Slider
@@ -176,10 +152,12 @@ function on_resize() {
     jiggle();
 }
 
+
 function get_real_width(elem) {
     let style = getComputedStyle(elem);
     return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
 }
+
 
 function ticked(links, nodes) {
     nodes
@@ -192,8 +170,6 @@ function ticked(links, nodes) {
         .attr("x2", function(d) { return d.target.x; })
         .attr("y2", function(d) { return d.target.y; });
 }
-
-
 
 
 let DRAG_TARGET = null;
@@ -226,14 +202,10 @@ function get_grouped_nodes(node) {
     return NODE_DATA.filter(other_node => other_node.group === node.group);
 }
 
-// var MOUSE_NODE = null;
-
 function on_mouseover_node(d) {
     if (DRAG_TARGET !== null) {
       return;
     }
-
-    // focus(d);
 
     GRAPH.nodes.forEach(node => {
         node.is_group_focused = node.group === d.group;
@@ -241,24 +213,6 @@ function on_mouseover_node(d) {
     });
 
     update();
-
-    // if (HIGHLIGHTED_GROUP === null) {
-    //     color_grouped_rows(d, "#ECECEC");
-    // }
-    //
-    // if (MOUSE_NODE !== null) {
-    //     for (let td of get_tds(MOUSE_NODE)) {
-    //         td.style.backgroundColor = "";
-    //     }
-    // }
-    //
-    // MOUSE_NODE = d;
-    //
-    // for (let td of get_tds(d)) {
-    //     td.style.backgroundColor = "#CCCCCC";
-    // }
-
-
 }
 
 function on_mouseout_node(d) {
@@ -266,19 +220,11 @@ function on_mouseout_node(d) {
         return;
     }
 
-    // focus({ id: null, group: null });
-
     GRAPH.nodes.forEach(node => {
         node.is_group_focused = node.is_node_focused = false;
     });
 
     update();
-
-    // color_grouped_rows(d, "");
-    //
-    //  for (let td of get_tds(d)) {
-    //      td.style.backgroundColor = "";
-    //  }
 }
 
 function on_click_node(d) {
@@ -290,80 +236,9 @@ function on_click_node(d) {
 
     update();
 
-//    select_node(d);
     d3.event.stopPropagation();
 }
 
-// function color_grouped_rows(node, color) {
-//     let grouped_nodes = get_grouped_nodes(node);
-//
-//     for (let grouped_node of grouped_nodes) {
-//         let row_elements = get_tds(grouped_node);
-//
-//         for (let row_element of row_elements) {
-//             row_element.parentNode.style.backgroundColor = color;
-//         }
-//     }
-// }
-
-// function get_tds(node) {
-//     return document.getElementsByClassName(`${node.id}_index`);
-// }
-
-
-// function select_node(node=null) {
-//     // find all nodes that are grouped with node
-//     let grouped_nodes = node === null ? NODE_DATA : get_grouped_nodes(node);
-//     grouped_nodes = new Set(grouped_nodes);
-//     // for every node in graph
-//     NODE_DATA.forEach(other_node => {
-//         // find all dom elems in the index for node
-//         let index_elems = get_tds(other_node);
-//
-//         // if node is not grouped with selected node, make it invisible
-//         for (let index_elem of index_elems) {
-//             if (grouped_nodes.has(other_node)) {
-//                 index_elem.parentNode.style.display = "";
-//             } else {
-//                 index_elem.parentNode.style.display = "none";
-//             }
-//
-//             // make the clicked node bold in the index
-//             if (node !== null && other_node.id === node.id) {
-//                 index_elem.style.fontFamily = "Roboto-Bold";
-//             } else {
-//                 index_elem.style.removeProperty("font-family");
-//             }
-//         }
-//     });
-//
-//     highlight_group(node, grouped_nodes);
-//
-//     if (node !== null) {
-//         color_grouped_rows(node, "");
-//         for (let td of get_tds(node)) {
-//             td.style.backgroundColor = "#CCCCCC";
-//         }
-//     }
-// }
-
-// function highlight_group(node=null, grouped_nodes=null) {
-//     // grouped_nodes can be passed in as a performance optimization if already computed (see select_node)
-//     grouped_nodes = grouped_nodes === null ? new Set(node === null ? NODE_DATA : get_grouped_nodes(node)) : grouped_nodes;
-//
-//     set_color();
-//
-//     if (node !== null) {
-//         HIGHLIGHTED_GROUP = node.group;
-//         let node_color = COLOR(node.group);
-//         COLOR = (group_id) => group_id === node.group ? node_color : "grey";
-//     } else {
-//         HIGHLIGHTED_GROUP = null;
-//     }
-//
-//
-//     color_groups();
-// }
 
 function set_color(f=null) {
     if (f === null) {
@@ -437,21 +312,9 @@ function cutoff(n) {
     let node_ids = new Set(LINK_DATA.map(d => d.source.id).concat(LINK_DATA.map(d => d.target.id)));
     NODE_DATA = GRAPH.nodes.filter(d => node_ids.has(d.id));
 
-    // let rows = document.querySelector("#results tbody").children;
-    // for (let row of rows) {
-    //     let score = parseFloat(row.querySelector(".score").textContent);
-    //     if (score < n) {
-    //         row.style.display = "none";
-    //     } else {
-    //         row.style.display = "";
-    //     }
-    // }
-
     update();
 
     jiggle(.1);
-
-    //color_groups();
 }
 
 function update() {
@@ -513,7 +376,6 @@ function update_index() {
             GRAPH.nodes.forEach(node => {
                 node.is_group_focused = node.group === link.source.group;
                 node.is_node_focused = node.id === link.source.id || node.id === link.target.id;
-                node.reflect_focus_in_index = false;
                 update_graph();
             });
         })
@@ -602,30 +464,8 @@ function jiggle(alpha=0.3, duration=300) {
 
 document.addEventListener("DOMContentLoaded", event => {
     window.addEventListener("resize", on_resize);
-
     init_index();
-    // // Make table rows links
-    // document.querySelectorAll("#results tr").forEach(row => {
-    //     if (!row.querySelectorAll("td").length) return;
-    //
-    //     // row.addEventListener("click", (event) => {
-    //     //     window.open(`match_${row.cells[0].textContent}.html`, "_blank");
-    //     // });
-    //
-    //     // row.addEventListener("mouseover", (event) => {
-    //     //     // let [node_a, node_b] = Array.from(row.querySelectorAll("td")).map(td => NODE_DATA.find(n => n.id == td.textContent));
-    //     //     // highlight_group(node_a);
-    //     //     //focus(node_a);
-    //     // });
-    //     //
-    //     // row.addEventListener("mouseout", (event) => {
-    //     //     //focus({ id: null, group: null });
-    //     //     // highlight_group(null);
-    //     // });
-    // });
-
     init_graph();
-
     update();
     jiggle();
 });
