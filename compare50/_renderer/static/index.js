@@ -12,7 +12,7 @@ var LINK_DATA = null;
 
 var FOCUSED_NODE_ID = null;
 var FOCUSED_GROUP_ID = null;
-var SELECTED_GROUP = null;
+var HIGHLIGHTED_GROUP = null;
 
 
 function focus(node={}) {
@@ -46,7 +46,7 @@ function init_graph() {
     // If svg is clicked, unselect node
     SVG.on("click", () => {
         focus({ id: null, group: null });
-        select_group();
+        select_node();
     });
 
     // Slider
@@ -206,7 +206,7 @@ function on_mouseover_node(d) {
 
     focus(d);
 
-    if (SELECTED_GROUP === null) {
+    if (HIGHLIGHTED_GROUP === null) {
         color_grouped_rows(d, "#ECECEC");
     }
 
@@ -240,7 +240,7 @@ function on_mouseout_node(d) {
 }
 
 function on_click_node(d) {
-    select_group(d);
+    select_node(d);
     d3.event.stopPropagation();
 }
 
@@ -260,12 +260,11 @@ function get_tds(node) {
     return document.getElementsByClassName(`${node.id}_index`);
 }
 
-function select_group(node=null) {
-    SELECTED_GROUP = node === null ? null : node.group;
+
+function select_node(node=null) {
     // find all nodes that are grouped with node
     let grouped_nodes = node === null ? NODE_DATA : get_grouped_nodes(node);
     grouped_nodes = new Set(grouped_nodes);
-
     // for every node in graph
     NODE_DATA.forEach(other_node => {
         // find all dom elems in the index for node
@@ -288,15 +287,28 @@ function select_group(node=null) {
         }
     });
 
-    set_color();
+    highlight_group(node, grouped_nodes);
 
     if (node !== null) {
-        let node_color = COLOR(node.group);
-        COLOR = (group_id) => group_id === node.group ? node_color : "grey";
         color_grouped_rows(node, "");
         for (let td of get_tds(node)) {
             td.style.backgroundColor = "#CCCCCC";
         }
+    }
+}
+
+function highlight_group(node=null, grouped_nodes=null) {
+    // grouped_nodes can be passed in as a performance optimization if already computed (see select_node)
+    grouped_nodes = grouped_nodes === null ? new Set(node === null ? NODE_DATA : get_grouped_nodes(node)) : grouped_nodes;
+
+    set_color();
+
+    if (node !== null) {
+        HIGHLIGHTED_GROUP = node.group;
+        let node_color = COLOR(node.group);
+        COLOR = (group_id) => group_id === node.group ? node_color : "grey";
+    } else {
+        HIGHLIGHTED_GROUP = null;
     }
 
 
@@ -374,7 +386,7 @@ function cutoff(n) {
 
     let rows = document.querySelector("#results tbody").children;
     for (let row of rows) {
-        let score = parseFloat(row.querySelector(".score").innerHTML);
+        let score = parseFloat(row.querySelector(".score").textContent);
         if (score < n) {
             row.style.display = "none";
         } else {
@@ -457,6 +469,17 @@ document.addEventListener("DOMContentLoaded", event => {
 
         row.addEventListener("click", (event) => {
             window.open(`match_${row.cells[0].textContent}.html`, "_blank");
+        });
+
+        row.addEventListener("mouseover", (event) => {
+            let [node_a, node_b] = Array.from(row.querySelectorAll("td")).map(td => NODE_DATA.find(n => n.id == td.textContent));
+            highlight_group(node_a);
+            focus(node_a);
+        });
+
+        row.addEventListener("mouseout", (event) => {
+            focus({ id: null, group: null });
+            highlight_group(null);
         });
     });
 
