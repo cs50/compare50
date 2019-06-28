@@ -382,7 +382,9 @@ function update_index() {
         })
         .on("mouseout", link => {
           GRAPH.nodes.forEach(node => {
+            node.is_group_selected = false;
             node.is_group_focused = false;
+            node.is_node_selected = false;
             node.is_node_focused = false;
          })
          update_graph();
