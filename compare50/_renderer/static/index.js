@@ -246,7 +246,6 @@ function on_click_node(d) {
 }
 
 function color_grouped_rows(node, color) {
-    console.log(node, color);
     let grouped_nodes = get_grouped_nodes(node);
 
     for (let grouped_node of grouped_nodes) {
