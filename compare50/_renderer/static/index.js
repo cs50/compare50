@@ -413,14 +413,14 @@ function update_graph() {
 
     nodes.merge(new_nodes)
         .attr("stroke", function(d) {
-            if (d.is_node_focused || d.is_node_in_splotlight)
+            if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected)
                 return "black";
             else if (d.is_group_focused)
                 return d3.select(this).style("fill");
             else
                 return "none";
         })
-        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "")
+        .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "")
         .style("fill", d => {
             if (d.is_node_in_background) {
                 return "grey";
