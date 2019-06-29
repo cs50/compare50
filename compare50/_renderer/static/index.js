@@ -192,10 +192,6 @@ function dragended(d) {
     on_mouseout_node(drag_target);
 }
 
-function get_grouped_nodes(node) {
-    return NODE_DATA.filter(other_node => other_node.group === node.group);
-}
-
 function on_mouseover_node(d) {
     if (DRAG_TARGET !== null) {
       return;
