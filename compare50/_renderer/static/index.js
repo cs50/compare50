@@ -24,7 +24,7 @@ function init_graph() {
 
     // If svg is clicked, unselect node
     SVG.on("click", () => {
-        GRAPH.nodes.forEach(node => 
+        GRAPH.nodes.forEach(node =>
             node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
         update();
     });
@@ -376,20 +376,17 @@ function update_index() {
         })
         .on("mouseover", link => {
             GRAPH.nodes.forEach(node => {
-                node.is_group_focused = false;
-                node.is_group_selected = node.group === link.source.group;
-                node.is_node_focused = node.id === link.source.id || node.id === link.target.id;
-                update_graph();
+                node.is_node_in_splotlight = node.id === link.source.id || node.id === link.target.id;
+                node.is_node_in_background = node.group !== link.source.group;
             });
+            update_graph();
         })
         .on("mouseout", link => {
-          GRAPH.nodes.forEach(node => {
-            node.is_group_selected = false;
-            node.is_group_focused = false;
-            node.is_node_selected = false;
-            node.is_node_focused = false;
-         })
-         update_graph();
+            GRAPH.nodes.forEach(node => {
+                node.is_node_in_splotlight = false;
+                node.is_node_in_background = false;
+            })
+            update_graph();
        });
 
     table_data.exit().remove();
@@ -423,14 +420,14 @@ function update_graph() {
 
     nodes.merge(new_nodes)
         .attr("stroke", function(d) {
-            if (d.is_node_focused)
+            if (d.is_node_focused || d.is_node_in_splotlight)
                 return "black";
             else if (d.is_group_focused)
                 return d3.select(this).style("fill");
             else
                 return "none";
         })
-        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused ? "5px" : "");
+        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "");
 
     let all_links = G_LINK.selectAll("line");
     let all_nodes = G_NODE.selectAll("circle");
@@ -458,7 +455,15 @@ function color_groups() {
     let group_selected = undefined;
     GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
-    G_NODE.selectAll("circle").style("fill", d => group_selected === undefined || group_selected === d.group ? COLOR(d.group) : "grey");
+    G_NODE.selectAll("circle").style("fill", d => {
+        if (d.is_node_in_background) {
+            return "grey";
+        }
+        if (group_selected === undefined || group_selected === d.group) {
+            return COLOR(d.group)
+        }
+        return "grey";
+    });
 }
 
 function jiggle(alpha=0.3, duration=300) {
