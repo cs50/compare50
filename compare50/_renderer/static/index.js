@@ -10,10 +10,6 @@ var G_LINK = null;
 var NODE_DATA = GRAPH.nodes;
 var LINK_DATA = GRAPH.links;
 
-var FOCUSED_NODE_IDS = [];
-var FOCUSED_GROUP_IDS = [];
-var HIGHLIGHTED_GROUP = null;
-
 var COLOR = null;
 
 function init_graph() {
@@ -345,12 +341,12 @@ function update_index() {
             let tds = tr.selectAll("td");
             let source = d.source.id === undefined ? d.source : d.source.id;
             let target = d.target.id === undefined ? d.target : d.target.id;
-            tds.filter((d,i) => i == 0)
+            tds.filter((d, i) => i == 0)
                 .attr("class", d => `${source}_index`)
                 .text(d => source)
                 .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
                 .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
-            tds.filter((d,i) => i == 1)
+            tds.filter((d, i) => i == 1)
                 .attr("class", d => `${target}_index`)
                 .text(d => target)
                 .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
