@@ -13,9 +13,6 @@ var LINK_DATA = GRAPH.links;
 var COLOR = null;
 
 function init_graph() {
-    NODE_DATA = GRAPH.nodes;
-    LINK_DATA = GRAPH.links;
-
     SVG = d3.select("div#cluster_graph").append("svg");
 
     // If svg is clicked, unselect node
@@ -70,8 +67,9 @@ function init_graph() {
     // add data to graph
     update_graph();
 
-    // Don't move this up, this needs to be after simulation.force!!!
-    set_groups();
+    // assign groups to nodes
+    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
+    GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
 
     set_color();
 
@@ -245,62 +243,62 @@ function set_color(f=null) {
     }
 }
 
-function set_groups() {
+function get_group_map(links) {
     // create a map from node_id to node
-    let node_map = {};
-    NODE_DATA.forEach(d => {
-        d.group = null;
-        node_map[d.id] = d;
+    let group_map = {};
+    links.forEach(d => {
+        group_map[d.source] = null;
+        group_map[d.target] = null;
     });
 
     // create a map from node.id to directly connected node.ids
     let link_map = {};
-    LINK_DATA.forEach(d => {
-        if (d.source.id in link_map) {
-            link_map[d.source.id].push(d.target.id);
+    links.forEach(d => {
+        if (d.source in link_map) {
+            link_map[d.source].push(d.target);
         } else {
-            link_map[d.source.id] = [d.target.id];
+            link_map[d.source] = [d.target];
         }
 
-        if (d.target.id in link_map) {
-            link_map[d.target.id].push(d.source.id);
+        if (d.target in link_map) {
+            link_map[d.target].push(d.source);
         } else {
-            link_map[d.target.id] = [d.source.id];
+            link_map[d.target] = [d.source];
         }
     })
 
     let group_id = 0;
     let visited = new Set();
-    let unseen = new Set(Object.keys(node_map));
+    let unseen = new Set(Object.keys(group_map));
 
     // visit all nodes
     while (unseen.size > 0) {
         // start with an unseen node
-        let node_id = unseen.values().next().value;
-        unseen.delete(node_id);
+        let node = unseen.values().next().value;
+        unseen.delete(node);
 
         // DFS for all reachable nodes, start with all directly reachable
-        let stack = [node_id];
+        let stack = [node];
         while (stack.length > 0) {
             // take top node on stack
-            let cur_node_id = stack.pop();
+            let cur_node = stack.pop();
 
             // visit it, give it a group
-            visited.add(cur_node_id);
-            node_map[cur_node_id].group = group_id;
+            visited.add(cur_node);
+            group_map[cur_node] = group_id;
 
             // add all directly reachable (and unvisited nodes) to stack
-            let directly_reachable = link_map[cur_node_id].filter(id => unseen.has(id));
+            let directly_reachable = link_map[cur_node].filter(n => unseen.has(n));
             stack = stack.concat(directly_reachable);
 
             // remove all directly reachable elements from unseen
-            directly_reachable.forEach(id => unseen.delete(id));
+            directly_reachable.forEach(n => unseen.delete(n));
         }
 
         group_id++;
     }
 
-    NODE_DATA.forEach(d => d.group = node_map[d.id].group);
+    return group_map;
 }
 
 function cutoff(n) {
