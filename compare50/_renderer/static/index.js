@@ -64,16 +64,16 @@ function init_graph() {
     // scale graph and slider
     on_resize();
 
-    // add data to graph
-    update_graph();
-
     // assign groups to nodes
-    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
+    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source, target:d.target})));
     GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
 
-    set_color();
+    // set COLOR (function from group => color)
+    let n_groups = Math.max.apply(0, GRAPH.nodes.map(node => node.group));
+    COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
 
-    color_groups();
+    // add data to graph
+    update_graph();
 
     let choseX = d3.randomUniform(WIDTH / 4, 3 * WIDTH / 4);
     let choseY = d3.randomUniform(HEIGHT / 4, 3 * HEIGHT / 4);
@@ -92,6 +92,7 @@ function init_graph() {
 
     setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
 }
+
 
 function init_index() {
     let table = d3.select("div#index").append("table")
@@ -176,10 +177,12 @@ function dragstarted(d) {
     DRAG_TARGET = d;
 }
 
+
 function dragged(d) {
     d.fx = d3.event.x;
     d.fy = d3.event.y;
 }
+
 
 function dragended(d) {
     if (!d3.event.active) SIMULATION.alphaTarget(0);
@@ -191,6 +194,7 @@ function dragended(d) {
 
     on_mouseout_node(drag_target);
 }
+
 
 function on_mouseover_node(d) {
     if (DRAG_TARGET !== null) {
@@ -205,6 +209,7 @@ function on_mouseover_node(d) {
     update();
 }
 
+
 function on_mouseout_node(d) {
     if (DRAG_TARGET !== null) {
         return;
@@ -217,8 +222,8 @@ function on_mouseout_node(d) {
     update();
 }
 
-function on_click_node(d) {
 
+function on_click_node(d) {
     GRAPH.nodes.forEach(node => {
         node.is_node_selected = node.is_node_focused = node.id === d.id;
         node.is_group_selected = node.is_group_focused = node.group === d.group;
@@ -229,15 +234,6 @@ function on_click_node(d) {
     d3.event.stopPropagation();
 }
 
-
-function set_color(f=null) {
-    if (f === null) {
-        let n_groups = Math.max.apply(0, NODE_DATA.map(node => +node.group));
-        COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
-    } else {
-        COLOR = f;
-    }
-}
 
 function get_group_map(links) {
     // create a map from node_id to node
@@ -297,6 +293,7 @@ function get_group_map(links) {
     return group_map;
 }
 
+
 function cutoff(n) {
     LINK_DATA = GRAPH.links.filter(d => (d.value) >= n);
     let node_ids = new Set(LINK_DATA.map(d => d.source.id).concat(LINK_DATA.map(d => d.target.id)));
@@ -307,10 +304,12 @@ function cutoff(n) {
     jiggle(.1);
 }
 
+
 function update() {
     update_index();
     update_graph();
 }
+
 
 function update_index() {
     let table_data = INDEX.selectAll("tr").data(LINK_DATA);
@@ -382,6 +381,7 @@ function update_index() {
     table_data.exit().remove();
 }
 
+
 function update_graph() {
     let links = G_LINK.selectAll("line").data(LINK_DATA);
 
@@ -408,6 +408,9 @@ function update_graph() {
 
     nodes.exit().remove();
 
+    let group_selected = undefined;
+    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+
     nodes.merge(new_nodes)
         .attr("stroke", function(d) {
             if (d.is_node_focused || d.is_node_in_splotlight)
@@ -417,7 +420,16 @@ function update_graph() {
             else
                 return "none";
         })
-        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "");
+        .attr("stroke-width", d => d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "")
+        .style("fill", d => {
+            if (d.is_node_in_background) {
+                return "grey";
+            }
+            if (group_selected === undefined || group_selected === d.group) {
+                return COLOR(d.group)
+            }
+            return "grey";
+        });
 
     let all_links = G_LINK.selectAll("line");
     let all_nodes = G_NODE.selectAll("circle");
@@ -435,26 +447,8 @@ function update_graph() {
     SIMULATION.force("link")
         .links(LINK_DATA)
         .distance(d => 50 - (d.value - min_score) / delta_score * 40);
-
-    if (COLOR !== null) {
-        color_groups();
-    }
 }
 
-function color_groups() {
-    let group_selected = undefined;
-    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
-
-    G_NODE.selectAll("circle").style("fill", d => {
-        if (d.is_node_in_background) {
-            return "grey";
-        }
-        if (group_selected === undefined || group_selected === d.group) {
-            return COLOR(d.group)
-        }
-        return "grey";
-    });
-}
 
 function jiggle(alpha=0.3, duration=300) {
     SIMULATION.alphaTarget(alpha).restart();
