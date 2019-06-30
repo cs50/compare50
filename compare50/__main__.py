@@ -58,7 +58,7 @@ class SubmissionFactory:
         pattern = lib50.config.TaggedValue(pattern, "exclude")
         self.patterns.append(pattern)
 
-    def _get(self, path, preprocessor):
+    def _get(self, path, preprocessor, is_archive=False):
         path = pathlib.Path(path)
 
         if path.is_file():
@@ -83,9 +83,9 @@ class SubmissionFactory:
             raise _api.Error(f"Empty submission: {path}")
 
         decodable_files = sorted(decodable_files)
-        return _data.Submission(path, decodable_files, preprocessor=preprocessor)
+        return _data.Submission(path, decodable_files, preprocessor=preprocessor, is_archive=is_archive)
 
-    def get_all(self, paths, preprocessor):
+    def get_all(self, paths, preprocessor, is_archive=False):
         """
         For every path, and every preprocessor, generate a Submission containing that path/preprocessor.
         Returns a list of lists of Submissions.
@@ -93,7 +93,7 @@ class SubmissionFactory:
         subs = set()
         for sub_path in paths:
             try:
-                subs.add(self._get(sub_path, preprocessor))
+                subs.add(self._get(sub_path, preprocessor, is_archive))
             except _api.Error:
                 pass
             else:
@@ -316,7 +316,7 @@ def main():
         with _api.progress_bar("Preparing", total=total, disable=args.debug) as bar:
             # Collect all submissions, archive submissions and distro files
             subs = submission_factory.get_all(args.submissions, preprocessor)
-            archive_subs = submission_factory.get_all(args.archive, preprocessor)
+            archive_subs = submission_factory.get_all(args.archive, preprocessor, is_archive=True)
             ignored_subs = submission_factory.get_all(args.distro, preprocessor)
             ignored_files = {f for sub in ignored_subs for f in sub.files}
 

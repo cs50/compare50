@@ -117,6 +117,7 @@ class Submission:
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
+    is_archive = attr.ib(default=False, cmp=False)
     id = attr.ib(init=False)
 
     def __attrs_post_init__(self):

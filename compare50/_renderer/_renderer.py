@@ -107,7 +107,7 @@ def render(pass_to_results, dest):
 
     # Generate cluster data
     subs = set()
-    graph_info = {"nodes": [], "links": []}
+    graph_info = {"nodes": [], "links": [], "data": {}}
     for i, result in enumerate(ranking_results):
         graph_info["links"].append({"index":i, "source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 * result.score.score/max_score})
         subs.add(result.sub_a)
@@ -115,6 +115,7 @@ def render(pass_to_results, dest):
 
     for sub in subs:
         graph_info["nodes"].append({"id": str(sub.path), "group": 0})
+        graph_info["data"][str(sub.path)] = {"is_archive": sub.is_archive}
 
     index_css = common_css + [read_file(STATIC / "index.css")]
     index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]

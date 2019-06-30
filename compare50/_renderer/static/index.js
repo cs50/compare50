@@ -334,14 +334,15 @@ function update_index() {
             let tds = tr.selectAll("td");
             let source = d.source.id === undefined ? d.source : d.source.id;
             let target = d.target.id === undefined ? d.target : d.target.id;
+
             tds.filter((d, i) => i == 0)
                 .attr("class", d => `${source}_index`)
-                .text(d => source)
+                .html(d => GRAPH.data[source].is_archive ? `ARCHIVE ${source}` : source)
                 .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
                 .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
             tds.filter((d, i) => i == 1)
                 .attr("class", d => `${target}_index`)
-                .text(d => target)
+                .html(d => GRAPH.data[target].is_archive ? `ARCHIVE ${target}` : target)
                 .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
                 .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
             tds.filter((d, i) => i == 2)
