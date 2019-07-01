@@ -93,6 +93,8 @@ function init_graph() {
 
     G_NODE = SVG.append("g").attr("class", "nodes");
 
+
+
     // scale graph and slider
     on_resize();
 
@@ -115,7 +117,6 @@ function init_graph() {
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
     setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
-    cutoff(0);
 }
 
 
@@ -485,5 +486,6 @@ document.addEventListener("DOMContentLoaded", event => {
     init_data();
     init_index();
     init_graph();
+    cutoff(0);
     jiggle();
 });
