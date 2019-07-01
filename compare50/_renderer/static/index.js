@@ -334,49 +334,26 @@ function update() {
 function update_index() {
     let table_data = INDEX.selectAll("tr").data(LINK_DATA, d => d.index);
 
-    let new_trs = table_data.enter()
-                            .append("tr")
-                            .on("click", d => window.open(`match_${d.index + 1}.html`));
+    let new_trs = table_data.enter().append("tr");
 
     new_trs.append("th")
         .attr("scope", "row")
         .text(d => d.index + 1);
 
-    new_trs.append("td")
-        .attr("class", d => `${d.source.id}_index`)
-        .html(d => GRAPH.data[d.source.id].is_archive ? `${ARCHIVE_IMG} ${d.source.id}` : d.source.id)
-        .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
-        .style("font-weight", d => d.source.is_node_selected ? "bold" : "");
-
-    new_trs.append("td")
-        .attr("class", d => `${d.target.id}_index`)
-        .html(d => GRAPH.data[d.target.id].is_archive ? `${ARCHIVE_IMG} ${d.target.id}` : d.target.id)
-        .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
-        .style("font-weight", d => d.target.is_node_selected ? "bold" : "");
+    for (let field of ["source", "target"]) {
+        new_trs.append("td")
+            .attr("class", "sub_name")
+            .datum(d => d[field])
+            .html(d => GRAPH.data[d.id].is_archive ? `${ARCHIVE_IMG} ${d.id}` : d.id);
+    }
 
     new_trs.append("td")
         .attr("class", "score")
         .text(d => d.value.toFixed(1))
         .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
 
-    let group_selected = undefined;
-    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
-    let all_data = new_trs
-        .style("background-color", link => {
-            if (link.source.is_group_focused && !link.source.is_group_selected) {
-                return "#ECECEC";
-            } else {
-                return "";
-            }
-        })
-        .style("display", link => {
-            if (group_selected !== undefined && group_selected !== link.source.group) {
-                return "none";
-            } else {
-                return "";
-            }
-        })
+    new_trs
         .on("mouseover", link => {
             GRAPH.nodes.forEach(node => {
                 node.is_node_in_splotlight = node.id === link.source.id || node.id === link.target.id;
@@ -390,7 +367,18 @@ function update_index() {
                 node.is_node_in_background = false;
             })
             update_graph();
-       });
+       }) 
+       .on("click", d => window.open(`match_${d.index + 1}.html`));
+
+    let group_selected = undefined;
+    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+
+    table_data.merge(new_trs)
+              .style("background-color", link => link.source.is_group_focused && !link.source.is_group_selected ? "#ECECEC" : "")
+              .style("display", link => group_selected !== undefined && group_selected !== link.source.group ? "none" : "")
+              .selectAll(".sub_name")
+                .style("background-color", d => d.is_node_focused ? "#CCCCCC" : "")
+                .style("font-weight", d => d.is_node_selected ? "bold" : "");
 
     table_data.exit().remove();
 }
