@@ -156,14 +156,14 @@ function get_real_width(elem) {
 
 function ticked(links, nodes) {
     nodes
-        .attr("cx", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS, d.x)); })
-        .attr("cy", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS, d.y)); });
+        .attr("x", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS, d.x)); })
+        .attr("y", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS, d.y)); });
 
     links
-        .attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+        .attr("x1", function(d) { return d.source.x + RADIUS; })
+        .attr("y1", function(d) { return d.source.y + RADIUS; })
+        .attr("x2", function(d) { return d.target.x + RADIUS; })
+        .attr("y2", function(d) { return d.target.y + RADIUS; });
 }
 
 
@@ -391,12 +391,15 @@ function update_graph() {
 
     links.exit().remove();
 
-    let nodes = G_NODE.selectAll("circle").data(NODE_DATA);
+    let nodes = G_NODE.selectAll("rect").data(NODE_DATA);
 
-    let new_nodes = nodes.enter().append("circle");
+    let new_nodes = nodes.enter().append("rect");
 
     new_nodes
-        .attr("r", RADIUS)
+        .attr("width", RADIUS * 2)
+        .attr("height", RADIUS * 2)
+        .attr("rx", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
+        .attr("ry", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
         .call(d3.drag()
           .on("start", dragstarted)
           .on("drag", dragged)
@@ -433,7 +436,7 @@ function update_graph() {
         });
 
     let all_links = G_LINK.selectAll("line");
-    let all_nodes = G_NODE.selectAll("circle");
+    let all_nodes = G_NODE.selectAll("rect");
 
     // don't swap simulation.nodes and simulation.force
     SIMULATION
