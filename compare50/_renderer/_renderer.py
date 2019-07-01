@@ -103,7 +103,10 @@ def render(pass_to_results, dest):
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
 
-    max_score = max((result.score.score for result in ranking_results))
+    try:
+        max_score = max((result.score.score for result in ranking_results))
+    except ValueError:
+        max_score = 0
 
     # Generate cluster data
     subs = set()
