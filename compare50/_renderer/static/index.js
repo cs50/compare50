@@ -19,7 +19,7 @@ var LINK_DATA = GRAPH.links;
 
 var COLOR = null;
 
-// When there are exactly two nodes in the graph, d3 sets all kinds of things to 
+// When there are exactly two nodes in the graph, d3 sets all kinds of things to
 // NaN for an unknown reason
 // This bool exists to mark all the places in the code where we implement the hack to fix this issue.
 const HORRIBLE_TWO_NODE_HACK = true;
@@ -406,9 +406,10 @@ function update_graph() {
 
     links.enter().append("line")
         .attr("stroke-width", 2)
-        //.attr("visibility", "hidden")
-        //.transition().delay(280).duration(0)
-            //.attr("visibility", "");
+        .attr("visibility", "hidden")
+        .interrupt("foo")
+        .transition("foo").delay(280).duration(0)
+            .attr("visibility", "");
 
     links.exit().remove();
 
@@ -416,12 +417,12 @@ function update_graph() {
 
     let new_nodes = nodes.enter().append("rect");
 
-    new_nodes
-        //.attr("width", 0)
-        //.attr("height", 0)
-        //.transition().duration(280)
+    nodes.merge(new_nodes)
+        .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
+        .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
+        .transition("bar").duration(280)
             .attr("width", RADIUS * 2)
-            .attr("height", RADIUS * 2)
+            .attr("height", RADIUS * 2);
 
     new_nodes
         .attr("rx", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
@@ -437,11 +438,11 @@ function update_graph() {
           .text(d => d.id);
 
     nodes.exit()
-        //.transition()
-            //.delay(0)
-            //.duration(100)
-            //.attr("width", 0)
-            //.attr("height", 0)
+        .transition("bar")
+            .delay(0)
+            .duration(100)
+            .attr("width", 0)
+            .attr("height", 0)
             .remove();
 
     let group_selected = undefined;
@@ -498,6 +499,11 @@ document.addEventListener("DOMContentLoaded", event => {
     init_data();
     init_index();
     init_graph();
+<<<<<<< HEAD
     if (HORRIBLE_TWO_NODE_HACK) cutoff(0);
+=======
+    // Needed for the horrible hack
+    cutoff(0);
+>>>>>>> fix transitions
     jiggle();
 });
