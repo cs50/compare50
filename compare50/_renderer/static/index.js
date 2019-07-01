@@ -1,3 +1,10 @@
+const ARCHIVE_IMG = `<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="79.164 91.172 63.675 66.68" width=1.5em height=1.5em xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
+  <path style="fill: rgba(216, 216, 216, 0); stroke: rgb(0, 0, 0); stroke-width: 2px;" d="M 89.898 99.084 H 131.124 A 4.5 4.467 0 0 1 135.624 103.551 V 106.018 A 2 2 0 0 1 133.624 108.018 H 87.398 A 2 2 0 0 1 85.398 106.018 V 103.551 A 4.5 4.467 0 0 1 89.898 99.084 Z" bx:shape="rect 85.398 99.084 50.226 8.934 4.5 4.5 2 2 1@72b6ad5a"/>
+  <rect x="90.259" y="113.324" width="40.503" height="34.631" style="fill: rgba(216, 216, 216, 0); stroke: rgb(0, 0, 0); stroke-width: 2px;"/>
+  <rect style="fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 2px;" x="102.169" y="119.696" width="16.684" height="3.633" rx="1" ry="1"/>
+</svg>`
+
 var RADIUS = 10;
 var WIDTH = null;
 var HEIGHT = null;
@@ -337,12 +344,12 @@ function update_index() {
 
             tds.filter((d, i) => i == 0)
                 .attr("class", d => `${source}_index`)
-                .html(d => GRAPH.data[source].is_archive ? `ARCHIVE ${source}` : source)
+                .html(d => GRAPH.data[source].is_archive ? `${ARCHIVE_IMG} ${source}` : source)
                 .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
                 .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
             tds.filter((d, i) => i == 1)
                 .attr("class", d => `${target}_index`)
-                .html(d => GRAPH.data[target].is_archive ? `ARCHIVE ${target}` : target)
+                .html(d => GRAPH.data[target].is_archive ? `${ARCHIVE_IMG} ${target}` : target)
                 .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
                 .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
             tds.filter((d, i) => i == 2)
