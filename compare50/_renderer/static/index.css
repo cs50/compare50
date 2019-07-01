@@ -1,5 +1,5 @@
 body {
-    font-family: Roboto-Regular
+    font-family: Proxima-Nova, sans-serif;
 }
 
 #results {
@@ -7,7 +7,7 @@ body {
 }
 
 #results thead {
-    font-family: Roboto-Bold;
+    font-weight: bold;
 }
 
 #results tbody tr {
