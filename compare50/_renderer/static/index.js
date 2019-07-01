@@ -19,13 +19,19 @@ var LINK_DATA = GRAPH.links;
 
 var COLOR = null;
 
+// When there are exactly two nodes in the graph, d3 sets all kinds of things to 
+// NaN for an unknown reason
+// This bool exists to mark all the places in the code where we implement the hack to fix this issue.
+const HORRIBLE_TWO_NODE_HACK = true;
 
 function init_data() {
-    /// HORRIBLE HACK when there are two nodes d3 doesn't know what to do so we add an invisible node with the empty string as a submission name
-    if (GRAPH.nodes.length == 2) {
-        GRAPH.nodes.push({id: ""});
-        GRAPH.links.push({source: GRAPH.nodes[0], target: "", value: -1});
-        GRAPH.data[""] = {is_archive: false};
+    if (HORRIBLE_TWO_NODE_HACK) {
+        /// When there are exactly two nodes, add an additional one with an id of "" and an edge with value -1
+        if (GRAPH.nodes.length == 2) {
+            GRAPH.nodes.push({id: ""});
+            GRAPH.links.push({source: GRAPH.nodes[0], target: "", value: -1});
+            GRAPH.data[""] = {is_archive: false};
+        }
     }
 
     // simulation
@@ -61,7 +67,13 @@ function init_graph() {
     });
 
     // Slider
-    let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+    let slider_start = null;
+    if (HORRIBLE_TWO_NODE_HACK) {
+        // Since the hack adds an edge with weight -1, filter it out
+        slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+    } else {
+        slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value)))
+    }
 
     SLIDER = d3
         .sliderBottom()
@@ -486,7 +498,6 @@ document.addEventListener("DOMContentLoaded", event => {
     init_data();
     init_index();
     init_graph();
-    // Needed for the horrible hack 
-    cutoff(0);
+    if (HORRIBLE_TWO_NODE_HACK) cutoff(0);
     jiggle();
 });
