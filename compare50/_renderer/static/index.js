@@ -64,6 +64,12 @@ function init_graph() {
         .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
         .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
 
+    SIMULATION
+        .nodes(NODE_DATA);
+
+    SIMULATION.force("link")
+        .links(LINK_DATA);
+
     G_LINK = SVG.append("g").attr("class", "links");
 
     G_NODE = SVG.append("g").attr("class", "nodes");
@@ -72,7 +78,7 @@ function init_graph() {
     on_resize();
 
     // assign groups to nodes
-    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source, target:d.target})));
+    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
     GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
 
     // set COLOR (function from group => color)
@@ -319,21 +325,39 @@ function update() {
 
 
 function update_index() {
-    let table_data = INDEX.selectAll("tr").data(LINK_DATA);
+    let table_data = INDEX.selectAll("tr").data(LINK_DATA, d => d.index);
 
     let new_trs = table_data.enter()
                             .append("tr")
                             .on("click", d => window.open(`match_${d.index + 1}.html`));
-    new_trs.append("th");
-    for (let i = 0; i != 3; i++) {
-        new_trs.append("td");
-    }
+
+    new_trs.append("th")
+        .attr("scope", "row")
+        .text(d => d.index + 1);
+
+    new_trs.append("td")
+        .attr("class", d => `${d.source.id}_index`)
+        .html(d => GRAPH.data[d.source.id].is_archive ? `${ARCHIVE_IMG} ${d.source.id}` : d.source.id)
+        .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
+        .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
+
+    new_trs.append("td")
+        .attr("class", d => `${d.target.id}_index`)
+        .html(d => GRAPH.data[d.target.id].is_archive ? `${ARCHIVE_IMG} ${d.target.id}` : d.target.id)
+        .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
+        .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
+
+    new_trs.append("td")
+        .attr("class", "score")
+        .text(d => d.value.toFixed(1))
+        .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
 
     let group_selected = undefined;
     GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
-    let all_data = table_data.merge(new_trs)
+    let all_data = new_trs
         .each(function (d) {
+<<<<<<< HEAD
             let tr = d3.select(this);
             tr.select("th").attr("scope", "row").text(d => d.index + 1);
 
@@ -356,6 +380,12 @@ function update_index() {
                 .attr("class", "score")
                 .text(d => d.value.toFixed(1))
                 .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
+=======
+            //let tr = d3.select(this);
+            //tr.append("th")
+            // let source = d.source.id === undefined ? d.source : d.source.id;
+            // let target = d.target.id === undefined ? d.target : d.target.id;
+>>>>>>> refactor
         })
         .style("background-color", link => {
             if (link.source.is_group_focused && !link.source.is_group_selected) {
@@ -386,19 +416,20 @@ function update_index() {
             update_graph();
        });
 
+    console.log(table_data.exit().each(d => console.log(d)));
     table_data.exit().remove();
 }
 
 
 function update_graph() {
-    let links = G_LINK.selectAll("line").data(LINK_DATA);
+    let links = G_LINK.selectAll("line").data(LINK_DATA, d => d.index);
 
     links.enter().append("line")
         .attr("stroke-width", 2);
 
     links.exit().remove();
 
-    let nodes = G_NODE.selectAll("rect").data(NODE_DATA);
+    let nodes = G_NODE.selectAll("rect").data(NODE_DATA, d => d.id);
 
     let new_nodes = nodes.enter().append("rect");
 
@@ -469,6 +500,16 @@ function jiggle(alpha=0.3, duration=300) {
 
 document.addEventListener("DOMContentLoaded", event => {
     window.addEventListener("resize", on_resize);
+
+        // simulation
+        SIMULATION = d3.forceSimulation().force("link", d3.forceLink().id(d => d.id));
+
+        SIMULATION
+            .nodes(NODE_DATA);
+
+        SIMULATION.force("link")
+            .links(LINK_DATA);
+
     init_index();
     init_graph();
     update();

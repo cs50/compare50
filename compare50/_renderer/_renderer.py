@@ -114,7 +114,7 @@ def render(pass_to_results, dest):
         subs.add(result.sub_b)
 
     for sub in subs:
-        graph_info["nodes"].append({"id": str(sub.path), "group": 0})
+        graph_info["nodes"].append({"id": str(sub.path)})
         graph_info["data"][str(sub.path)] = {"is_archive": sub.is_archive}
 
     index_css = common_css + [read_file(STATIC / "index.css")]
