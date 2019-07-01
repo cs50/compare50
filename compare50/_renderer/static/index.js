@@ -346,12 +346,12 @@ function update_index() {
                 .attr("class", d => `${source}_index`)
                 .html(d => GRAPH.data[source].is_archive ? `${ARCHIVE_IMG} ${source}` : source)
                 .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
-                .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
+                .style("font-weight", d => d.source.is_node_selected ? "bold" : "");
             tds.filter((d, i) => i == 1)
                 .attr("class", d => `${target}_index`)
                 .html(d => GRAPH.data[target].is_archive ? `${ARCHIVE_IMG} ${target}` : target)
                 .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
-                .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
+                .style("font-weight", d => d.target.is_node_selected ? "bold" : "");
             tds.filter((d, i) => i == 2)
                 .attr("class", "score")
                 .text(d => d.value.toFixed(1))
