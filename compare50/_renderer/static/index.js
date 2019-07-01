@@ -367,7 +367,7 @@ function update_index() {
                 node.is_node_in_background = false;
             })
             update_graph();
-       }) 
+       })
        .on("click", d => window.open(`match_${d.index + 1}.html`));
 
     let group_selected = undefined;
@@ -388,7 +388,10 @@ function update_graph() {
     let links = G_LINK.selectAll("line").data(LINK_DATA, d => d.index);
 
     links.enter().append("line")
-        .attr("stroke-width", 2);
+        .attr("stroke-width", 2)
+        .attr("visibility", "hidden")
+        .transition().delay(280).duration(0)
+            .attr("visibility", "");
 
     links.exit().remove();
 
@@ -397,8 +400,13 @@ function update_graph() {
     let new_nodes = nodes.enter().append("rect");
 
     new_nodes
-        .attr("width", RADIUS * 2)
-        .attr("height", RADIUS * 2)
+        .attr("width", 0)
+        .attr("height", 0)
+        .transition().duration(280)
+            .attr("width", RADIUS * 2)
+            .attr("height", RADIUS * 2)
+
+    new_nodes
         .attr("rx", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
         .attr("ry", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
         .call(d3.drag()
@@ -411,7 +419,13 @@ function update_graph() {
         .append("title")
           .text(d => d.id);
 
-    nodes.exit().remove();
+    nodes.exit()
+        .transition()
+            .delay(0)
+            .duration(100)
+            .attr("width", 0)
+            .attr("height", 0)
+            .remove();
 
     let group_selected = undefined;
     GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
