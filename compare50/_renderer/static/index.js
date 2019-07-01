@@ -19,13 +19,28 @@ var LINK_DATA = GRAPH.links;
 
 var COLOR = null;
 
+function init_data() {
+    // simulation
+    temp_sim = d3.forceSimulation().force("link", d3.forceLink().id(d => d.id));
+    temp_sim.nodes(NODE_DATA);
+    temp_sim.force("link").links(LINK_DATA);
+
+    // assign groups to nodes
+    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
+    GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
+
+    // set COLOR (function from group => color)
+    let n_groups = Math.max.apply(0, GRAPH.nodes.map(node => node.group));
+    COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+}
+
 function init_graph() {
     SVG = d3.select("div#cluster_graph").append("svg");
 
     // If svg is clicked, unselect node
     SVG.on("click", () => {
         GRAPH.nodes.forEach(node =>
-            node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
+            node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
         update();
     });
 
@@ -76,14 +91,6 @@ function init_graph() {
 
     // scale graph and slider
     on_resize();
-
-    // assign groups to nodes
-    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
-    GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
-
-    // set COLOR (function from group => color)
-    let n_groups = Math.max.apply(0, GRAPH.nodes.map(node => node.group));
-    COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
 
     // add data to graph
     update_graph();
@@ -385,7 +392,6 @@ function update_index() {
             update_graph();
        });
 
-    console.log(table_data.exit().each(d => console.log(d)));
     table_data.exit().remove();
 }
 
@@ -423,15 +429,6 @@ function update_graph() {
     GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
     nodes.merge(new_nodes)
-        .attr("stroke", function(d) {
-            if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected)
-                return "black";
-            else if (d.is_group_focused)
-                return d3.select(this).style("fill");
-            else
-                return "none";
-        })
-        .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "")
         .style("fill", d => {
             if (d.is_node_in_background) {
                 return "grey";
@@ -440,7 +437,16 @@ function update_graph() {
                 return COLOR(d.group)
             }
             return "grey";
-        });
+        })
+        .attr("stroke", function(d) {
+            if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected)
+                return "black";
+            else if (d.is_group_focused)
+                return d3.select(this).style("fill");
+            else
+                return "none";
+        })
+        .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "");
 
     let all_links = G_LINK.selectAll("line");
     let all_nodes = G_NODE.selectAll("rect");
@@ -470,11 +476,8 @@ function jiggle(alpha=0.3, duration=300) {
 document.addEventListener("DOMContentLoaded", event => {
     window.addEventListener("resize", on_resize);
 
-        // simulation
-        SIMULATION = d3.forceSimulation().nodes(NODE_DATA).force("link", d3.forceLink().id(d => d.id)).links(LINK_DATA);
-
+    init_data();
     init_index();
     init_graph();
-    update();
     jiggle();
 });
