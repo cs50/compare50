@@ -163,8 +163,8 @@ function get_real_width(elem) {
 
 function ticked(links, nodes) {
     nodes
-        .attr("x", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS, d.x)); })
-        .attr("y", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS, d.y)); });
+        .attr("x", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS * 3, d.x)); })
+        .attr("y", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS * 3, d.y)); });
 
     links
         .attr("x1", function(d) { return d.source.x + RADIUS; })
