@@ -19,11 +19,27 @@ var LINK_DATA = GRAPH.links;
 
 var COLOR = null;
 
+
 function init_data() {
+    /// HORRIBLE HACK when there are two nodes d3 doesn't know what to do so we add an invisible node with the empty string as a submission name
+    if (GRAPH.nodes.length == 2) {
+        GRAPH.nodes.push({id: ""});
+        GRAPH.links.push({source: GRAPH.nodes[0], target: "", value: -1});
+        GRAPH.data[""] = {is_archive: false};
+    }
+
     // simulation
-    temp_sim = d3.forceSimulation().force("link", d3.forceLink().id(d => d.id));
-    temp_sim.nodes(NODE_DATA);
-    temp_sim.force("link").links(LINK_DATA);
+    SIMULATION = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id))
+        .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
+        .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
+
+    SIMULATION
+        .nodes(NODE_DATA);
+
+    SIMULATION.force("link")
+        .links(LINK_DATA);
+
 
     // assign groups to nodes
     let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
@@ -45,7 +61,7 @@ function init_graph() {
     });
 
     // Slider
-    let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value)))
+    let slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value).filter(v => v >= 0)));
 
     SLIDER = d3
         .sliderBottom()
@@ -73,18 +89,6 @@ function init_graph() {
       .append("g")
         .attr("transform", "translate(30,30)");
 
-    // simulation
-    SIMULATION = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
-        .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
-
-    SIMULATION
-        .nodes(NODE_DATA);
-
-    SIMULATION.force("link")
-        .links(LINK_DATA);
-
     G_LINK = SVG.append("g").attr("class", "links");
 
     G_NODE = SVG.append("g").attr("class", "nodes");
@@ -111,6 +115,7 @@ function init_graph() {
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
     setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
+    cutoff(0);
 }
 
 
@@ -163,7 +168,6 @@ function on_resize() {
 
     SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
-    SIMULATION.force("center", d3.forceCenter(WIDTH / 2, HEIGHT / 2));
     jiggle();
 }
 
