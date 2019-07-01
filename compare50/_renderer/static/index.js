@@ -339,13 +339,13 @@ function update_index() {
         .attr("class", d => `${d.source.id}_index`)
         .html(d => GRAPH.data[d.source.id].is_archive ? `${ARCHIVE_IMG} ${d.source.id}` : d.source.id)
         .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
-        .style("font-family", d => d.source.is_node_selected ? "Roboto-Bold" : "");
+        .style("font-weight", d => d.source.is_node_selected ? "bold" : "");
 
     new_trs.append("td")
         .attr("class", d => `${d.target.id}_index`)
         .html(d => GRAPH.data[d.target.id].is_archive ? `${ARCHIVE_IMG} ${d.target.id}` : d.target.id)
         .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
-        .style("font-family", d => d.target.is_node_selected ? "Roboto-Bold" : "");
+        .style("font-weight", d => d.target.is_node_selected ? "bold" : "");
 
     new_trs.append("td")
         .attr("class", "score")
@@ -356,37 +356,6 @@ function update_index() {
     GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
     let all_data = new_trs
-        .each(function (d) {
-<<<<<<< HEAD
-            let tr = d3.select(this);
-            tr.select("th").attr("scope", "row").text(d => d.index + 1);
-
-            // I HATE IT
-            let tds = tr.selectAll("td");
-            let source = d.source.id === undefined ? d.source : d.source.id;
-            let target = d.target.id === undefined ? d.target : d.target.id;
-
-            tds.filter((d, i) => i == 0)
-                .attr("class", d => `${source}_index`)
-                .html(d => GRAPH.data[source].is_archive ? `${ARCHIVE_IMG} ${source}` : source)
-                .style("background-color", d => d.source.is_node_focused ? "#CCCCCC" : "")
-                .style("font-weight", d => d.source.is_node_selected ? "bold" : "");
-            tds.filter((d, i) => i == 1)
-                .attr("class", d => `${target}_index`)
-                .html(d => GRAPH.data[target].is_archive ? `${ARCHIVE_IMG} ${target}` : target)
-                .style("background-color", d => d.target.is_node_focused ? "#CCCCCC" : "")
-                .style("font-weight", d => d.target.is_node_selected ? "bold" : "");
-            tds.filter((d, i) => i == 2)
-                .attr("class", "score")
-                .text(d => d.value.toFixed(1))
-                .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
-=======
-            //let tr = d3.select(this);
-            //tr.append("th")
-            // let source = d.source.id === undefined ? d.source : d.source.id;
-            // let target = d.target.id === undefined ? d.target : d.target.id;
->>>>>>> refactor
-        })
         .style("background-color", link => {
             if (link.source.is_group_focused && !link.source.is_group_selected) {
                 return "#ECECEC";
@@ -502,13 +471,7 @@ document.addEventListener("DOMContentLoaded", event => {
     window.addEventListener("resize", on_resize);
 
         // simulation
-        SIMULATION = d3.forceSimulation().force("link", d3.forceLink().id(d => d.id));
-
-        SIMULATION
-            .nodes(NODE_DATA);
-
-        SIMULATION.force("link")
-            .links(LINK_DATA);
+        SIMULATION = d3.forceSimulation().nodes(NODE_DATA).force("link", d3.forceLink().id(d => d.id)).links(LINK_DATA);
 
     init_index();
     init_graph();
