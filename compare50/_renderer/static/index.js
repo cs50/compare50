@@ -486,6 +486,7 @@ document.addEventListener("DOMContentLoaded", event => {
     init_data();
     init_index();
     init_graph();
+    // Needed for the horrible hack 
     cutoff(0);
     jiggle();
 });
