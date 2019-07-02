@@ -420,7 +420,7 @@ function update_graph() {
     nodes.merge(new_nodes)
         .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
         .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
-        .transition("bar").duration(280)
+        .transition("nodes").duration(280)
             .attr("width", RADIUS * 2)
             .attr("height", RADIUS * 2);
 
@@ -438,7 +438,7 @@ function update_graph() {
           .text(d => d.id);
 
     nodes.exit()
-        .transition("bar")
+        .transition("nodes")
             .delay(0)
             .duration(100)
             .attr("width", 0)
@@ -499,11 +499,6 @@ document.addEventListener("DOMContentLoaded", event => {
     init_data();
     init_index();
     init_graph();
-<<<<<<< HEAD
     if (HORRIBLE_TWO_NODE_HACK) cutoff(0);
-=======
-    // Needed for the horrible hack
-    cutoff(0);
->>>>>>> fix transitions
     jiggle();
 });
