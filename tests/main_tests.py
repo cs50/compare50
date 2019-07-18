@@ -3,6 +3,7 @@ import tempfile
 import zipfile
 import os
 import compare50.__main__ as main
+import compare50._api as api
 
 class TestCase(unittest.TestCase):
     def setUp(self):
@@ -19,9 +20,13 @@ class TestSubmissionFactory(TestCase):
     def setUp(self):
         super().setUp()
         self.factory = main.SubmissionFactory()
+        api.progress_bar("foo", disable=True).__enter__()
 
     def tearDown(self):
         super().tearDown()
+        api._progress_bar.close()
+        api._progress_bar = None
+
 
     def test_no_submissions(self):
         preprocessor = lambda tokens : tokens

@@ -5,69 +5,31 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {% for style in css %}
-            <style>{{style}}</style>
+            <style>{{style | safe}}</style>
         {% endfor %}
-        <style>
-            #results {
-                margin: 0 auto;
-            }
-
-            #results tbody tr {
-                cursor: pointer;
-            }
-
-            h4 {
-                font-weight: bold;
-            }
-
-        </style>
     </head>
     <body>
         <div class="container-fluid">
-            <div class="row">
-                <div id="title" class="col bg-dark sticky-top text-light no-gutter">
-                    <h4 class="align-text-bottom">compare50 results</h4>
+            <div class="row sticky-top">
+                <div id="title" class="col bg-dark text-light no-gutter">
+                    <h4 class="align-text-bottom">compare50</h4>
                 </div>
             </div>
             <div class="row">
-                <div class="col table-responsive">
-                    <table class="table table-hover w-75" id="results">
-                        <thead>
-                            <tr>
-                                <th scope="col">#</th>
-                                <th scope="col" colspan=2>Submissions</th>
-                                <th scope="col">
-                                    <div class="score_tooltip">Score
-                                        <span class="tooltiptext bg-dark text-light">{{score_description}}</span>
-                                    </div>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for score in scores %}
-                                  <tr>
-                                      <th scope="row">{{loop.index}}</th>
-                                      <td>{{score.sub_a.path}}</td>
-                                      <td>{{score.sub_b.path}}</td>
-                                      <td>{{score.score}}</td>
-                                  </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <div class="col-8 table-responsive" id="index"></div>
+                <div class="col-4" id="cluster">
+                    <div id="cluster_graph"></div>
+                    <div id="slider"></div>
                 </div>
             </div>
         </div>
         <script>
-            function rowListenerFactory(row) {
-                return event => {
-                    window.location.href = `match_${row.cells[0].textContent}.html`
-                }
-            }
-            for (let row of document.getElementById("results").rows) {
-                if (row.getElementsByTagName("td").length > 0) {
-                    row.addEventListener("click", rowListenerFactory(row));
-                }
-            }
+            var GRAPH = {{graph_info|tojson}};
         </script>
+        {% for script in js %}
+            <script>
+                {{script|safe}}
+            </script>
+        {% endfor %}
     </body>
 </html>

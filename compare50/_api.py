@@ -1,5 +1,7 @@
 import collections
+import contextlib
 import heapq
+import io
 import itertools
 import multiprocessing
 import time
@@ -7,12 +9,11 @@ import time
 import intervaltree
 import tqdm
 
-
 import concurrent.futures
 from ._data import Submission, Span, Group, BisectList, Compare50Result
 
 
-__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "Error"]
+__all__ = ["rank", "compare", "missing_spans", "expand", "progress_bar", "get_progress_bar", "Error"]
 
 
 class Error(Exception):
@@ -39,9 +40,17 @@ def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
     Rank submissions, return the top ``n`` most similar pairs
     """
     scores = pass_.comparator.score(submissions, archive_submissions, ignored_files)
-
     # Keep only top `n` submission matches
     return heapq.nlargest(n, scores)
+
+    # max_id = max((max(score.sub_a.id, score.sub_b.id) for score in scores))
+    # matrix = np.zeros((max_id+1, max_id+1))
+    # for score in scores:
+        # matrix[score.sub_b.id][score.sub_a.id] = matrix[score.sub_a.id][score.sub_b.id] = 1 / (score.score + 1)
+    # labels = cluster.SpectralClustering(affinity="precomputed").fit_predict(matrix)
+
+    # for submission in itertools.chain(submissions, archive_submissions):
+        # object.__setattr__(submission, "cluster", int(labels[submission.id]))
 
 
 def compare(scores, ignored_files, pass_):
@@ -327,115 +336,77 @@ def _filter_subsumed_groups(groups):
     return [g for g in groups if not _is_group_subsumed(g, groups)]
 
 
-class _Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super().__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class _ProgressBar(metaclass=_Singleton):
-    """ANSI progress bar with message"""
-    STOP_SIGNAL = None
-    UPDATE_SIGNAL = 1
-
-    def __init__(self, message, enabled=True):
-        self.enabled = enabled
-        self._message = message
-        self._process = None
-        self._percentage = 0
-        self._message_queue = multiprocessing.Queue()
-        self._update = 0
-        self._resolution = 2
-
-    def fill(self):
-        """Fill the progress bar to 100%."""
-        self.update(self.remaining_percentage)
+class _ProgressBar:
+    def __init__(self, msg="", total=100, disable=False, **kwargs):
+        self.msg = msg
+        self.disable = disable
+        if not disable:
+            self._bar = tqdm.tqdm(total=total, dynamic_ncols=True, bar_format="{l_bar}{bar}|[{elapsed} {remaining}s]", **kwargs)
+            self._bar.write(msg)
+        else:
+            self._n = 0
+            self._total = total
 
     @property
-    def remaining_percentage(self):
-        """Percentage remaining on progress bar."""
-        return 100 - self._percentage
+    def n(self):
+        try:
+            return self._bar.n
+        except AttributeError:
+            return self._n
 
-    def new(self, message):
-        """Fill the current bar, and create a new bar with message."""
-        if self.enabled:
-            self._message = message
-            self.fill()
-            self._percentage = 0
-            self._message_queue.put((message, 100))
-        return self
+    @property
+    def total(self):
+        try:
+            return self._bar.total
+        except AttributeError:
+            return self._n
+
+    def reset(self, total=100):
+        try:
+            self._bar.reset(total=total)
+        except AttributeError:
+            self._n = 0
+            self._total = total
 
     def update(self, amount=1):
-        """Update the progress bar with amount."""
-        if not self.enabled:
-            return
+        try:
+            self._bar.update(amount)
+        except AttributeError:
+            self._n += amount
 
-        self._update += amount
-        if self._update < self._resolution:
-            return
+    def close(self, leave=True):
+        try:
+            self._bar.close(leave)
+        except AttributeError:
+            pass
 
-        amount = round(self._update, 0)
-        self._update -= amount
-
-        if self._percentage + amount >= 100:
-            amount = 100 - self._percentage
-        self._percentage += amount
-        self._message_queue.put((_ProgressBar.UPDATE_SIGNAL, amount))
-
-    def _start(self):
-        """Spawn a new process that runs a progress bar."""
-        if self._process and self._process.is_alive():
-            self._stop()
-        self.__enter__()
-
-    def _stop(self):
-        """Stop the progress bar."""
-        self.fill()
-        self._message_queue.put(_ProgressBar.STOP_SIGNAL)
-        self._process.join()
 
     def __enter__(self):
-        if not self.enabled:
-            return self
-
-        def progress_runner(message, total, message_queue):
-            format = '{l_bar}{bar}|[{elapsed} {remaining}s]'
-            bar = tqdm.tqdm(total=total, bar_format=format)
-            bar.write(message)
-
-            try:
-                while True:
-                    while not message_queue.empty():
-                        message = message_queue.get()
-                        if message == _ProgressBar.STOP_SIGNAL:
-                            return
-                        elif message[0] == _ProgressBar.UPDATE_SIGNAL:
-                            bar.update(message[1])
-                        else:
-                            bar.close()
-                            msg, total = message
-                            bar = tqdm.tqdm(total=total, bar_format=format)
-                            bar.write(msg)
-
-                    time.sleep(0.1)
-            finally:
-                bar.close()
-
-        self._process = multiprocessing.Process(
-            target=progress_runner, args=(self._message, 100, self._message_queue,))
-        self._process.start()
+        try:
+            self._bar.__enter__()
+        except AttributeError:
+            pass
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.enabled:
-            self._stop()
+        self.update(self.total - self.n)
+        try:
+            self._bar.__exit__(exc_type, exc_val, exc_tb)
+        except AttributeError:
+            pass
 
 
-#: Global progress bar used by compare50
-progress_bar = None
+_progress_bar = _ProgressBar(disable=True)
+
+
+def progress_bar(*args, **kwargs):
+    global _progress_bar
+    _progress_bar = _ProgressBar(*args, **kwargs)
+    return _progress_bar
+
+
+def get_progress_bar():
+    return _progress_bar
 
 
 class FauxExecutor:

@@ -69,6 +69,7 @@ class HTMLSubmission:
 
 
 def render(pass_to_results, dest):
+    bar = _api.get_progress_bar()
     dest = pathlib.Path(dest)
 
     sub_pair_to_results = collections.defaultdict(list)
@@ -76,24 +77,23 @@ def render(pass_to_results, dest):
         for result in results:
             sub_pair_to_results[(result.sub_a, result.sub_b)].append(result)
 
+    bar.reset(total=len(sub_pair_to_results) + 1)
     # Sort by score
     results_per_sub_pair = sorted(sub_pair_to_results.values(),
                                   key=lambda res: res[0].score, reverse=True)
 
-    # Load static files
-    compare50_js, bootstrap, fonts, compare50_css = (read_file(STATIC / name)
-            for name in ("compare50.js", "bootstrap.min.css", "fonts.css", "compare50.css"))
-
+    common_css = [read_file(STATIC / f) for f in  ("bootstrap.min.css", "fonts.css")]
+    match_css = common_css + [read_file(STATIC / "match.css")]
+    match_js = [read_file(STATIC / f) for f in ("split.min.js", "match.js")]
     # Render all matches
     with _api.Executor() as executor:
-        update_percentage = _api.progress_bar.remaining_percentage / (len(results_per_sub_pair) + 1)
-        js = (compare50_js,)
-        css = (bootstrap, fonts, compare50_css)
+        # Load static files
         max_id = len(results_per_sub_pair)
-        for id, html in executor.map(_RenderTask(dest, max_id, js, css), enumerate(results_per_sub_pair, 1)):
+        for id, html in executor.map(_RenderTask(dest, max_id, match_js, match_css), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
-            _api.progress_bar.update(update_percentage)
+            bar.update()
+
 
     # Create index
     with open(TEMPLATES / "index.html") as f:
@@ -102,15 +102,35 @@ def render(pass_to_results, dest):
 
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
-    # Render index
-    rendered_html = index_template.render(css=(bootstrap, fonts, compare50_css),
-                                          score_description=ranking_pass.comparator.score.__doc__,
-                                          scores=[result.score for result in ranking_results],
-                                          dest=dest.resolve())
-    with open(dest / "index.html", "w") as f:
-        f.write(rendered_html)
 
-    _api.progress_bar.update(update_percentage)
+    try:
+        max_score = max((result.score.score for result in ranking_results))
+    except ValueError:
+        max_score = 0
+
+    # Generate cluster data
+    subs = set()
+    graph_info = {"nodes": [], "links": [], "data": {}}
+    for i, result in enumerate(ranking_results):
+        graph_info["links"].append({"index":i, "source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 * result.score.score/max_score})
+        subs.add(result.sub_a)
+        subs.add(result.sub_b)
+
+    for sub in subs:
+        graph_info["nodes"].append({"id": str(sub.path)})
+        graph_info["data"][str(sub.path)] = {"is_archive": sub.is_archive}
+
+    index_css = common_css + [read_file(STATIC / "index.css")]
+    index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
+    # Render index
+    rendered_index = index_template.render(js=index_js,
+                                           css=index_css,
+                                           graph_info=graph_info,
+                                           dest=dest.resolve())
+    with open(dest / "index.html", "w") as f:
+        f.write(rendered_index)
+
+    bar.update()
     return dest / "index.html"
 
 

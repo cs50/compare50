@@ -1,5 +1,6 @@
 import argparse
 import contextlib
+import glob
 import itertools
 import os
 import pathlib
@@ -7,8 +8,10 @@ import tempfile
 import textwrap
 import shutil
 import sys
+import string
 import traceback
 import time
+import tempfile
 
 import attr
 import lib50
@@ -25,6 +28,8 @@ def excepthook(cls, exc, tb):
     elif not issubclass(cls, Exception) and not isinstance(exc, KeyboardInterrupt):
         # Class is some other BaseException, better just let it go
         return
+    elif isinstance(exc, KeyboardInterrupt):
+        print()
     else:
         termcolor.cprint(
             "Sorry, something's wrong! Let sysadmins@cs50.harvard.edu know!", "red", file=sys.stderr)
@@ -46,21 +51,23 @@ class SubmissionFactory:
         self.submissions = {}
 
     def include(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.PatternType.Included, pattern)
-        self.patterns.append(fp)
+        pattern = lib50.config.TaggedValue(pattern, "include")
+        self.patterns.append(pattern)
 
     def exclude(self, pattern):
-        fp = lib50.config.FilePattern(lib50.config.PatternType.Excluded, pattern)
-        self.patterns.append(fp)
+        pattern = lib50.config.TaggedValue(pattern, "exclude")
+        self.patterns.append(pattern)
 
-    def _get(self, path, preprocessor):
+    def _get(self, path, preprocessor, is_archive=False):
         path = pathlib.Path(path)
 
         if path.is_file():
-            included, excluded = [path.name], []
+            with tempfile.TemporaryDirectory() as dir:
+                (pathlib.Path(dir) / path.name).touch()
+                included, excluded = lib50.files(self.patterns, root=dir)
             path = path.parent
         else:
-            included, excluded = lib50.files(self.patterns, root=path, always_exclude=[])
+            included, excluded = lib50.files(self.patterns, require_tags=[], root=path)
 
         decodable_files = []
         for file_path in included:
@@ -76,9 +83,9 @@ class SubmissionFactory:
             raise _api.Error(f"Empty submission: {path}")
 
         decodable_files = sorted(decodable_files)
-        return _data.Submission(path, decodable_files, preprocessor=preprocessor)
+        return _data.Submission(path, decodable_files, preprocessor=preprocessor, is_archive=is_archive)
 
-    def get_all(self, paths, preprocessor):
+    def get_all(self, paths, preprocessor, is_archive=False):
         """
         For every path, and every preprocessor, generate a Submission containing that path/preprocessor.
         Returns a list of lists of Submissions.
@@ -86,9 +93,11 @@ class SubmissionFactory:
         subs = set()
         for sub_path in paths:
             try:
-                subs.add(self._get(sub_path, preprocessor))
+                subs.add(self._get(sub_path, preprocessor, is_archive))
             except _api.Error:
                 pass
+            else:
+                _api.get_progress_bar().update()
         return subs
 
 
@@ -169,6 +178,35 @@ def profile():
         termcolor.cprint(f"Profiling data written to {outfile}", "yellow")
 
 
+# https://stackoverflow.com/questions/21872366/plural-string-formatting
+class PluralDict(dict):
+    def __missing__(self, key):
+        if '(' in key and key.endswith(')'):
+            key, rest = key.split('(', 1)
+            value = super().__getitem__(key)
+            suffix = rest.rstrip(')').split(',')
+            if len(suffix) == 1:
+                suffix.insert(0, '')
+            return suffix[0] if value == 1 else suffix[1]
+        raise KeyError(key)
+
+
+def print_stats(subs, archives, distro_files):
+    avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (len(subs) + len(archives)), 2)
+    data = PluralDict(subs=len(subs), archives=len(archives), distro=len(distro_files), avg=avg)
+    fmt = "Found {subs} submission{subs(s)}, {archives} archive submission{archives(s)}, and " \
+          "{distro} distro file{distro(s)} with an average of {avg} file{avg(s)} per submission"
+    termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
+
+
+def expand_patterns(patterns):
+    """
+    Given a list of glob patterns, return a flat list containing the result
+    of globbing all of them.
+    """
+    return list(itertools.chain.from_iterable(map(lambda x: glob.glob(x, recursive=True), patterns)))
+
+
 def main():
     submission_factory = SubmissionFactory()
 
@@ -187,7 +225,6 @@ def main():
     parser.add_argument("-p", "--passes",
                         dest="passes",
                         nargs="+",
-                        metavar="PASSES",
                         default=[pass_.__name__ for pass_ in _data.Pass._get_all()],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
@@ -234,6 +271,10 @@ def main():
 
     excepthook.verbose = args.verbose
 
+    for attrib in ("submissions", "archive", "distro"):
+        # Expand all patterns found in args.{submissions,archive,distro}
+        setattr(args, attrib, expand_patterns(getattr(args, attrib)))
+
 
     # Extract comparator and preprocessors from pass
     try:
@@ -264,41 +305,43 @@ def main():
         if not resp or resp.lower().startswith("y"):
             try:
                 os.remove(args.output)
-            except IsADirectoryError:
+            except (IsADirectoryError, PermissionError):
                 shutil.rmtree(args.output)
         else:
             print("Quitting...")
             sys.exit(1)
 
+    with profiler():
+        total = len(args.submissions) + len(args.archive) + len(args.distro)
+        with _api.progress_bar("Preparing", total=total, disable=args.debug) as bar:
+            # Collect all submissions, archive submissions and distro files
+            subs = submission_factory.get_all(args.submissions, preprocessor)
+            archive_subs = submission_factory.get_all(args.archive, preprocessor, is_archive=True)
+            ignored_subs = submission_factory.get_all(args.distro, preprocessor)
+            ignored_files = {f for sub in ignored_subs for f in sub.files}
 
-    with profiler(), _api._ProgressBar("Preparing", enabled=not args.debug) as _api.progress_bar:
-        # Collect all submissions, archive submissions and distro files
-        subs = submission_factory.get_all(args.submissions, preprocessor)
-        _api.progress_bar.update(33)
-        archive_subs = submission_factory.get_all(args.archive, preprocessor)
-        _api.progress_bar.update(33)
-        ignored_subs = submission_factory.get_all(args.distro, preprocessor)
-        ignored_files = {f for sub in ignored_subs for f in sub.files}
+            if len(subs) + len(archive_subs) < 2:
+                raise _api.Error("At least two non-empty submissions are required for a comparison.")
 
-        if len(subs) + len(archive_subs) < 2:
-            raise _api.Error("At least two non-empty submissions are required for a comparison.")
+        print_stats(subs, archive_subs, ignored_files)
 
-        # Cross compare and rank all submissions, keep only top `n`
-        _api.progress_bar.new(f"Scoring ({passes[0].__name__})")
-        scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+        with _api.progress_bar(f"Scoring ({passes[0].__name__})", disable=args.debug) as bar:
+            # Cross compare and rank all submissions, keep only top `n`
+            scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
+
         # Get the matching spans, group them per submission
         groups = []
         pass_to_results = {}
         for pass_ in passes:
-            _api.progress_bar.new(f"Comparing ({pass_.__name__})")
-            preprocessor = Preprocessor(pass_.preprocessors)
-            for sub in itertools.chain(subs, archive_subs, ignored_subs):
-                object.__setattr__(sub, "preprocessor", preprocessor)
-            pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
+            with _api.progress_bar(f"Comparing ({pass_.__name__})", disable=args.debug):
+                preprocessor = Preprocessor(pass_.preprocessors)
+                for sub in itertools.chain(subs, archive_subs, ignored_subs):
+                    object.__setattr__(sub, "preprocessor", preprocessor)
+                pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
 
         # Render results
-        _api.progress_bar.new("Rendering")
-        index = _renderer.render(pass_to_results, dest=args.output)
+        with _api.progress_bar("Rendering", disable=args.debug):
+            index = _renderer.render(pass_to_results, dest=args.output)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
