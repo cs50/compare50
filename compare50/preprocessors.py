@@ -1,7 +1,7 @@
 import re
 
 import attr
-from pygments.token import Comment, Name, Number, String, Text
+from pygments.token import Comment, Name, Number, String, Text, Keyword
 
 from ._data import Token
 
@@ -15,6 +15,14 @@ def strip_whitespace(tokens):
         if val:
             tok.val = val
             yield tok
+
+
+def normalize_builtin_types(tokens):
+    """Normalize builtin type names"""
+    for tok in tokens:
+        if tok.type in Keyword.Type:
+            tok.val = "t"
+        yield tok
 
 
 def strip_comments(tokens):
@@ -36,9 +44,7 @@ def normalize_identifiers(tokens):
     for tok in tokens:
         if tok.type in Name:
             tok.val = "v"
-            yield tok
-        else:
-            yield tok
+        yield tok
 
 
 def normalize_string_literals(tokens):
