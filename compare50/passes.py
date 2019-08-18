@@ -12,6 +12,7 @@ class structure(Pass):
     preprocessors = [preprocessors.strip_whitespace,
                      preprocessors.strip_comments,
                      preprocessors.normalize_identifiers,
+                     preprocessors.normalize_builtin_types,
                      preprocessors.normalize_string_literals,
                      preprocessors.normalize_numeric_literals]
     comparator = comparators.Winnowing(k=25, t=35)
