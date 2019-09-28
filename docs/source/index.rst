@@ -77,7 +77,7 @@ Usage::
 
 Do note the quotation marks above. These are necessary as the shell would otherwise glob `*.txt` to every text file in the current directory. This would have compare50 exclude just these files, and not the text files within the submissions themselves.
 
-Sometimes its specific types of files that need to be compared, and in that case it is easier to tell compare50 what to include rather than exclude. To support this compare50 comes with an optional `-i` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
+Sometimes it is specific types of files that need to be compared, and in that case it is easier to tell compare50 what to include rather than exclude. To support this compare50 comes with an optional `-i` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
 
 Usage::
 
