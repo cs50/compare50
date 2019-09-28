@@ -40,7 +40,7 @@ Under Windows, please |install_windows_sub|. Then install compare50 within the s
 
    <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10" target="_blank">install the Linux subsystem</a>
 
-Alternatively you can opt to run compare50 via cli50. Cli50 will in fact pull in a Docker image with compare50 pre-installed. So all you need to do is install and run cli50, and you are then good to go. Please refer to cli50's docs For instructions on how to install.
+Alternatively you can opt to run compare50 via cli50. Cli50 will in fact pull in a Docker image with compare50 pre-installed. So all you need to do is install and run cli50, and you are good to go. Please refer to cli50's docs for instructions on how to install.
 
 Usage
 *******
