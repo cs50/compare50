@@ -24,6 +24,16 @@ class exact(Pass):
                      preprocessors.strip_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
 
+class nocomments(Pass):
+    """Removes comments, but keeps whitespace, then uses the winnowing algorithm to compare submissions"""
+    preprocessors = [ preprocessors.split_on_whitespace, preprocessors.strip_comments ]
+    comparator = comparators.Winnowing(k=25, t=35)
+
+class verbatim(Pass):
+    """Removes nothing, not even whitespaces, then uses the winnowing algorithm to compare submissions"""
+    preprocessors = [ ]
+    comparator = comparators.Winnowing(k=25, t=35)
+
 
 class misspellings(Pass):
     """Compares comments for identically misspelled English words."""
