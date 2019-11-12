@@ -43,6 +43,9 @@ class Pass(metaclass=_PassRegistry):
     """
     __register = False
 
+    # Whether or not the pass should be enabled by default
+    default = False
+
     @abc.abstractmethod
     def preprocessors(self):
         pass
