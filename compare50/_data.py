@@ -209,6 +209,17 @@ class File:
         return tokens
 
 
+@attr.s(slots=True)
+class Preprocessor:
+    """Hack to ensure that composed preprocessor is serializable by Pickle."""
+    preprocessors = attr.ib()
+
+    def __call__(self, tokens):
+        for preprocessor in self.preprocessors:
+            tokens = preprocessor(tokens)
+        return tokens
+
+
 @attr.s(slots=True, frozen=True, repr=False)
 class Span:
     """
