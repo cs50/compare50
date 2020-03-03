@@ -72,15 +72,15 @@ Or better yet, the following compares everything in the current directory:
 Including and excluding submissions
 -----------------------------------
 
-Odds are that directories contain files that should not be compared. Say for instance some extraneous `.txt` files. To exclude these, run compare50 with the optional `-x` (eXclude) argument like so:
+Odds are that directories contain files that should not be compared. Say for instance some extraneous ``.txt`` files. To exclude these, run compare50 with the optional ``-x`` (eXclude) argument like so:
 
 .. code-block:: bash
 
     compare50 * -x "*.txt"
 
-Do note the quotation marks above. These are necessary as the shell would otherwise glob `*.txt` to every text file in the current directory. This would have compare50 exclude just these files, and not the text files within the submissions themselves.
+Do note the quotation marks above. These are necessary as the shell would otherwise glob ``*.txt`` to every text file in the current directory. This would have compare50 exclude just these files, and not the text files within the submissions themselves.
 
-Sometimes only specific types of files need to be compared, and in that case it is easier to tell compare50 what to include rather than to exclude. To support this compare50 comes with an optional `-i` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
+Sometimes only specific types of files need to be compared, and in that case it is easier to tell compare50 what to include rather than to exclude. To support this compare50 comes with an optional ``-i`` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
 
 .. code-block:: bash
 
@@ -92,7 +92,7 @@ The order of the arguments is important here. Each include or exclude argument w
 Removing distribution code
 --------------------------
 
-In order to exclude distribution code from comparison, supply the distribution files and folders with the `-d` argument.
+In order to exclude distribution code from comparison, supply the distribution files and folders with the ``-d`` argument.
 
 .. code-block:: bash
 
@@ -104,22 +104,55 @@ Any code found in `foo.java` and in the folder `bar` will be subtracted from the
 Comparing archived submissions
 ------------------------------
 
-Compare50 will cross compare all submissions by default. This is however unwanted behavior in the case of archived submissions, those are for instance the submissions from last year's iteration of the course. Submissions that need to be compared, but not cross compared against other archived submissions, can be marked as an archived submission with the `-a` argument.
+Compare50 will cross compare all submissions by default. This is however unwanted behavior in the case of archived submissions, those are for instance the submissions from last year's iteration of the course. Submissions that need to be compared, but not cross compared against other archived submissions, can be marked as an archived submission with the ``-a`` argument.
 
 .. code-block:: bash
 
     compare50 foo -a bar baz
 
-In the example above, foo is compared to bar and to baz, but bar is never compared to baz.
+In the example above, foo is compared to bar and to baz, but bar is not compared to baz.
 
 
 Performing different comparisons
 --------------------------------
 
+Compare50 is by design extensible in its methods of comparison. To view all comparison methods, run compare50 with the ``--list`` argument.
 
 
-Usage::
+.. code-block::
 
+    $ compare50 --list
+    structure
+        Compares code structure by removing whitespace and comments; normalizing
+        variable names, string literals, and numeric literals; and then running the
+        winnowing algorithm.
+    exact
+        Removes all whitespace, then uses the winnowing algorithm to compare
+        submissions.
+    misspellings
+        Compares comments for identically misspelled English words.
+
+
+Comparison methods consist of two phases, a ranking phase and a comparison phase. In the ranking phase all submissions are cross-compared. Each comparison gets a score assigned and is ultimately ranked by this score. The ranking phase results in a top N matches (50 by default, but this is configurable via the ``-n`` argument). The limited scale of just N matches makes it possible to perform a more extensive and finer detailed comparison in the comparison phase. In this phase then, each match is again compared, but this time to produce a list of spans, regions in each submission that match. These spans are ultimately shown and highlighted in the view.
+
+Compare50 can, and by default will, use multiple comparison methods in a single run. However, the results are only ranked by the first listed comparison method. This restriction is in place to ensure exactly N matches at the end of a run. As each method of ranking could potentially produce a different top N matches, that if used in combination with each other could produce `number_of_methods x N` matches.
+
+To configure how compare50 should compare, specify the methods of comparison with the ``-p`` (passes) argument:
+
+.. code-block:: bash
+
+    compare50 * -p structure exact misspellings
+
+The example above is the default comparison for compare50. It will rank all submissions by the structure comparison, and produce comparison views for the structure, exact, and misspellings comparisons. To rank instead by the exact comparison, run compare50 like so:
+
+.. code-block:: bash
+
+    compare50 * -p exact structure misspellings
+
+
+.. code-block::
+
+    $ compare50 --help
     usage: compare50 [-h] [-a ARCHIVE [ARCHIVE ...]] [-d DISTRO [DISTRO ...]]
                      [-p PASSES [PASSES ...]] [-i INCLUDE [INCLUDE ...]]
                      [-x EXCLUDE [EXCLUDE ...]] [--list] [-o OUTPUT] [-v]
