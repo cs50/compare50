@@ -22,7 +22,7 @@ Compare50 is a tool for detecting similarity in code that supports well over 300
 Installation
 ************
 
-First make sure you have Python 3.6 or higher installed. You can download Python |download_python|.
+First make sure Python 3.6 or higher is installed. You can download Python |download_python|.
 
 .. |download_python| raw:: html
 
@@ -40,50 +40,82 @@ Under Windows, please |install_windows_sub|. Then install compare50 within the s
 
    <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10" target="_blank">install the Linux subsystem</a>
 
-Alternatively you can opt to run compare50 via cli50. Cli50 will in fact pull in a Docker image with compare50 pre-installed. So all you need to do is install and run cli50, and you are good to go. Please refer to cli50's docs for instructions on how to install.
+Alternatively compare50 can be run via cli50. Cli50 will pull in a Docker image with compare50 pre-installed. So all that is needed is to install and run cli50. Please refer to cli50's docs for instructions on how to install.
 
 Usage
 *******
 
-To compare two source files, simply run:
+To compare source files simply call compare50 with the files to compare:
 
-Usage::
+.. code-block:: bash
 
-    compare50 foo.java bar.java
+    compare50 foo.java bar.java ~/baz/qux.java
 
-It quickly becomes tedious to type out every file to compare. So instead shell globbing can be used to for instance compare all .java files in the current directory:
+Instead of typing out all paths, shell globbing can be used to for instance compare all .java files in the current directory:
 
-Usage::
+.. code-block:: bash
 
     compare50 *.java
 
-Compare50 conceptually takes submissions in the form of paths as its command-line arguments. If that path just so happens to be a directory and not a single file, then every file within that directory is grouped together and treated as a single submission. For instance the following compares two directories foo and bar:
+Conceptually, compare50 takes submissions in the form of paths as its command-line arguments. If that path just so happens to be a directory and not a single file, then every file within that directory is grouped together and treated as a single submission. For instance the following compares two directories foo and bar:
 
-Usage::
+.. code-block:: bash
 
     compare50 foo bar
 
-Or better yet, everything in the current directory:
+Or better yet, the following compares everything in the current directory:
 
-Usage::
+.. code-block:: bash
 
     compare50 *
 
-Odds are that directories contain files that should not be compared. Say for instance some extraneous `.txt` files. To exclude these, just run compare50 with the optional `-x` (eXclude) argument like so:
+Including and excluding submissions
+-----------------------------------
 
-Usage::
+Odds are that directories contain files that should not be compared. Say for instance some extraneous `.txt` files. To exclude these, run compare50 with the optional `-x` (eXclude) argument like so:
+
+.. code-block:: bash
 
     compare50 * -x "*.txt"
 
 Do note the quotation marks above. These are necessary as the shell would otherwise glob `*.txt` to every text file in the current directory. This would have compare50 exclude just these files, and not the text files within the submissions themselves.
 
-Sometimes it is specific types of files that need to be compared, and in that case it is easier to tell compare50 what to include rather than exclude. To support this compare50 comes with an optional `-i` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
+Sometimes only specific types of files need to be compared, and in that case it is easier to tell compare50 what to include rather than to exclude. To support this compare50 comes with an optional `-i` (Include) argument. The exclude and include argument interact with each other in order. If familiar, this is in similar spirit to a `.gitignore` file, where each line either includes or excludes some files. So let us say we want to compare no other files, but every `.java` file, except `foo.java`. This can be achieved like so:
 
-Usage::
+.. code-block:: bash
 
     compare50 * -x "*" -i "*.java" -x "foo.java"
 
-The order of the arguments above is important here. Each include or exclude argument will override the previous. So the above reads as following. Take everything in the current directory and treat it as a submission. Then exclude everything from every submission. Next, once again include every `.java` file. Finally, exclude `foo.java` once more.
+The order of the arguments is important here. Each include or exclude argument will override the previous. So the above reads as following. Take everything in the current directory and treat it as a submission. Then exclude everything from every submission. Next, once again include every `.java` file. Finally, exclude `foo.java`.
+
+
+Removing distribution code
+--------------------------
+
+In order to exclude distribution code from comparison, supply the distribution files and folders with the `-d` argument.
+
+.. code-block:: bash
+
+    compare50 * -d foo.java bar
+
+Any code found in `foo.java` and in the folder `bar` will be subtracted from the submissions up for comparison. This subtraction is performed depending on the type of comparison. For instance, if compare50 does an exact comparison it will subtract only exact occurrences of the distribution code. If compare50 does a structure comparison it will subtract structurally equivalent occurrences in the submissions.
+
+
+Comparing archived submissions
+------------------------------
+
+Compare50 will cross compare all submissions by default. This is however unwanted behavior in the case of archived submissions, those are for instance the submissions from last year's iteration of the course. Submissions that need to be compared, but not cross compared against other archived submissions, can be marked as an archived submission with the `-a` argument.
+
+.. code-block:: bash
+
+    compare50 foo -a bar baz
+
+In the example above, foo is compared to bar and to baz, but bar is never compared to baz.
+
+
+Performing different comparisons
+--------------------------------
+
 
 
 Usage::
