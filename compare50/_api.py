@@ -3,7 +3,6 @@ import contextlib
 import heapq
 import io
 import itertools
-import multiprocessing
 import time
 
 import intervaltree
