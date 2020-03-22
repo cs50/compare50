@@ -69,20 +69,11 @@ class SubmissionFactory:
         else:
             included, excluded = lib50.files(self.patterns, require_tags=[], root=path)
 
-        decodable_files = []
-        for file_path in included:
-            try:
-                with open(path / file_path) as f:
-                    f.read()
-            except UnicodeDecodeError:
-                pass
-            else:
-                decodable_files.append(file_path)
+        decodable_files = sorted(file_path for file_path in included if self._is_valid_utf8(path / file_path))
 
         if not decodable_files:
             raise _api.Error(f"Empty submission: {path}")
 
-        decodable_files = sorted(decodable_files)
         return _data.Submission(path, decodable_files, preprocessor=preprocessor, is_archive=is_archive)
 
     def get_all(self, paths, preprocessor, is_archive=False):
@@ -99,6 +90,22 @@ class SubmissionFactory:
             else:
                 _api.get_progress_bar().update()
         return subs
+
+    @staticmethod
+    def _is_valid_utf8(file_path):
+        """
+        Check if file_path is valid utf-8.
+        f.read() is not performant since the entire file is read in before checking if it is valid utf8.
+        This function reads in the file in increasingly large blocks so that it can error out early if necessary.
+        """
+        try:
+            with open(file_path) as f:
+                blocksize = 64
+                while f.read(blocksize):
+                    blocksize *= 2;
+        except UnicodeDecodeError:
+            return False
+        return True
 
 
 class ArgParser(argparse.ArgumentParser):
