@@ -137,17 +137,6 @@ class IncludeExcludeAction(argparse.Action):
             self.callback(v)
 
 
-@attr.s(slots=True)
-class Preprocessor:
-    """Hack to ensure that composed preprocessor is serializable by Pickle."""
-    preprocessors = attr.ib()
-
-    def __call__(self, tokens):
-        for preprocessor in self.preprocessors:
-            tokens = preprocessor(tokens)
-        return tokens
-
-
 PROFILE = [ _api.compare
           , comparators.Winnowing.score
           , comparators.Winnowing.compare
@@ -283,7 +272,7 @@ def main():
         raise _api.Error("{} is not a pass, try one of these: {}"
                            .format(e.args[0], [c.__name__ for c in _data.Pass._get_all()]))
 
-    preprocessor = Preprocessor(passes[0].preprocessors)
+    preprocessor = _data.Preprocessor(passes[0].preprocessors)
 
     if args.profile:
         args.debug = True
@@ -334,7 +323,7 @@ def main():
         pass_to_results = {}
         for pass_ in passes:
             with _api.progress_bar(f"Comparing ({pass_.__name__})", disable=args.debug):
-                preprocessor = Preprocessor(pass_.preprocessors)
+                preprocessor = _data.Preprocessor(pass_.preprocessors)
                 for sub in itertools.chain(subs, archive_subs, ignored_subs):
                     object.__setattr__(sub, "preprocessor", preprocessor)
                 pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)

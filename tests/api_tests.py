@@ -2,7 +2,6 @@ import unittest
 import tempfile
 import os
 
-from compare50.__main__ import Preprocessor
 import compare50._data as data
 import compare50._api as api
 
