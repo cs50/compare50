@@ -99,7 +99,7 @@ class SubmissionFactory:
         This function reads in the file in increasingly large blocks so that it can error out early if necessary.
         """
         try:
-            with open(file_path) as f:
+            with open(file_path, encoding="utf8") as f:
                 blocksize = 64
                 while f.read(blocksize):
                     blocksize *= 2;
