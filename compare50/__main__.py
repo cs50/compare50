@@ -337,6 +337,10 @@ def main():
                 preprocessor = Preprocessor(pass_.preprocessors)
                 for sub in itertools.chain(subs, archive_subs, ignored_subs):
                     object.__setattr__(sub, "preprocessor", preprocessor)
+
+                for score in scores:
+                    print(score.sub_a.path, score.sub_b.path, score.score)
+
                 pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
 
         # Render results
