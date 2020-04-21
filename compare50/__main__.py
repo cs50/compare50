@@ -46,8 +46,8 @@ sys.excepthook = excepthook
 
 
 class SubmissionFactory:
-    def __init__(self, max_file_size=100):
-        self.max_file_size = max_file_size
+    def __init__(self):
+        self.max_file_size = 1024 * 1024
         self.patterns = []
         self.submissions = {}
 
@@ -355,6 +355,11 @@ def main():
                         metavar="MATCHES",
                         type=int,
                         help="number of matches to output")
+    parser.add_argument("--max-file-size",
+                        action="store",
+                        default=1024,
+                        type=int,
+                        help="maximum allowed file size in kilobytes (default 1024kB)")
     parser.add_argument("--profile",
                         action="store_true",
                         help="profile compare50 (development only, requires line_profiler, implies debug)")
@@ -369,10 +374,12 @@ def main():
 
     excepthook.verbose = args.verbose
 
+    # Set max file size in bytes
+    submission_factory.max_file_size = args.max_file_size * 1024
+
     for attrib in ("submissions", "archive", "distro"):
         # Expand all patterns found in args.{submissions,archive,distro}
         setattr(args, attrib, expand_patterns(getattr(args, attrib)))
-
 
     # Extract comparator and preprocessors from pass
     try:
