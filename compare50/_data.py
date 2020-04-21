@@ -112,12 +112,12 @@ class Submission:
     Represents a single submission. Submissions may either be single files or
     directories containing many files.
     """
-    _store = IdStore(key=lambda sub: (sub.path, sub.files))
+    _store = IdStore(key=lambda sub: (sub.path, sub.files, sub.large_files, sub.undecodable_files))
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
-    large_files = attr.ib(default=attr.Factory(list), cmp=False, repr=False)
-    undecodable_files = attr.ib(default=attr.Factory(list), cmp=False, repr=False)
+    large_files = attr.ib(default=attr.Factory(tuple), cmp=False, repr=False)
+    undecodable_files = attr.ib(default=attr.Factory(tuple), cmp=False, repr=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     is_archive = attr.ib(default=False, cmp=False)
     id = attr.ib(init=False)
@@ -125,6 +125,10 @@ class Submission:
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(
             [File(pathlib.Path(path), self) for path in self.files]))
+        object.__setattr__(self, "large_files", tuple(
+            [File(pathlib.Path(path), self) for path in self.large_files]))
+        object.__setattr__(self, "undecodable_files", tuple(
+            [File(pathlib.Path(path), self) for path in self.undecodable_files]))
         object.__setattr__(self, "id", Submission._store[self])
 
     def __iter__(self):

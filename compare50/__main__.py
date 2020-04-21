@@ -92,11 +92,6 @@ class SubmissionFactory:
                 large_files.append(file_path)
 
         small_files = sorted(small_files)
-
-        # Error in case no files are left in the submission
-        if not small_files:
-            raise _api.Error(f"Empty submission: {path}")
-
         return _data.Submission(path, small_files,
                                 large_files=large_files,
                                 undecodable_files=undecodable_files,
@@ -110,13 +105,8 @@ class SubmissionFactory:
         """
         subs = set()
         for sub_path in paths:
-            try:
-                subs.add(self._get(sub_path, preprocessor, is_archive))
-            # Ignore empty submissions
-            except _api.Error:
-                pass
-            else:
-                _api.get_progress_bar().update()
+            subs.add(self._get(sub_path, preprocessor, is_archive))
+            _api.get_progress_bar().update()
         return subs
 
     @staticmethod
@@ -221,9 +211,15 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     Also prints a warning in case of any large and/or non utf-8 files.
     """
 
+    def non_empty_subs(subs):
+        return [sub for sub in subs if sub.files]
+
     # Print the number of subs, archives, distro files, and the average number of files per sub
-    avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (len(subs) + len(archives)), 2)
-    data = PluralDict(subs=len(subs), archives=len(archives), distro=len(distro_files), avg=avg)
+    n_subs = len(non_empty_subs(subs))
+    n_archives = len(non_empty_subs(archives))
+    n_distro = len(distro_files)
+    avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (n_subs + n_archives), 2)
+    data = PluralDict(subs=n_subs, archives=n_archives, distro=n_distro, avg=avg)
     fmt = "Found {subs} submission{subs(s)}, {archives} archive submission{archives(s)}, and " \
           "{distro} distro file{distro(s)} with an average of {avg} file{avg(s)} per submission"
     termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
@@ -240,7 +236,7 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
             termcolor.cprint(f"    {file}", "yellow", attrs=["bold"])
 
     def get_large_files(subs):
-        return [sub.path / file_path for sub in subs for file_path in sub.large_files]
+        return [sub.path / file.name for sub in subs for file in sub.large_files]
 
     large = get_large_files(subs)
     large_archive = get_large_files(archives)
@@ -255,8 +251,6 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
         fmt = "Excluded {total} large file{total(s)}: {subs} in submissions, " \
               "{archives} in archives, {distro} in distro"
         termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
-        termcolor.cprint("  Consider increasing --max-file-size if these files should be included",
-                         "yellow", attrs=["bold"])
 
         # List all excluded large files in verbose mode
         if verbose:
@@ -264,10 +258,13 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
             print_files(large_archive, "Large files in archives")
             print_files(large_distro, "Large files in distro")
 
+        termcolor.cprint("  Consider increasing --max-file-size if these files should be included",
+                         "yellow", attrs=["bold"])
+
         did_print_warning = True
 
     def get_undecodable_files(subs):
-        return [sub.path / file_path for sub in subs for file_path in sub.undecodable_files]
+        return [sub.path / file.name for sub in subs for file in sub.undecodable_files]
 
     undecodable = get_undecodable_files(subs)
     undecodable_archive = get_undecodable_files(archives)
@@ -425,10 +422,15 @@ def main():
             ignored_subs = submission_factory.get_all(args.distro, preprocessor)
             ignored_files = {f for sub in ignored_subs for f in sub.files}
 
-            if len(subs) + len(archive_subs) < 2:
-                raise _api.Error("At least two non-empty submissions are required for a comparison.")
-
         print_stats(subs, archive_subs, ignored_subs, ignored_files, verbose=bool(args.verbose))
+
+        # Remove any empty submissions
+        subs = [sub for sub in subs if sub.files]
+        archive_subs = [archive for archive in archive_subs if archive.files]
+
+        # Not enough subs to compare, error
+        if len(subs) + len(archive_subs) < 2:
+            raise _api.Error("At least two non-empty submissions are required for a comparison.")
 
         with _api.progress_bar(f"Scoring ({passes[0].__name__})", disable=args.debug) as bar:
             # Cross compare and rank all submissions, keep only top `n`
