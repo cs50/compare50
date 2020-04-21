@@ -211,12 +211,42 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     Also prints a warning in case of any large and/or non utf-8 files.
     """
 
-    def non_empty_subs(subs):
+    def print_files(files, message):
+        if not files:
+            return
+
+        termcolor.cprint(f"  {message}:", "yellow", attrs=["bold"])
+        for file in files:
+            termcolor.cprint(f"    {file}", "yellow", attrs=["bold"])
+
+    def print_warning(sub_files, archive_files, distro_files, reason):
+        data = PluralDict(subs=len(sub_files),
+                          archives=len(archive_files),
+                          distro=len(distro_files),
+                          total=len(sub_files) + len(archive_files) + len(distro_files),
+                          reason=reason)
+        fmt = "Excluded {total} {reason} file{total(s)}: {subs} in submissions, " \
+              "{archives} in archives, {distro} in distro"
+        termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
+
+        # List all excluded large files in verbose mode
+        if verbose:
+            print_files(sub_files, f"{reason.capitalize()} files in submissions")
+            print_files(archive_files, f"{reason.capitalize()} files in archives")
+            print_files(distro_files, f"{reason.capitalize()} files in distro")
+
+    def get_large_files(subs):
+        return [sub.path / file.name for sub in subs for file in sub.large_files]
+
+    def get_non_empty_subs(subs):
         return [sub for sub in subs if sub.files]
 
+    def get_undecodable_files(subs):
+        return [sub.path / file.name for sub in subs for file in sub.undecodable_files]
+
     # Print the number of subs, archives, distro files, and the average number of files per sub
-    n_subs = len(non_empty_subs(subs))
-    n_archives = len(non_empty_subs(archives))
+    n_subs = len(get_non_empty_subs(subs))
+    n_archives = len(get_non_empty_subs(archives))
     n_distro = len(distro_files)
     avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (n_subs + n_archives), 2)
     data = PluralDict(subs=n_subs, archives=n_archives, distro=n_distro, avg=avg)
@@ -227,65 +257,26 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     # Keep track of any printed warning
     did_print_warning = False
 
-    def print_files(files, message):
-        if not files:
-            return
-
-        termcolor.cprint(f"  {message}:", "yellow", attrs=["bold"])
-        for file in files:
-            termcolor.cprint(f"    {file}", "yellow", attrs=["bold"])
-
-    def get_large_files(subs):
-        return [sub.path / file.name for sub in subs for file in sub.large_files]
-
+    # Find all excluded large files
     large = get_large_files(subs)
     large_archive = get_large_files(archives)
     large_distro = get_large_files(distro_subs)
 
     # Warn about excluded large files
     if large or large_archive or large_distro:
-        data = PluralDict(subs=len(large),
-                          archives=len(large_archive),
-                          distro=len(large_distro),
-                          total=len(large) + len(large_archive) + len(large_distro))
-        fmt = "Excluded {total} large file{total(s)}: {subs} in submissions, " \
-              "{archives} in archives, {distro} in distro"
-        termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
-
-        # List all excluded large files in verbose mode
-        if verbose:
-            print_files(large, "Large files in submissions")
-            print_files(large_archive, "Large files in archives")
-            print_files(large_distro, "Large files in distro")
-
+        print_warning(large, large_archive, large_distro, "large")
         termcolor.cprint("  Consider increasing --max-file-size if these files should be included",
                          "yellow", attrs=["bold"])
-
         did_print_warning = True
 
-    def get_undecodable_files(subs):
-        return [sub.path / file.name for sub in subs for file in sub.undecodable_files]
-
+    # Find all excluded undecodable (non utf-8) files
     undecodable = get_undecodable_files(subs)
     undecodable_archive = get_undecodable_files(archives)
     undecodable_distro = get_undecodable_files(distro_subs)
 
     # Warn about undecodable (non utf-8) files
     if undecodable or undecodable_archive or undecodable_distro:
-        data = PluralDict(subs=len(undecodable),
-                          archives=len(undecodable_archive),
-                          distro=len(undecodable_distro),
-                          total=len(undecodable) + len(undecodable_archive) + len(undecodable_distro))
-        fmt = "Excluded {total} non utf-8 file{total(s)}: {subs} in submissions, " \
-              "{archives} in archives, {distro} in distro"
-        termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
-
-        # List all undecodable files in verbose mode
-        if verbose:
-            print_files(undecodable, "Non utf-8 files in submissions")
-            print_files(undecodable_archive, "Non utf-8 files in archives")
-            print_files(undecodable_distro, "Non utf-8 files in distro")
-
+        print_warning(undecodable, undecodable_archive, undecodable_distro, "non utf-8")
         did_print_warning = True
 
     # Print suggestion to run with --verbose if any files are excluded
