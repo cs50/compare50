@@ -216,16 +216,31 @@ class PluralDict(dict):
 
 
 def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
+    """
+    Prints stats on the number of subs, archives, and distro files.
+    Also prints a warning in case of any large and/or non utf-8 files.
+    """
+
+    # Print the number of subs, archives, distro files, and the average number of files per sub
     avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (len(subs) + len(archives)), 2)
     data = PluralDict(subs=len(subs), archives=len(archives), distro=len(distro_files), avg=avg)
     fmt = "Found {subs} submission{subs(s)}, {archives} archive submission{archives(s)}, and " \
           "{distro} distro file{distro(s)} with an average of {avg} file{avg(s)} per submission"
     termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
 
+    # Keep track of any printed warning
     did_print_warning = False
 
+    def print_files(files, message):
+        if not files:
+            return
+
+        termcolor.cprint(f"  {message}:", "yellow", attrs=["bold"])
+        for file in files:
+            termcolor.cprint(f"    {file}", "yellow", attrs=["bold"])
+
     def get_large_files(subs):
-        return [file_path for sub in subs for file_path in sub.large_files]
+        return [sub.path / file_path for sub in subs for file_path in sub.large_files]
 
     large = get_large_files(subs)
     large_archive = get_large_files(archives)
@@ -240,12 +255,19 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
         fmt = "Excluded {total} large file{total(s)}: {subs} in submissions, " \
               "{archives} in archives, {distro} in distro"
         termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
-        termcolor.cprint("  Consider increasing --max-file-size if these files should be included,",
+        termcolor.cprint("  Consider increasing --max-file-size if these files should be included",
                          "yellow", attrs=["bold"])
+
+        # List all excluded large files in verbose mode
+        if verbose:
+            print_files(large, "Large files in submissions")
+            print_files(large_archive, "Large files in archives")
+            print_files(large_distro, "Large files in distro")
+
         did_print_warning = True
 
     def get_undecodable_files(subs):
-        return [file_path for sub in subs for file_path in sub.undecodable_files]
+        return [sub.path / file_path for sub in subs for file_path in sub.undecodable_files]
 
     undecodable = get_undecodable_files(subs)
     undecodable_archive = get_undecodable_files(archives)
@@ -260,6 +282,13 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
         fmt = "Excluded {total} non utf-8 file{total(s)}: {subs} in submissions, " \
               "{archives} in archives, {distro} in distro"
         termcolor.cprint(fmt.format_map(data), "yellow", attrs=["bold"])
+
+        # List all undecodable files in verbose mode
+        if verbose:
+            print_files(undecodable, "Non utf-8 files in submissions")
+            print_files(undecodable_archive, "Non utf-8 files in archives")
+            print_files(undecodable_distro, "Non utf-8 files in distro")
+
         did_print_warning = True
 
     # Print suggestion to run with --verbose if any files are excluded
@@ -392,7 +421,7 @@ def main():
             if len(subs) + len(archive_subs) < 2:
                 raise _api.Error("At least two non-empty submissions are required for a comparison.")
 
-        print_stats(subs, archive_subs, ignored_subs, ignored_files)
+        print_stats(subs, archive_subs, ignored_subs, ignored_files, verbose=bool(args.verbose))
 
         with _api.progress_bar(f"Scoring ({passes[0].__name__})", disable=args.debug) as bar:
             # Cross compare and rank all submissions, keep only top `n`
