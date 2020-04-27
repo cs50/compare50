@@ -45,6 +45,14 @@ excepthook.verbose = True
 sys.excepthook = excepthook
 
 
+def partition(vals, pred):
+    true = set()
+    false = set()
+    for val in vals:
+        (true if pred(val) else false).add(val)
+    return true, false
+
+
 class SubmissionFactory:
     def __init__(self):
         self.max_file_size = 1024 * 1024
@@ -74,27 +82,14 @@ class SubmissionFactory:
             included, excluded = lib50.files(self.patterns, require_tags=[], root=path)
 
         # Filter out any non utf8 files
-        undecodable_files = []
-        decodable_files = []
-        for file_path in included:
-            if self._is_valid_utf8(path / file_path):
-                decodable_files.append(file_path)
-            else:
-                undecodable_files.append(file_path)
+        decodable, undecodable = partition(included, lambda fp: self._is_valid_utf8(path / fp))
 
         # Filter out any large files (>self.max_file_size)
-        small_files = []
-        large_files = []
-        for file_path in decodable_files:
-            if (path / file_path).stat().st_size <= self.max_file_size:
-                small_files.append(file_path)
-            else:
-                large_files.append(file_path)
+        small, large = partition(decodable, lambda fp: (path / fp).stat().st_size <= self.max_file_size)
 
-        small_files = sorted(small_files)
-        return _data.Submission(path, small_files,
-                                large_files=large_files,
-                                undecodable_files=undecodable_files,
+        return _data.Submission(path, sorted(small),
+                                large_files=large,
+                                undecodable_files=undecodable,
                                 preprocessor=preprocessor,
                                 is_archive=is_archive)
 
@@ -220,6 +215,7 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
             termcolor.cprint(f"    {file}", "yellow", attrs=["bold"])
 
     def print_warning(sub_files, archive_files, distro_files, reason):
+        print()
         data = PluralDict(subs=len(sub_files),
                           archives=len(archive_files),
                           distro=len(distro_files),
@@ -236,13 +232,13 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
             print_files(distro_files, f"{reason.capitalize()} files in distro")
 
     def get_large_files(subs):
-        return [sub.path / file.name for sub in subs for file in sub.large_files]
+        return [sub.path / file for sub in subs for file in sub.large_files]
 
     def get_non_empty_subs(subs):
         return [sub for sub in subs if sub.files]
 
     def get_undecodable_files(subs):
-        return [sub.path / file.name for sub in subs for file in sub.undecodable_files]
+        return [sub.path / file for sub in subs for file in sub.undecodable_files]
 
     # Print the number of subs, archives, distro files, and the average number of files per sub
     n_subs = len(get_non_empty_subs(subs))
