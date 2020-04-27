@@ -115,7 +115,7 @@ class Submission:
     Represents a single submission. Submissions may either be single files or
     directories containing many files.
     """
-    _store = IdStore(key=lambda sub: (sub.path, sub.files, sub.large_files, sub.undecodable_files))
+    _store = IdStore(key=lambda sub: (sub.path, sub.files))
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
@@ -128,10 +128,6 @@ class Submission:
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(
             [File(pathlib.Path(path), self) for path in self.files]))
-        object.__setattr__(self, "large_files", tuple(
-            [File(pathlib.Path(path), self) for path in self.large_files]))
-        object.__setattr__(self, "undecodable_files", tuple(
-            [File(pathlib.Path(path), self) for path in self.undecodable_files]))
         object.__setattr__(self, "id", Submission._store[self])
 
     def __iter__(self):
