@@ -102,6 +102,15 @@ class IdStore(Mapping):
         return len(self.objects)
 
 
+def _to_path_tuple(fs):
+    """
+    Convert iterable yielding strings to tuple containing paths.
+    Ideally we could use an attrs converter decorator,but it doesn't exist yet
+    https://github.com/python-attrs/attrs/pull/404
+    """
+    return tuple(map(pathlib.Path, fs))
+
+
 @attr.s(slots=True, frozen=True)
 class Submission:
     """
@@ -119,11 +128,12 @@ class Submission:
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
-    large_files = attr.ib(factory=tuple, converter=lambda fs: tuple(pathlib.Path(f) for f in fs), cmp=False, repr=False)
-    undecodable_files = attr.ib(factory=tuple, converter=lambda fs: tuple(pathlib.Path(f) for f in fs), cmp=False, repr=False)
+    large_files = attr.ib(factory=tuple, converter=_to_path_tuple, cmp=False, repr=False)
+    undecodable_files = attr.ib(factory=tuple, converter=_to_path_tuple, cmp=False, repr=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     is_archive = attr.ib(default=False, cmp=False)
     id = attr.ib(init=False)
+
 
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(
@@ -137,6 +147,10 @@ class Submission:
     def get(cls, id):
         """Retrieve submission corresponding to specified id"""
         return cls._store.objects[id]
+
+    @staticmethod
+    def _to_path_tuple(fs):
+        return tuple(map(pathlib.Path, fs))
 
 
 @attr.s(slots=True, frozen=True)
