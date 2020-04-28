@@ -119,8 +119,8 @@ class Submission:
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
-    large_files = attr.ib(default=attr.Factory(tuple), converter=tuple, cmp=False, repr=False)
-    undecodable_files = attr.ib(default=attr.Factory(tuple), converter=tuple, cmp=False, repr=False)
+    large_files = attr.ib(default=attr.Factory(tuple), converter=lambda fs: tuple(pathlib.Path(f) for f in fs), cmp=False, repr=False)
+    undecodable_files = attr.ib(default=attr.Factory(tuple), converter=lambda fs: tuple(pathlib.Path(f) for f in fs), cmp=False, repr=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     is_archive = attr.ib(default=False, cmp=False)
     id = attr.ib(init=False)
@@ -128,10 +128,6 @@ class Submission:
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(
             [File(pathlib.Path(path), self) for path in self.files]))
-        object.__setattr__(self, "large_files", tuple(
-            [pathlib.Path(path) for path in self.large_files]))
-        object.__setattr__(self, "undecodable_files", tuple(
-            [pathlib.Path(path) for path in self.undecodable_files]))
         object.__setattr__(self, "id", Submission._store[self])
 
     def __iter__(self):
