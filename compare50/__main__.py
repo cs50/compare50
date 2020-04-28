@@ -88,8 +88,8 @@ class SubmissionFactory:
         small, large = partition(decodable, lambda fp: (path / fp).stat().st_size <= self.max_file_size)
 
         return _data.Submission(path, sorted(small),
-                                large_files=large,
-                                undecodable_files=undecodable,
+                                large_files=sorted(large),
+                                undecodable_files=sorted(undecodable),
                                 preprocessor=preprocessor,
                                 is_archive=is_archive)
 
