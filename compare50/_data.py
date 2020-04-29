@@ -148,10 +148,6 @@ class Submission:
         """Retrieve submission corresponding to specified id"""
         return cls._store.objects[id]
 
-    @staticmethod
-    def _to_path_tuple(fs):
-        return tuple(map(pathlib.Path, fs))
-
 
 @attr.s(slots=True, frozen=True)
 class File:
