@@ -286,7 +286,7 @@ def expand_patterns(patterns):
     Given a list of glob patterns, return a flat list containing the result
     of globbing all of them.
     """
-    return list(itertools.chain.from_iterable(map(lambda x: glob.glob(x, recursive=True), patterns)))
+    return list(itertools.chain.from_iterable(map(lambda x: glob.glob(x, recursive=True) or [x], patterns)))
 
 
 def main():
