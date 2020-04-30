@@ -137,7 +137,7 @@ class ListAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         indentation = " " * 4
         for pass_ in _data.Pass._get_all():
-            print(str(pass_.__name__))
+            print(str(pass_.__name__), f"(default: {'ON' if pass_.default else 'OFF'})")
             for line in textwrap.wrap(pass_.__doc__ or "No description provided", 80 - len(indentation)):
                 print("{}{}".format(indentation, line))
         parser.exit()
@@ -307,7 +307,8 @@ def main():
     parser.add_argument("-p", "--passes",
                         dest="passes",
                         nargs="+",
-                        default=[pass_.__name__ for pass_ in _data.Pass._get_all()],
+                        default=[pass_.__name__ for pass_ in _data.Pass._get_all()
+                                                if pass_.default],
                         help="Specify which passes to use. compare50 ranks only by the first pass, but will render views for every pass.")
     parser.add_argument("-i", "--include",
                         callback=submission_factory.include,
