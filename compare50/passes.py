@@ -37,7 +37,7 @@ class misspellings(Pass):
 
 class nocomments(Pass):
     """Removes comments, but keeps whitespace, then uses the winnowing algorithm to compare submissions"""
-    preprocessors = [preprocessors.split_on_whitespace, preprocessors.strip_comments]
+    preprocessors = [preprocessors.strip_comments, preprocessors.split_on_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
 
 class verbatim(Pass):
