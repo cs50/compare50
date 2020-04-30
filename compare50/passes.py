@@ -26,13 +26,11 @@ class exact(Pass):
     comparator = comparators.Winnowing(k=25, t=35)
 
 
-class misspellings(Pass):
-    """Compares comments for identically misspelled English words."""
-    preprocessors = [preprocessors.comments,
-                     preprocessors.normalize_case,
-                     preprocessors.words]
-    comparator = comparators.Misspellings(resource_filename("compare50.comparators",
-                                                            "english_dictionary.txt"))
+class verbatim(Pass):
+    """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."""
+    default = True
+    preprocessors = []
+    comparator = comparators.Winnowing(k=25, t=35)
 
 
 class nocomments(Pass):
@@ -41,8 +39,10 @@ class nocomments(Pass):
     comparator = comparators.Winnowing(k=25, t=35)
 
 
-class verbatim(Pass):
-    """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."""
-    default = True
-    preprocessors = []
-    comparator = comparators.Winnowing(k=25, t=35)
+class misspellings(Pass):
+    """Compares comments for identically misspelled English words."""
+    preprocessors = [preprocessors.comments,
+                     preprocessors.normalize_case,
+                     preprocessors.words]
+    comparator = comparators.Misspellings(resource_filename("compare50.comparators",
+                                                            "english_dictionary.txt"))
