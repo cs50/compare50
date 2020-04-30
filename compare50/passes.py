@@ -28,7 +28,6 @@ class exact(Pass):
 
 class misspellings(Pass):
     """Compares comments for identically misspelled English words."""
-    default = True
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,
                      preprocessors.words]
@@ -42,5 +41,6 @@ class nocomments(Pass):
 
 class verbatim(Pass):
     """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions"""
+    default = True
     preprocessors = []
     comparator = comparators.Winnowing(k=25, t=35)
