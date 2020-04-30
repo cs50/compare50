@@ -34,10 +34,12 @@ class misspellings(Pass):
     comparator = comparators.Misspellings(resource_filename("compare50.comparators",
                                                             "english_dictionary.txt"))
 
+
 class nocomments(Pass):
     """Removes comments, but keeps whitespace, then uses the winnowing algorithm to compare submissions."""
     preprocessors = [preprocessors.strip_comments, preprocessors.split_on_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
+
 
 class verbatim(Pass):
     """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."""
