@@ -99,6 +99,15 @@ class IdStore(Mapping):
         return len(self.objects)
 
 
+def _to_path_tuple(fs):
+    """
+    Convert iterable yielding strings to tuple containing paths.
+    Ideally we could use an attrs converter decorator,but it doesn't exist yet
+    https://github.com/python-attrs/attrs/pull/404
+    """
+    return tuple(map(pathlib.Path, fs))
+
+
 @attr.s(slots=True, frozen=True)
 class Submission:
     """
@@ -112,13 +121,16 @@ class Submission:
     Represents a single submission. Submissions may either be single files or
     directories containing many files.
     """
-    _store = IdStore(key=lambda sub: (sub.path, sub.files))
+    _store = IdStore(key=lambda sub: (sub.path, sub.files, sub.large_files, sub.undecodable_files))
 
     path = attr.ib(converter=pathlib.Path, cmp=False)
     files = attr.ib(cmp=False)
+    large_files = attr.ib(factory=tuple, converter=_to_path_tuple, cmp=False, repr=False)
+    undecodable_files = attr.ib(factory=tuple, converter=_to_path_tuple, cmp=False, repr=False)
     preprocessor = attr.ib(default=lambda tokens: tokens, cmp=False, repr=False)
     is_archive = attr.ib(default=False, cmp=False)
     id = attr.ib(init=False)
+
 
     def __attrs_post_init__(self):
         object.__setattr__(self, "files", tuple(
