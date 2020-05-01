@@ -344,7 +344,7 @@ def main():
                         action="store",
                         default=1024,
                         type=int,
-                        help="maximum allowed file size in kilobytes (default 1024kB)")
+                        help="maximum allowed file size in KiB (default 1024 KiB)")
     parser.add_argument("--profile",
                         action="store_true",
                         help="profile compare50 (development only, requires line_profiler, implies debug)")
