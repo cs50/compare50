@@ -29,7 +29,7 @@ class text(Pass):
 class exact(Pass):
     """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."""
     default = True
-    preprocessors = []
+    preprocessors = [preprocessors.split_on_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
 
 
