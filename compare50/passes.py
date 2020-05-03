@@ -3,7 +3,7 @@ from pkg_resources import resource_filename
 from . import comparators, preprocessors
 from ._data import Pass
 
-__all__ = ["structure", "exact", "verbatim", "nocomments", "misspellings"]
+__all__ = ["structure", "text", "exact", "nocomments", "misspellings"]
 
 
 class structure(Pass):
@@ -18,15 +18,15 @@ class structure(Pass):
     comparator = comparators.Winnowing(k=25, t=35)
 
 
-class exact(Pass):
-    """Removes all whitespace, then uses the winnowing algorithm to compare submissions."""
+class text(Pass):
+    """Removes whitespace, then uses the winnowing algorithm to compare submissions."""
     default = True
     preprocessors = [preprocessors.split_on_whitespace,
                      preprocessors.strip_whitespace]
     comparator = comparators.Winnowing(k=25, t=35)
 
 
-class verbatim(Pass):
+class exact(Pass):
     """Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."""
     default = True
     preprocessors = []
