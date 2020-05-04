@@ -27,11 +27,11 @@ class TestSubmissionFactory(TestCase):
         api._progress_bar.close()
         api._progress_bar = None
 
-
     def test_no_submissions(self):
         preprocessor = lambda tokens : tokens
         os.mkdir("foo")
         subs = self.factory.get_all(["foo"], preprocessor)
+        subs = {sub for sub in subs if sub.files}
         self.assertEqual(subs, set())
 
     def test_one_submission(self):
@@ -42,10 +42,12 @@ class TestSubmissionFactory(TestCase):
             pass
 
         subs = list(self.factory.get_all(["foo"], preprocessor))
+        subs = [sub for sub in subs if sub.files]
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].path.name, "foo")
 
         subs = list(self.factory.get_all(["foo/bar"], preprocessor))
+        subs = [sub for sub in subs if sub.files]
         self.assertEqual(len(subs), 1)
         self.assertEqual(subs[0].path.parent.name, "foo")
         self.assertEqual(subs[0].path.name, "bar")
@@ -58,6 +60,7 @@ class TestSubmissionFactory(TestCase):
             pass
 
         subs = list(self.factory.get_all(["foo"], preprocessor))
+        subs = [sub for sub in subs if sub.files]
         self.assertEqual(subs[0].preprocessor(""), ["foo"])
 
     def test_single_file_submission(self):
@@ -67,6 +70,7 @@ class TestSubmissionFactory(TestCase):
             pass
 
         subs = list(self.factory.get_all(["foo/bar.py"], preprocessor))
+        subs = [sub for sub in subs if sub.files]
         self.assertEqual(len(subs), 1)
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
@@ -79,6 +83,7 @@ class TestSubmissionFactory(TestCase):
 
         self.factory.exclude("*")
         subs = self.factory.get_all(["foo"], preprocessor)
+        subs = {sub for sub in subs if sub.files}
         self.assertEquals(subs, set())
 
     def test_include_pattern(self):
@@ -90,6 +95,7 @@ class TestSubmissionFactory(TestCase):
         self.factory.exclude("*")
         self.factory.include("bar.py")
         subs = list(self.factory.get_all(["foo"], preprocessor))
+        subs = [sub for sub in subs if sub.files]
         self.assertEqual(len(subs), 1)
         self.assertEqual(len(list(subs[0].files)), 1)
         self.assertEqual(str(list(subs[0].files)[0].name), "bar.py")
@@ -101,6 +107,7 @@ class TestSubmissionFactory(TestCase):
             f.write(b'\x80abc')
 
         subs = self.factory.get_all(["foo"], preprocessor)
+        subs = {sub for sub in subs if sub.files}
         self.assertEqual(subs, set())
 
 
