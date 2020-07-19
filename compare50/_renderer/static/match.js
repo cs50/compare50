@@ -286,7 +286,7 @@ function init_group_button(groups, view_name) {
     let next_group_button = document.getElementById("next_group");
     next_group_button.addEventListener("click", go_to_adjacent_group);
     document.addEventListener("keyup", (event) =>  {
-        if (event.key === ' ') {
+        if (event.key === ' ' || event.key == "ArrowRight") {
             event.preventDefault();
             go_to_adjacent_group(event, "n"); 
         }
