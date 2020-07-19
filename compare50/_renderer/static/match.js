@@ -178,8 +178,8 @@ function init_navigation(id) {
 }
 
 function init_group_button(groups, view_name) {
-    function update_group_counter() {
-        document.getElementById("group_counter").innerHTML = (group_index + 1) + " / " + groups.length;
+    function update_group_counter(mult=1) {
+        document.getElementById("group_counter").innerHTML = (group_index + mult * 1) + " / " + groups.length;
     }
 
     // If view changed, update group counter
@@ -218,13 +218,40 @@ function init_group_button(groups, view_name) {
     let group_index = 0;
     update_group_counter();
 
-    function go_to_next_group(event) {
+    // keep track of last move for wrapping's sake
+    let last_move = null;
+
+    function go_to_adjacent_group(event, direction=null) {
         // if view is not active (current), nothing to do here
         if (CURRENT_VIEW !== view_name) {
             return;
         }
 
+        if (direction === null) {
+            direction = (event.target.id == "next_group") ? "n" : "p";
+        }
+
+        if (direction == "n") {
+            if (group_index < 0) {
+                group_index = 0;
+            }
+            index_increment = 1;
+        }
+        else {
+            if (group_index == 0 && last_move == "n") {
+                group_index = sorted_groups.length - 2;
+            }
+            else if (group_index < 0 && last_move != "n") {
+                group_index = sorted_groups.length - 1;
+            }
+            else if (last_move == "n") {
+                group_index -= 1;
+            }
+            index_increment = -1;
+        }
+
         update_group_counter();
+        last_move = direction;
 
         // find first fragment of group
         let frag = sorted_groups[group_index].spans[0].fragments[0];
@@ -243,16 +270,26 @@ function init_group_button(groups, view_name) {
         frag.scroll_to();
 
         // increment index
-        group_index = (group_index + 1) % sorted_groups.length;
-
+        group_index = (group_index + index_increment) % sorted_groups.length;
     }
+
     // On click move to next group from sorted_groups
     let next_group_button = document.getElementById("next_group");
-    next_group_button.addEventListener("click", go_to_next_group);
+    next_group_button.addEventListener("click", go_to_adjacent_group);
     document.addEventListener("keyup", (event) =>  {
         if (event.key === ' ') {
-            event.preventDefault()
-            go_to_next_group(event); 
+            event.preventDefault();
+            go_to_next_group(event, "n"); 
+        }
+    });
+
+    // On click move to previous group from sorted_groups
+    let previous_group_button = document.getElementById("previous_group");
+    previous_group_button.addEventListener("click", go_to_adjacent_group);
+    document.addEventListener("keyup", (event) =>  {
+        if (event.key === 8) {
+            event.preventDefault();
+            go_to_adjacent_group(event, "p");
         }
     });
 }
