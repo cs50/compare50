@@ -74,6 +74,10 @@ pre {
     counter-reset: none;
 }
 
+.file_name {
+    word-break: break-word;
+}
+
 /* highlighted code fragments */
 .match {
     background-color: #ffd0a8;
@@ -135,7 +139,7 @@ pre {
     margin-bottom: 10%;
 }
 
-#next_group {
+.matches_group {
     margin-bottom: .4em;
 }
 
