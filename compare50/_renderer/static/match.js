@@ -178,8 +178,8 @@ function init_navigation(id) {
 }
 
 function init_group_button(groups, view_name) {
-    function update_group_counter(mult=1) {
-        document.getElementById("group_counter").innerHTML = (group_index + mult * 1) + " / " + groups.length;
+    function update_group_counter() {
+        document.getElementById("group_counter").innerHTML = (group_index + 1) + " / " + groups.length;
     }
 
     // If view changed, update group counter
@@ -227,26 +227,35 @@ function init_group_button(groups, view_name) {
             return;
         }
 
+        // find direction from event target (when a button, not keypress)
         if (direction === null) {
             direction = (event.target.id == "next_group") ? "n" : "p";
         }
 
+        // different index behavior if going to next or previous group
         if (direction == "n") {
+            if (last_move == "p") {
+                group_index += 1;
+            }
             if (group_index < 0) {
                 group_index = 0;
             }
+
             index_increment = 1;
         }
         else {
             if (group_index == 0 && last_move == "n") {
+                // if on last group right now
                 group_index = sorted_groups.length - 2;
             }
             else if (group_index < 0 && last_move != "n") {
+                // if on first group right now
                 group_index = sorted_groups.length - 1;
             }
             else if (last_move == "n") {
                 group_index -= 1;
             }
+
             index_increment = -1;
         }
 
@@ -279,7 +288,7 @@ function init_group_button(groups, view_name) {
     document.addEventListener("keyup", (event) =>  {
         if (event.key === ' ') {
             event.preventDefault();
-            go_to_next_group(event, "n"); 
+            go_to_adjacent_group(event, "n"); 
         }
     });
 
@@ -287,7 +296,8 @@ function init_group_button(groups, view_name) {
     let previous_group_button = document.getElementById("previous_group");
     previous_group_button.addEventListener("click", go_to_adjacent_group);
     document.addEventListener("keyup", (event) =>  {
-        if (event.key === 8) {
+        // left arrow key will go to previous group
+        if (event.key === "ArrowLeft") {
             event.preventDefault();
             go_to_adjacent_group(event, "p");
         }
