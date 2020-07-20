@@ -458,22 +458,21 @@ function render50(str_a, str_b, name_a="a.txt", name_b="b.txt") {
         if (response.ok) {
             return response.blob();
         }
-    })
-    .then((response) => {
-        // Create data URL to download from
+    }).then((response) => {
+        // create data URL to download from
         let anchor = document.createElement("a");
         anchor.href = URL.createObjectURL(response);
         anchor.setAttribute("download", "output");
         anchor.style.display = "none";
         document.body.appendChild(anchor);
 
-        // Wait, then click to download
+        // wait, then click to download
         setTimeout(function() {
             anchor.click();
             document.body.removeChild(anchor);
         }, 66);
     });
-};
+}
 
 
 document.addEventListener("DOMContentLoaded", event => {
