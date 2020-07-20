@@ -215,52 +215,27 @@ function init_group_button(groups, view_name) {
     }
 
     // init group counter
-    let group_index = 0;
-    update_group_counter();
+    let group_index = -1;
+    go_to_adjacent_group(new Event("InitializeHighlights"), 1);
 
-    // keep track of last move for wrapping's sake
-    let last_move = null;
-
-    function go_to_adjacent_group(event, direction=null) {
+    function go_to_adjacent_group(event, direction) {
         // if view is not active (current), nothing to do here
         if (CURRENT_VIEW !== view_name) {
             return;
         }
 
-        // find direction from event target (when a button, not keypress)
-        if (direction === null) {
-            direction = (event.target.id == "next_group") ? "n" : "p";
+        // increment index
+        group_index += direction;
+
+        // wrap around
+        if (group_index >= sorted_groups.length) {
+            group_index = 0;
         }
-
-        // different index behavior if going to next or previous group
-        if (direction == "n") {
-            if (last_move == "p") {
-                group_index += 1;
-            }
-            if (group_index < 0) {
-                group_index = 0;
-            }
-
-            index_increment = 1;
-        }
-        else {
-            if (group_index == 0 && last_move == "n") {
-                // if on last group right now
-                group_index = sorted_groups.length - 2;
-            }
-            else if (group_index < 0 && last_move != "n") {
-                // if on first group right now
-                group_index = sorted_groups.length - 1;
-            }
-            else if (last_move == "n") {
-                group_index -= 1;
-            }
-
-            index_increment = -1;
+        else if (group_index < 0) {
+            group_index = sorted_groups.length - 1;
         }
 
         update_group_counter();
-        last_move = direction;
 
         // find first fragment of group
         let frag = sorted_groups[group_index].spans[0].fragments[0];
@@ -277,29 +252,30 @@ function init_group_button(groups, view_name) {
 
         // scroll to frag
         frag.scroll_to();
-
-        // increment index
-        group_index = (group_index + index_increment) % sorted_groups.length;
     }
 
     // On click move to next group from sorted_groups
     let next_group_button = document.getElementById("next_group");
-    next_group_button.addEventListener("click", go_to_adjacent_group);
+    next_group_button.addEventListener("click", (event) => {
+        go_to_adjacent_group(event, 1);
+    });
     document.addEventListener("keyup", (event) =>  {
-        if (event.key === ' ' || event.key == "ArrowRight") {
+        if (event.key === ' ' || event.key == "]") {
             event.preventDefault();
-            go_to_adjacent_group(event, "n"); 
+            go_to_adjacent_group(event, 1); 
         }
     });
 
     // On click move to previous group from sorted_groups
     let previous_group_button = document.getElementById("previous_group");
-    previous_group_button.addEventListener("click", go_to_adjacent_group);
+    previous_group_button.addEventListener("click", (event) => {
+        go_to_adjacent_group(event, -1);
+    });
     document.addEventListener("keyup", (event) =>  {
-        // left arrow key will go to previous group
-        if (event.key === "ArrowLeft") {
+        // left bracket key will go to previous group
+        if (event.key === "[") {
             event.preventDefault();
-            go_to_adjacent_group(event, "p");
+            go_to_adjacent_group(event, -1);
         }
     });
 }
