@@ -27,8 +27,11 @@
                 {% endfor %}
                 </div>
                 <div id="group_nav">
-                  <button type="button" class="btn btn-outline-light next_group" id="next_group">next</button>
-                  <div class="text-light" id="group_counter"></div>
+                    <div class="btn-group" role="group" aria-label="NextPrevGroup">
+                        <button type="button" class="btn btn-outline-light matches_group" id="previous_group">&lt;</button>
+                        <button type="button" class="btn btn-outline-light matches_group" id="next_group">&gt;</button>
+                    </div>
+                    <div class="text-light" id="group_counter"></div>
                 </div>
             </nav>
             <div id="content">

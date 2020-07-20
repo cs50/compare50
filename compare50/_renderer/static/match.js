@@ -215,13 +215,24 @@ function init_group_button(groups, view_name) {
     }
 
     // init group counter
-    let group_index = 0;
-    update_group_counter();
+    let group_index = -1;
+    go_to_adjacent_group(new Event("InitializeHighlights"), 1);
 
-    function go_to_next_group(event) {
+    function go_to_adjacent_group(event, direction) {
         // if view is not active (current), nothing to do here
         if (CURRENT_VIEW !== view_name) {
             return;
+        }
+
+        // increment index
+        group_index += direction;
+
+        // wrap around
+        if (group_index >= sorted_groups.length) {
+            group_index = 0;
+        }
+        else if (group_index < 0) {
+            group_index = sorted_groups.length - 1;
         }
 
         update_group_counter();
@@ -241,18 +252,30 @@ function init_group_button(groups, view_name) {
 
         // scroll to frag
         frag.scroll_to();
-
-        // increment index
-        group_index = (group_index + 1) % sorted_groups.length;
-
     }
+
     // On click move to next group from sorted_groups
     let next_group_button = document.getElementById("next_group");
-    next_group_button.addEventListener("click", go_to_next_group);
+    next_group_button.addEventListener("click", (event) => {
+        go_to_adjacent_group(event, 1);
+    });
     document.addEventListener("keyup", (event) =>  {
-        if (event.key === ' ') {
-            event.preventDefault()
-            go_to_next_group(event); 
+        if (event.key === ' ' || event.key == "]") {
+            event.preventDefault();
+            go_to_adjacent_group(event, 1); 
+        }
+    });
+
+    // On click move to previous group from sorted_groups
+    let previous_group_button = document.getElementById("previous_group");
+    previous_group_button.addEventListener("click", (event) => {
+        go_to_adjacent_group(event, -1);
+    });
+    document.addEventListener("keyup", (event) =>  {
+        // left bracket key will go to previous group
+        if (event.key === "[") {
+            event.preventDefault();
+            go_to_adjacent_group(event, -1);
         }
     });
 }
