@@ -40,12 +40,12 @@ class Side extends React.Component {
                     "height":this.props.height,
                     "line-height":this.props.height
                 }}>
-                    <SubmissionBar filepath="looooooooooooooooooooooooooooooooooooooooooooong/file/path/to/submission_a"
+                    <TopBar filepath="looooooooooooooooooooooooooooooooooooooooooooong/file/path/to/submission_a"
                                    percentage={70}
                                    file_in_view="foo.c"/>
                 </div>
                 <div className="row fill">
-                    bar
+                    <Code/>
                 </div>
             </div>
         )
@@ -53,7 +53,7 @@ class Side extends React.Component {
 }
 
 
-class SubmissionBar extends React.Component {
+class TopBar extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -105,6 +105,15 @@ class SubmissionBar extends React.Component {
             filepath_elem.scrollLeft = filepath_elem.scrollWidth;
         }, 1);
 
+    }
+}
+
+
+class Code extends React.Component {
+    render() {
+        return (
+            <div>hello world</div>
+        )
     }
 }
 
