@@ -1,6 +1,8 @@
 import React from 'react';
-import './App.css';
 import Split from 'react-split';
+
+import './App.css';
+import TopBar from './topbar';
 
 
 class App extends React.Component {
@@ -15,13 +17,6 @@ class App extends React.Component {
     }
 }
 
-class TopBar extends React.Component {
-    render() {
-        return (
-            <div style={{"height":"100px", "width":"100%", "float":"left", "background-color": "orange"}}>navigation</div>
-        )
-    }
-}
 
 class SideBar extends React.Component {
     render() {
