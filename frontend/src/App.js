@@ -21,11 +21,7 @@ class App extends React.Component {
                   </div>
               </div>
               <div className="row fill">
-                  <div className="column-box">
-                      <div className="row fill">
-                          <CodeView top_height="2.5em"/>
-                      </div>
-                  </div>
+                  <CodeView top_height="2.5em"/>
               </div>
             </div>
         );
