@@ -1,47 +1,34 @@
 import React from 'react';
-import Split from 'react-split';
 
 import './App.css';
-import TopBar from './topbar';
+import SideBar from './sidebar';
+import Logo from './logo';
+import CodeView from './codeview';
 
 
 class App extends React.Component {
     render() {
         return (
-            <div>
-                <TopBar />
-                <SideBar />
-                <CodeView />
+            <div className="row-box" style={{"height":"100vh"}}>
+              <div className="row auto" style={{"width":"10%"}}>
+                  <div className="column-box" >
+                      <div className="row auto">
+                          <Logo height="2.5em"/>
+                      </div>
+                      <div className="row fill">
+                          <SideBar/>
+                      </div>
+                  </div>
+              </div>
+              <div className="row fill">
+                  <div className="column-box">
+                      <div className="row fill">
+                          <CodeView top_height="2.5em"/>
+                      </div>
+                  </div>
+              </div>
             </div>
         );
-    }
-}
-
-
-class SideBar extends React.Component {
-    render() {
-        return (
-            <div style={{"height":"500px", "width": "10%", "margin":0, "float":"left", "background-color": "green"}}>foo</div>
-        )
-    }
-}
-
-class CodeView extends React.Component {
-    render() {
-        return (
-            <Split
-                sizes={[45, 45]}
-                gutterSize={10}
-                gutterAlign="center"
-                snapOffset={30}
-                dragInterval={1}
-                direction="horizontal"
-                cursor="col-resize"
-            >
-                <div style={{"height":"500px", "margin":0, "float":"left", "background-color": "#D3D3D3"}}>code</div>
-                <div style={{"height":"500px", "margin":0, "float":"left", "background-color": "#D3D3D3"}}>code</div>
-            </Split>
-        )
     }
 }
 

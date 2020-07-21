@@ -1,0 +1,29 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+}
+
+.column-box {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+
+.row-box {
+    display: flex;
+    flex-flow: row;
+    height: 100%;
+}
+
+/* .column-box .row, .row-box .row {
+    border: 1px solid red;
+} */
+
+.column-box .row.auto, .row-box .row.auto {
+    flex: 0 1 auto;
+}
+
+.column-box .row.fill, .row-box .row.fill {
+    flex: 1 1 auto;
+}
