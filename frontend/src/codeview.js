@@ -38,7 +38,7 @@ class Side extends React.Component {
             <div className="column-box">
                 <div className="row auto" style={{
                     "height":this.props.height,
-                    "line-height":this.props.height
+                    "lineHeight":this.props.height
                 }}>
                     <TopBar filepath="looooooooooooooooooooooooooooooooooooooooooooong/file/path/to/submission_a"
                                    percentage={70}
@@ -80,13 +80,13 @@ class TopBar extends React.Component {
                 </div>
                 <div className="row auto" style={{
                     "width":"4em",
-                    "text-align":"center"
+                    "textAlign":"center"
                 }}>
                     {`${this.props.percentage}%`}
                 </div>
                 <div className="row auto" style={{
                     "width":"10em",
-                    "text-align":"center"
+                    "textAlign":"center"
                 }}>
                     {this.state.file_in_view}
                 </div>

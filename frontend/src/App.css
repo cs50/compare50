@@ -15,8 +15,8 @@ body {
     flex-flow: row;
     height: 100%;
 }
-
-/* .column-box .row, .row-box .row {
+/* 
+.column-box .row, .row-box .row {
     border: 1px solid red;
 } */
 
@@ -26,4 +26,61 @@ body {
 
 .column-box .row.fill, .row-box .row.fill {
     flex: 1 1 auto;
+}
+
+.btn-group button {
+    text-align: center;
+    background-color: #4CAF50; /* Green background */
+    border: 1px solid white; /* Green border */
+    color: white; /* White text */
+    padding: 10px 0px; /* Some vertical padding */
+    cursor: pointer; /* Pointer/hand icon */
+}
+
+.btn-group button:hover {
+    background-color: #3e8e41; /* Add a background color on hover */
+}
+
+.btn-group.vertical button {
+    display: block; /* Make the buttons appear below each other */
+}
+
+.btn-group.vertical button:first-child {
+    border-radius: 5px 5px 0px 0px;
+}
+
+.btn-group.vertical button:last-child {
+    border-radius: 0px 0px 5px 5px;
+}
+
+.btn-group.vertical button:not(:last-child) {
+    border-bottom: none; /* Prevent double borders */
+}
+
+.btn-group.horizontal button {
+    float: left; /* Float the buttons side by side */
+}
+
+.btn-group.horizontal button:first-child {
+    border-radius: 5px 0px 0px 5px;
+}
+
+.btn-group.horizontal button:last-child {
+    border-radius: 0px 5px 5px 0px;
+}
+
+.btn-group.horizontal button:not(:last-child) {
+    border-right: none; /* Prevent double borders */
+}
+
+.btn-group.vertical button:only-child, .btn-group.horizontal button:only-child {
+    border-radius: 5px 5px 5px 5px;
+}
+
+/* https://www.w3schools.com/howto/howto_css_button_group_vertical.asp */
+/* Clear floats (clearfix hack) */
+.btn-group.horizontal:after {
+    content: "";
+    clear: both;
+    display: table;
 }
