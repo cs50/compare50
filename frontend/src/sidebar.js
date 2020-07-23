@@ -12,7 +12,6 @@ class SideBar extends React.Component {
 
         return (
             <div style={{
-                "backgroundColor":"green",
                 "height":"100%"
             }}>
                 <div style={{...style, ...{"marginTop": "0"}}}>

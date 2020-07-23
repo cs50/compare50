@@ -11,7 +11,7 @@ class App extends React.Component {
         return (
             <div className="row-box" style={{"height":"100vh"}}>
               <div className="row auto" style={{"width":"10%"}}>
-                  <div className="column-box" >
+                  <div className="column-box" style={{"borderRight": "1px solid #a7adba"}}>
                       <div className="row auto">
                           <Logo height="2.5em"/>
                       </div>

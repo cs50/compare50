@@ -1,11 +1,23 @@
 import React from 'react';
 import Split from 'react-split';
 
+import API from './api';
+
 import './App.css';
 import './split.css';
 
 
 class CodeView extends React.Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            "match": API.get_match(),
+            "passes": API.passes,
+            "current_pass": API.passes[0]
+        }
+    }
+
     render() {
         return (
             <Split
@@ -20,11 +32,11 @@ class CodeView extends React.Component {
                     "height":"100%"
                 }}
             >
-                <div style={{"height":"100%", "margin":0, "float":"left", "backgroundColor": "#D3D3D3"}}>
-                    <Side height={this.props.top_height}/>
+                <div style={{"height":"100%", "margin":0, "float":"left"}}>
+                    <Side height={this.props.top_height} code={this.state.match.code_a()}/>
                 </div>
-                <div style={{"height":"100%", "margin":0, "float":"left", "backgroundColor": "#D3D3D3"}}>
-                    <Side height={this.props.top_height}/>
+                <div style={{"height":"100%", "margin":0, "float":"left"}}>
+                    <Side height={this.props.top_height} code={this.state.match.code_b()}/>
                 </div>
             </Split>
         )
@@ -33,6 +45,14 @@ class CodeView extends React.Component {
 
 
 class Side extends React.Component {
+    // constructor(props) {
+    //     super(props);
+    //
+    //     this.state = {
+    //         "code": props.code
+    //     }
+    // }
+
     render() {
         return (
             <div className="column-box">
@@ -44,8 +64,8 @@ class Side extends React.Component {
                                    percentage={70}
                                    file_in_view="foo.c"/>
                 </div>
-                <div className="row fill">
-                    <Code/>
+                <div className="row fill" style={{"overflow":"scroll"}}>
+                    <Code code={this.props.code}/>
                 </div>
             </div>
         )
@@ -70,7 +90,7 @@ class TopBar extends React.Component {
 
     render() {
         return (
-            <div className="row-box" style={{"backgroundColor":"orange"}}>
+            <div className="row-box" style={{"font-weight":"bold"}}>
                 <div ref={this.filepath_ref} className="row fill" style={{
                     "overflow":"scroll",
                     "marginLeft":"5px",
@@ -112,7 +132,11 @@ class TopBar extends React.Component {
 class Code extends React.Component {
     render() {
         return (
-            <div>hello world</div>
+            <div style={{"paddingLeft":".5em"}}>
+                <pre>
+                    {this.props.code}
+                </pre>
+            </div>
         )
     }
 }

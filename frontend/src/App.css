@@ -2,6 +2,11 @@ html,
 body {
     height: 100%;
     margin: 0;
+    font-family: Proxima-Nova, sans-serif;
+}
+
+pre {
+    font-family: Consolas, monospace;
 }
 
 .column-box {
@@ -15,7 +20,7 @@ body {
     flex-flow: row;
     height: 100%;
 }
-/* 
+/*
 .column-box .row, .row-box .row {
     border: 1px solid red;
 } */
@@ -30,15 +35,14 @@ body {
 
 .btn-group button {
     text-align: center;
-    background-color: #4CAF50; /* Green background */
-    border: 1px solid white; /* Green border */
-    color: white; /* White text */
+    border: 1px solid #a7adba; /* Green border */
+    color: black; /* White text */
     padding: 10px 0px; /* Some vertical padding */
     cursor: pointer; /* Pointer/hand icon */
 }
 
 .btn-group button:hover {
-    background-color: #3e8e41; /* Add a background color on hover */
+    background-color: #c0c5ce; /* Add a background color on hover */
 }
 
 .btn-group.vertical button {

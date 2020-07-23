@@ -102,7 +102,6 @@ def render(pass_to_results, dest):
 
     ranking_pass, ranking_results = next(iter(pass_to_results.items()))
 
-
     try:
         max_score = max((result.score.score for result in ranking_results))
     except ValueError:
@@ -122,6 +121,7 @@ def render(pass_to_results, dest):
 
     index_css = common_css + [read_file(STATIC / "index.css")]
     index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
+
     # Render index
     rendered_index = index_template.render(js=index_js,
                                            css=index_css,
