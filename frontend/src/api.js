@@ -12,12 +12,12 @@ class API {
 
 
 class Match {
-    code_a() {
-        return sub_a.code;
+    files_a() {
+        return sub_a.files;
     }
 
-    code_b() {
-        return sub_b.code;
+    files_b() {
+        return sub_b.files;
     }
 }
 
