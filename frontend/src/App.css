@@ -35,14 +35,14 @@ pre {
 
 .btn-group button {
     text-align: center;
-    border: 1px solid #a7adba; /* Green border */
+    border: 1px solid #c0c5ce; /* Green border */
     color: black; /* White text */
     padding: 10px 0px; /* Some vertical padding */
     cursor: pointer; /* Pointer/hand icon */
 }
 
 .btn-group button:hover {
-    background-color: #c0c5ce; /* Add a background color on hover */
+    background-color: #d0d5de; /* Add a background color on hover */
 }
 
 .btn-group.vertical button {

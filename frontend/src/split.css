@@ -24,6 +24,6 @@
 }
 
 .split.split-horizontal, .gutter.gutter-horizontal {
-    height: 500px;
+    height: 100%;
     float: left;
 }
