@@ -33,6 +33,21 @@ pre {
     flex: 1 1 auto;
 }
 
+code.newline {
+    counter-increment: line_numbers;
+}
+code.newline::before {
+    content: counter(line_numbers) "";
+    display: inline-block;
+    width: 3em;
+    border-right: 1px solid black;
+    margin-right: 0.5em;
+    padding-right: 1em;
+    text-align: right;
+    padding: 0 0.5em;
+    color: black;
+}
+
 .btn-group button {
     text-align: center;
     border: 1px solid #c0c5ce; /* Green border */

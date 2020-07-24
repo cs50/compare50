@@ -77,7 +77,7 @@ class PassNavigation extends React.Component {
         return (
             <div className="btn-group vertical">
                 {this.state.passes.map(pass =>
-                    <button type="button" title={pass.docs} style={{"width":"100%"}}>
+                    <button key={`pass_${pass.name}`} type="button" title={pass.docs} style={{"width":"100%"}}>
                         {pass.name}
                     </button>
                 )}

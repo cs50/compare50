@@ -2,6 +2,7 @@ import React, {useState, useRef, useEffect} from 'react';
 import Split from 'react-split';
 
 import API from '../api';
+import slice from './fragmentslicer'
 
 import './app.css';
 import './split.css';
@@ -11,6 +12,28 @@ function CodeView(props) {
     const [match] = useState(API.get_match());
     const [passes] = useState(API.passes);
     const [current_pass, setCurrentPass] = useState(API.passes[0]);
+
+    const pass = match.get_pass(current_pass);
+
+    const attachFragments = file => {
+        let spans = [];
+        pass.groups.forEach(group => {
+            group.forEach(span => {
+                if (span.file_id === file.id) {
+                    spans.push(span);
+                }
+            })
+        });
+
+        let ignored = pass.ignored_spans.filter(span => span.file_id === file.id);
+
+        file.fragments = slice(file.content, spans.concat(ignored));
+
+        return file;
+    };
+
+    const filesA = match.files_a().map(attachFragments);
+    const filesB = match.files_b().map(attachFragments);
 
     return (
         <Split
@@ -26,10 +49,10 @@ function CodeView(props) {
             }}
         >
             <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={match.files_a()}/>
+                <Side height={props.top_height} files={filesA}/>
             </div>
             <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={match.files_b()}/>
+                <Side height={props.top_height} files={filesB}/>
             </div>
         </Split>
     )
@@ -106,7 +129,7 @@ function StatusBar(props) {
     });
 
     return (
-        <div className="row-box" style={{"font-weight":"bold"}}>
+        <div className="row-box" style={{"fontWeight":"bold"}}>
             <div ref={filepathRef} className="row fill" style={{
                 "overflow":"scroll",
                 "marginLeft":"5px",
@@ -139,12 +162,9 @@ function Code(props) {
     )
 }
 
-// Only rerender code if its files change
-Code = React.memo(Code, (prev, next) => prev.files == next.files);
-
 
 function File(props) {
-    const [ref, entry] = useIntersect({
+    const [visibilityRef, entry] = useIntersect({
         threshold: Array.from(Array(100).keys(), i => i / 100),
     });
 
@@ -152,11 +172,41 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
+    // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
+    let starts_on_newline = true;
+
+    const renderFragment = (frag, frag_index) => {
+        // Break up the fragments into lines (keep the newline)
+        const lines = frag.split(/(?<=\n)/g);
+
+        // Create a code element for each line
+        const code_elems = lines.map((line, line_index) => {
+            const code_elem = (
+                <code
+                    key={`line_${props.file.id}_${frag_index}_${line_index}`}
+                    className={starts_on_newline ? "newline" : ""}
+                >
+                    {line}
+                </code>
+            );
+
+            starts_on_newline = line.endsWith("\n");
+
+            return code_elem;
+        });
+
+        return (
+            <span key={`fragment_${props.file.id}_${frag_index}`}>
+                {code_elems}
+            </span>
+        )
+    }
+
     return (
         <>
             <h4> {props.file.name} <span>({props.file.percentage}%)</span></h4>
-            <pre ref={ref}>
-                {props.file.content}
+            <pre ref={visibilityRef}>
+                {props.file.fragments.map(renderFragment)}
             </pre>
         </>
     )
