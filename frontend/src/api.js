@@ -1,5 +1,6 @@
 import sub_a from './spoofed_data/sub_a.json'
 import sub_b from './spoofed_data/sub_a.json'
+import match_structure from './spoofed_data/match_structure.json'
 
 
 class API {
@@ -18,6 +19,10 @@ class Match {
 
     files_b() {
         return sub_b.files;
+    }
+
+    get_pass(pass) {
+        return match_structure;
     }
 }
 

@@ -1,9 +1,9 @@
 import React, {useState, useRef, useEffect} from 'react';
 import Split from 'react-split';
 
-import API from './api';
+import API from '../api';
 
-import './App.css';
+import './app.css';
 import './split.css';
 
 
@@ -132,7 +132,6 @@ function StatusBar(props) {
 
 
 function Code(props) {
-    console.log('RENDERING')
     return (
         <div style={{"paddingLeft":".5em"}}>
             {props.files.map(file => <File key={file.name} file={file} updateFileVisibility={props.updateFileVisibility}/>)}

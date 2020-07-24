@@ -1,6 +1,6 @@
 import React from 'react';
 
-import './App.css';
+import './app.css';
 import SideBar from './sidebar';
 import Logo from './logo';
 import CodeView from './codeview';

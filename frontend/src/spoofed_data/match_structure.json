@@ -1,0 +1,17 @@
+{
+    "pass": "structure",
+    "score": 90,
+    "groups": [
+        [
+            {"file_id": 1, "start": 20, "end": 30},
+            {"file_id": 3, "start": 20, "end": 30}
+        ],
+        [
+            {"file_id": 2, "start": 10, "end": 40},
+            {"file_id": 4, "start": 20, "end": 50}
+        ]
+    ],
+    "ignored_spans": [
+        {"file_id": 2, "start": 100, "end": 150}
+    ]
+}
