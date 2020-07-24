@@ -110,13 +110,7 @@ function StatusBar(props) {
     const filepathRef = useRef(null);
 
     useEffect(() => {
-        // Horrible hack
-        // As of writng, July 21 2020
-        // Chrome does not scroll all the way left, unless it's delayed a little
-        setTimeout(() => {
-            const elem = filepathRef.current;
-            elem.scrollLeft = elem.scrollWidth;
-        }, 1);
+        filepathRef.current.scrollLeft = filepathRef.current.scrollWidth;
     });
 
     return (
