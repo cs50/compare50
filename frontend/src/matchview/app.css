@@ -39,12 +39,10 @@ code.newline {
 code.newline::before {
     content: counter(line_numbers) "";
     display: inline-block;
-    width: 3em;
-    border-right: 1px solid black;
+    width: 2em;
     margin-right: 0.5em;
-    padding-right: 1em;
     text-align: right;
-    padding: 0 0.5em;
+    padding: 0 0.5em 0 0;
     color: black;
 }
 
