@@ -3,7 +3,7 @@ import React from 'react';
 import './app.css';
 import SideBar from './sidebar';
 import Logo from './logo';
-import CodeView from './codeview';
+import SplitView from './code/splitview';
 
 
 class App extends React.Component {
@@ -21,7 +21,7 @@ class App extends React.Component {
                   </div>
               </div>
               <div className="row fill">
-                  <CodeView top_height="2.5em"/>
+                  <SplitView top_height="2.5em"/>
               </div>
             </div>
         );

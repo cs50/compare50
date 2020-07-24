@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 // import './index.css';
 // import './bootstrap.min.css';
-import App from './matchview/app';
+import App from './match/app';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
