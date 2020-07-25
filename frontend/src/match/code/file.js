@@ -1,5 +1,7 @@
 import React, {useState, useRef, useEffect} from 'react';
 
+import "./file.css";
+
 
 function File(props) {
     const [visibilityRef, entry] = useIntersect({
@@ -43,7 +45,7 @@ function File(props) {
     return (
         <>
             <h4> {props.file.name} <span>({props.file.percentage}%)</span></h4>
-            <pre ref={visibilityRef}>
+            <pre ref={visibilityRef} className={props.softWrap ? "softwrap" : ""}>
                 {props.file.fragments.map(renderFragment)}
             </pre>
         </>

@@ -1,28 +1,34 @@
-import sub_a from './spoofed_data/sub_a.json'
-import sub_b from './spoofed_data/sub_a.json'
-import match_structure from './spoofed_data/match_structure.json'
+import subA from './spoofed_data/sub_a.json'
+import subB from './spoofed_data/sub_a.json'
+import matchStructure from './spoofed_data/match_structure.json'
 
 
 class API {
-    static passes = ["structure", "text", "exact"];
+    static getPasses() {
+        return [
+            {"name": "structure", "docs":"foo"},
+            {"name": "text", "docs": "bar"},
+            {"name": "exact", "docs": "baz"}
+        ]
+    }
 
-    static get_match() {
+    static getMatch() {
         return new Match();
     }
 }
 
 
 class Match {
-    files_a() {
-        return sub_a.files;
+    filesA() {
+        return subA.files;
     }
 
-    files_b() {
-        return sub_b.files;
+    filesB() {
+        return subB.files;
     }
 
-    get_pass(pass) {
-        return match_structure;
+    getPass(pass) {
+        return matchStructure;
     }
 }
 

@@ -2,12 +2,12 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 // import './index.css';
 // import './bootstrap.min.css';
-import App from './match/app';
+import MatchView from './match/matchview';
 import * as serviceWorker from './serviceWorker';
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <MatchView />
   </React.StrictMode>,
   document.getElementById('root')
 );

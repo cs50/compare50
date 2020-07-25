@@ -48,14 +48,15 @@ code.newline::before {
 
 .btn-group button {
     text-align: center;
-    border: 1px solid #c0c5ce; /* Green border */
-    color: black; /* White text */
+    background-color: #eee;
+    border: 1px solid #ddd;
+    color: black;
     padding: 10px 0px; /* Some vertical padding */
     cursor: pointer; /* Pointer/hand icon */
 }
 
 .btn-group button:hover {
-    background-color: #d0d5de; /* Add a background color on hover */
+    background-color: #ddd; /* Add a background color on hover */
 }
 
 .btn-group.vertical button {

@@ -5,24 +5,22 @@ import API from '../../api';
 import createFragments from './fragmentslicer'
 import File from './file'
 
-import '../app.css';
+import '../matchview.css';
 import './split.css';
 
 
 function SplitView(props) {
-    const [match] = useState(API.get_match());
-    const [passes] = useState(API.passes);
-    const [current_pass, setCurrentPass] = useState(API.passes[0]);
+    const [match] = useState(API.getMatch());
 
-    const pass = match.get_pass(current_pass);
+    const pass = match.getPass(props.globalState.currentPass);
 
     const attachFragments = file => {
         file.fragments = createFragments(file, pass);
         return file;
     };
 
-    const filesA = match.files_a().map(attachFragments);
-    const filesB = match.files_b().map(attachFragments);
+    const filesA = match.filesA().map(attachFragments);
+    const filesB = match.filesB().map(attachFragments);
 
     return (
         <Split
@@ -38,10 +36,10 @@ function SplitView(props) {
             }}
         >
             <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesA}/>
+                <Side height={props.top_height} files={filesA} globalState={props.globalState}/>
             </div>
             <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesB}/>
+                <Side height={props.top_height} files={filesB} globalState={props.globalState}/>
             </div>
         </Split>
     )
@@ -98,7 +96,14 @@ function Side(props) {
             </div>
             <div className="row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
-                    {props.files.map(file => <File key={file.name} file={file} updateFileVisibility={updateFileVisibility}/>)}
+                    {props.files.map(file =>
+                        <File
+                            key={file.name}
+                            file={file}
+                            softWrap={props.globalState.softWrap}
+                            updateFileVisibility={updateFileVisibility}
+                        />
+                    )}
                 </div>
             </div>
         </div>
