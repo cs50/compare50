@@ -1,4 +1,5 @@
 import React, {useState, useRef, useEffect} from 'react';
+import createFragments from './fragmentslicer'
 
 import "./file.css";
 
@@ -12,15 +13,23 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
+    const fragments = useRef(createFragments(props.file, props.regionMap));
+
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
 
-    const fragmentElems = props.file.fragments.map((frag, i) => {
+    const fragmentElems = fragments.current.map((frag, i) => {
         const id = `fragment_${props.file.id}_${i}`;
-        const fragElem = <Fragment key={id} fragment={frag} id={id} onNewline={onNewline}/>
-        onNewline = frag.endsWith("\n");
+        const fragElem = <Fragment
+                            key={id}
+                            fragment={frag}
+                            fileId={props.file.id}
+                            id={id}
+                            onNewline={onNewline}
+                            regionMap={props.regionMap}/>
+        onNewline = frag.text.endsWith("\n");
         return fragElem;
-    })
+    });
 
     return (
         <>
@@ -34,17 +43,25 @@ function File(props) {
 
 
 function Fragment(props) {
-    const [hovering, setHovering] = useState(false);
-
     // Break up the fragments into lines (keep the newline)
-    const lines = props.fragment.split(/(?<=\n)/g);
+    const lines = props.fragment.text.split(/(?<=\n)/g);
+
+    let className = "";
+    if (props.regionMap.isActive(props.fragment)) {
+        className = "active-match";
+    }
+    else if (props.regionMap.isSelected(props.fragment)) {
+        className = "selected-match";
+    }
+    else if (props.regionMap.isGrouped(props.fragment)) {
+        className = "grouped-match";
+    }
 
     return (
         <span
-            className={hovering ? "active-match" : ""}
+            className={className}
             key={props.id}
-            onMouseEnter={event => setHovering(true)}
-            onMouseLeave={event => setHovering(false)}
+            onMouseEnter={event => props.regionMap.activate(props.fragment)}
         >
             {lines.map((line, lineIndex) =>
                 <code

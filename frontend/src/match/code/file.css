@@ -12,3 +12,7 @@ pre.softwrap {
     background-color: #ffaa60;
     cursor: pointer;
 }
+
+.grouped-match {
+    background-color: #ffd0a8;
+}

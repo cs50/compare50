@@ -3,15 +3,16 @@
     "score": 90,
     "groups": [
         [
-            {"file_id": 1, "start": 20, "end": 30},
-            {"file_id": 3, "start": 20, "end": 30}
+            {"fileId": 1, "start": 5, "end": 10},
+            {"fileId": 1, "start": 20, "end": 30},
+            {"fileId": 3, "start": 20, "end": 30}
         ],
         [
-            {"file_id": 2, "start": 10, "end": 40},
-            {"file_id": 4, "start": 20, "end": 50}
+            {"fileId": 2, "start": 10, "end": 40},
+            {"fileId": 4, "start": 20, "end": 50}
         ]
     ],
-    "ignored_spans": [
-        {"file_id": 2, "start": 100, "end": 150}
+    "ignoredSpans": [
+        {"fileId": 2, "start": 100, "end": 150}
     ]
 }

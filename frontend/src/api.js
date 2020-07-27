@@ -1,5 +1,5 @@
 import subA from './spoofed_data/sub_a.json'
-import subB from './spoofed_data/sub_a.json'
+import subB from './spoofed_data/sub_b.json'
 import matchStructure from './spoofed_data/match_structure.json'
 
 

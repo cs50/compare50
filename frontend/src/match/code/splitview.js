@@ -1,8 +1,6 @@
 import React, {useState, useRef, useEffect} from 'react';
 import Split from 'react-split';
 
-import API from '../../api';
-import createFragments from './fragmentslicer'
 import File from './file'
 
 import '../matchview.css';
@@ -10,18 +8,6 @@ import './split.css';
 
 
 function SplitView(props) {
-    const [match] = useState(API.getMatch());
-
-    const pass = match.getPass(props.globalState.currentPass);
-
-    const attachFragments = file => {
-        file.fragments = createFragments(file, pass);
-        return file;
-    };
-
-    const filesA = match.filesA().map(attachFragments);
-    const filesB = match.filesB().map(attachFragments);
-
     return (
         <Split
             sizes={[50, 50]}
@@ -35,12 +21,16 @@ function SplitView(props) {
                 "height":"100%"
             }}
         >
-            <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesA} globalState={props.globalState}/>
-            </div>
-            <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesB} globalState={props.globalState}/>
-            </div>
+            {[props.match.filesA(), props.match.filesB()].map((files, i) =>
+                <div key={`side_${i}`} style={{"height":"100%", "margin":0, "float":"left"}}>
+                    <Side
+                        height={props.topHeight}
+                        files={files}
+                        regionMap={props.regionMap}
+                        globalState={props.globalState}
+                    />
+                </div>
+            )}
         </Split>
     )
 }
@@ -66,6 +56,7 @@ function Side(props) {
                         <File
                             key={file.name}
                             file={file}
+                            regionMap={props.regionMap}
                             softWrap={props.globalState.softWrap}
                             updateFileVisibility={updateFileVisibility}
                         />
@@ -109,14 +100,15 @@ function StatusBar(props) {
     )
 }
 
+
 function useMax(items, initial=null) {
     if (initial === null) {
         initial = items[0];
     }
 
-    let [item, setItem] = useState(initial);
+    const [item, setItem] = useState(initial);
 
-    let values = useRef(items.reduce((acc, item) => {
+    const values = useRef(items.reduce((acc, item) => {
         acc[item] = 0;
         return acc;
     }, {}));
@@ -125,7 +117,7 @@ function useMax(items, initial=null) {
     const update = (item, value) => {
         values.current[item] = value;
 
-        // Find the item with the most visibility
+        // Find the item with the highest value
         let maxItem = item;
         let maxValue = 0;
         Object.entries(values.current).forEach(([item, value]) => {
