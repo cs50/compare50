@@ -34,22 +34,26 @@ function File(props) {
 
 
 function Fragment(props) {
+    const [hovering, setHovering] = useState(false);
+
     // Break up the fragments into lines (keep the newline)
     const lines = props.fragment.split(/(?<=\n)/g);
 
-    // Create a code element for each line
-    const codeLines = lines.map((line, lineIndex) =>
-        <code
-            key={`code_${props.id}_${lineIndex}`}
-            className={props.onNewline || lineIndex > 0 ? "newline" : ""}
-        >
-            {line}
-        </code>
-    );
-
     return (
-        <span key={props.id}>
-            {codeLines}
+        <span
+            className={hovering ? "active-match" : ""}
+            key={props.id}
+            onMouseEnter={event => setHovering(true)}
+            onMouseLeave={event => setHovering(false)}
+        >
+            {lines.map((line, lineIndex) =>
+                <code
+                    key={`code_${props.id}_${lineIndex}`}
+                    className={props.onNewline || lineIndex > 0 ? "newline" : ""}
+                >
+                    {line}
+                </code>
+            )}
         </span>
     )
 }

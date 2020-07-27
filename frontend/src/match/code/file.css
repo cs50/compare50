@@ -6,3 +6,9 @@ pre.softwrap {
     white-space: -o-pre-wrap; /* Opera 7 */
     word-wrap: break-word; /* Internet Explorer 5.5+ */
 }
+
+
+.active-match {
+    background-color: #ffaa60;
+    cursor: pointer;
+}
