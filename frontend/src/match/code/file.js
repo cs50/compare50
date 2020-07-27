@@ -13,42 +13,44 @@ function File(props) {
     });
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
-    let starts_on_newline = true;
+    let onNewline = true;
 
-    const renderFragment = (frag, frag_index) => {
-        // Break up the fragments into lines (keep the newline)
-        const lines = frag.split(/(?<=\n)/g);
-
-        // Create a code element for each line
-        const code_elems = lines.map((line, line_index) => {
-            const code_elem = (
-                <code
-                    key={`line_${props.file.id}_${frag_index}_${line_index}`}
-                    className={starts_on_newline ? "newline" : ""}
-                >
-                    {line}
-                </code>
-            );
-
-            starts_on_newline = line.endsWith("\n");
-
-            return code_elem;
-        });
-
-        return (
-            <span key={`fragment_${props.file.id}_${frag_index}`}>
-                {code_elems}
-            </span>
-        )
-    }
+    const fragmentElems = props.file.fragments.map((frag, i) => {
+        const id = `fragment_${props.file.id}_${i}`;
+        const fragElem = <Fragment key={id} fragment={frag} id={id} onNewline={onNewline}/>
+        onNewline = frag.endsWith("\n");
+        return fragElem;
+    })
 
     return (
         <>
             <h4> {props.file.name} <span>({props.file.percentage}%)</span></h4>
             <pre ref={visibilityRef} className={props.softWrap ? "softwrap" : ""}>
-                {props.file.fragments.map(renderFragment)}
+                {(fragmentElems)}
             </pre>
         </>
+    )
+}
+
+
+function Fragment(props) {
+    // Break up the fragments into lines (keep the newline)
+    const lines = props.fragment.split(/(?<=\n)/g);
+
+    // Create a code element for each line
+    const codeLines = lines.map((line, lineIndex) =>
+        <code
+            key={`code_${props.id}_${lineIndex}`}
+            className={props.onNewline || lineIndex > 0 ? "newline" : ""}
+        >
+            {line}
+        </code>
+    );
+
+    return (
+        <span key={props.id}>
+            {codeLines}
+        </span>
     )
 }
 
