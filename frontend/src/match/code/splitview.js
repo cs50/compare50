@@ -47,41 +47,7 @@ function SplitView(props) {
 
 
 function Side(props) {
-    let [fileInView, setFileInView] = useState(props.files[0].name);
-
-    // Keep track of the visilibity of each file in the viewport
-    let fileVisibilities = useRef({
-        "maxFile": props.files[0].name,
-        "maxVisibility": 0,
-        "visibilities": props.files.reduce((acc, curr) => {
-            acc[curr.name] = 0;
-            return acc;
-        }, {})
-    });
-
-    // Callback for when the visibility of a file in the viewport changes
-    const updateFileVisibility = (filename, visibility) => {
-        fileVisibilities.current.visibilities[filename] = visibility;
-
-        // Find the file with the most visibility in the viewport
-        let maxFile = props.files[0].name;
-        let maxVisibility = fileVisibilities.current.visibilities[maxFile];
-        props.files.forEach(file => {
-            let vis = fileVisibilities.current.visibilities[file.name]
-            if (vis > maxVisibility) {
-                maxVisibility = vis;
-                maxFile = file.name;
-            }
-        });
-
-        fileVisibilities.current.maxVisibility = maxVisibility;
-
-        // If the file with the most visibility is different from the last, update fileInView
-        if (fileVisibilities.current.maxFile !== maxFile) {
-            fileVisibilities.current.maxFile = maxFile;
-            setFileInView(maxFile);
-        }
-    }
+    let [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
     return (
         <div className="column-box">
@@ -141,6 +107,41 @@ function StatusBar(props) {
             </div>
         </div>
     )
+}
+
+function useMax(items, initial=null) {
+    if (initial === null) {
+        initial = items[0];
+    }
+
+    let [item, setItem] = useState(initial);
+
+    let values = useRef(items.reduce((acc, item) => {
+        acc[item] = 0;
+        return acc;
+    }, {}));
+
+    // Callback for when the value of an item changes
+    const update = (item, value) => {
+        values.current[item] = value;
+
+        // Find the item with the most visibility
+        let maxItem = item;
+        let maxValue = 0;
+        Object.entries(values.current).forEach(([item, value]) => {
+            if (value > maxValue) {
+                maxItem = item;
+                maxValue = value;
+            }
+        });
+
+        // If the item with the highest value is different from the last, update maxItem
+        if (item !== maxItem) {
+            setItem(maxItem);
+        }
+    }
+
+    return [item, update];
 }
 
 
