@@ -15,7 +15,7 @@ function HomeView() {
           <Logo />
         </div>
         <div>
-          <Graph />
+          <Graph graph='{"data": {"../check50-ja/check50": {"is_archive": false}, "../check50/check50": {"is_archive": false}}, "links": [{"index": 0, "source": "../check50/check50", "target": "../check50-ja/check50", "value": 10.0}], "nodes": [{"id": "../check50-ja/check50"}, {"id": "../check50/check50"}]}' />
         </div>
       </div>
     );
