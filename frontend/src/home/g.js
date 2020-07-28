@@ -193,6 +193,8 @@ d3Graph.init_graph = function (el, props, state) {
         }
     });
 
+    console.log(props.width)
+
     this.SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
@@ -226,7 +228,7 @@ d3Graph.ticked = function(links, nodes, props) {
         .attr("y2", function(d) { return d.target.y + props.radius; });
 }
 
-d3Graph.dragstarted = function(d) {
+d3Graph.dragstarted = function(d, el, props, state) {
     if (!d3.event.active) this.SIMULATION.alphaTarget(0.15).restart();
     d.fx = d.x;
     d.fy = d.y;
@@ -248,7 +250,7 @@ d3Graph.dragended = function(d, el, props, state) {
     let drag_target = this.DRAG_TARGET;
     this.DRAG_TARGET = null;
 
-    this.on_mouseout_node(drag_target);
+    this.on_mouseout_node(drag_target, el, props, state);
 }
 
 
@@ -280,6 +282,7 @@ d3Graph.on_mouseout_node = function(d, el, props, state) {
 
 
 d3Graph.on_click_node = function(d, el, props, state) {
+    console.log(state)
     state.graph.nodes.forEach(node => {
         node.is_node_selected = node.is_node_focused = node.id === d.id;
         node.is_group_selected = node.is_group_focused = node.group === d.group;
@@ -320,7 +323,6 @@ d3Graph.on_resize = function() {
 }
 
 d3Graph.create = function(el, props, state) {
-    console.log("el:", el)
     this.init_data(el, props, state);
     this.init_graph(el, props, state);
     if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
@@ -353,7 +355,7 @@ d3Graph.update = function(el, props, state) {
         .attr("rx", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
         .attr("ry", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
         .call(d3.drag()
-          .on("start", this.dragstarted)
+          .on("start", (event) => {this.dragstarted(event, el, props, state)})
           .on("drag", this.dragged)
           .on("end", (event) => {this.dragended(event, el, props, state)}))
         .on("click", (event) => {this.on_click_node(event, el, props, state)})
@@ -361,7 +363,6 @@ d3Graph.update = function(el, props, state) {
             this.on_mouseover_node(event, el, props, state)
         })
         .on("mouseout", (event) => {
-            console.log(state)
             this.on_mouseout_node(event, el, props, state)
         })
         .append("title")

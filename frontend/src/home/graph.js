@@ -17,8 +17,8 @@ class Graph extends React.PureComponent {
     componentDidMount() {
       d3Graph.create(this.graph.current, {
         radius: 10,
-        width: "100%",
-        height: "300px"
+        width: 400,
+        height: 300
       }, this.getChartState());
     }
 
@@ -38,7 +38,7 @@ class Graph extends React.PureComponent {
   
     render() {
       return (
-        <svg className="d3graph" ref={this.graph}></svg>
+        <svg className="d3graph" ref={this.graph} width="100%" height="300px"></svg>
       )
     }
 };
