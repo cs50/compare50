@@ -74,8 +74,17 @@ class SpanManager {
         return this._regionMap.getGroupId(region) !== null;
     }
 
+    selectedGroupIndex() {
+        for (let span of this.spans) {
+            if (this._spanStates[span.id] === Span.STATES.SELECTED) {
+                return span.groupId + 1;
+            }
+        }
+        return 0;
+    }
+
     nGroups() {
-        return this._regionMap.nGroups();
+        return this._regionMap.nGroups;
     }
 
     _getState(region) {
@@ -98,7 +107,7 @@ class RegionMap {
         // Memoization map, maps a this._key() to a span
         this._map = {};
 
-        this.nGroups = new Set(this.spans.map(span => span.groupId)).length
+        this.nGroups = new Set(this.spans.map(span => span.groupId)).size;
     }
 
     getSpan(region) {
@@ -132,10 +141,6 @@ class RegionMap {
     getGroupId(region, state) {
         const span = this.getSpan(region);
         return span !== null ? span.groupId : null;
-    }
-
-    nGroups() {
-        return this.nGroups;
     }
 
     _key(region) {

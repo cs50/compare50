@@ -13,7 +13,6 @@ function SideBar(props) {
 
     const updateGlobalState = newState => props.setGlobalState({...props.globalState, ...newState})
 
-
     return (
         <div style={{
             "height":"100%"
@@ -33,8 +32,8 @@ function SideBar(props) {
             </div>
             <div style={style}>
                 <GroupNavigation
-                    current={props.globalState.currentGroup}
-                    n={props.globalState.nGroups}
+                    current={props.spanManager.selectedGroupIndex()}
+                    n={props.spanManager.nGroups()}
                     setGroup={group => updateGlobalState({"currentGroup": group})}
                 />
             </div>
