@@ -15,8 +15,6 @@ function MatchView() {
         "passes": API.getPasses(),
         "nMatches": 50,
         "currentMatch": 1,
-        "currentGroup": 1,
-        "nGroups": 6,
         "softWrap": true
     });
 
@@ -32,7 +30,7 @@ function MatchView() {
                       <Logo height="2.5em"/>
                   </div>
                   <div className="row fill">
-                      <SideBar globalState={globalState} setGlobalState={setGlobalState}/>
+                      <SideBar globalState={globalState} setGlobalState={setGlobalState} spanManager={spanManager}/>
                   </div>
               </div>
           </div>

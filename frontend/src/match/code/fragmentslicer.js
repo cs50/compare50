@@ -9,7 +9,7 @@ class Fragment {
 
 
 function slice(file, spans) {
-    const slicingMarks = [];
+    let slicingMarks = [];
     spans.forEach(span => {
         slicingMarks.push(span.start);
         slicingMarks.push(span.end);
@@ -17,6 +17,8 @@ function slice(file, spans) {
 
     slicingMarks.push(0);
     slicingMarks.push(file.content.length);
+
+    slicingMarks = Array.from(new Set(slicingMarks));
 
     slicingMarks.sort((a, b) => a - b).filter((item, pos, array) => !pos || item !== array[pos - 1]);
 

@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import React, {useState, useMemo} from 'react';
 
 
 class SpanManager {
@@ -59,8 +59,6 @@ class SpanManager {
             return acc;
         }, {});
 
-        console.log(spanStates);
-
         this._setSpanStates(spanStates);
     }
 
@@ -74,6 +72,10 @@ class SpanManager {
 
     isGrouped(region) {
         return this._regionMap.getGroupId(region) !== null;
+    }
+
+    nGroups() {
+        return this._regionMap.nGroups();
     }
 
     _getState(region) {
@@ -90,13 +92,23 @@ class SpanManager {
 
 // Immutable map from a region in a file to a span/group
 class RegionMap {
-    constructor(spans, groups) {
+    constructor(spans) {
         this.spans = spans;
-        this._groups = groups;
+
+        // Memoization map, maps a this._key() to a span
+        this._map = {};
+
+        this.nGroups = new Set(this.spans.map(span => span.groupId)).length
     }
 
     getSpan(region) {
-        // TODO likely candidate for optimization, memoization might be good enough, KISS for now
+        const key = this._key(region);
+
+        // Get span from memory if possible
+        if (this._map[key] !== undefined) {
+            return this._map[key];
+        }
+
         let largestSpan = null;
 
         this.spans.forEach(span => {
@@ -111,12 +123,23 @@ class RegionMap {
             }
         });
 
+        // Memoize span
+        this._map[key] = largestSpan;
+
         return largestSpan;
     }
 
     getGroupId(region, state) {
         const span = this.getSpan(region);
         return span !== null ? span.groupId : null;
+    }
+
+    nGroups() {
+        return this.nGroups;
+    }
+
+    _key(region) {
+        return `${region.fileId}:${region.start}`;
     }
 }
 
