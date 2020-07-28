@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useRef, useEffect} from 'react';
 
 import './sidebar.css';
 
@@ -84,6 +84,26 @@ function PassNavigation(props) {
 
 
 function GroupNavigation(props) {
+    const prevRef = useRef(null);
+    const nextRef = useRef(null);
+
+    useEffect(() => {
+        const eventListener = (event) =>  {
+            if (event.key === "]") {
+                event.preventDefault();
+                nextRef.current.click();
+            }
+            else if (event.key === "[") {
+                event.preventDefault();
+                prevRef.current.click();
+            }
+        };
+
+        document.addEventListener("keyup", eventListener);
+
+        return () => document.removeEventListener("keyup", eventListener);
+    }, []);
+
     return (
         <div>
             <div style={{
@@ -95,6 +115,7 @@ function GroupNavigation(props) {
             </div>
             <div className="btn-group horizontal" style={{"width":"100%"}}>
                 <button
+                    ref={prevRef}
                     type="button"
                     style={{"width":"50%"}}
                     onClick={() => props.spanManager.selectPreviousGroup()}
@@ -102,6 +123,7 @@ function GroupNavigation(props) {
                     &lt;
                 </button>
                 <button
+                    ref={nextRef}
                     type="button"
                     style={{"width":"50%"}}
                     onClick={() => props.spanManager.selectNextGroup()}
