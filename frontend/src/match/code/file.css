@@ -7,6 +7,10 @@ pre.softwrap {
     word-wrap: break-word; /* Internet Explorer 5.5+ */
 }
 
+.selected-match {
+    background-color: black;
+    cursor: pointer;
+}
 
 .active-match {
     background-color: #ffaa60;
@@ -15,4 +19,5 @@ pre.softwrap {
 
 .grouped-match {
     background-color: #ffd0a8;
+    cursor: pointer;
 }

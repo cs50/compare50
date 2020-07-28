@@ -13,7 +13,7 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
-    const fragments = useRef(createFragments(props.file, props.regionMap));
+    const fragments = useRef(createFragments(props.file, props.spanManager));
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
@@ -26,7 +26,7 @@ function File(props) {
                             fileId={props.file.id}
                             id={id}
                             onNewline={onNewline}
-                            regionMap={props.regionMap}/>
+                            spanManager={props.spanManager}/>
         onNewline = frag.text.endsWith("\n");
         return fragElem;
     });
@@ -47,13 +47,13 @@ function Fragment(props) {
     const lines = props.fragment.text.split(/(?<=\n)/g);
 
     let className = "";
-    if (props.regionMap.isActive(props.fragment)) {
+    if (props.spanManager.isActive(props.fragment)) {
         className = "active-match";
     }
-    else if (props.regionMap.isSelected(props.fragment)) {
+    else if (props.spanManager.isSelected(props.fragment)) {
         className = "selected-match";
     }
-    else if (props.regionMap.isGrouped(props.fragment)) {
+    else if (props.spanManager.isGrouped(props.fragment)) {
         className = "grouped-match";
     }
 
@@ -61,7 +61,8 @@ function Fragment(props) {
         <span
             className={className}
             key={props.id}
-            onMouseEnter={event => props.regionMap.activate(props.fragment)}
+            onMouseEnter={event => props.spanManager.activate(props.fragment)}
+            onMouseUp={event => props.spanManager.select(props.fragment)}
         >
             {lines.map((line, lineIndex) =>
                 <code

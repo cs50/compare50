@@ -26,7 +26,7 @@ function SplitView(props) {
                     <Side
                         height={props.topHeight}
                         files={files}
-                        regionMap={props.regionMap}
+                        spanManager={props.spanManager}
                         globalState={props.globalState}
                     />
                 </div>
@@ -56,7 +56,7 @@ function Side(props) {
                         <File
                             key={file.name}
                             file={file}
-                            regionMap={props.regionMap}
+                            spanManager={props.spanManager}
                             softWrap={props.globalState.softWrap}
                             updateFileVisibility={updateFileVisibility}
                         />
