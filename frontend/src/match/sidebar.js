@@ -32,8 +32,7 @@ function SideBar(props) {
             </div>
             <div style={style}>
                 <GroupNavigation
-                    current={props.spanManager.selectedGroupIndex()}
-                    n={props.spanManager.nGroups()}
+                    spanManager={props.spanManager}
                     setGroup={group => updateGlobalState({"currentGroup": group})}
                 />
             </div>
@@ -92,11 +91,23 @@ function GroupNavigation(props) {
                 "paddingBottom": ".1em",
                 "color": "black"
             }}>
-                {props.current} / {props.n}
+                {props.spanManager.selectedGroupIndex()} / {props.spanManager.nGroups()}
             </div>
             <div className="btn-group horizontal" style={{"width":"100%"}}>
-                <button type="button" style={{"width":"50%"}}>&lt;</button>
-                <button type="button" style={{"width":"50%"}}>&gt;</button>
+                <button
+                    type="button"
+                    style={{"width":"50%"}}
+                    onClick={() => props.spanManager.selectPreviousGroup()}
+                >
+                    &lt;
+                </button>
+                <button
+                    type="button"
+                    style={{"width":"50%"}}
+                    onClick={() => props.spanManager.selectNextGroup()}
+                >
+                    &gt;
+                </button>
             </div>
         </div>
     )

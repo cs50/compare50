@@ -55,11 +55,18 @@ class SpanManager {
             else {
                 acc[span.id] = Span.STATES.INACTIVE;
             }
-
             return acc;
         }, {});
 
         this._setSpanStates(spanStates);
+    }
+
+    selectNextGroup() {
+        this._selectAdjacentGroup(1);
+    }
+
+    selectPreviousGroup() {
+        this._selectAdjacentGroup(-1);
     }
 
     isActive(region) {
@@ -80,11 +87,35 @@ class SpanManager {
                 return span.groupId + 1;
             }
         }
-        return 0;
+        return 1;
     }
 
     nGroups() {
         return this._regionMap.nGroups;
+    }
+
+    _selectAdjacentGroup(direction) {
+        let groupIndex = this.selectedGroupIndex();
+
+        // increment index
+        groupIndex += direction;
+
+        // wrap around
+        if (groupIndex > this.nGroups()) {
+            groupIndex = 1;
+        }
+        else if (groupIndex < 1) {
+            groupIndex = this.nGroups();
+        }
+
+        const groupId = groupIndex - 1;
+
+        for (let span of this.spans) {
+            if (span.groupId === groupId) {
+                this.select(span);
+                return;
+            }
+        }
     }
 
     _getState(region) {
