@@ -262,7 +262,7 @@ function init_group_button(groups, view_name) {
     document.addEventListener("keyup", (event) =>  {
         if (event.key === ' ' || event.key == "]") {
             event.preventDefault();
-            go_to_adjacent_group(event, 1); 
+            go_to_adjacent_group(event, 1);
         }
     });
 

@@ -39,6 +39,16 @@ function SplitView(props) {
 function Side(props) {
     let [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
+    const scrollableRef = useRef(null);
+
+    useEffect(() => {
+        const elems = scrollableRef.current.getElementsByClassName("selected-match");
+        if (elems.length === 0) {
+            return
+        }
+        scrollTo(elems[0], scrollableRef.current);
+    });
+
     return (
         <div className="column-box">
             <div className="row auto" style={{
@@ -50,7 +60,7 @@ function Side(props) {
                     percentage={70}
                     file={fileInView}/>
             </div>
-            <div className="row fill" style={{"overflow":"scroll"}}>
+            <div ref={scrollableRef} className="row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
                     {props.files.map(file =>
                         <File
@@ -136,5 +146,56 @@ function useMax(items, initial=null) {
     return [item, update];
 }
 
+
+function findPos(domElement) {
+    let obj = domElement;
+    let curtop = 0;
+    if (obj.offsetParent) {
+        do {
+            curtop += obj.offsetTop;
+            obj = obj.offsetParent;
+        } while (obj);
+    }
+    return curtop;
+}
+
+
+// Custom implementation/hack of element.scrollIntoView();
+// Because safari does not support smooth scrolling @ July 27 2018
+// Update @ July 29 2020, still no smooth scrolling in Safari
+// Feel free to replace once it does:
+//     this.dom_element.scrollIntoView({"behavior":"smooth"});
+// Also see: https://github.com/iamdustan/smoothscroll
+// Credits: https://gist.github.com/andjosh/6764939
+function scrollTo(domElement, scrollable=document, offset=200) {
+    let easeInOutQuad = (t, b, c, d) => {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+    };
+
+    let to = findPos(domElement) - offset;
+    let duration = 300;
+
+    let start = scrollable.scrollTop;
+    let change = to - start;
+    let currentTime = 0;
+    let increment = 20;
+
+    let animateScroll = () => {
+        currentTime += increment;
+        let val = easeInOutQuad(currentTime, start, change, duration);
+        scrollable.scrollTop = val;
+        if (currentTime < duration) {
+            setTimeout(animateScroll, increment);
+        }
+        else {
+            let event = new Event("finished_scrolling");
+            domElement.dispatchEvent(event);
+        }
+    };
+    animateScroll();
+}
 
 export default SplitView
