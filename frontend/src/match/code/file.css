@@ -7,6 +7,11 @@ pre.softwrap {
     word-wrap: break-word; /* Internet Explorer 5.5+ */
 }
 
+.highlighted-match {
+    background-color: red;
+    cursor: pointer;
+}
+
 .selected-match {
     background-color: black;
     cursor: pointer;

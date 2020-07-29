@@ -1,4 +1,4 @@
-import React, {useState, useMemo} from 'react';
+import {useState, useMemo} from 'react';
 
 
 class SpanManager {
@@ -22,8 +22,8 @@ class SpanManager {
 
         const spanStates = this.spans.reduce((acc, span) => {
             // Don't overwrite a selected span
-            if (this._spanStates[span.id] === Span.STATES.SELECTED) {
-                acc[span.id] = Span.STATES.SELECTED;
+            if (this.isSelected(span) || this.isHighlighted(span)) {
+                acc[span.id] = this._getState(span);
             }
             // Set all spans in group to
             else if (span.groupId === groupId) {
@@ -46,19 +46,81 @@ class SpanManager {
             return;
         }
 
-        const alreadySelectedSubs = new Set();
-        const spanStates = this.spans.reduce((acc, span) => {
-            // Set the first spans in each submission to selected
-            if (span.groupId === groupId && !alreadySelectedSubs.has(span.subId)) {
-                acc[span.id] = Span.STATES.SELECTED;
-                alreadySelectedSubs.add(span.subId);
+        // If this span was selected before, highlight the next span in the other sub
+        if (this.isHighlighted(region)) {
+            this._reselect(region);
+            return;
+        }
+
+        // Grab the span that is selected
+        const selectedSpan = this._regionMap.getSpan(region);
+
+        // Grab all spans in the same group
+        const groupedSpans = this.spans.filter(span => span.groupId === selectedSpan.groupId);
+
+        // Keep track of whether the first span in the other sub has been found
+        let foundFirst = false;
+
+        // Highlight the selected span, and the first in the other sub, select all other grouped spans
+        let spanStates = groupedSpans.reduce((acc, span) => {
+            if (span === selectedSpan) {
+                acc[span.id] = Span.STATES.HIGHLIGHTED;
             }
-            // Set everything else to inactive
+            else if (!foundFirst && span.subId !== selectedSpan.subId) {
+                acc[span.id] = Span.STATES.HIGHLIGHTED;
+                foundFirst = true;
+            }
             else {
-                acc[span.id] = Span.STATES.INACTIVE;
+                acc[span.id] = Span.STATES.SELECTED;
             }
             return acc;
         }, {});
+
+        // Set all other spans to inactive
+        spanStates = this.spans.reduce((acc, span) => {
+            if (!acc.hasOwnProperty(span.id)) {
+                acc[span.id] = Span.STATES.INACTIVE;
+            }
+            return acc;
+        }, spanStates);
+
+        this._setSpanStates(spanStates);
+    }
+
+    _reselect(region) {
+        // Find which span was reselected
+        const selectedSpan = this._regionMap.getSpan(region);
+
+        // Grab all spans from the other submission in the same group
+        const groupedSpans = this.spans.filter(span => span.groupId === selectedSpan.groupId);
+
+        // Grab all spans from the group in the other submission
+        const otherSpans = groupedSpans.filter(span => span.subId !== selectedSpan.subId);
+
+        // Find which span from the other submission was highlighted before
+        const highlightedSpan = otherSpans.filter(span =>this.isHighlighted(span))[0];
+
+        // Find the index of which span should now be highlighted
+        const newIndex = (otherSpans.indexOf(highlightedSpan) + 1) % otherSpans.length;
+        const newHighlightedSpan = otherSpans[newIndex];
+
+        // Create the state for each span from the other submission
+        let spanStates = groupedSpans.reduce((acc, span) => {
+            if (span === newHighlightedSpan || span === selectedSpan) {
+                acc[span.id] = Span.STATES.HIGHLIGHTED;
+            } else {
+                acc[span.id] = Span.STATES.SELECTED;
+            }
+            return acc;
+        }, {});
+
+        // Set all other spans to inactive
+        spanStates = this.spans.reduce((acc, span) => {
+            if (!acc.hasOwnProperty(span.id)) {
+                acc[span.id] = Span.STATES.INACTIVE;
+            }
+            return acc;
+        }, spanStates);
 
         this._setSpanStates(spanStates);
     }
@@ -69,6 +131,10 @@ class SpanManager {
 
     selectPreviousGroup() {
         this._selectAdjacentGroup(-1);
+    }
+
+    isHighlighted(region) {
+        return this._getState(region) === Span.STATES.HIGHLIGHTED;
     }
 
     isActive(region) {
@@ -186,7 +252,8 @@ class Span {
     static STATES = {
         INACTIVE: 0,
         ACTIVE: 1,
-        SELECTED: 2
+        SELECTED: 2,
+        HIGHLIGHTED: 3
     }
 
     constructor(id, subId, fileId, groupId, start, end, isIgnored=false) {

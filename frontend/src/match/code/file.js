@@ -53,8 +53,8 @@ function Fragment(props) {
     const classNameRef = useRef("");
 
     useEffect(() => {
-        // If this fragment was not selected before, but now it is, scroll to it
-        if (classNameRef.current !== "selected-match" && ref.current.className === "selected-match") {
+        // If this fragment was not highlighted before, but now it is, scroll to it
+        if (classNameRef.current !== "highlighted-match" && ref.current.className === "highlighted-match") {
             props.scrollTo(ref.current);
         }
 
@@ -62,7 +62,10 @@ function Fragment(props) {
     })
 
     let className = "";
-    if (props.spanManager.isActive(props.fragment)) {
+    if (props.spanManager.isHighlighted(props.fragment)) {
+        className = "highlighted-match";
+    }
+    else if (props.spanManager.isActive(props.fragment)) {
         className = "active-match";
     }
     else if (props.spanManager.isSelected(props.fragment)) {
@@ -78,6 +81,12 @@ function Fragment(props) {
             className={className}
             key={props.id}
             onMouseEnter={event => props.spanManager.activate(props.fragment)}
+            onMouseDown={event => {
+                // Prevent text selection when clicking on highlighted fragments
+                if (props.spanManager.isHighlighted(props.fragment)) {
+                    event.preventDefault();
+                }
+            }}
             onMouseUp={event => props.spanManager.select(props.fragment)}
         >
             {lines.map((line, lineIndex) =>
