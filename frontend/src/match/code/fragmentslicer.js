@@ -31,9 +31,9 @@ function slice(file, spans) {
 }
 
 
-function createFragments(file, regionMap) {
+function createFragments(file, spans) {
     //let ignored = pass.ignoredSpans.filter(span => span.fileId === file.id);
-    return slice(file, regionMap.spans);
+    return slice(file, spans);
 }
 
 

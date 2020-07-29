@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
 import createFragments from './fragmentslicer'
 
 import "./file.css";
@@ -13,12 +13,14 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
-    const fragments = useRef(createFragments(props.file, props.spanManager));
+    const spans = props.spanManager.spans.filter(span => span.fileId === props.file.id);
+
+    const fragments = useMemo(() => createFragments(props.file, spans), [props.file, spans]);
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
 
-    const fragmentElems = fragments.current.map((frag, i) => {
+    const fragmentElems = fragments.map((frag, i) => {
         const id = `fragment_${props.file.id}_${i}`;
         const fragElem = <Fragment
                             key={id}

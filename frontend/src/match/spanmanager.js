@@ -46,10 +46,12 @@ class SpanManager {
             return;
         }
 
+        const alreadySelectedSubs = new Set();
         const spanStates = this.spans.reduce((acc, span) => {
-            // Set all spans in group to
-            if (span.groupId === groupId) {
+            // Set the first spans in each submission to selected
+            if (span.groupId === groupId && !alreadySelectedSubs.has(span.subId)) {
                 acc[span.id] = Span.STATES.SELECTED;
+                alreadySelectedSubs.add(span.subId);
             }
             // Set everything else to inactive
             else {
@@ -187,8 +189,9 @@ class Span {
         SELECTED: 2
     }
 
-    constructor(id, fileId, groupId, start, end, isIgnored=false) {
+    constructor(id, subId, fileId, groupId, start, end, isIgnored=false) {
         this.id = id;
+        this.subId = subId;
         this.fileId = fileId;
         this.groupId = groupId;
         this.start = start;
@@ -203,7 +206,7 @@ function useSpanManager(pass) {
         const spans = [];
         pass.groups.forEach((group, groupId) => {
             group.forEach(span => {
-                spans.push(new Span(span.id, span.fileId, groupId, span.start, span.end));
+                spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end));
             });
         });
         return spans;
