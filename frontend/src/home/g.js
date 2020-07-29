@@ -164,19 +164,20 @@ d3Graph.init_graph = function (el, props, state) {
               .type(d3.symbolCircle)
               .size(200)()
         );
-    /* d3.select(sliderEl)
+
+    this.SLIDER_EL
       .append("svg")
         .attr("height", 100)
         .attr("class", "mx-auto d-block")
       .append("g")
-        .attr("transform", "translate(30,30)"); */
+        .attr("transform", "translate(30,30)");
 
     this.G_LINK = this.SVG.append("g").attr("class", "links");
     this.G_NODE = this.SVG.append("g").attr("class", "nodes");
 
 
     // scale graph and slider
-    //this.on_resize();
+    this.on_resize();
 
     // add data to graph
     this.update(el, props, state);
@@ -192,8 +193,6 @@ d3Graph.init_graph = function (el, props, state) {
             };
         }
     });
-
-    console.log(props.width)
 
     this.SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
               .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
@@ -282,7 +281,6 @@ d3Graph.on_mouseout_node = function(d, el, props, state) {
 
 
 d3Graph.on_click_node = function(d, el, props, state) {
-    console.log(state)
     state.graph.nodes.forEach(node => {
         node.is_node_selected = node.is_node_focused = node.id === d.id;
         node.is_group_selected = node.is_group_focused = node.group === d.group;
@@ -294,36 +292,37 @@ d3Graph.on_click_node = function(d, el, props, state) {
 }
 
 d3Graph.on_resize = function() {
-    let cluster_div = document.getElementById("cluster");
-    let header_size = document.querySelector("thead").clientHeight;
-    cluster_div.style.paddingTop = `${header_size}px`;
+    //let cluster_div = document.getElementById("cluster");
+    //let header_size = document.querySelector("thead").clientHeight;
+    //cluster_div.style.paddingTop = `${header_size}px`;
 
-    let WIDTH = get_real_width(document.getElementById("cluster"));
+    let WIDTH = 500//get_real_width(document.getElementById("cluster"));
 
     this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-    d3.select("div#slider")
+    this.SLIDER_EL
       .attr("width", WIDTH)
         .select("svg")
           .attr("width", Math.floor(0.8 * WIDTH))
 
-    d3.select("div#slider")
+    this.SLIDER_EL
       .attr("width", WIDTH)
       .select("svg")
         .attr("width", Math.floor(0.8 * WIDTH))
         .select("g")
           .call(this.SLIDER);
 
-    let HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
-                                - document.getElementById("slider").clientHeight
-                                - header_size;
+    let HEIGHT = 300// window.innerHeight - document.getElementById("title").clientHeight
+                     //           - document.getElementById("slider").clientHeight
+                                //- header_size;
 
     this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
 
     this.jiggle();
 }
 
-d3Graph.create = function(el, props, state) {
+d3Graph.create = function(el, slider_el, props, state) {
     this.init_data(el, props, state);
+    this.SLIDER_EL = d3.select(slider_el);
     this.init_graph(el, props, state);
     if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
     this.jiggle();
