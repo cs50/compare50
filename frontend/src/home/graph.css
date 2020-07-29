@@ -7,3 +7,8 @@
     /* stroke: none; */
     stroke-width: 3px;
 }
+
+.d3slider svg {
+    display: block;
+    margin: auto;
+}

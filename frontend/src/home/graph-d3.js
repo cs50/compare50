@@ -1,257 +1,8 @@
-const ARCHIVE_IMG = `<?xml version="1.0" encoding="utf-8"?>
-<svg viewBox="79.164 91.172 63.675 66.68" width=1.5em height=1.5em xmlns="http://www.w3.org/2000/svg" xmlns:bx="https://boxy-svg.com">
-  <path style="fill: rgba(216, 216, 216, 0); stroke: rgb(0, 0, 0); stroke-width: 2px;" d="M 89.898 99.084 H 131.124 A 4.5 4.467 0 0 1 135.624 103.551 V 106.018 A 2 2 0 0 1 133.624 108.018 H 87.398 A 2 2 0 0 1 85.398 106.018 V 103.551 A 4.5 4.467 0 0 1 89.898 99.084 Z" bx:shape="rect 85.398 99.084 50.226 8.934 4.5 4.5 2 2 1@72b6ad5a"/>
-  <rect x="90.259" y="113.324" width="40.503" height="34.631" style="fill: rgba(216, 216, 216, 0); stroke: rgb(0, 0, 0); stroke-width: 2px;"/>
-  <rect style="fill: rgb(255, 255, 255); stroke: rgb(0, 0, 0); stroke-width: 2px;" x="102.169" y="119.696" width="16.684" height="3.633" rx="1" ry="1"/>
-</svg>`
-
-var RADIUS = 10;
-var WIDTH = null;
-var HEIGHT = null;
-
-var SVG = null
-var SLIDER = null;
-var G_NODE = null;
-var G_LINK = null;
-
-var NODE_DATA = GRAPH.nodes;
-var LINK_DATA = GRAPH.links;
-
-var COLOR = null;
-
-// When there are exactly two nodes in the graph, d3 sets all kinds of things to
-// NaN for an unknown reason
-// This bool exists to mark all the places in the code where we implement the hack to fix this issue.
-const HORRIBLE_TWO_NODE_HACK = true;
-
-function init_data() {
-    if (HORRIBLE_TWO_NODE_HACK) {
-        /// When there are exactly two nodes, add an additional one with an id of "" and an edge with value -1
-        if (GRAPH.nodes.length == 2) {
-            GRAPH.nodes.push({id: ""});
-            GRAPH.links.push({source: GRAPH.nodes[0], target: "", value: -1});
-            GRAPH.data[""] = {is_archive: false};
-        }
-    }
-
-    // simulation
-    SIMULATION = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id))
-        .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
-        .force('collision', d3.forceCollide().radius(d => RADIUS * 2));
-
-    SIMULATION
-        .nodes(NODE_DATA);
-
-    SIMULATION.force("link")
-        .links(LINK_DATA);
+var d3 = require("d3");
+var slider = require("d3-simple-slider");
 
 
-    // assign groups to nodes
-    let group_map = get_group_map(GRAPH.links.map(d => ({source:d.source.id, target:d.target.id})));
-    GRAPH.nodes.forEach(d => d.group = group_map[d.id]);
-
-    // set COLOR (function from group => color)
-    let n_groups = Math.max.apply(0, GRAPH.nodes.map(node => node.group));
-    COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
-}
-
-function init_graph() {
-    let container = document.createElement("div");
-
-    SVG = d3.select(container).append("svg");
-
-    // If svg is clicked, unselect node
-    SVG.on("click", () => {
-        GRAPH.nodes.forEach(node =>
-            node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
-        update();
-    });
-
-    // Slider
-    let slider_start = null;
-    if (HORRIBLE_TWO_NODE_HACK) {
-        // Since the hack adds an edge with weight -1, filter it out
-        slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value).filter(v => v >= 0)));
-    } else {
-        slider_start = Math.floor(Math.min(...LINK_DATA.map(d => d.value)))
-    }
-
-    SLIDER = d3
-        .sliderBottom()
-        .min(slider_start)
-        .max(10)
-        .tickFormat(d => {
-            let num = d3.format(".1f")(d)
-            let [whole, fraction] = num.split(".");
-            return fraction === "0" ? whole : num;
-        })
-        .ticks(10 - slider_start + 1)
-        .default(0)
-        .fill("#2196f3")
-        .on("onchange", cutoff)
-        .handle(
-            d3
-              .symbol()
-              .type(d3.symbolCircle)
-              .size(200)()
-        );
-    d3.select("div#slider")
-      .append("svg")
-        .attr("height", 100)
-        .attr("class", "mx-auto d-block")
-      .append("g")
-        .attr("transform", "translate(30,30)");
-
-    G_LINK = SVG.append("g").attr("class", "links");
-
-    G_NODE = SVG.append("g").attr("class", "nodes");
-
-
-    // scale graph and slider
-    on_resize();
-
-    // add data to graph
-    update_graph();
-
-    let choseX = d3.randomUniform(WIDTH / 4, 3 * WIDTH / 4);
-    let choseY = d3.randomUniform(HEIGHT / 4, 3 * HEIGHT / 4);
-    let pos_map = []
-    NODE_DATA.forEach(d => {
-        if (pos_map[d.group] === undefined) {
-            pos_map[d.group] = {
-                x: choseX(),
-                y: choseY()
-            };
-        }
-    });
-
-    SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
-              .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
-
-    setTimeout(() => SIMULATION.force("x", null).force("y", null), 300);
-
-    return container
-}
-
-
-function on_resize() {
-    let cluster_div = document.getElementById("cluster");
-    let header_size = document.querySelector("thead").clientHeight;
-    cluster_div.style.paddingTop = `${header_size}px`;
-
-    WIDTH = get_real_width(document.getElementById("cluster"));
-
-    SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-    d3.select("div#slider")
-      .attr("width", WIDTH)
-        .select("svg")
-          .attr("width", Math.floor(0.8 * WIDTH))
-
-    d3.select("div#slider")
-      .attr("width", WIDTH)
-      .select("svg")
-        .attr("width", Math.floor(0.8 * WIDTH))
-        .select("g")
-          .call(SLIDER);
-
-    HEIGHT = window.innerHeight - document.getElementById("title").clientHeight
-                                - document.getElementById("slider").clientHeight
-                                - header_size;
-
-    SVG.attr("width", WIDTH).attr("height", HEIGHT);
-
-    jiggle();
-}
-
-
-function get_real_width(elem) {
-    let style = getComputedStyle(elem);
-    return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-}
-
-
-function ticked(links, nodes) {
-    nodes
-        .attr("x", function(d) { return d.x = Math.max(RADIUS, Math.min(WIDTH - RADIUS * 3, d.x)); })
-        .attr("y", function(d) { return d.y = Math.max(RADIUS, Math.min(HEIGHT - RADIUS * 3, d.y)); });
-
-    links
-        .attr("x1", function(d) { return d.source.x + RADIUS; })
-        .attr("y1", function(d) { return d.source.y + RADIUS; })
-        .attr("x2", function(d) { return d.target.x + RADIUS; })
-        .attr("y2", function(d) { return d.target.y + RADIUS; });
-}
-
-
-let DRAG_TARGET = null;
-
-function dragstarted(d) {
-    if (!d3.event.active) SIMULATION.alphaTarget(0.15).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-
-    DRAG_TARGET = d;
-}
-
-
-function dragged(d) {
-    d.fx = d3.event.x;
-    d.fy = d3.event.y;
-}
-
-
-function dragended(d) {
-    if (!d3.event.active) SIMULATION.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
-
-    let drag_target = DRAG_TARGET;
-    DRAG_TARGET = null;
-
-    on_mouseout_node(drag_target);
-}
-
-
-function on_mouseover_node(d) {
-    if (DRAG_TARGET !== null) {
-      return;
-    }
-
-    GRAPH.nodes.forEach(node => {
-        node.is_group_focused = node.group === d.group;
-        node.is_node_focused = node.id === d.id;
-    });
-
-    update();
-}
-
-
-function on_mouseout_node(d) {
-    if (DRAG_TARGET !== null) {
-        return;
-    }
-
-    GRAPH.nodes.forEach(node => {
-        node.is_group_focused = node.is_node_focused = false;
-    });
-
-    update();
-}
-
-
-function on_click_node(d) {
-    GRAPH.nodes.forEach(node => {
-        node.is_node_selected = node.is_node_focused = node.id === d.id;
-        node.is_group_selected = node.is_group_focused = node.group === d.group;
-    });
-
-    update();
-
-    d3.event.stopPropagation();
-}
-
-
+// Helper functions
 function get_group_map(links) {
     // create a map from node_id to node
     let group_map = {};
@@ -310,79 +61,277 @@ function get_group_map(links) {
     return group_map;
 }
 
-
-function cutoff(n) {
-    LINK_DATA = GRAPH.links.filter(d => (d.value) >= n);
-    let node_ids = new Set(LINK_DATA.map(d => d.source.id).concat(LINK_DATA.map(d => d.target.id)));
-    NODE_DATA = GRAPH.nodes.filter(d => node_ids.has(d.id));
-
-    update();
-
-    jiggle(.1);
-}
-
-
-function update() {
-    update_index();
-    update_graph();
-}
-
-
-function update_index() {
-    let table_data = INDEX.selectAll("tr").data(LINK_DATA, d => d.index);
-
-    let new_trs = table_data.enter().append("tr");
-
-    new_trs.append("th")
-        .attr("scope", "row")
-        .text(d => d.index + 1);
-
-    for (let field of ["source", "target"]) {
-        new_trs.append("td")
-            .attr("class", "sub_name")
-            .datum(d => d[field])
-            .html(d => GRAPH.data[d.id].is_archive ? `${ARCHIVE_IMG} ${d.id}` : d.id);
+function get_real_width(elem, props) {
+    // if we're given a static width, use it
+    if (props.width !== undefined) {
+        return props.width;
     }
 
-    new_trs.append("td")
-        .attr("class", "score")
-        .text(d => d.value.toFixed(1))
-        .style("border-right", d => d.source.group === undefined ? "" : `10px solid ${COLOR(d.source.group)}`);
-
-
-    new_trs
-        .on("mouseover", link => {
-            GRAPH.nodes.forEach(node => {
-                node.is_node_in_splotlight = node.id === link.source.id || node.id === link.target.id;
-                node.is_node_in_background = node.group !== link.source.group;
-            });
-            update_graph();
-        })
-        .on("mouseout", link => {
-            GRAPH.nodes.forEach(node => {
-                node.is_node_in_splotlight = false;
-                node.is_node_in_background = false;
-            })
-            update_graph();
-       })
-       .on("click", d => window.open(`match_${d.index + 1}.html`));
-
-    let group_selected = undefined;
-    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
-
-    table_data.merge(new_trs)
-              .style("background-color", link => link.source.is_group_focused && !link.source.is_group_selected ? "#ECECEC" : "")
-              .style("display", link => group_selected !== undefined && group_selected !== link.source.group ? "none" : "")
-              .selectAll(".sub_name")
-                .style("background-color", d => d.is_node_focused ? "#CCCCCC" : "")
-                .style("font-weight", d => d.is_node_selected ? "bold" : "");
-
-    table_data.exit().remove();
+    // calculate width of provided (likely, parent) element
+    let style = getComputedStyle(elem);
+    return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
 }
 
 
-function update_graph() {
-    let links = G_LINK.selectAll("line").data(LINK_DATA, d => d.index);
+// Graph -- store in an object to maintain state
+var d3Graph = {
+    SVG: null,
+    SLIDER: null,
+    G_NODE: null,
+    G_LINK: null,
+    NODE_DATA: null,
+    LINK_DATA: null,
+    COLOR: null,
+    DRAG_TARGET: null,
+    SIMULATION: null
+};
+
+
+// When there are exactly two nodes in the graph, d3 sets all kinds of things to
+// NaN for an unknown reason
+// This bool exists to mark all the places in the code where we implement the hack to fix this issue.
+d3Graph.HORRIBLE_TWO_NODE_HACK = true;
+
+
+// Initialize the data
+d3Graph.init_data = function(el, props, state) {
+    if (this.HORRIBLE_TWO_NODE_HACK) {
+        /// When there are exactly two nodes, add an additional one with an id of "" and an edge with value -1
+        if (state.graph.nodes.length === 2) {
+            state.graph.nodes.push({id: ""});
+            state.graph.links.push({source: state.graph.nodes[0], target: "", value: -1});
+            state.graph.data[""] = {is_archive: false};
+        }
+    }
+
+    this.NODE_DATA = state.graph.nodes;
+    this.LINK_DATA = state.graph.links;
+
+    // simulation
+    this.SIMULATION = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id))
+        .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
+        .force("collision", d3.forceCollide().radius(d => props.radius * 2));
+
+    this.SIMULATION
+        .nodes(this.NODE_DATA);
+
+    this.SIMULATION.force("link")
+        .links(this.LINK_DATA);
+
+    // assign groups to nodes
+    let group_map = get_group_map(state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
+    state.graph.nodes.forEach(d => d.group = group_map[d.id]);
+
+    // set COLOR (function from group => color)
+    let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
+    this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+}
+
+
+// Initialize the graph visualization
+d3Graph.init_graph = function (el, props, state) {
+    this.SVG = d3.select(el);
+
+    // If svg is clicked, unselect node
+    this.SVG.on("click", () => {
+        state.graph.nodes.forEach(node =>
+            node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
+        this.update(el, props, state);
+    });
+
+    // Slider
+    let slider_start = null;
+    if (this.HORRIBLE_TWO_NODE_HACK) {
+        // Since the hack adds an edge with weight -1, filter it out
+        slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+    } else {
+        slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+    }
+
+    this.SLIDER = slider
+        .sliderBottom()
+        .min(slider_start)
+        .max(10)
+        .tickFormat(d => {
+            let num = d3.format(".1f")(d)
+            let [whole, fraction] = num.split(".");
+            return fraction === "0" ? whole : num;
+        })
+        .ticks(10 - slider_start + 1)
+        .default(0)
+        .fill("#2196f3")
+        .on("onchange", (event) => { this.cutoff(event, el, props, state) })
+        .handle(
+            d3
+              .symbol()
+              .type(d3.symbolCircle)
+              .size(200)()
+        );
+
+    this.SLIDER_EL
+      .append("svg")
+        .attr("height", 100)
+      .append("g")
+        .attr("transform", "translate(30,30)");
+
+    this.G_LINK = this.SVG.append("g").attr("class", "links");
+    this.G_NODE = this.SVG.append("g").attr("class", "nodes");
+
+    // scale graph and slider
+    this.on_resize(el, props, state);
+
+    // add data to graph
+    this.update(el, props, state);
+
+    let width = get_real_width(el.parentNode, props);
+    let choseX = d3.randomUniform(width / 4, 3 * width / 4);
+    let choseY = d3.randomUniform(props.height / 4, 3 * props.height / 4);
+    let pos_map = []
+    this.NODE_DATA.forEach(d => {
+        if (pos_map[d.group] === undefined) {
+            pos_map[d.group] = {
+                x: choseX(),
+                y: choseY()
+            };
+        }
+    });
+
+    this.SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
+              .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
+
+    setTimeout(() => this.SIMULATION.force("x", null).force("y", null), 300);
+}
+
+
+d3Graph.cutoff = function(n, el, props, state) {
+    this.LINK_DATA = state.graph.links.filter(d => (d.value) >= n);
+    let node_ids = new Set(this.LINK_DATA.map(d => d.source.id).concat(this.LINK_DATA.map(d => d.target.id)));
+    this.NODE_DATA = state.graph.nodes.filter(d => node_ids.has(d.id));
+
+    this.update(el, props, state);
+
+    this.jiggle(.1);
+}
+
+
+d3Graph.jiggle = function(alpha=0.3, duration=300) {
+    this.SIMULATION.alphaTarget(alpha).restart();
+    setTimeout(() => this.SIMULATION.alphaTarget(0).restart(), duration);
+}
+
+
+d3Graph.ticked = function(links, nodes, el, props) {
+    nodes
+        .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(el.parentNode, props) - props.radius * 3, d.x)); })
+        .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(props.height - props.radius * 3, d.y)); });
+
+    links
+        .attr("x1", function(d) { return d.source.x + props.radius; })
+        .attr("y1", function(d) { return d.source.y + props.radius; })
+        .attr("x2", function(d) { return d.target.x + props.radius; })
+        .attr("y2", function(d) { return d.target.y + props.radius; });
+}
+
+
+d3Graph.dragstarted = function(d, el, props, state) {
+    if (!d3.event.active) this.SIMULATION.alphaTarget(0.15).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+
+    this.DRAG_TARGET = d;
+}
+
+
+d3Graph.dragged = function(d) {
+    d.fx = d3.event.x;
+    d.fy = d3.event.y;
+}
+
+
+d3Graph.dragended = function(d, el, props, state) {
+    if (!d3.event.active) this.SIMULATION.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+
+    let drag_target = this.DRAG_TARGET;
+    this.DRAG_TARGET = null;
+
+    this.on_mouseout_node(drag_target, el, props, state);
+}
+
+
+d3Graph.on_mouseover_node = function(d, el, props, state) {
+    if (this.DRAG_TARGET !== null) {
+      return;
+    }
+
+    state.graph.nodes.forEach(node => {
+        node.is_group_focused = node.group === d.group;
+        node.is_node_focused = node.id === d.id;
+    });
+
+    this.update(el, props, state);
+}
+
+
+d3Graph.on_mouseout_node = function(d, el, props, state) {
+    if (this.DRAG_TARGET !== null) {
+        return;
+    }
+
+    state.graph.nodes.forEach(node => {
+        node.is_group_focused = node.is_node_focused = false;
+    });
+
+    this.update(el, props, state);
+}
+
+
+d3Graph.on_click_node = function(d, el, props, state) {
+    state.graph.nodes.forEach(node => {
+        node.is_node_selected = node.is_node_focused = node.id === d.id;
+        node.is_group_selected = node.is_group_focused = node.group === d.group;
+    });
+
+    this.update(el, props, state);
+
+    d3.event.stopPropagation();
+}
+
+
+d3Graph.on_resize = function(el, props, state) {
+    let WIDTH = get_real_width(el.parentNode, props);
+    this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+    this.SLIDER_EL
+      .attr("width", WIDTH)
+        .select("svg")
+          .attr("width", Math.floor(0.8 * WIDTH))
+
+    this.SLIDER_EL
+      .attr("width", WIDTH)
+      .select("svg")
+        .attr("width", Math.floor(0.8 * WIDTH))
+        .select("g")
+          .call(this.SLIDER);
+
+    this.SVG.attr("width", WIDTH).attr("height", props.height);
+
+    this.jiggle();
+}
+
+
+d3Graph.create = function(el, slider_el, props, state) {
+    this.init_data(el, props, state);
+    this.SLIDER_EL = d3.select(slider_el);
+    this.init_graph(el, props, state);
+    if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
+    this.jiggle();
+}
+
+
+d3Graph.update = function(el, props, state) {
+    let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
 
     links.enter().append("line")
         .attr("stroke-width", 2)
@@ -393,27 +342,30 @@ function update_graph() {
 
     links.exit().remove();
 
-    let nodes = G_NODE.selectAll("rect").data(NODE_DATA, d => d.id);
-
+    let nodes = this.G_NODE.selectAll("rect").data(this.NODE_DATA, d => d.id);
     let new_nodes = nodes.enter().append("rect");
 
     nodes.merge(new_nodes)
         .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
         .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
         .transition("nodes").duration(280)
-            .attr("width", RADIUS * 2)
-            .attr("height", RADIUS * 2);
+            .attr("width", props.radius * 2)
+            .attr("height", props.radius * 2);
 
     new_nodes
-        .attr("rx", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
-        .attr("ry", d => GRAPH.data[d.id].is_archive ? RADIUS * 0.4 : RADIUS)
+        .attr("rx", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
+        .attr("ry", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
         .call(d3.drag()
-          .on("start", dragstarted)
-          .on("drag", dragged)
-          .on("end", dragended))
-        .on("click", on_click_node)
-        .on("mouseover", on_mouseover_node)
-        .on("mouseout", on_mouseout_node)
+          .on("start", (event) => {this.dragstarted(event, el, props, state)})
+          .on("drag", this.dragged)
+          .on("end", (event) => {this.dragended(event, el, props, state)}))
+        .on("click", (event) => {this.on_click_node(event, el, props, state)})
+        .on("mouseover", (event) => {
+            this.on_mouseover_node(event, el, props, state)
+        })
+        .on("mouseout", (event) => {
+            this.on_mouseout_node(event, el, props, state)
+        })
         .append("title")
           .text(d => d.id);
 
@@ -426,7 +378,7 @@ function update_graph() {
             .remove();
 
     let group_selected = undefined;
-    GRAPH.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+    state.graph.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
     nodes.merge(new_nodes)
         .style("fill", d => {
@@ -434,7 +386,7 @@ function update_graph() {
                 return "grey";
             }
             if (group_selected === undefined || group_selected === d.group) {
-                return COLOR(d.group)
+                return this.COLOR(d.group)
             }
             return "grey";
         })
@@ -448,36 +400,28 @@ function update_graph() {
         })
         .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "");
 
-    let all_links = G_LINK.selectAll("line");
-    let all_nodes = G_NODE.selectAll("rect");
+    let all_links = this.G_LINK.selectAll("line");
+    let all_nodes = this.G_NODE.selectAll("rect");
 
     // don't swap simulation.nodes and simulation.force
-    SIMULATION
-        .nodes(NODE_DATA)
-        .on("tick", () => ticked(all_links, all_nodes));
+    this.SIMULATION
+        .nodes(this.NODE_DATA)
+        .on("tick", () => this.ticked(all_links, all_nodes, el, props));
 
     // scale the distance (inverse of similarity) to 10 to 50
-    let min_score = Math.min.apply(null, GRAPH.links.map(link => link.value));
+    let min_score = Math.min.apply(null, state.graph.links.map(link => link.value));
     let max_score = 10;
     let delta_score = max_score - min_score;
 
-    SIMULATION.force("link")
-        .links(LINK_DATA)
+    this.SIMULATION.force("link")
+        .links(this.LINK_DATA)
         .distance(d => 50 - (d.value - min_score) / delta_score * 40);
 }
 
 
-function jiggle(alpha=0.3, duration=300) {
-    SIMULATION.alphaTarget(alpha).restart();
-    setTimeout(() => SIMULATION.alphaTarget(0).restart(), duration);
+d3Graph.destroy = function(el, props, state) {
+    d3.select(el).remove();
 }
 
 
-document.addEventListener("DOMContentLoaded", event => {
-    window.addEventListener("resize", on_resize);
-
-    init_data();
-    init_graph();
-    if (HORRIBLE_TWO_NODE_HACK) cutoff(0);
-    jiggle();
-});
+export default d3Graph;
