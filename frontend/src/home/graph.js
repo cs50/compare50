@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import '../index.css';
+import './graph.css';
 
 import d3Graph from './g';
 
@@ -12,14 +13,18 @@ class Graph extends React.PureComponent {
     constructor(props) {
       super(props);
       this.graph = React.createRef();
+      this.slider = React.createRef();
     }
 
     componentDidMount() {
-      d3Graph.create(this.graph.current, {
-        radius: 10,
-        width: 400,
-        height: 300
-      }, this.getChartState());
+      d3Graph.create(this.graph.current,
+        this.slider.current,
+        {
+          radius: 10,
+          width: 400,
+          height: 300
+        },
+        this.getChartState());
     }
 
     componentDidUpdate() {
@@ -38,7 +43,10 @@ class Graph extends React.PureComponent {
   
     render() {
       return (
-        <svg className="d3graph" ref={this.graph} width="100%" height="300px"></svg>
+        <div>
+          <svg className="d3graph" ref={this.graph} width="100%" height="300px"></svg>
+          <div className="d3slider" ref={this.slider} width="100%" height="300px"></div>
+        </div>
       )
     }
 };
