@@ -100,7 +100,7 @@ class SpanManager {
         // Find which span from the other submission was highlighted before
         const highlightedSpan = otherSpans.filter(span =>this.isHighlighted(span))[0];
 
-        // Find the index of which span should now be highlighted
+        // Find which span should now be highlighted
         const newIndex = (otherSpans.indexOf(highlightedSpan) + 1) % otherSpans.length;
         const newHighlightedSpan = otherSpans[newIndex];
 

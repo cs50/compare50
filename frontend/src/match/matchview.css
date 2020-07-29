@@ -5,10 +5,6 @@ body {
     font-family: Proxima-Nova, sans-serif;
 }
 
-pre {
-    font-family: Consolas, monospace;
-}
-
 .column-box {
     display: flex;
     flex-flow: column;
@@ -31,19 +27,6 @@ pre {
 
 .column-box .row.fill, .row-box .row.fill {
     flex: 1 1 auto;
-}
-
-code.newline {
-    counter-increment: line_numbers;
-}
-code.newline::before {
-    content: counter(line_numbers) "";
-    display: inline-block;
-    width: 2em;
-    margin-right: 0.5em;
-    text-align: right;
-    padding: 0 0.5em 0 0;
-    color: black;
 }
 
 .btn-group button {
