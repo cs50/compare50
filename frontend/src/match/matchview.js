@@ -20,7 +20,7 @@ function MatchView() {
 
     const [match] = useState(API.getMatch());
 
-    const [spanManager] = useSpanManager(API.getMatch().getPass("structure"));
+    const [spanManager] = useSpanManager(match.getPass(globalState.currentPass));
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>

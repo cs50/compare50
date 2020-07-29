@@ -37,17 +37,9 @@ function SplitView(props) {
 
 
 function Side(props) {
-    let [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
+    const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
-    const scrollableRef = useRef(null);
-
-    useEffect(() => {
-        const elems = scrollableRef.current.getElementsByClassName("selected-match");
-        if (elems.length === 0) {
-            return
-        }
-        scrollTo(elems[0], scrollableRef.current);
-    });
+    const ref = useRef(null);
 
     return (
         <div className="column-box">
@@ -60,7 +52,7 @@ function Side(props) {
                     percentage={70}
                     file={fileInView}/>
             </div>
-            <div ref={scrollableRef} className="row fill" style={{"overflow":"scroll"}}>
+            <div ref={ref} className="scrollable-side row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
                     {props.files.map(file =>
                         <File
@@ -69,6 +61,7 @@ function Side(props) {
                             spanManager={props.spanManager}
                             softWrap={props.globalState.softWrap}
                             updateFileVisibility={updateFileVisibility}
+                            scrollTo={domElement => scrollTo(domElement, ref.current)}
                         />
                     )}
                 </div>
@@ -197,5 +190,6 @@ function scrollTo(domElement, scrollable=document, offset=200) {
     };
     animateScroll();
 }
+
 
 export default SplitView

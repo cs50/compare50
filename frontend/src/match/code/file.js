@@ -26,6 +26,7 @@ function File(props) {
                             fileId={props.file.id}
                             id={id}
                             onNewline={onNewline}
+                            scrollTo={props.scrollTo}
                             spanManager={props.spanManager}/>
         onNewline = frag.text.endsWith("\n");
         return fragElem;
@@ -46,6 +47,18 @@ function Fragment(props) {
     // Break up the fragments into lines (keep the newline)
     const lines = props.fragment.text.split(/(?<=\n)/g);
 
+    const ref = useRef(null);
+    const classNameRef = useRef("");
+
+    useEffect(() => {
+        // If this fragment was not selected before, but now it is, scroll to it
+        if (classNameRef.current !== "selected-match" && ref.current.className === "selected-match") {
+            props.scrollTo(ref.current);
+        }
+
+        classNameRef.current = ref.current.className;
+    })
+
     let className = "";
     if (props.spanManager.isActive(props.fragment)) {
         className = "active-match";
@@ -59,6 +72,7 @@ function Fragment(props) {
 
     return (
         <span
+            ref={ref}
             className={className}
             key={props.id}
             onMouseEnter={event => props.spanManager.activate(props.fragment)}
