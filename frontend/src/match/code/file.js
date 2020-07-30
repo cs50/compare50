@@ -13,9 +13,11 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
-    const spans = props.spanManager.spans.filter(span => span.fileId === props.file.id);
+    const fromFile = span => span.fileId === props.file.id;
+    const spans = props.spanManager.spans.filter(fromFile);
+    const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
 
-    const fragments = useMemo(() => createFragments(props.file, spans), [props.file, spans]);
+    const fragments = useMemo(() => createFragments(props.file, spans.concat(ignoredSpans)), [props.file, spans]);
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
@@ -62,17 +64,20 @@ function Fragment(props) {
     })
 
     let className = "";
-    if (props.spanManager.isHighlighted(props.fragment)) {
-        className = "highlighted-match";
+    if (props.spanManager.isIgnored(props.fragment)) {
+        className = "ignored-match";
+    }
+    else if (props.spanManager.isHighlighted(props.fragment)) {
+        className += "highlighted-match";
     }
     else if (props.spanManager.isActive(props.fragment)) {
-        className = "active-match";
+        className += "active-match";
     }
     else if (props.spanManager.isSelected(props.fragment)) {
-        className = "selected-match";
+        className += "selected-match";
     }
     else if (props.spanManager.isGrouped(props.fragment)) {
-        className = "grouped-match";
+        className += "grouped-match";
     }
 
     return (

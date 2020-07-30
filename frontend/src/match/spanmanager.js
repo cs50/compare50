@@ -1,17 +1,24 @@
 import {useState, useMemo} from 'react';
 
-
+/*
+ * A SpanManager that manages the state of spans (parts of a file that compare50 identifies).
+ * This manager maps regions of a file to the spans identified by compare50.
+ * A region is an object of the form:
+ * {fileId: 1, start: 0, end: 10}
+ */
 class SpanManager {
-    constructor(spans, spanStates, setSpanStates, regionMap) {
-        this.spans = spans;
+    constructor(regionMap, ignoredRegionMap, spanStates, setSpanStates) {
+        this.spans = regionMap.spans;
+        this._regionMap = regionMap;
+
+        this.ignoredSpans = ignoredRegionMap.spans;
+        this._ignoredRegionMap = ignoredRegionMap;
 
         // An immutable map from spanId to state
         this._spanStates = spanStates;
 
         // Change _spanStates (triggers a rerender)
         this._setSpanStates = setSpanStates;
-
-        this._regionMap = regionMap;
     }
 
     activate(region) {
@@ -149,6 +156,10 @@ class SpanManager {
         return this._regionMap.getGroupId(region) !== null;
     }
 
+    isIgnored(region) {
+        return this._ignoredRegionMap.getSpan(region) !== null;
+    }
+
     selectedGroupIndex() {
         for (let span of this.spans) {
             if (this._spanStates[span.id] === Span.STATES.SELECTED) {
@@ -278,19 +289,26 @@ function useSpanManager(pass) {
         });
         return spans;
     }
-    // TODO ignored spans
+
+    const initIgnoredSpans = () =>
+        pass.ignoredSpans.map(span => new Span(span.id, span.subId, span.fileId, null, span.start, span.end, true));
 
     // Memoize the (expensive) mapping from regions to spans on the selected pass
     const spans = useMemo(initSpans, [pass.pass]);
-    const regionMap = useMemo(() => new RegionMap(spans, pass.groups), [pass.pass]);
+    const regionMap = useMemo(() => new RegionMap(spans), [spans]);
+
+    // Memoize the (expensive) mapping from regions to ignoredSpans on the selected pass
+    const ignoredSpans = useMemo(initIgnoredSpans, [pass.pass]);
+    const ignoredRegionMap = useMemo(() => new RegionMap(ignoredSpans), [ignoredSpans]);
 
     const [spanStates, setSpanStates] = useState(spans.reduce((acc, span) => {
         acc[span.id] = Span.STATES.INACTIVE;
         return acc;
     }, {}));
 
-    return [new SpanManager(spans, spanStates, setSpanStates, regionMap)];
+    return [new SpanManager(regionMap, ignoredRegionMap, spanStates, setSpanStates)];
 }
 
-export {SpanManager, Span, RegionMap}
+
+export {Span}
 export default useSpanManager

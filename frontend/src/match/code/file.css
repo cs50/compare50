@@ -12,11 +12,11 @@ pre.softwrap {
 }
 
 code.newline {
-    counter-increment: line_numbers;
+    counter-increment: lineNumbers;
 }
 
 code.newline::before {
-    content: counter(line_numbers) "";
+    content: counter(lineNumbers) "";
     display: inline-block;
     width: 2em;
     margin-right: 0.5em;
@@ -25,6 +25,7 @@ code.newline::before {
     color: black;
 }
 
+/* https://material.io/resources/color/ */
 .highlighted-match {
     background-color: #90caf9; /*#aed581;*/
     cursor: pointer;
@@ -43,4 +44,8 @@ code.newline::before {
 .grouped-match {
     background-color: #ffe0b2; /*#ffd0a8;*/
     cursor: pointer;
+}
+
+.ignored-match {
+    color: lightgrey;
 }
