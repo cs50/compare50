@@ -2,33 +2,34 @@ import React from 'react';
 import '../index.css';
 import './graph.css';
 
-import d3Graph from './graph-d3';
+import D3Graph from './graph-d3';
 
 class Graph extends React.PureComponent {
     constructor(props) {
         super(props);
         this.graph = React.createRef();
         this.slider = React.createRef();
+        this.d3Graph = new D3Graph();
     }
 
     componentDidMount() {
         // Initialize the graph
-        d3Graph.create(
+        this.d3Graph.create(
             this.graph.current,
             this.slider.current,
             this.getProps(),
-            this.getChartState());
+            this.getGraphState());
     }
 
     componentDidUpdate() {
         // Update the graph
-        d3Graph.update(
+        this.d3Graph.update(
             this.graph.current,
             this.getProps(),
-            this.getChartState());
+            this.getGraphState());
     }
 
-    getChartState() {
+    getGraphState() {
         // Assumes the graph is passed in JSON format as a prop
         return {
             graph: JSON.parse(this.props.graph)
@@ -45,7 +46,7 @@ class Graph extends React.PureComponent {
     }
 
     componentWillUnmount() {
-        d3Graph.destroy(this.graph.current);
+        this.d3Graph.destroy(this.graph.current);
     }
   
     render() {
