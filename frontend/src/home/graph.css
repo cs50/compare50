@@ -1,0 +1,14 @@
+.links line {
+    stroke: #aaa;
+}
+
+.nodes circle {
+    pointer-events: all;
+    /* stroke: none; */
+    stroke-width: 3px;
+}
+
+.d3slider svg {
+    display: block;
+    margin: auto;
+}
