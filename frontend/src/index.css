@@ -178,6 +178,14 @@ a.index-link:hover {
     visibility: visible;
 }
 
+/* index page specific */
+nav {
+    padding: 1rem;
+    width: calc(100% - 2rem);
+    height: auto;
+    background: #ddd;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;

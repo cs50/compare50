@@ -21,7 +21,7 @@ class MatchTableRow extends React.Component {
             <td>{this.props.link.index + 1}</td>
             <td>{this.props.link.source}</td>
             <td>{this.props.link.target}</td>
-            <td>{this.props.link.value}</td>
+            <td>{Math.round(this.props.link.value * 10) / 10}</td>
         </tr>
         );
     }
@@ -73,9 +73,8 @@ class HomeView extends React.Component {
     render() { 
         return (
         <>
-            <Logo />
             <Split
-                sizes={[50, 50]}
+                sizes={[60, 40]}
                 gutterSize={10}
                 gutterAlign="center"
                 snapOffset={30}
@@ -87,14 +86,17 @@ class HomeView extends React.Component {
                 }}
                 onDrag={this.updateGraphWidth}
             >
-                <div style={{"height":"100%", "margin":0, "float":"left"}}>
+                <div style={{"height":"100%", "margin":0, "float":"left", "overflow": "auto"}}>
+                    <nav>
+                        <Logo />
+                    </nav>
                     <MatchTable data={this.props.data} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
                         graph={this.props.data}
                         width={this.state.graph_width}
-                        height="300" />
+                        height={window.innerHeight - 104} />
                 </div>
             </Split>
         </>
