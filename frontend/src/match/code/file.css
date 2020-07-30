@@ -27,30 +27,30 @@ code.newline::before {
 }
 
 /* https://material.io/resources/color/ */
-.highlighted-match {
+.highlighted-span {
     background-color: #90caf9; /*#aed581;*/
     cursor: pointer;
 }
 
-.selected-match {
+.selected-span {
     background-color: #e3f2fd; /*#dcedc8;*/
     cursor: pointer;
 }
 
-.active-match {
+.active-span {
     background-color: #ffb74d; /*#ffcc80;/*#ffaa60;*/
     cursor: pointer;
 }
 
-.grouped-match {
+.grouped-span {
     background-color: #ffe0b2; /*#ffd0a8;*/
     cursor: pointer;
 }
 
-.ignored-match {
+.ignored-span {
     color: white;
 }
 
-.ignored-match:not(.grouped-match):not(.active-match):not(.selected-match):not(.highlighted-match) {
+.ignored-span:not(.grouped-span):not(.active-span):not(.selected-span):not(.highlighted-span) {
     color: lightgrey;
 }

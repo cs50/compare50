@@ -56,30 +56,14 @@ function Fragment(props) {
 
     useEffect(() => {
         // If this fragment was not highlighted before, but now it is, scroll to it
-        if (classNameRef.current !== "highlighted-match" && ref.current.className === "highlighted-match") {
+        if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")) {
             props.scrollTo(ref.current);
         }
 
         classNameRef.current = ref.current.className;
     })
 
-    let className = "";
-    if (props.spanManager.isIgnored(props.fragment)) {
-        className = "ignored-match";
-    }
-
-    if (props.spanManager.isHighlighted(props.fragment)) {
-        className = [className, "highlighted-match"].join(" ");
-    }
-    else if (props.spanManager.isActive(props.fragment)) {
-        className = [className, "active-match"].join(" ");
-    }
-    else if (props.spanManager.isSelected(props.fragment)) {
-        className = [className, "selected-match"].join(" ");
-    }
-    else if (props.spanManager.isGrouped(props.fragment)) {
-        className = [className, "grouped-match"].join(" ");
-    }
+    let className = getClassName(props.fragment, props.spanManager);
 
     return (
         <span
@@ -105,6 +89,29 @@ function Fragment(props) {
             )}
         </span>
     )
+}
+
+
+function getClassName(fragment, spanManager) {
+    const classNames = [];
+    if (spanManager.isIgnored(fragment)) {
+        classNames.push("ignored-span");
+    }
+
+    if (spanManager.isHighlighted(fragment)) {
+        classNames.push("highlighted-span");
+    }
+    else if (spanManager.isActive(fragment)) {
+        classNames.push("active-span");
+    }
+    else if (spanManager.isSelected(fragment)) {
+        classNames.push("selected-span");
+    }
+    else if (spanManager.isGrouped(fragment)) {
+        classNames.push("grouped-span");
+    }
+
+    return classNames.join(" ");
 }
 
 
