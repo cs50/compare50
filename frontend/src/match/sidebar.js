@@ -116,7 +116,7 @@ function GroupNavigation(props) {
             }}>
                 {formatFraction(props.spanManager.selectedGroupIndex(), props.spanManager.nGroups())}
             </div>
-            <div className="btn-group horizontal" style={{"width":"100%"}}>
+            <div className="tooltip btn-group horizontal" style={{"width":"100%"}}>
                 <button
                     ref={prevRef}
                     type="button"
@@ -133,6 +133,7 @@ function GroupNavigation(props) {
                 >
                     &gt;
                 </button>
+                <span class="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press '[' ']'"}</span>
             </div>
         </div>
     )
@@ -152,10 +153,10 @@ function ConfigMenu(props) {
     return (
         <React.Fragment>
             <div style={{"marginBottom": ".25em"}}>
-                <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap}/>
+                <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap} tooltip="Soft Wrap long lines of code"/>
             </div>
             <div>
-                <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored}/>
+                <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored} tooltip="Hide code that was not used in the comparison"/>
             </div>
         </React.Fragment>
     )
@@ -170,8 +171,9 @@ function Switch(props) {
                 <input type="checkbox" onChange={event => props.setOption(event.target.checked)} defaultChecked={props.default}/>
                 <span className="slider round"></span>
             </label>
-            <div className="monospace-text" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
-                {props.text}
+            <div className="tooltip" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
+                <span className="monospace-text">{props.text}</span>
+                <span class="tooltiptext">{props.tooltip}</span>
             </div>
         </div>
     )
