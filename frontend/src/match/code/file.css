@@ -1,5 +1,6 @@
 pre {
     font-family: Consolas, monospace;
+    counter-reset: lineNumbers;
 }
 
 /* https://www.longren.io/wrapping-text-inside-pre-tags/ */
@@ -47,5 +48,9 @@ code.newline::before {
 }
 
 .ignored-match {
+    color: white;
+}
+
+.ignored-match:not(.grouped-match):not(.active-match):not(.selected-match):not(.highlighted-match) {
     color: lightgrey;
 }

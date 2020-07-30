@@ -14,6 +14,6 @@
         ]
     ],
     "ignoredSpans": [
-        {"id": 7, "subId": 1, "fileId": 2, "start": 100, "end": 150}
+        {"id": 7, "subId": 1, "fileId": 2, "start": 0, "end": 25}
     ]
 }

@@ -67,17 +67,18 @@ function Fragment(props) {
     if (props.spanManager.isIgnored(props.fragment)) {
         className = "ignored-match";
     }
-    else if (props.spanManager.isHighlighted(props.fragment)) {
-        className += "highlighted-match";
+
+    if (props.spanManager.isHighlighted(props.fragment)) {
+        className = [className, "highlighted-match"].join(" ");
     }
     else if (props.spanManager.isActive(props.fragment)) {
-        className += "active-match";
+        className = [className, "active-match"].join(" ");
     }
     else if (props.spanManager.isSelected(props.fragment)) {
-        className += "selected-match";
+        className = [className, "selected-match"].join(" ");
     }
     else if (props.spanManager.isGrouped(props.fragment)) {
-        className += "grouped-match";
+        className = [className, "grouped-match"].join(" ");
     }
 
     return (
