@@ -1,5 +1,6 @@
 import React, {useRef, useEffect} from 'react';
 
+import './matchview.css'
 import './sidebar.css';
 
 
@@ -53,13 +54,13 @@ function SideBar(props) {
 function MatchNavigation(props) {
     return (
         <div>
-            <div style={{
+            <div className="monospace-text" style={{
                 "textAlign": "center",
                 "paddingBottom": ".1em",
                 "paddingTop": ".5em",
                 "color": "black"
             }}>
-                {props.current} / {props.n}
+                {formatFraction(props.current, props.n)}
             </div>
             <div className="btn-group horizontal">
                 <button type="button" style={{"width":"50%"}}>{"<<"}</button>
@@ -106,12 +107,12 @@ function GroupNavigation(props) {
 
     return (
         <div>
-            <div style={{
+            <div className="monospace-text" style={{
                 "textAlign": "center",
                 "paddingBottom": ".1em",
                 "color": "black"
             }}>
-                {props.spanManager.selectedGroupIndex()} / {props.spanManager.nGroups()}
+                {formatFraction(props.spanManager.selectedGroupIndex(), props.spanManager.nGroups())}
             </div>
             <div className="btn-group horizontal" style={{"width":"100%"}}>
                 <button
@@ -147,7 +148,14 @@ function ExportMenu(props) {
 
 function ConfigMenu(props) {
     return (
-        <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap}/>
+        <React.Fragment>
+            <div style={{"marginBottom": ".25em"}}>
+                <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap}/>
+            </div>
+            <div>
+                <Switch text="hide" default={false} setOption={props.setHideIgnored}/>
+            </div>
+        </React.Fragment>
     )
 }
 
@@ -160,11 +168,18 @@ function Switch(props) {
                 <input type="checkbox" onChange={event => props.setOption(event.target.checked)} defaultChecked={props.default}/>
                 <span className="slider round"></span>
             </label>
-            <div style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
+            <div className="monospace-text" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
                 {props.text}
             </div>
         </div>
     )
+}
+
+
+function formatFraction(numerator, denominator) {
+    let nDigits = Math.max(numerator.toString().length, denominator.toString().length);
+    const format = n => ("0".repeat(nDigits) + n).slice(-nDigits);
+    return `${format(numerator)}/${format(denominator)}`;
 }
 
 

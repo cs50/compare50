@@ -5,6 +5,10 @@ body {
     font-family: Proxima-Nova, sans-serif;
 }
 
+.monospace-text {
+    font-family: Consolas, monospace;
+}
+
 .column-box {
     display: flex;
     flex-flow: column;
