@@ -1,43 +1,43 @@
 import React, {useRef, useEffect} from 'react';
 
-import './matchview.css'
+import Graph from '../home/graph';
+
+import './matchview.css';
 import './sidebar.css';
 
 
 function SideBar(props) {
     let style = {
         "margin": "auto",
-        "marginBottom": "1em",
-        "marginTop": "1em",
+        "marginBottom": ".5em",
+        "marginTop": ".5em",
         "width": "90%"
     }
 
     const updateGlobalState = newState => props.setGlobalState({...props.globalState, ...newState})
 
     return (
-        <div style={{
-            "height":"100%"
-        }}>
-            <div style={{...style, ...{"marginTop": "0"}}}>
+        <div className="column-box">
+            <div className="row auto" style={style}>
                 <MatchNavigation
                     current={props.globalState.currentMatch}
                     n={props.globalState.nMatches}
                     setMatch={match => updateGlobalState({"currentMatch": match})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <PassNavigation
                     passes={props.globalState.passes}
                     setPass={pass => updateGlobalState({"currentPass": pass})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <GroupNavigation
                     spanManager={props.spanManager}
                     setGroup={group => updateGlobalState({"currentGroup": group})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <ConfigMenu
                     softWrap={props.globalState.softWrap}
                     setSoftWrap={softWrap => updateGlobalState({"softWrap": softWrap})}
@@ -45,8 +45,11 @@ function SideBar(props) {
                     setHideIgnored={hideIgnored => updateGlobalState({"hideIgnored": hideIgnored})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <ExportMenu/>
+            </div>
+            <div className="row fill" style={style}>
+                <Graph graph={props.graphData}/>
             </div>
         </div>
     )
@@ -77,7 +80,7 @@ function PassNavigation(props) {
     return (
         <div className="btn-group vertical">
             {props.passes.map(pass =>
-                <button key={`pass_${pass.name}`} type="button" title={pass.docs} style={{"width":"100%"}}>
+                <button className="monospace-text" key={`pass_${pass.name}`} type="button" title={pass.docs} style={{"width":"100%"}}>
                     {pass.name}
                 </button>
             )}

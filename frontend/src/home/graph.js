@@ -9,6 +9,7 @@ class Graph extends React.PureComponent {
         super(props);
         this.graph = React.createRef();
         this.slider = React.createRef();
+        this.divRef = React.createRef();
         this.d3Graph = new D3Graph();
     }
 
@@ -30,31 +31,35 @@ class Graph extends React.PureComponent {
     }
 
     getGraphState() {
-        // Assumes the graph is passed in JSON format as a prop
         return {
-            graph: JSON.parse(this.props.graph)
+            graph: this.props.graph
         };
     }
 
     getProps() {
+        // TODO looks like 120 is the slider height, but the height of this component should probably include the slider
+
+        const minWidth = 100;
+        const minHeight = 200;
+
         // Important information about displaying the graph
         return {
             radius: 10,
-            width: this.props.width,
-            height: this.props.height
+            width: Math.max(this.props.width || this.divRef.current.offsetWidth, minWidth),
+            height: Math.max(this.props.height || this.divRef.current.offsetHeight - 120, minHeight)
         }
     }
 
     componentWillUnmount() {
         this.d3Graph.destroy(this.graph.current);
     }
-  
+
     render() {
         return (
-            <>
+            <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
                 <svg className="d3graph" ref={this.graph}></svg>
                 <div className="d3slider" ref={this.slider}></div>
-            </>
+            </div>
         )
     }
 };
