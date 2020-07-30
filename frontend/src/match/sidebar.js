@@ -41,6 +41,8 @@ function SideBar(props) {
                 <ConfigMenu
                     softWrap={props.globalState.softWrap}
                     setSoftWrap={softWrap => updateGlobalState({"softWrap": softWrap})}
+                    hideIgnored={props.globalState.hideIgnored}
+                    setHideIgnored={hideIgnored => updateGlobalState({"hideIgnored": hideIgnored})}
                 />
             </div>
             <div style={style}>
@@ -153,7 +155,7 @@ function ConfigMenu(props) {
                 <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap}/>
             </div>
             <div>
-                <Switch text="hide" default={false} setOption={props.setHideIgnored}/>
+                <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored}/>
             </div>
         </React.Fragment>
     )

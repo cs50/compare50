@@ -60,6 +60,7 @@ function Side(props) {
                             file={file}
                             spanManager={props.spanManager}
                             softWrap={props.globalState.softWrap}
+                            hideIgnored={props.globalState.hideIgnored}
                             updateFileVisibility={updateFileVisibility}
                             scrollTo={domElement => scrollTo(domElement, ref.current)}
                         />
