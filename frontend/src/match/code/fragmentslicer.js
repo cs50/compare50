@@ -20,7 +20,7 @@ function slice(file, spans) {
 
     slicingMarks = Array.from(new Set(slicingMarks));
 
-    slicingMarks.sort((a, b) => a - b).filter((item, pos, array) => !pos || item !== array[pos - 1]);
+    slicingMarks.sort((a, b) => a - b);
 
     let fragments = [];
     for (let i = 0; i < slicingMarks.length - 1; i++) {
