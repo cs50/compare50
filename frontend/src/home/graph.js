@@ -4,7 +4,7 @@ import './graph.css';
 
 import D3Graph from './graph-d3';
 
-class Graph extends React.PureComponent {
+class Graph extends React.Component {
     constructor(props) {
         super(props);
         this.graph = React.createRef();

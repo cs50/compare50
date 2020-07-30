@@ -6,7 +6,7 @@ import createFragments from './fragmentslicer'
 import File from './file'
 
 import '../matchview.css';
-import './split.css';
+import '../../split.css';
 
 
 function SplitView(props) {

@@ -292,13 +292,9 @@ class D3Graph {
     on_resize(el, props, state) {
         let WIDTH = get_real_width(el.parentNode, props);
         this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-        this.SLIDER_EL
-          .attr("width", WIDTH)
-            .select("svg")
-              .attr("width", Math.floor(0.8 * WIDTH))
     
         this.SLIDER_EL
-          .attr("width", WIDTH)
+          .style("width", WIDTH + "px")
           .select("svg")
             .attr("width", Math.floor(0.8 * WIDTH))
             .select("g")
@@ -318,6 +314,7 @@ class D3Graph {
     }
 
     update(el, props, state) {
+        this.on_resize(el, props, state);
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
     
         links.enter().append("line")

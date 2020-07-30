@@ -10,6 +10,10 @@ body {
     font-family: Proxima-Nova, sans-serif;
 }
 
+#root {
+    height: 100%;
+}
+
 .wrapper {
     margin-left: 10em;
 }
@@ -172,4 +176,31 @@ a.index-link:hover {
 
 .score_tooltip:hover .tooltiptext {
     visibility: visible;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+
+tr {
+    cursor: pointer;
+}
+
+tr:hover {
+    background: #eeeeee;
+}
+
+tr td:first-child {
+    font-weight: bold;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+}
+
+td {
+    border-top: 1px solid #eeeeee;
 }
