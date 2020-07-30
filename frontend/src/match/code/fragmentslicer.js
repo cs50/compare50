@@ -1,38 +1,38 @@
-function slice(code, spans) {
-    const slicingMarks = [];
+class Fragment {
+    constructor(file, start, end) {
+        this.fileId = file.id;
+        this.start = start;
+        this.end = end;
+        this.text = file.content.substring(start, end);
+    }
+}
+
+
+function slice(file, spans) {
+    let slicingMarks = [];
     spans.forEach(span => {
         slicingMarks.push(span.start);
         slicingMarks.push(span.end);
     });
 
     slicingMarks.push(0);
-    slicingMarks.push(code.length);
+    slicingMarks.push(file.content.length);
 
-    slicingMarks.sort((a, b) => a - b).filter((item, pos, array) => !pos || item !== array[pos - 1]);
+    slicingMarks = Array.from(new Set(slicingMarks));
+
+    slicingMarks.sort((a, b) => a - b);
 
     let fragments = [];
     for (let i = 0; i < slicingMarks.length - 1; i++) {
-        const fragment = code.substring(slicingMarks[i], slicingMarks[i + 1]);
-        fragments.push(fragment);
+        fragments.push(new Fragment(file, slicingMarks[i], slicingMarks[i + 1]));
     }
 
     return fragments;
 }
 
 
-function createFragments(file, pass) {
-    let spans = [];
-    pass.groups.forEach(group => {
-        group.forEach(span => {
-            if (span.file_id === file.id) {
-                spans.push(span);
-            }
-        })
-    });
-
-    let ignored = pass.ignored_spans.filter(span => span.file_id === file.id);
-
-    return slice(file.content, spans.concat(ignored));
+function createFragments(file, spans) {
+    return slice(file, spans);
 }
 
 

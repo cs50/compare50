@@ -1,5 +1,7 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
+import createFragments from './fragmentslicer'
 
+import "../matchview.css"
 import "./file.css";
 
 
@@ -12,20 +14,33 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
+    const fromFile = span => span.fileId === props.file.id;
+    const spans = props.spanManager.spans.filter(fromFile);
+    const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
+
+    const fragments = useMemo(() => createFragments(props.file, spans.concat(ignoredSpans)), [props.file, spans]);
+
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
 
-    const fragmentElems = props.file.fragments.map((frag, i) => {
+    const fragmentElems = fragments.map((frag, i) => {
         const id = `fragment_${props.file.id}_${i}`;
-        const fragElem = <Fragment key={id} fragment={frag} id={id} onNewline={onNewline}/>
-        onNewline = frag.endsWith("\n");
+        const fragElem = <Fragment
+                            key={id}
+                            fragment={frag}
+                            fileId={props.file.id}
+                            id={id}
+                            onNewline={onNewline}
+                            scrollTo={props.scrollTo}
+                            spanManager={props.spanManager}/>
+        onNewline = frag.text.endsWith("\n");
         return fragElem;
-    })
+    });
 
     return (
         <>
             <h4> {props.file.name} <span>({props.file.percentage}%)</span></h4>
-            <pre ref={visibilityRef} className={props.softWrap ? "softwrap" : ""}>
+            <pre ref={visibilityRef} className={(props.softWrap ? "softwrap" : "") + " monospace-text"}>
                 {(fragmentElems)}
             </pre>
         </>
@@ -34,17 +49,36 @@ function File(props) {
 
 
 function Fragment(props) {
-    const [hovering, setHovering] = useState(false);
-
     // Break up the fragments into lines (keep the newline)
-    const lines = props.fragment.split(/(?<=\n)/g);
+    const lines = props.fragment.text.split(/(?<=\n)/g);
+
+    const ref = useRef(null);
+    const classNameRef = useRef("");
+
+    useEffect(() => {
+        // If this fragment was not highlighted before, but now it is, scroll to it
+        if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")) {
+            props.scrollTo(ref.current);
+        }
+
+        classNameRef.current = ref.current.className;
+    })
+
+    let className = getClassName(props.fragment, props.spanManager);
 
     return (
         <span
-            className={hovering ? "active-match" : ""}
+            ref={ref}
+            className={className}
             key={props.id}
-            onMouseEnter={event => setHovering(true)}
-            onMouseLeave={event => setHovering(false)}
+            onMouseEnter={event => props.spanManager.activate(props.fragment)}
+            onMouseDown={event => {
+                // Prevent text selection when clicking on highlighted fragments
+                if (props.spanManager.isHighlighted(props.fragment)) {
+                    event.preventDefault();
+                }
+            }}
+            onMouseUp={event => props.spanManager.select(props.fragment)}
         >
             {lines.map((line, lineIndex) =>
                 <code
@@ -56,6 +90,29 @@ function Fragment(props) {
             )}
         </span>
     )
+}
+
+
+function getClassName(fragment, spanManager) {
+    const classNames = [];
+    if (spanManager.isIgnored(fragment)) {
+        classNames.push("ignored-span");
+    }
+
+    if (spanManager.isHighlighted(fragment)) {
+        classNames.push("highlighted-span");
+    }
+    else if (spanManager.isActive(fragment)) {
+        classNames.push("active-span");
+    }
+    else if (spanManager.isSelected(fragment)) {
+        classNames.push("selected-span");
+    }
+    else if (spanManager.isGrouped(fragment)) {
+        classNames.push("grouped-span");
+    }
+
+    return classNames.join(" ");
 }
 
 

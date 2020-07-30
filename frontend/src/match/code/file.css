@@ -1,3 +1,7 @@
+pre {
+    counter-reset: lineNumbers;
+}
+
 /* https://www.longren.io/wrapping-text-inside-pre-tags/ */
 pre.softwrap {
     white-space: pre-wrap; /* css-3 */
@@ -7,8 +11,45 @@ pre.softwrap {
     word-wrap: break-word; /* Internet Explorer 5.5+ */
 }
 
+code.newline {
+    counter-increment: lineNumbers;
+}
 
-.active-match {
-    background-color: #ffaa60;
+code.newline::before {
+    content: counter(lineNumbers) "";
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+    padding: 0 0.5em 0 0;
+    color: black;
+}
+
+/* https://material.io/resources/color/ */
+.highlighted-span {
+    background-color: #90caf9; /*#aed581;*/
     cursor: pointer;
+}
+
+.selected-span {
+    background-color: #e3f2fd; /*#dcedc8;*/
+    cursor: pointer;
+}
+
+.active-span {
+    background-color: #ffb74d; /*#ffcc80;/*#ffaa60;*/
+    cursor: pointer;
+}
+
+.grouped-span {
+    background-color: #ffe0b2; /*#ffd0a8;*/
+    cursor: pointer;
+}
+
+.ignored-span {
+    color: white;
+}
+
+.ignored-span:not(.grouped-span):not(.active-span):not(.selected-span):not(.highlighted-span) {
+    color: lightgrey;
 }

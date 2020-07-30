@@ -1,8 +1,6 @@
 import React, {useState, useRef, useEffect} from 'react';
 import Split from 'react-split';
 
-import API from '../../api';
-import createFragments from './fragmentslicer'
 import File from './file'
 
 import '../matchview.css';
@@ -10,18 +8,6 @@ import '../../split.css';
 
 
 function SplitView(props) {
-    const [match] = useState(API.getMatch());
-
-    const pass = match.getPass(props.globalState.currentPass);
-
-    const attachFragments = file => {
-        file.fragments = createFragments(file, pass);
-        return file;
-    };
-
-    const filesA = match.filesA().map(attachFragments);
-    const filesB = match.filesB().map(attachFragments);
-
     return (
         <Split
             sizes={[50, 50]}
@@ -35,19 +21,25 @@ function SplitView(props) {
                 "height":"100%"
             }}
         >
-            <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesA} globalState={props.globalState}/>
-            </div>
-            <div style={{"height":"100%", "margin":0, "float":"left"}}>
-                <Side height={props.top_height} files={filesB} globalState={props.globalState}/>
-            </div>
+            {[props.match.filesA(), props.match.filesB()].map((files, i) =>
+                <div key={`side_${i}`} style={{"height":"100%", "margin":0, "float":"left"}}>
+                    <Side
+                        height={props.topHeight}
+                        files={files}
+                        spanManager={props.spanManager}
+                        globalState={props.globalState}
+                    />
+                </div>
+            )}
         </Split>
     )
 }
 
 
 function Side(props) {
-    let [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
+    const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
+
+    const ref = useRef(null);
 
     return (
         <div className="column-box">
@@ -60,14 +52,16 @@ function Side(props) {
                     percentage={70}
                     file={fileInView}/>
             </div>
-            <div className="row fill" style={{"overflow":"scroll"}}>
+            <div ref={ref} className="scrollable-side row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
                     {props.files.map(file =>
                         <File
                             key={file.name}
                             file={file}
+                            spanManager={props.spanManager}
                             softWrap={props.globalState.softWrap}
                             updateFileVisibility={updateFileVisibility}
+                            scrollTo={domElement => scrollTo(domElement, ref.current)}
                         />
                     )}
                 </div>
@@ -109,14 +103,15 @@ function StatusBar(props) {
     )
 }
 
+
 function useMax(items, initial=null) {
     if (initial === null) {
         initial = items[0];
     }
 
-    let [item, setItem] = useState(initial);
+    const [item, setItem] = useState(initial);
 
-    let values = useRef(items.reduce((acc, item) => {
+    const values = useRef(items.reduce((acc, item) => {
         acc[item] = 0;
         return acc;
     }, {}));
@@ -125,7 +120,7 @@ function useMax(items, initial=null) {
     const update = (item, value) => {
         values.current[item] = value;
 
-        // Find the item with the most visibility
+        // Find the item with the highest value
         let maxItem = item;
         let maxValue = 0;
         Object.entries(values.current).forEach(([item, value]) => {
@@ -142,6 +137,58 @@ function useMax(items, initial=null) {
     }
 
     return [item, update];
+}
+
+
+function findPos(domElement) {
+    let obj = domElement;
+    let curtop = 0;
+    if (obj.offsetParent) {
+        do {
+            curtop += obj.offsetTop;
+            obj = obj.offsetParent;
+        } while (obj);
+    }
+    return curtop;
+}
+
+
+// Custom implementation/hack of element.scrollIntoView();
+// Because safari does not support smooth scrolling @ July 27 2018
+// Update @ July 29 2020, still no smooth scrolling in Safari
+// Feel free to replace once it does:
+//     this.dom_element.scrollIntoView({"behavior":"smooth"});
+// Also see: https://github.com/iamdustan/smoothscroll
+// Credits: https://gist.github.com/andjosh/6764939
+function scrollTo(domElement, scrollable=document, offset=200) {
+    let easeInOutQuad = (t, b, c, d) => {
+        t /= d / 2;
+        if (t < 1) return c / 2 * t * t + b;
+        t--;
+        return -c / 2 * (t * (t - 2) - 1) + b;
+    };
+
+    let to = findPos(domElement) - offset;
+    let duration = 300;
+
+    let start = scrollable.scrollTop;
+    let change = to - start;
+    let currentTime = 0;
+    let increment = 20;
+
+    let animateScroll = () => {
+        currentTime += increment;
+        let val = easeInOutQuad(currentTime, start, change, duration);
+        scrollable.scrollTop = val;
+        if (currentTime < duration) {
+            setTimeout(animateScroll, increment);
+        }
+        else {
+            let event = new Event("finished_scrolling");
+            domElement.dispatchEvent(event);
+        }
+    };
+    animateScroll();
 }
 
 

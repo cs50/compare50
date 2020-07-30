@@ -6,6 +6,7 @@ import Logo from './logo';
 import SplitView from './code/splitview';
 
 import API from '../api';
+import useSpanManager from './spanmanager';
 
 
 function MatchView() {
@@ -14,10 +15,12 @@ function MatchView() {
         "passes": API.getPasses(),
         "nMatches": 50,
         "currentMatch": 1,
-        "currentGroup": 1,
-        "nGroups": 6,
         "softWrap": true
     });
+
+    const [match] = useState(API.getMatch());
+
+    const [spanManager] = useSpanManager(match.getPass(globalState.currentPass));
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>
@@ -27,15 +30,16 @@ function MatchView() {
                       <Logo height="2.5em"/>
                   </div>
                   <div className="row fill">
-                      <SideBar globalState={globalState} setGlobalState={setGlobalState}/>
+                      <SideBar globalState={globalState} setGlobalState={setGlobalState} spanManager={spanManager}/>
                   </div>
               </div>
           </div>
           <div className="row fill">
-              <SplitView top_height="2.5em" globalState={globalState}/>
+              <SplitView topHeight="2.5em" globalState={globalState} match={match} spanManager={spanManager}/>
           </div>
         </div>
     );
 }
+
 
 export default MatchView;
