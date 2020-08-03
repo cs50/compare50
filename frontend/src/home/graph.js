@@ -7,13 +7,13 @@ import D3Graph from './graph-d3';
 class Graph extends React.Component {
     constructor(props) {
         super(props);
+        this.divRef = React.createRef();
         this.graph = React.createRef();
         this.slider = React.createRef();
         this.d3Graph = new D3Graph();
     }
 
     static defaultProps = {
-        height: 200,
         slider: true
     }
 
@@ -42,6 +42,9 @@ class Graph extends React.Component {
     }
 
     getProps() {
+        const minWidth = 100;
+        const minHeight = 200;
+
         // Important information about displaying the graph
         return {
             radius: 10,
@@ -57,10 +60,10 @@ class Graph extends React.Component {
   
     render() {
         return (
-            <>
+            <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
                 <svg className="d3graph" ref={this.graph}></svg>
                 <div className="d3slider" ref={this.slider}></div>
-            </>
+            </div>
         )
     }
 };

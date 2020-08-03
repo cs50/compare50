@@ -1,6 +1,9 @@
 var d3 = require("d3");
 var slider = require("d3-simple-slider");
 
+const MIN_HEIGHT = 200;
+const MIN_WIDTH = 100;
+const SLIDER_HEIGHT = 100;
 
 // Helper functions
 function get_group_map(links) {
@@ -64,12 +67,22 @@ function get_group_map(links) {
 function get_real_width(elem, props) {
     // if we're given a static width, use it
     if (props.width !== undefined) {
-        return props.width;
+        return Math.max(props.width, MIN_WIDTH);
     }
 
     // calculate width of provided (likely, parent) element
     let style = getComputedStyle(elem);
-    return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return Math.max(elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), MIN_WIDTH);
+}
+
+function get_real_height(elem, props) {
+    // if we're given a static height, use it
+    if (props.height !== undefined) {
+        return Math.max(props.height, MIN_HEIGHT);
+    }
+
+    // calculate width of provided (likely, parent) element
+    return Math.max(elem.offsetHeight - SLIDER_HEIGHT - 3, MIN_HEIGHT);
 }
 
 
@@ -171,7 +184,7 @@ class D3Graph {
 
             this.SLIDER_EL
             .append("svg")
-                .attr("height", 100)
+                .attr("height", SLIDER_HEIGHT)
             .append("g")
                 .attr("transform", "translate(30,30)");
         }
@@ -186,8 +199,9 @@ class D3Graph {
         this.update(el, props, state);
 
         let width = get_real_width(el.parentNode, props);
+        let height = get_real_height(el.parentNode, props);
         let choseX = d3.randomUniform(width / 4, 3 * width / 4);
-        let choseY = d3.randomUniform(props.height / 4, 3 * props.height / 4);
+        let choseY = d3.randomUniform(height / 4, 3 * height / 4);
         let pos_map = []
         this.NODE_DATA.forEach(d => {
             if (pos_map[d.group] === undefined) {
@@ -222,7 +236,7 @@ class D3Graph {
     ticked(links, nodes, el, props) {
         nodes
             .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(el.parentNode, props) - props.radius * 3, d.x)); })
-            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(props.height - props.radius * 3, d.y)); });
+            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(el.parentNode, props) - props.radius * 3, d.y)); });
     
         links
             .attr("x1", function(d) { return d.source.x + props.radius; })
@@ -293,6 +307,7 @@ class D3Graph {
 
     on_resize(el, props, state) {
         let WIDTH = get_real_width(el.parentNode, props);
+        let HEIGHT = get_real_height(el.parentNode, props);
 
         if (props.slider) {
             this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
@@ -305,7 +320,7 @@ class D3Graph {
                 .call(this.SLIDER);
         }
     
-        this.SVG.attr("width", WIDTH).attr("height", props.height);
+        this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
     
         this.jiggle();
     }
@@ -313,9 +328,13 @@ class D3Graph {
     create(el, slider_el, props, state) {
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
-        this.init_graph(el, props, state);
-        if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
-        this.jiggle();
+
+        // Most problems with the split.js layout can be resolved by waiting a bit
+        setTimeout(() => {
+            this.init_graph(el, props, state);
+            if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
+            this.jiggle();
+        }, 66);
     }
 
     update(el, props, state) {

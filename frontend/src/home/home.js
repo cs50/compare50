@@ -12,7 +12,7 @@ class MatchTableRow extends React.Component {
     }
 
     goTo = () => {
-        window.location = "/match_" + this.props.link.index;
+        window.location = "/match_" + this.props.link.index + ".html";
     }
 
     render() {
@@ -34,7 +34,7 @@ class MatchTable extends React.Component {
 
     render() {
         let data = JSON.parse(this.props.data);
-        let rows = data.links.map(link => <MatchTableRow link={link} />)
+        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} />)
 
         return (
             <table>
@@ -57,17 +57,6 @@ class HomeView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {graph_width: undefined}
-    }
-
-    // This makes sure the graph actually rescales as needed
-    updateGraphWidth = (sizes) => {
-        this.setState({graph_width: undefined});
-    }
-
-    componentDidMount() {
-        setTimeout(() => {
-            this.updateGraphWidth();
-        }, 66);
     }
 
     render() { 
@@ -94,9 +83,7 @@ class HomeView extends React.Component {
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
-                        graph={this.props.data}
-                        width={this.state.graph_width}
-                        height={window.innerHeight - 104} />
+                        graph={this.props.data} />
                 </div>
             </Split>
         </>
