@@ -42,9 +42,6 @@ class Graph extends React.Component {
     }
 
     getProps() {
-        const minWidth = 100;
-        const minHeight = 200;
-
         // Important information about displaying the graph
         return {
             radius: 10,
