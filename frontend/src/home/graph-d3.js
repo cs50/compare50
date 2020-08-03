@@ -310,7 +310,7 @@ class D3Graph {
         this.jiggle();
     }
 
-    create(el, props, state, slider_el=null) {
+    create(el, slider_el, props, state) {
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
         this.init_graph(el, props, state);
