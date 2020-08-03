@@ -12,6 +12,11 @@ class Graph extends React.Component {
         this.d3Graph = new D3Graph();
     }
 
+    static defaultProps = {
+        height: 200,
+        slider: true
+    }
+
     componentDidMount() {
         // Initialize the graph
         this.d3Graph.create(
@@ -41,7 +46,8 @@ class Graph extends React.Component {
         return {
             radius: 10,
             width: this.props.width,
-            height: this.props.height
+            height: this.props.height,
+            slider: this.props.slider
         }
     }
 

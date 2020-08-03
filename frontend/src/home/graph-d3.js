@@ -140,39 +140,41 @@ class D3Graph {
         });
 
         // Slider
-        let slider_start = null;
-        if (this.HORRIBLE_TWO_NODE_HACK) {
-            // Since the hack adds an edge with weight -1, filter it out
-            slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
-        } else {
-            slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+        if (props.slider) {
+            let slider_start = null;
+            if (this.HORRIBLE_TWO_NODE_HACK) {
+                // Since the hack adds an edge with weight -1, filter it out
+                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+            } else {
+                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+            }
+
+            this.SLIDER = slider
+                .sliderBottom()
+                .min(slider_start)
+                .max(10)
+                .tickFormat(d => {
+                    let num = d3.format(".1f")(d)
+                    let [whole, fraction] = num.split(".");
+                    return fraction === "0" ? whole : num;
+                })
+                .ticks(10 - slider_start + 1)
+                .default(0)
+                .fill("#2196f3")
+                .on("onchange", (event) => { this.cutoff(event, el, props, state) })
+                .handle(
+                    d3
+                    .symbol()
+                    .type(d3.symbolCircle)
+                    .size(200)()
+                );
+
+            this.SLIDER_EL
+            .append("svg")
+                .attr("height", 100)
+            .append("g")
+                .attr("transform", "translate(30,30)");
         }
-
-        this.SLIDER = slider
-            .sliderBottom()
-            .min(slider_start)
-            .max(10)
-            .tickFormat(d => {
-                let num = d3.format(".1f")(d)
-                let [whole, fraction] = num.split(".");
-                return fraction === "0" ? whole : num;
-            })
-            .ticks(10 - slider_start + 1)
-            .default(0)
-            .fill("#2196f3")
-            .on("onchange", (event) => { this.cutoff(event, el, props, state) })
-            .handle(
-                d3
-                .symbol()
-                .type(d3.symbolCircle)
-                .size(200)()
-            );
-
-        this.SLIDER_EL
-        .append("svg")
-            .attr("height", 100)
-        .append("g")
-            .attr("transform", "translate(30,30)");
 
         this.G_LINK = this.SVG.append("g").attr("class", "links");
         this.G_NODE = this.SVG.append("g").attr("class", "nodes");
@@ -291,21 +293,24 @@ class D3Graph {
 
     on_resize(el, props, state) {
         let WIDTH = get_real_width(el.parentNode, props);
-        this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-    
-        this.SLIDER_EL
-          .style("width", WIDTH + "px")
-          .select("svg")
-            .attr("width", Math.floor(0.8 * WIDTH))
-            .select("g")
-              .call(this.SLIDER);
+
+        if (props.slider) {
+            this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+        
+            this.SLIDER_EL
+            .style("width", WIDTH + "px")
+            .select("svg")
+                .attr("width", Math.floor(0.8 * WIDTH))
+                .select("g")
+                .call(this.SLIDER);
+        }
     
         this.SVG.attr("width", WIDTH).attr("height", props.height);
     
         this.jiggle();
     }
 
-    create(el, slider_el, props, state) {
+    create(el, props, state, slider_el=null) {
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
         this.init_graph(el, props, state);
