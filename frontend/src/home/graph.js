@@ -10,10 +10,11 @@ class Graph extends React.Component {
         this.divRef = React.createRef();
         this.graph = React.createRef();
         this.slider = React.createRef();
-        this.d3Graph = new D3Graph();
+        this.d3Graph = new D3Graph.D3Graph();
     }
 
     static defaultProps = {
+        color: null,
         slider: true
     }
 
@@ -47,7 +48,8 @@ class Graph extends React.Component {
             radius: 10,
             width: this.props.width,
             height: this.props.height,
-            slider: this.props.slider
+            slider: this.props.slider,
+            color: this.props.color
         }
     }
 
@@ -56,6 +58,7 @@ class Graph extends React.Component {
     }
   
     render() {
+        console.log(this.props.forceUpdate)
         return (
             <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
                 <svg className="d3graph" ref={this.graph}></svg>

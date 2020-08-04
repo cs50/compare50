@@ -88,14 +88,14 @@ function get_real_height(elem, props) {
 
 // Graph -- store in an object to maintain state
 class D3Graph {
-    constructor() {
+    constructor(color=null) {
         this.SVG = null;
         this.SLIDER = null;
         this.G_NODE = null;
         this.G_LINK = null;
         this.NODE_DATA = null;
         this.LINK_DATA = null;
-        this.COLOR = null;
+        this.COLOR = color;
         this.DRAG_TARGET = null;
         this.SIMULATION = null;
 
@@ -136,9 +136,11 @@ class D3Graph {
         let group_map = get_group_map(state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
         state.graph.nodes.forEach(d => d.group = group_map[d.id]);
 
-        // set COLOR (function from group => color)
-        let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
-        this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+        if (this.COLOR === null) {
+            // set COLOR (function from group => color)
+            let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
+            this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+        }
     }
 
     // Initialize the graph visualization
@@ -326,6 +328,10 @@ class D3Graph {
     }
 
     create(el, slider_el, props, state) {
+        if (props.color !== null) {
+            this.COLOR = props.color;
+        }
+
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
 
@@ -431,4 +437,7 @@ class D3Graph {
     }
 }
 
-export default D3Graph;
+export default {
+    D3Graph: D3Graph,
+    get_group_map: get_group_map
+};
