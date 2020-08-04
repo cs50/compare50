@@ -53,7 +53,7 @@ body {
 }
 
 .btn-group.vertical button {
-    display: block; /* Make the buttons appear below each other */
+    display: inline-block; /* Make the buttons appear below each other */
 }
 
 .btn-group.vertical button:first-child {
@@ -95,7 +95,6 @@ body {
 
 .tooltip {
     position: relative;
-    display: inline-block;
 }
 
 .tooltip .tooltiptext {
@@ -104,9 +103,10 @@ body {
     background-color: gray;
     color: white;
     text-align: center;
-    border: 1px solid #ddd;
+    border: 1px solid #ddd !important;
+    font-weight: normal;
     border-radius: 10px;
-    padding: 5px 5px;
+    padding: 5px 5px !important;
 
     z-index: 1;
     position: absolute;

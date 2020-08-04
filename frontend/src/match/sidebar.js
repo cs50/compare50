@@ -80,21 +80,50 @@ function MatchNavigation(props) {
 function PassNavigation(props) {
     return (
         <div className="btn-group vertical">
-            {props.passes.map(pass =>
-                <button
-                    className={"monospace-text" + (props.currentPass.name === pass.name ? " active" : "")}
+            {props.passes.map((pass, i) =>
+                <PassButton
+                    pass={pass}
+                    index={i + 1}
+                    isSelected={props.currentPass.name === pass.name}
                     key={`pass_${pass.name}`}
-                    type="button"
-                    title={pass.docs}
-                    onClick={() => {props.setPass(pass)}}
-                    style={{"width":"100%"}}
-                >
-                    {pass.name}
-                </button>
+                    setPass={props.setPass}
+                />
             )}
         </div>
     )
 }
+
+
+function PassButton(props) {
+    useEffect(() => {
+        const eventListener = (event) =>  {
+            if (event.key === props.index.toString()) {
+                event.preventDefault();
+                props.setPass(props.pass);
+            }
+        };
+
+        document.addEventListener("keyup", eventListener);
+
+        return () => document.removeEventListener("keyup", eventListener);
+    });
+
+    return (
+        <span className="tooltip monospace-text">
+        <button
+            className={`monospace-text ${props.isSelected ? " active" : ""}`}
+            type="button"
+            title={props.pass.docs}
+            style={{"width":"100%"}}
+            onClick={() => {props.setPass(props.pass)}}
+        >
+            {props.pass.name}
+        </button>
+        <span className="tooltiptext">{`Press '${props.index}'`}</span>
+    </span>
+    )
+}
+
 
 
 function GroupNavigation(props) {
@@ -103,11 +132,11 @@ function GroupNavigation(props) {
 
     useEffect(() => {
         const eventListener = (event) =>  {
-            if (event.key === "]") {
+            if (event.key === "q") {
                 event.preventDefault();
                 nextRef.current.click();
             }
-            else if (event.key === "[") {
+            else if (event.key === "e") {
                 event.preventDefault();
                 prevRef.current.click();
             }
@@ -144,7 +173,7 @@ function GroupNavigation(props) {
                 >
                     &gt;
                 </button>
-                <span className="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press '[' ']'"}</span>
+                <span className="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press 'q' 'e'"}</span>
             </div>
         </div>
     )

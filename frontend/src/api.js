@@ -2,14 +2,11 @@ import subA from './spoofed_data/sub_a.json'
 import subB from './spoofed_data/sub_b.json'
 import matchStructure from './spoofed_data/match_structure.json'
 import graphData from './spoofed_data/graph.json'
+import passes from './spoofed_data/passes.json'
 
 class API {
     static getPasses() {
-        return [
-            {"name": "structure", "docs":"foo"},
-            {"name": "text", "docs": "bar"},
-            {"name": "exact", "docs": "baz"}
-        ]
+        return passes;
     }
 
     static getMatch() {
