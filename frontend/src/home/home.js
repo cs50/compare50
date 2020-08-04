@@ -26,22 +26,37 @@ class MatchTableRow extends React.Component {
     }
 
     render() {
-        let style = {
+        let last_td_style = {
             borderRightColor: this.props.color,
             borderRightWidth: "10px",
-            borderRightStyle: "solid"};
+            borderRightStyle: "solid"
+        };
+
+        let tr_style = {}, source_style = {}, target_style = {};
+        if (this.props.highlight !== null) {
+            let hl = this.props.highlight;
+            tr_style.backgroundColor = this.props.selected === null && !hl.clicked && hl.group === this.props.nodeGroup ? "#ececec" : undefined;
+            source_style.backgroundColor = !hl.clicked && hl.id === this.props.link.source ? "#ccc" : undefined;
+            target_style.backgroundColor = !hl.clicked && hl.id === this.props.link.target ? "#ccc" : undefined;
+        }
+        if (this.props.selected !== null) {
+            let sl = this.props.selected;
+            source_style.fontWeight = sl.id === this.props.link.source ? "bold" : undefined;
+            target_style.fontWeight = sl.id === this.props.link.target ? "bold" : undefined;
+        }
 
         return (
         <tr
+            style={tr_style}
             key={this.props.link.index}
             onClick={this.goTo}
             onMouseEnter={this.callbacks.mouseenter}
             onMouseLeave={this.props.callbacks.mouseleave}
         >
             <td>{this.props.link.index + 1}</td>
-            <td>{this.props.link.source}</td>
-            <td>{this.props.link.target}</td>
-            <td style={style}>{Math.round(this.props.link.value * 10) / 10}</td>
+            <td style={source_style}>{this.props.link.source}</td>
+            <td style={target_style}>{this.props.link.target}</td>
+            <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
         </tr>
         );
     }
@@ -63,7 +78,7 @@ class MatchTable extends React.Component {
         let data = JSON.parse(this.props.data);
         let node_groups = {};
         data.nodes.forEach(n => {node_groups[n.id] = n.group});
-        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source])} callbacks={this.callbacks} nodeGroup={node_groups[link.source]} />)
+        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source])} callbacks={this.callbacks} nodeGroup={node_groups[link.source]} highlight={this.props.highlight} selected={this.props.selected} />)
 
         return (
             <table>
@@ -90,6 +105,8 @@ class HomeView extends React.Component {
             graph: JSON.parse(this.props.data),
             graphJSON: this.props.data,
             highlight: null,
+            table_highlight: null,
+            table_selected: null,
             update_graph: false
         };
 
@@ -105,6 +122,26 @@ class HomeView extends React.Component {
 
     drag = () => {
         this.setState({update_graph: !this.state.update_graph});
+    }
+
+    graph_callbacks = {
+        mouseenter: (d) => {
+            if (this.state.table_highlight === null || !this.state.table_highlight.clicked) {
+                this.setState({table_highlight: d});
+            }
+        },
+
+        mouseleave: (d) => {
+            this.setState({table_highlight: null});
+        },
+
+        select: (d) => {
+            this.setState({table_selected: d});
+        },
+
+        deselect: (d) => {
+            this.setState({table_selected: null});
+        }
     }
 
     table_callbacks = {
@@ -146,10 +183,13 @@ class HomeView extends React.Component {
                     <MatchTable
                         callbacks={this.table_callbacks}
                         color={this.state.color}
-                        data={this.state.graphJSON} />
+                        data={this.state.graphJSON}
+                        highlight={this.state.table_highlight}
+                        selected={this.state.table_selected} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
+                        callbacks={this.graph_callbacks}
                         highlight={this.state.highlight}
                         forceUpdate={this.state.update_graph}
                         color={this.state.color}

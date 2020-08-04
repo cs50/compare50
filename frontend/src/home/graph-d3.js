@@ -153,6 +153,8 @@ class D3Graph {
         this.SVG.on("click", () => {
             state.graph.nodes.forEach(node =>
                 node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
+
+            props.callbacks.deselect();
             this.update(el, props, state);
         });
 
@@ -282,6 +284,8 @@ class D3Graph {
             node.is_group_focused = node.group === d.group;
             node.is_node_focused = node.id === d.id;
         });
+
+        props.callbacks.mouseenter(d);
     
         this.update(el, props, state);
     }
@@ -294,6 +298,8 @@ class D3Graph {
         state.graph.nodes.forEach(node => {
             node.is_group_focused = node.is_node_focused = false;
         });
+
+        props.callbacks.mouseleave(d);
     
         this.update(el, props, state);
     }
@@ -305,6 +311,8 @@ class D3Graph {
         });
     
         this.update(el, props, state);
+
+        props.callbacks.select(d);
     
         d3.event.stopPropagation();
     }

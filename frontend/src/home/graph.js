@@ -14,6 +14,7 @@ class Graph extends React.Component {
     }
 
     static defaultProps = {
+        callbacks: {mouseenter: () => {}, mouseleave: () => {}, select: () => {}, deselect: () => {}},
         color: null,
         slider: true
     }
@@ -50,7 +51,8 @@ class Graph extends React.Component {
             width: this.props.width,
             height: this.props.height,
             slider: this.props.slider,
-            color: this.props.color
+            color: this.props.color,
+            callbacks: this.props.callbacks
         }
     }
 
