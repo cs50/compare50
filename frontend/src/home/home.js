@@ -15,6 +15,12 @@ class MatchTableRow extends React.Component {
         super(props);
     }
 
+    callbacks = {
+        mouseenter: () => {
+            this.props.callbacks.mouseenter({link: this.props.link, group: this.props.nodeGroup});
+        }
+    }
+
     goTo = () => {
         window.location = "/match_" + this.props.link.index + ".html";
     }
@@ -29,7 +35,9 @@ class MatchTableRow extends React.Component {
         <tr
             key={this.props.link.index}
             onClick={this.goTo}
-            >
+            onMouseEnter={this.callbacks.mouseenter}
+            onMouseLeave={this.props.callbacks.mouseleave}
+        >
             <td>{this.props.link.index + 1}</td>
             <td>{this.props.link.source}</td>
             <td>{this.props.link.target}</td>
@@ -44,11 +52,18 @@ class MatchTable extends React.Component {
         super(props);
     }
 
+    callbacks = {
+        mouseenter: (evt) => {
+            this.props.callbacks.mouseenter(evt)
+        },
+        mouseleave: this.props.callbacks.mouseleave
+    }
+
     render() {
         let data = JSON.parse(this.props.data);
         let node_groups = {};
         data.nodes.forEach(n => {node_groups[n.id] = n.group});
-        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source])} />)
+        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source])} callbacks={this.callbacks} nodeGroup={node_groups[link.source]} />)
 
         return (
             <table>
@@ -70,7 +85,13 @@ class MatchTable extends React.Component {
 class HomeView extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {color: null, graph: JSON.parse(this.props.data), graphJSON: this.props.data, update_graph: 0};
+        this.state = {
+            color: null,
+            graph: JSON.parse(this.props.data),
+            graphJSON: this.props.data,
+            highlight: null,
+            update_graph: false
+        };
 
         // assign groups to nodes
         let group_map = GraphFxns.get_group_map(this.state.graph.links);
@@ -83,18 +104,30 @@ class HomeView extends React.Component {
     }
 
     drag = () => {
-        this.setState({update_graph: this.state.update_graph + 1});
+        this.setState({update_graph: !this.state.update_graph});
     }
 
-    componentDidMount() {
+    table_callbacks = {
+        mouseenter: (event) => {
+            let highlight = {
+                group: event.group,
+                nodes: [event.link.source, event.link.target]
+            };
+            this.setState({highlight: highlight});
+        },
 
+        mouseleave: (event) => {
+            this.setState({highlight: null});
+        }
     }
 
     render() { 
+        let sizes = this.state.graph.nodes.length > 50 ? [55, 45] : [60, 40];
+
         return (
         <>
             <Split
-                sizes={[60, 40]}
+                sizes={sizes}
                 gutterSize={10}
                 gutterAlign="center"
                 snapOffset={30}
@@ -111,11 +144,13 @@ class HomeView extends React.Component {
                         <Logo />
                     </nav>
                     <MatchTable
+                        callbacks={this.table_callbacks}
                         color={this.state.color}
                         data={this.state.graphJSON} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
+                        highlight={this.state.highlight}
                         forceUpdate={this.state.update_graph}
                         color={this.state.color}
                         graph={this.props.data} />

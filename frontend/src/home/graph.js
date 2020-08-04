@@ -38,7 +38,8 @@ class Graph extends React.Component {
     getGraphState() {
         // Assumes the graph is passed in JSON format as a prop
         return {
-            graph: JSON.parse(this.props.graph)
+            graph: JSON.parse(this.props.graph),
+            highlight: this.props.highlight
         };
     }
 
@@ -58,7 +59,6 @@ class Graph extends React.Component {
     }
   
     render() {
-        console.log(this.props.forceUpdate)
         return (
             <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
                 <svg className="d3graph" ref={this.graph}></svg>

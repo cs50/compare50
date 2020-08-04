@@ -194,6 +194,7 @@ table {
 
 tr {
     cursor: pointer;
+    overflow: hidden;
 }
 
 tbody tr:hover {
@@ -207,6 +208,10 @@ tr td:first-child {
 th, td {
     padding: 1rem;
     text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
 }
 
 td {
