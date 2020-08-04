@@ -28,6 +28,7 @@ function SideBar(props) {
             <div className="row auto" style={style}>
                 <PassNavigation
                     passes={props.globalState.passes}
+                    currentPass={props.globalState.currentPass}
                     setPass={pass => updateGlobalState({"currentPass": pass})}
                 />
             </div>
@@ -80,7 +81,14 @@ function PassNavigation(props) {
     return (
         <div className="btn-group vertical">
             {props.passes.map(pass =>
-                <button className="monospace-text" key={`pass_${pass.name}`} type="button" title={pass.docs} style={{"width":"100%"}}>
+                <button
+                    className={"monospace-text" + (props.currentPass.name === pass.name ? " active" : "")}
+                    key={`pass_${pass.name}`}
+                    type="button"
+                    title={pass.docs}
+                    onClick={() => {props.setPass(pass)}}
+                    style={{"width":"100%"}}
+                >
                     {pass.name}
                 </button>
             )}
@@ -136,7 +144,7 @@ function GroupNavigation(props) {
                 >
                     &gt;
                 </button>
-                <span class="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press '[' ']'"}</span>
+                <span className="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press '[' ']'"}</span>
             </div>
         </div>
     )
@@ -176,7 +184,7 @@ function Switch(props) {
             </label>
             <div className="tooltip" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
                 <span className="monospace-text">{props.text}</span>
-                <span class="tooltiptext">{props.tooltip}</span>
+                <span className="tooltiptext">{props.tooltip}</span>
             </div>
         </div>
     )

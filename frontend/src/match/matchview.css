@@ -42,6 +42,12 @@ body {
     cursor: pointer; /* Pointer/hand icon */
 }
 
+.btn-group button.active {
+    font-weight: bold;
+    padding: 8px 0px;
+    border: 3px solid #2196F3;
+}
+
 .btn-group button:hover {
     background-color: #ddd; /* Add a background color on hover */
 }
@@ -58,9 +64,6 @@ body {
     border-radius: 0px 0px 5px 5px;
 }
 
-.btn-group.vertical button:not(:last-child) {
-    border-bottom: none; /* Prevent double borders */
-}
 
 .btn-group.horizontal button {
     float: left; /* Float the buttons side by side */
