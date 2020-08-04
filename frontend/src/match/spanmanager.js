@@ -162,7 +162,7 @@ class SpanManager {
 
     selectedGroupIndex() {
         for (let span of this.spans) {
-            if (this._spanStates[span.id] === Span.STATES.SELECTED) {
+            if (this._spanStates[span.id] === Span.STATES.SELECTED || this._spanStates[span.id] === Span.STATES.HIGHLIGHTED) {
                 return span.groupId + 1;
             }
         }
@@ -293,20 +293,40 @@ function useSpanManager(pass) {
     const initIgnoredSpans = () =>
         pass.ignoredSpans.map(span => new Span(span.id, span.subId, span.fileId, null, span.start, span.end, true));
 
+    const initSpanStates = () => {
+        const spanStates = spans.reduce((acc, span) => {
+            acc[span.id] = Span.STATES.INACTIVE;
+            return acc;
+        }, {});
+
+        return spanStates;
+    }
+
     // Memoize the (expensive) mapping from regions to spans on the selected pass
     const spans = useMemo(initSpans, [pass.pass]);
     const regionMap = useMemo(() => new RegionMap(spans), [spans]);
 
     // Memoize the (expensive) mapping from regions to ignoredSpans on the selected pass
     const ignoredSpans = useMemo(initIgnoredSpans, [pass.pass]);
-    const ignoredRegionMap = useMemo(() => new RegionMap(ignoredSpans), [ignoredSpans]);
+    const ignoredRegionMap = useMemo(() => new RegionMap(ignoredSpans), [spans]);
 
-    const [spanStates, setSpanStates] = useState(spans.reduce((acc, span) => {
-        acc[span.id] = Span.STATES.INACTIVE;
-        return acc;
-    }, {}));
+    // A map from pass.name => span.id => state
+    const [allSpanStates, setAllSpanStates] = useState({});
 
-    return [new SpanManager(regionMap, ignoredRegionMap, spanStates, setSpanStates)];
+    // Retrieve the spanStates from the map, otherwise create new
+    let spanStates = allSpanStates[pass.pass]
+    if (spanStates === undefined) {
+        spanStates = initSpanStates();
+    }
+
+    // Callback to set the spanStates for the current pass
+    const setSpanStates = spanStates => {
+        const temp = {}
+        temp[pass.pass] = {...(allSpanStates[pass.pass]), ...spanStates}
+        setAllSpanStates({...allSpanStates, ...temp})
+    };
+
+    return new SpanManager(regionMap, ignoredRegionMap, spanStates, setSpanStates);
 }
 
 
