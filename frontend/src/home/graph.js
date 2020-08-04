@@ -14,7 +14,7 @@ class Graph extends React.Component {
     }
 
     static defaultProps = {
-        callbacks: {mouseenter: () => {}, mouseleave: () => {}, select: () => {}, deselect: () => {}},
+        callbacks: {loaded: () => {}, mouseenter: () => {}, mouseleave: () => {}, select: () => {}, deselect: () => {}},
         color: null,
         slider: true,
         sliderTip: true
@@ -38,9 +38,8 @@ class Graph extends React.Component {
     }
 
     getGraphState() {
-        // Assumes the graph is passed in JSON format as a prop
         return {
-            graph: JSON.parse(this.props.graph),
+            graph: this.props.graph,
             highlight: this.props.highlight
         };
     }

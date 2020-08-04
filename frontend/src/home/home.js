@@ -37,13 +37,14 @@ class MatchTableRow extends React.Component {
         if (this.props.highlight !== null) {
             let hl = this.props.highlight;
             tr_style.backgroundColor = this.props.selected === null && !hl.clicked && hl.group === this.props.nodeGroup ? "#ececec" : undefined;
-            source_style.backgroundColor = !hl.clicked && hl.id === this.props.link.source ? "#ccc" : undefined;
-            target_style.backgroundColor = !hl.clicked && hl.id === this.props.link.target ? "#ccc" : undefined;
+            source_style.backgroundColor = !hl.clicked && hl.id === this.props.link.source.id ? "#ccc" : undefined;
+            target_style.backgroundColor = !hl.clicked && hl.id === this.props.link.target.id ? "#ccc" : undefined;
         }
+        
         if (this.props.selected !== null) {
             let sl = this.props.selected;
-            source_style.fontWeight = sl.id === this.props.link.source ? "bold" : undefined;
-            target_style.fontWeight = sl.id === this.props.link.target ? "bold" : undefined;
+            source_style.fontWeight = sl.id === this.props.link.source.id ? "bold" : undefined;
+            target_style.fontWeight = sl.id === this.props.link.target.id ? "bold" : undefined;
         }
 
         return (
@@ -55,8 +56,8 @@ class MatchTableRow extends React.Component {
             onMouseLeave={this.props.callbacks.mouseleave}
         >
             <td>{this.props.link.index + 1}</td>
-            <td style={source_style} data-tip={this.props.link.source}>{this.props.link.source}</td>
-            <td style={target_style} data-tip={this.props.link.target}>{this.props.link.target}</td>
+            <td style={source_style} data-tip={this.props.link.source.id}>{this.props.link.source.id}</td>
+            <td style={target_style} data-tip={this.props.link.target.id}>{this.props.link.target.id}</td>
             <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
         </tr>
         );
@@ -76,10 +77,10 @@ class MatchTable extends React.Component {
     }
 
     render() {
-        let data = JSON.parse(this.props.data);
+        let data = this.props.data;
         let node_groups = {};
         data.nodes.forEach(n => {node_groups[n.id] = n.group});
-        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source])} callbacks={this.callbacks} nodeGroup={node_groups[link.source]} highlight={this.props.highlight} selected={this.props.selected} />)
+        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source.id])} callbacks={this.callbacks} nodeGroup={node_groups[link.source.id]} highlight={this.props.highlight} selected={this.props.selected} />)
 
         return (
             <table>
@@ -87,7 +88,7 @@ class MatchTable extends React.Component {
                     <tr>
                         <th>#</th>
                         <th colSpan="2">Submissions</th>
-                        <th colSpan="2">Score <span data-tip="here's how" className="tooltip-marker">?</span></th>
+                        <th colSpan="2">Score <span data-tip="On a scale of 1-10, how similar the files are." className="tooltip-marker">?</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,11 +105,11 @@ class HomeView extends React.Component {
         this.state = {
             color: null,
             graph: JSON.parse(this.props.data),
-            graphJSON: this.props.data,
             highlight: null,
             table_highlight: null,
             table_selected: null,
-            update_graph: false
+            update_graph: false,
+            update_table: true
         };
 
         // assign groups to nodes
@@ -118,7 +119,6 @@ class HomeView extends React.Component {
         // set COLOR (function from group => color)
         let n_groups = Math.max.apply(0, this.state.graph.nodes.map(node => node.group));
         this.state.color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
-        this.state.graphJSON = JSON.stringify(this.state.graph)
     }
 
     drag = () => {
@@ -126,6 +126,10 @@ class HomeView extends React.Component {
     }
 
     graph_callbacks = {
+        loaded: (evt) => {
+            this.setState({update_table: !this.state.update_table});
+        },
+
         mouseenter: (d) => {
             if (this.state.table_highlight === null || !this.state.table_highlight.clicked) {
                 this.setState({table_highlight: d});
@@ -183,9 +187,10 @@ class HomeView extends React.Component {
                         <Logo />
                     </nav>
                     <MatchTable
+                        forceUpdate={this.update_table}
                         callbacks={this.table_callbacks}
                         color={this.state.color}
-                        data={this.state.graphJSON}
+                        data={this.state.graph}
                         highlight={this.state.table_highlight}
                         selected={this.state.table_selected} />
                 </div>
@@ -195,7 +200,7 @@ class HomeView extends React.Component {
                         highlight={this.state.highlight}
                         forceUpdate={this.state.update_graph}
                         color={this.state.color}
-                        graph={this.props.data}
+                        graph={this.state.graph}
                         sliderTip={true} />
                 </div>
             </Split>
