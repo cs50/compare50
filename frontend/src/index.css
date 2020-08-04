@@ -217,3 +217,16 @@ th, td {
 td {
     border-top: 1px solid #eeeeee;
 }
+
+/* Tooltip marker */
+.tooltip-marker {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    text-align: center;
+    cursor: pointer;
+    font-size: .8rem;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    border-radius: 32px;
+}

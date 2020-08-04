@@ -1,6 +1,7 @@
 
 import React from 'react';
 import Split from 'react-split';
+import ReactTooltip from "react-tooltip";
 
 import '../index.css';
 import '../split.css';
@@ -54,8 +55,8 @@ class MatchTableRow extends React.Component {
             onMouseLeave={this.props.callbacks.mouseleave}
         >
             <td>{this.props.link.index + 1}</td>
-            <td style={source_style}>{this.props.link.source}</td>
-            <td style={target_style}>{this.props.link.target}</td>
+            <td style={source_style} data-tip={this.props.link.source}>{this.props.link.source}</td>
+            <td style={target_style} data-tip={this.props.link.target}>{this.props.link.target}</td>
             <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
         </tr>
         );
@@ -86,7 +87,7 @@ class MatchTable extends React.Component {
                     <tr>
                         <th>#</th>
                         <th colSpan="2">Submissions</th>
-                        <th colSpan="2">Score</th>
+                        <th colSpan="2">Score <span data-tip="here's how" className="tooltip-marker">?</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -163,6 +164,7 @@ class HomeView extends React.Component {
 
         return (
         <>
+            <ReactTooltip />
             <Split
                 sizes={sizes}
                 gutterSize={10}
@@ -193,7 +195,8 @@ class HomeView extends React.Component {
                         highlight={this.state.highlight}
                         forceUpdate={this.state.update_graph}
                         color={this.state.color}
-                        graph={this.props.data} />
+                        graph={this.props.data}
+                        sliderTip={true} />
                 </div>
             </Split>
         </>

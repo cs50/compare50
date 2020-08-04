@@ -12,7 +12,8 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
-    "react-split": "2.0.9"
+    "react-split": "2.0.9",
+    "react-tooltip": "^4.2.7"
   },
   "scripts": {
     "start": "react-app-rewired start",

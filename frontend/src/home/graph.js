@@ -16,7 +16,8 @@ class Graph extends React.Component {
     static defaultProps = {
         callbacks: {mouseenter: () => {}, mouseleave: () => {}, select: () => {}, deselect: () => {}},
         color: null,
-        slider: true
+        slider: true,
+        sliderTip: true
     }
 
     componentDidMount() {
@@ -52,7 +53,8 @@ class Graph extends React.Component {
             height: this.props.height,
             slider: this.props.slider,
             color: this.props.color,
-            callbacks: this.props.callbacks
+            callbacks: this.props.callbacks,
+            sliderTip: this.props.sliderTip
         }
     }
 
@@ -64,7 +66,17 @@ class Graph extends React.Component {
         return (
             <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
                 <svg className="d3graph" ref={this.graph}></svg>
-                <div className="d3slider" ref={this.slider}></div>
+                <div className="d3slider" ref={this.slider}>
+                    {this.props.sliderTip &&
+                    <small
+                        className="tooltip-marker"
+                        style={{position: "absolute", marginTop: "20px"}}
+                        data-tip="Slide this to hide all matches below the selected score."
+                    >
+                        ?
+                    </small>
+                    }
+                </div>
             </div>
         )
     }
