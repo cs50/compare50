@@ -17,8 +17,9 @@ function File(props) {
     const fromFile = span => span.fileId === props.file.id;
     const spans = props.spanManager.spans.filter(fromFile);
     const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
+    const allSpans = spans.concat(ignoredSpans);
 
-    const fragments = useMemo(() => createFragments(props.file, spans.concat(ignoredSpans)), [props.file, spans]);
+    const fragments = useMemo(() => createFragments(props.file, allSpans), [props.file, allSpans]);
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
@@ -31,6 +32,7 @@ function File(props) {
                             fileId={props.file.id}
                             id={id}
                             onNewline={onNewline}
+                            hideIgnored={props.hideIgnored}
                             scrollTo={props.scrollTo}
                             spanManager={props.spanManager}/>
         onNewline = frag.text.endsWith("\n");
@@ -64,7 +66,7 @@ function Fragment(props) {
         classNameRef.current = ref.current.className;
     })
 
-    let className = getClassName(props.fragment, props.spanManager);
+    let className = getClassName(props.fragment, props.spanManager, props.hideIgnored);
 
     return (
         <span
@@ -93,10 +95,14 @@ function Fragment(props) {
 }
 
 
-function getClassName(fragment, spanManager) {
+function getClassName(fragment, spanManager, hideIgnored) {
     const classNames = [];
     if (spanManager.isIgnored(fragment)) {
-        classNames.push("ignored-span");
+        if (hideIgnored) {
+            classNames.push("invisible-span");
+        } else {
+            classNames.push("ignored-span");
+        }
     }
 
     if (spanManager.isHighlighted(fragment)) {

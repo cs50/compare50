@@ -1,50 +1,56 @@
 import React, {useRef, useEffect} from 'react';
 
-import './matchview.css'
+import Graph from '../home/graph';
+
+import './matchview.css';
 import './sidebar.css';
 
 
 function SideBar(props) {
     let style = {
         "margin": "auto",
-        "marginBottom": "1em",
-        "marginTop": "1em",
+        "marginBottom": ".5em",
+        "marginTop": ".5em",
         "width": "90%"
     }
 
     const updateGlobalState = newState => props.setGlobalState({...props.globalState, ...newState})
 
     return (
-        <div style={{
-            "height":"100%"
-        }}>
-            <div style={{...style, ...{"marginTop": "0"}}}>
+        <div className="column-box">
+            <div className="row auto" style={style}>
                 <MatchNavigation
                     current={props.globalState.currentMatch}
                     n={props.globalState.nMatches}
                     setMatch={match => updateGlobalState({"currentMatch": match})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <PassNavigation
                     passes={props.globalState.passes}
+                    currentPass={props.globalState.currentPass}
                     setPass={pass => updateGlobalState({"currentPass": pass})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <GroupNavigation
                     spanManager={props.spanManager}
                     setGroup={group => updateGlobalState({"currentGroup": group})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <ConfigMenu
                     softWrap={props.globalState.softWrap}
                     setSoftWrap={softWrap => updateGlobalState({"softWrap": softWrap})}
+                    hideIgnored={props.globalState.hideIgnored}
+                    setHideIgnored={hideIgnored => updateGlobalState({"hideIgnored": hideIgnored})}
                 />
             </div>
-            <div style={style}>
+            <div className="row auto" style={style}>
                 <ExportMenu/>
+            </div>
+            <div className="row fill" style={style}>
+                <Graph graph={props.graphData}/>
             </div>
         </div>
     )
@@ -74,14 +80,50 @@ function MatchNavigation(props) {
 function PassNavigation(props) {
     return (
         <div className="btn-group vertical">
-            {props.passes.map(pass =>
-                <button key={`pass_${pass.name}`} type="button" title={pass.docs} style={{"width":"100%"}}>
-                    {pass.name}
-                </button>
+            {props.passes.map((pass, i) =>
+                <PassButton
+                    pass={pass}
+                    index={i + 1}
+                    isSelected={props.currentPass.name === pass.name}
+                    key={`pass_${pass.name}`}
+                    setPass={props.setPass}
+                />
             )}
         </div>
     )
 }
+
+
+function PassButton(props) {
+    useEffect(() => {
+        const eventListener = (event) =>  {
+            if (event.key === props.index.toString()) {
+                event.preventDefault();
+                props.setPass(props.pass);
+            }
+        };
+
+        document.addEventListener("keyup", eventListener);
+
+        return () => document.removeEventListener("keyup", eventListener);
+    });
+
+    return (
+        <span className="tooltip monospace-text">
+        <button
+            className={`monospace-text ${props.isSelected ? " active" : ""}`}
+            type="button"
+            title={props.pass.docs}
+            style={{"width":"100%"}}
+            onClick={() => {props.setPass(props.pass)}}
+        >
+            {props.pass.name}
+        </button>
+        <span className="tooltiptext">{`Press '${props.index}'`}</span>
+    </span>
+    )
+}
+
 
 
 function GroupNavigation(props) {
@@ -90,11 +132,11 @@ function GroupNavigation(props) {
 
     useEffect(() => {
         const eventListener = (event) =>  {
-            if (event.key === "]") {
+            if (event.key === "e") {
                 event.preventDefault();
                 nextRef.current.click();
             }
-            else if (event.key === "[") {
+            else if (event.key === "q") {
                 event.preventDefault();
                 prevRef.current.click();
             }
@@ -114,7 +156,7 @@ function GroupNavigation(props) {
             }}>
                 {formatFraction(props.spanManager.selectedGroupIndex(), props.spanManager.nGroups())}
             </div>
-            <div className="btn-group horizontal" style={{"width":"100%"}}>
+            <div className="tooltip btn-group horizontal" style={{"width":"100%"}}>
                 <button
                     ref={prevRef}
                     type="button"
@@ -131,6 +173,7 @@ function GroupNavigation(props) {
                 >
                     &gt;
                 </button>
+                <span className="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press 'q' 'e'"}</span>
             </div>
         </div>
     )
@@ -150,10 +193,10 @@ function ConfigMenu(props) {
     return (
         <React.Fragment>
             <div style={{"marginBottom": ".25em"}}>
-                <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap}/>
+                <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap} tooltip="Soft Wrap long lines of code"/>
             </div>
             <div>
-                <Switch text="hide" default={false} setOption={props.setHideIgnored}/>
+                <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored} tooltip="Hide code that was not used in the comparison"/>
             </div>
         </React.Fragment>
     )
@@ -168,8 +211,9 @@ function Switch(props) {
                 <input type="checkbox" onChange={event => props.setOption(event.target.checked)} defaultChecked={props.default}/>
                 <span className="slider round"></span>
             </label>
-            <div className="monospace-text" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
-                {props.text}
+            <div className="tooltip" style={{"display": "table-cell", "verticalAlign": "middle", "paddingLeft": ".5em"}}>
+                <span className="monospace-text">{props.text}</span>
+                <span className="tooltiptext">{props.tooltip}</span>
             </div>
         </div>
     )

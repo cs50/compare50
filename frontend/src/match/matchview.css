@@ -42,12 +42,18 @@ body {
     cursor: pointer; /* Pointer/hand icon */
 }
 
+.btn-group button.active {
+    font-weight: bold;
+    padding: 8px 0px;
+    border: 3px solid #2196F3;
+}
+
 .btn-group button:hover {
     background-color: #ddd; /* Add a background color on hover */
 }
 
 .btn-group.vertical button {
-    display: block; /* Make the buttons appear below each other */
+    display: inline-block; /* Make the buttons appear below each other */
 }
 
 .btn-group.vertical button:first-child {
@@ -58,9 +64,6 @@ body {
     border-radius: 0px 0px 5px 5px;
 }
 
-.btn-group.vertical button:not(:last-child) {
-    border-bottom: none; /* Prevent double borders */
-}
 
 .btn-group.horizontal button {
     float: left; /* Float the buttons side by side */
@@ -88,4 +91,34 @@ body {
     content: "";
     clear: both;
     display: table;
+}
+
+.tooltip {
+    position: relative;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    white-space: nowrap;
+    background-color: gray;
+    color: white;
+    text-align: center;
+    border: 1px solid #ddd !important;
+    font-weight: normal;
+    border-radius: 10px;
+    padding: 5px 5px !important;
+
+    z-index: 1;
+    position: absolute;
+    top: -3px;
+    left: 105%;
+}
+
+.tooltip .bottom {
+    top: 100%;
+    left: 0%;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
 }

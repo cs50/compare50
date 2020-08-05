@@ -1,0 +1,5 @@
+[
+    {"name": "structure", "docs": "Compares code structure by removing whitespace and comments; normalizing variable names, string literals, and numeric literals; and then running the winnowing algorithm."},
+    {"name": "text", "docs": "Removes whitespace, then uses the winnowing algorithm to compare submissions."},
+    {"name": "exact", "docs": "Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions."}
+]

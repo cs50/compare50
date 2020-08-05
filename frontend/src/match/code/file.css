@@ -53,3 +53,7 @@ code.newline::before {
 .ignored-span:not(.grouped-span):not(.active-span):not(.selected-span):not(.highlighted-span) {
     color: lightgrey;
 }
+
+.invisible-span {
+    visibility: hidden;
+}
