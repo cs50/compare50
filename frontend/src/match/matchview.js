@@ -21,7 +21,9 @@ function MatchView() {
     const [match] = useState(API.getMatch());
     const [graphData] = useState(API.getGraph(match));
 
-    const spanManager = useSpanManager(match.getPass(globalState.currentPass));
+    const pass = match.getPass(globalState.currentPass);
+
+    const spanManager = useSpanManager(pass);
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>
@@ -36,7 +38,7 @@ function MatchView() {
               </div>
           </div>
           <div className="row fill">
-              <SplitView topHeight="2.5em" globalState={globalState} match={match} spanManager={spanManager}/>
+              <SplitView topHeight="2.5em" globalState={globalState} match={match} pass={pass} spanManager={spanManager}/>
           </div>
         </div>
     );

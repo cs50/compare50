@@ -13,6 +13,12 @@
             {"id": 6, "subId": 2, "fileId": 4, "start": 300, "end": 350}
         ]
     ],
+    "fileData": [
+        {"fileId": 1, "percentage":50},
+        {"fileId": 2, "percentage":60},
+        {"fileId": 3, "percentage":70},
+        {"fileId": 4, "percentage":80}
+    ],
     "ignoredSpans": [
         {"id": 7, "subId": 1, "fileId": 2, "start": 0, "end": 25}
     ]

@@ -24,7 +24,7 @@ function SplitView(props) {
             {[props.match.filesA(), props.match.filesB()].map((files, i) =>
                 <div key={`side_${i}`} style={{"height":"100%", "margin":0, "float":"left"}}>
                     <Side
-                        height={props.topHeight}
+                        pass={props.pass}
                         files={files}
                         spanManager={props.spanManager}
                         globalState={props.globalState}
@@ -59,6 +59,7 @@ function Side(props) {
                             key={file.name}
                             file={file}
                             spanManager={props.spanManager}
+                            percentage={props.pass.fileData.find(el => el.fileId === file.id).percentage}
                             softWrap={props.globalState.softWrap}
                             hideIgnored={props.globalState.hideIgnored}
                             updateFileVisibility={updateFileVisibility}
