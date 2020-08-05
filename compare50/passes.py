@@ -46,3 +46,9 @@ class misspellings(Pass):
                      preprocessors.words]
     comparator = comparators.Misspellings(resource_filename("compare50.comparators",
                                                             "english_dictionary.txt"))
+
+
+class words(Pass):
+    """Treat the files as a collection of words seperated by a space, then run the winnowing algorithm."""
+    preprocessors = [preprocessors.words]
+    comparator = comparators.Winnowing(k=15, t=25)
