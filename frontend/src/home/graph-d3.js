@@ -88,14 +88,14 @@ function get_real_height(elem, props) {
 
 // Graph -- store in an object to maintain state
 class D3Graph {
-    constructor(color=null) {
+    constructor() {
         this.SVG = null;
         this.SLIDER = null;
         this.G_NODE = null;
         this.G_LINK = null;
         this.NODE_DATA = null;
         this.LINK_DATA = null;
-        this.COLOR = color;
+        this.COLOR = null;
         this.DRAG_TARGET = null;
         this.SIMULATION = null;
 
@@ -338,9 +338,7 @@ class D3Graph {
     }
 
     create(el, slider_el, props, state) {
-        if (props.color !== null) {
-            this.COLOR = props.color;
-        }
+        if (props.color !== null) this.COLOR = props.color;
 
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
@@ -357,9 +355,7 @@ class D3Graph {
     }
 
     update(el, props, state) {
-        if (!this.INITIALIZED) {
-            return false;
-        }
+        if (!this.INITIALIZED) return false;
         
         this.on_resize(el, props, state);
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
