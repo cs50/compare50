@@ -69,8 +69,12 @@ function MatchNavigation(props) {
                 {formatFraction(props.current, props.n)}
             </div>
             <div className="btn-group horizontal">
-                <button type="button" style={{"width":"50%"}}>{"<<"}</button>
-                <button type="button" style={{"width":"50%"}}>{">>"}</button>
+                <span className="btn">
+                    <button type="button" style={{"width":"50%"}}>{"<<"}</button>
+                </span>
+                <span className="btn">
+                    <button type="button" style={{"width":"50%"}}>{">>"}</button>
+                </span>
             </div>
         </div>
     )
@@ -109,18 +113,18 @@ function PassButton(props) {
     });
 
     return (
-        <span className="tooltip monospace-text">
-        <button
-            className={`monospace-text ${props.isSelected ? " active" : ""}`}
-            type="button"
-            title={props.pass.docs}
-            style={{"width":"100%"}}
-            onClick={() => {props.setPass(props.pass)}}
-        >
-            {props.pass.name}
-        </button>
-        <span className="tooltiptext">{`Press '${props.index}'`}</span>
-    </span>
+        <span className="tooltip btn">
+            <button
+                className={`monospace-text ${props.isSelected ? " active" : ""}`}
+                type="button"
+                title={props.pass.docs}
+                style={{"width":"100%"}}
+                onClick={() => {props.setPass(props.pass)}}
+            >
+                {props.pass.name}
+            </button>
+            <ShortcutTooltip shortcut={props.index.toString()}/>
+        </span>
     )
 }
 
@@ -157,23 +161,29 @@ function GroupNavigation(props) {
                 {formatFraction(props.spanManager.selectedGroupIndex(), props.spanManager.nGroups())}
             </div>
             <div className="tooltip btn-group horizontal" style={{"width":"100%"}}>
-                <button
-                    ref={prevRef}
-                    type="button"
-                    style={{"width":"50%"}}
-                    onClick={() => props.spanManager.selectPreviousGroup()}
-                >
-                    &lt;
-                </button>
-                <button
-                    ref={nextRef}
-                    type="button"
-                    style={{"width":"50%"}}
-                    onClick={() => props.spanManager.selectNextGroup()}
-                >
-                    &gt;
-                </button>
-                <span className="monospace-text tooltiptext bottom" style={{"fontSize":".65em"}}>{"Press 'q' 'e'"}</span>
+                <span className="btn">
+                    <button
+                        className="btn"
+                        ref={prevRef}
+                        type="button"
+                        style={{"width":"50%"}}
+                        onClick={() => props.spanManager.selectPreviousGroup()}
+                    >
+                        &lt;
+                    </button>
+                </span>
+                <ShortcutTooltip shortcut="q e" position="bottom"/>
+                <span className="btn">
+                    <button
+                        className="btn"
+                        ref={nextRef}
+                        type="button"
+                        style={{"width":"50%"}}
+                        onClick={() => props.spanManager.selectNextGroup()}
+                    >
+                        &gt;
+                    </button>
+                </span>
             </div>
         </div>
     )
@@ -183,7 +193,10 @@ function GroupNavigation(props) {
 function ExportMenu(props) {
     return (
         <div className="btn-group vertical">
-            <button type="button" style={{"width":"100%"}}>PDF</button>
+            <span className="btn tooltip">
+                <button type="button" style={{"width":"100%"}}>PDF</button>
+                <span className="tooltiptext">{"Export both submissions side-by-side as PDF"}</span>
+            </span>
         </div>
     )
 }
@@ -199,6 +212,16 @@ function ConfigMenu(props) {
                 <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored} tooltip="Hide code that was not used in the comparison"/>
             </div>
         </React.Fragment>
+    )
+}
+
+
+function ShortcutTooltip(props) {
+    return (
+        <span className={`tooltiptext ${props.position}`}>
+            <span>Press </span>
+            <span className="monospace-text" style={{"fontWeight":"bold"}}>{props.shortcut}</span>
+        </span>
     )
 }
 

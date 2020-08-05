@@ -56,11 +56,11 @@ body {
     display: inline-block; /* Make the buttons appear below each other */
 }
 
-.btn-group.vertical button:first-child {
+.btn-group.vertical > .btn:first-child button{
     border-radius: 5px 5px 0px 0px;
 }
 
-.btn-group.vertical button:last-child {
+.btn-group.vertical > .btn:last-child button {
     border-radius: 0px 0px 5px 5px;
 }
 
@@ -69,19 +69,15 @@ body {
     float: left; /* Float the buttons side by side */
 }
 
-.btn-group.horizontal button:first-child {
+.btn-group.horizontal > .btn:first-child button {
     border-radius: 5px 0px 0px 5px;
 }
 
-.btn-group.horizontal button:last-child {
+.btn-group.horizontal > .btn:last-child button {
     border-radius: 0px 5px 5px 0px;
 }
 
-.btn-group.horizontal button:not(:last-child) {
-    border-right: none; /* Prevent double borders */
-}
-
-.btn-group.vertical button:only-child, .btn-group.horizontal button:only-child {
+.btn-group.vertical > .btn:only-child button, .btn-group.horizontal > .btn:only-child button {
     border-radius: 5px 5px 5px 5px;
 }
 
