@@ -1,6 +1,9 @@
 var d3 = require("d3");
 var slider = require("d3-simple-slider");
 
+const MIN_HEIGHT = 200;
+const MIN_WIDTH = 100;
+const SLIDER_HEIGHT = 100;
 
 // Helper functions
 function get_group_map(links) {
@@ -64,12 +67,22 @@ function get_group_map(links) {
 function get_real_width(elem, props) {
     // if we're given a static width, use it
     if (props.width !== undefined) {
-        return props.width;
+        return Math.max(props.width, MIN_WIDTH);
     }
 
     // calculate width of provided (likely, parent) element
     let style = getComputedStyle(elem);
-    return elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    return Math.max(elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), MIN_WIDTH);
+}
+
+function get_real_height(elem, props) {
+    // if we're given a static height, use it
+    if (props.height !== undefined) {
+        return Math.max(props.height, MIN_HEIGHT);
+    }
+
+    // calculate width of provided (likely, parent) element
+    return Math.max(elem.offsetHeight - SLIDER_HEIGHT - 3, MIN_HEIGHT);
 }
 
 
@@ -85,6 +98,8 @@ class D3Graph {
         this.COLOR = null;
         this.DRAG_TARGET = null;
         this.SIMULATION = null;
+
+        this.INITIALIZED = false;
 
         // When there are exactly two nodes in the graph, d3 sets all kinds of things to
         // NaN for an unknown reason
@@ -123,9 +138,11 @@ class D3Graph {
         let group_map = get_group_map(state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
         state.graph.nodes.forEach(d => d.group = group_map[d.id]);
 
-        // set COLOR (function from group => color)
-        let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
-        this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+        if (this.COLOR === null) {
+            // set COLOR (function from group => color)
+            let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
+            this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+        }
     }
 
     // Initialize the graph visualization
@@ -136,43 +153,47 @@ class D3Graph {
         this.SVG.on("click", () => {
             state.graph.nodes.forEach(node =>
                 node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
+
+            props.callbacks.deselect();
             this.update(el, props, state);
         });
 
         // Slider
-        let slider_start = null;
-        if (this.HORRIBLE_TWO_NODE_HACK) {
-            // Since the hack adds an edge with weight -1, filter it out
-            slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
-        } else {
-            slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+        if (props.slider) {
+            let slider_start = null;
+            if (this.HORRIBLE_TWO_NODE_HACK) {
+                // Since the hack adds an edge with weight -1, filter it out
+                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+            } else {
+                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+            }
+
+            this.SLIDER = slider
+                .sliderBottom()
+                .min(slider_start)
+                .max(10)
+                .tickFormat(d => {
+                    let num = d3.format(".1f")(d)
+                    let [whole, fraction] = num.split(".");
+                    return fraction === "0" ? whole : num;
+                })
+                .ticks(10 - slider_start + 1)
+                .default(0)
+                .fill("#2196f3")
+                .on("onchange", (event) => { this.cutoff(event, el, props, state) })
+                .handle(
+                    d3
+                    .symbol()
+                    .type(d3.symbolCircle)
+                    .size(200)()
+                );
+
+            this.SLIDER_EL
+            .append("svg")
+                .attr("height", SLIDER_HEIGHT)
+            .append("g")
+                .attr("transform", "translate(30,30)");
         }
-
-        this.SLIDER = slider
-            .sliderBottom()
-            .min(slider_start)
-            .max(10)
-            .tickFormat(d => {
-                let num = d3.format(".1f")(d)
-                let [whole, fraction] = num.split(".");
-                return fraction === "0" ? whole : num;
-            })
-            .ticks(10 - slider_start + 1)
-            .default(0)
-            .fill("#2196f3")
-            .on("onchange", (event) => { this.cutoff(event, el, props, state) })
-            .handle(
-                d3
-                .symbol()
-                .type(d3.symbolCircle)
-                .size(200)()
-            );
-
-        this.SLIDER_EL
-        .append("svg")
-            .attr("height", 100)
-        .append("g")
-            .attr("transform", "translate(30,30)");
 
         this.G_LINK = this.SVG.append("g").attr("class", "links");
         this.G_NODE = this.SVG.append("g").attr("class", "nodes");
@@ -184,8 +205,9 @@ class D3Graph {
         this.update(el, props, state);
 
         let width = get_real_width(el.parentNode, props);
+        let height = get_real_height(el.parentNode, props);
         let choseX = d3.randomUniform(width / 4, 3 * width / 4);
-        let choseY = d3.randomUniform(props.height / 4, 3 * props.height / 4);
+        let choseY = d3.randomUniform(height / 4, 3 * height / 4);
         let pos_map = []
         this.NODE_DATA.forEach(d => {
             if (pos_map[d.group] === undefined) {
@@ -220,7 +242,7 @@ class D3Graph {
     ticked(links, nodes, el, props) {
         nodes
             .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(el.parentNode, props) - props.radius * 3, d.x)); })
-            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(props.height - props.radius * 3, d.y)); });
+            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(el.parentNode, props) - props.radius * 3, d.y)); });
     
         links
             .attr("x1", function(d) { return d.source.x + props.radius; })
@@ -262,6 +284,8 @@ class D3Graph {
             node.is_group_focused = node.group === d.group;
             node.is_node_focused = node.id === d.id;
         });
+
+        props.callbacks.mouseenter(d);
     
         this.update(el, props, state);
     }
@@ -274,6 +298,8 @@ class D3Graph {
         state.graph.nodes.forEach(node => {
             node.is_group_focused = node.is_node_focused = false;
         });
+
+        props.callbacks.mouseleave(d);
     
         this.update(el, props, state);
     }
@@ -285,39 +311,53 @@ class D3Graph {
         });
     
         this.update(el, props, state);
+
+        props.callbacks.select(d);
     
         d3.event.stopPropagation();
     }
 
     on_resize(el, props, state) {
         let WIDTH = get_real_width(el.parentNode, props);
-        this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-        this.SLIDER_EL
-          .attr("width", WIDTH)
+        let HEIGHT = get_real_height(el.parentNode, props);
+
+        if (props.slider) {
+            this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+        
+            this.SLIDER_EL
+            .style("width", WIDTH + "px")
             .select("svg")
-              .attr("width", Math.floor(0.8 * WIDTH))
+                .attr("width", Math.floor(0.8 * WIDTH))
+                .select("g")
+                .call(this.SLIDER);
+        }
     
-        this.SLIDER_EL
-          .attr("width", WIDTH)
-          .select("svg")
-            .attr("width", Math.floor(0.8 * WIDTH))
-            .select("g")
-              .call(this.SLIDER);
-    
-        this.SVG.attr("width", WIDTH).attr("height", props.height);
+        this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
     
         this.jiggle();
     }
 
     create(el, slider_el, props, state) {
+        if (props.color !== null) this.COLOR = props.color;
+
         this.init_data(el, props, state);
         this.SLIDER_EL = d3.select(slider_el);
-        this.init_graph(el, props, state);
-        if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
-        this.jiggle();
+
+        // Most problems with the split.js layout can be resolved by waiting a bit
+        setTimeout(() => {
+            this.init_graph(el, props, state);
+            this.INITIALIZED = true;
+            if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
+            this.jiggle();
+
+            props.callbacks.loaded();
+        }, 66);
     }
 
     update(el, props, state) {
+        if (!this.INITIALIZED) return false;
+        
+        this.on_resize(el, props, state);
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
     
         links.enter().append("line")
@@ -365,6 +405,12 @@ class D3Graph {
                 .remove();
     
         let group_selected = undefined;
+        let selected_nodes = [];
+        if (state.highlight !== null) {
+            group_selected = state.highlight.group;
+            selected_nodes = state.highlight.nodes;
+        }
+        
         state.graph.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
     
         nodes.merge(new_nodes)
@@ -378,14 +424,14 @@ class D3Graph {
                 return "grey";
             })
             .attr("stroke", function(d) {
-                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected)
+                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selected_nodes.includes(d))
                     return "black";
                 else if (d.is_group_focused)
                     return d3.select(this).style("fill");
                 else
                     return "none";
             })
-            .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight ? "5px" : "");
+            .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d) ? "5px" : "");
     
         let all_links = this.G_LINK.selectAll("line");
         let all_nodes = this.G_NODE.selectAll("rect");
@@ -410,4 +456,7 @@ class D3Graph {
     }
 }
 
-export default D3Graph;
+export default {
+    D3Graph: D3Graph,
+    get_group_map: get_group_map
+};

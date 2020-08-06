@@ -8,8 +8,7 @@ function Logo(props) {
             "width":"100%",
             "height":props.height,
             "lineHeight":props.height,
-            "textAlign":"center",
-            "float":"left"
+            "textAlign":"center"
         }}>
             compare50
         </div>

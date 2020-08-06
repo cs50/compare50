@@ -10,6 +10,10 @@ body {
     font-family: Proxima-Nova, sans-serif;
 }
 
+#root {
+    height: 100%;
+}
+
 .wrapper {
     margin-left: 10em;
 }
@@ -172,4 +176,57 @@ a.index-link:hover {
 
 .score_tooltip:hover .tooltiptext {
     visibility: visible;
+}
+
+/* index page specific */
+nav {
+    padding: 1rem;
+    width: calc(100% - 2rem);
+    height: auto;
+    background: #ddd;
+}
+
+table {
+    width: calc(100% - 5px);
+    border-collapse: collapse;
+    font-size: 1rem;
+}
+
+tr {
+    cursor: pointer;
+    overflow: hidden;
+}
+
+tbody tr:hover {
+    background: #eeeeee;
+}
+
+tr td:first-child {
+    font-weight: bold;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100px;
+}
+
+td {
+    border-top: 1px solid #eeeeee;
+}
+
+/* Tooltip marker */
+.tooltip-marker {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    text-align: center;
+    cursor: pointer;
+    font-size: .8rem;
+    font-weight: bold;
+    border: 1px solid #ddd;
+    border-radius: 32px;
 }

@@ -4,7 +4,7 @@ import Split from 'react-split';
 import File from './file'
 
 import '../matchview.css';
-import './split.css';
+import '../../split.css';
 
 
 function SplitView(props) {
