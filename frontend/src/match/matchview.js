@@ -15,7 +15,8 @@ function MatchView() {
         "passes": API.getPasses(),
         "nMatches": 50,
         "currentMatch": 1,
-        "softWrap": true
+        "softWrap": true,
+        "showWhiteSpace": false
     });
 
     const [match] = useState(API.getMatch());

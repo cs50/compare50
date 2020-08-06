@@ -33,6 +33,7 @@ function File(props) {
                             id={id}
                             onNewline={onNewline}
                             hideIgnored={props.hideIgnored}
+                            showWhiteSpace={props.showWhiteSpace}
                             scrollTo={props.scrollTo}
                             spanManager={props.spanManager}/>
         onNewline = frag.text.endsWith("\n");
@@ -82,16 +83,45 @@ function Fragment(props) {
             }}
             onMouseUp={event => props.spanManager.select(props.fragment)}
         >
-            {lines.map((line, lineIndex) =>
-                <code
-                    key={`code_${props.id}_${lineIndex}`}
-                    className={props.onNewline || lineIndex > 0 ? "newline" : ""}
-                >
-                    {line}
-                </code>
-            )}
+            {lines.map((line, lineIndex) => {
+                const onNewline = props.onNewline || lineIndex > 0
+
+                // If starting on a newline, make the leading whitespace visible
+                if (onNewline && props.showWhiteSpace) {
+                    line = replaceLeadingWhitespace(line);
+                }
+
+                return (
+                    <code
+                        key={`code_${props.id}_${lineIndex}`}
+                        className={onNewline ? "newline" : ""}
+                    >
+                        {line}
+                    </code>
+                )
+            })}
         </span>
     )
+}
+
+
+function replaceLeadingWhitespace(line) {
+    let newLine = ""
+
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === " ") {
+            newLine += ".";
+        }
+        else if (line[i] === "\t") {
+            newLine += "____";
+        }
+        else {
+            newLine += line.slice(i);
+            break;
+        }
+    }
+
+    return newLine;
 }
 
 

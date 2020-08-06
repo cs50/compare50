@@ -44,6 +44,8 @@ function SideBar(props) {
                     setSoftWrap={softWrap => updateGlobalState({"softWrap": softWrap})}
                     hideIgnored={props.globalState.hideIgnored}
                     setHideIgnored={hideIgnored => updateGlobalState({"hideIgnored": hideIgnored})}
+                    showWhiteSpace={props.globalState.showWhiteSpace}
+                    setShowWhiteSpace={showWhiteSpace => updateGlobalState({"showWhiteSpace": showWhiteSpace})}
                 />
             </div>
             <div className="row auto" style={style}>
@@ -208,8 +210,11 @@ function ConfigMenu(props) {
             <div style={{"marginBottom": ".25em"}}>
                 <Switch text="wrap" default={props.softWrap} setOption={props.setSoftWrap} tooltip="Soft Wrap long lines of code"/>
             </div>
-            <div>
+            <div style={{"marginBottom": ".25em"}}>
                 <Switch text="hide" default={props.hideIgnored} setOption={props.setHideIgnored} tooltip="Hide code that was not used in the comparison"/>
+            </div>
+            <div>
+                <Switch text="&nbsp;WS&nbsp;" default={props.showWhiteSpace} setOption={props.setShowWhiteSpace} tooltip="Show leading whitespace"/>
             </div>
         </React.Fragment>
     )
