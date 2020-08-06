@@ -1,4 +1,4 @@
-import {useState, useMemo} from 'react';
+import {useState, useMemo, useRef} from 'react';
 
 /*
  * A SpanManager that manages the state of spans (parts of a file that compare50 identifies).
@@ -302,6 +302,15 @@ function useSpanManager(pass) {
         return spanStates;
     }
 
+    const unselectSpanStates = spanStates => {
+        Object.keys(spanStates).forEach(spanId => {
+            if (spanStates[spanId] === Span.STATES.SELECTED || spanStates[spanId] === Span.STATES.HIGHLIGHTED) {
+                spanStates[spanId] = Span.STATES.INACTIVE;
+            }
+        });
+        return spanStates;
+    }
+
     // Memoize the (expensive) mapping from regions to spans on the selected pass
     const spans = useMemo(initSpans, [pass.pass]);
     const regionMap = useMemo(() => new RegionMap(spans), [spans]);
@@ -313,10 +322,19 @@ function useSpanManager(pass) {
     // A map from pass.name => span.id => state
     const [allSpanStates, setAllSpanStates] = useState({});
 
+    // Keep track of the last pass
+    const passRef = useRef(pass);
+
     // Retrieve the spanStates from the map, otherwise create new
     let spanStates = allSpanStates[pass.pass]
     if (spanStates === undefined) {
         spanStates = initSpanStates();
+    }
+
+    // In case pass changed, unselect everything in the new pass
+    if (passRef.current !== pass) {
+        passRef.current = pass;
+        spanStates = unselectSpanStates(spanStates);
     }
 
     // Callback to set the spanStates for the current pass
