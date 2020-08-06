@@ -46,11 +46,6 @@ class Graph extends React.Component {
     }
 
     getProps() {
-        // TODO looks like 120 is the slider height, but the height of this component should probably include the slider
-
-        const minWidth = 100;
-        const minHeight = 200;
-
         // Important information about displaying the graph
         return {
             radius: 10,
