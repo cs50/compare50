@@ -349,7 +349,7 @@ class D3Graph {
             this.INITIALIZED = true;
             if (this.HORRIBLE_TWO_NODE_HACK) this.cutoff(0, el, props, state);
             this.jiggle();
-            this.on_resize(el, props, state)
+            this.on_resize(el, props, state);
 
             props.callbacks.loaded();
         }, 66);
