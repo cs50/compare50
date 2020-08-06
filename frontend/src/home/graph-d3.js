@@ -228,9 +228,9 @@ class D3Graph {
         this.LINK_DATA = state.graph.links.filter(d => (d.value) >= n);
         let node_ids = new Set(this.LINK_DATA.map(d => d.source.id).concat(this.LINK_DATA.map(d => d.target.id)));
         this.NODE_DATA = state.graph.nodes.filter(d => node_ids.has(d.id));
-    
+
         this.update(el, props, state);
-    
+
         this.jiggle(.1);
     }
 
@@ -238,12 +238,12 @@ class D3Graph {
         this.SIMULATION.alphaTarget(alpha).restart();
         setTimeout(() => this.SIMULATION.alphaTarget(0).restart(), duration);
     }
-    
+
     ticked(links, nodes, el, props) {
         nodes
             .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(el.parentNode, props) - props.radius * 3, d.x)); })
             .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(el.parentNode, props) - props.radius * 3, d.y)); });
-    
+
         links
             .attr("x1", function(d) { return d.source.x + props.radius; })
             .attr("y1", function(d) { return d.source.y + props.radius; })
@@ -255,7 +255,7 @@ class D3Graph {
         if (!d3.event.active) this.SIMULATION.alphaTarget(0.15).restart();
         d.fx = d.x;
         d.fy = d.y;
-    
+
         this.DRAG_TARGET = d;
     }
 
@@ -268,10 +268,10 @@ class D3Graph {
         if (!d3.event.active) this.SIMULATION.alphaTarget(0);
         d.fx = null;
         d.fy = null;
-    
+
         let drag_target = this.DRAG_TARGET;
         this.DRAG_TARGET = null;
-    
+
         this.on_mouseout_node(drag_target, el, props, state);
     }
 
@@ -279,14 +279,14 @@ class D3Graph {
         if (this.DRAG_TARGET !== null) {
           return;
         }
-    
+
         state.graph.nodes.forEach(node => {
             node.is_group_focused = node.group === d.group;
             node.is_node_focused = node.id === d.id;
         });
 
         props.callbacks.mouseenter(d);
-    
+
         this.update(el, props, state);
     }
 
@@ -294,13 +294,13 @@ class D3Graph {
         if (this.DRAG_TARGET !== null) {
             return;
         }
-    
+
         state.graph.nodes.forEach(node => {
             node.is_group_focused = node.is_node_focused = false;
         });
 
         props.callbacks.mouseleave(d);
-    
+
         this.update(el, props, state);
     }
 
@@ -309,11 +309,11 @@ class D3Graph {
             node.is_node_selected = node.is_node_focused = node.id === d.id;
             node.is_group_selected = node.is_group_focused = node.group === d.group;
         });
-    
+
         this.update(el, props, state);
 
         props.callbacks.select(d);
-    
+
         d3.event.stopPropagation();
     }
 
@@ -323,7 +323,7 @@ class D3Graph {
 
         if (props.slider) {
             this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
-        
+
             this.SLIDER_EL
             .style("width", WIDTH + "px")
             .select("svg")
@@ -331,9 +331,9 @@ class D3Graph {
                 .select("g")
                 .call(this.SLIDER);
         }
-    
+
         this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
-    
+
         this.jiggle();
     }
 
@@ -356,29 +356,29 @@ class D3Graph {
 
     update(el, props, state) {
         if (!this.INITIALIZED) return false;
-        
+
         this.on_resize(el, props, state);
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
-    
+
         links.enter().append("line")
             .attr("stroke-width", 2)
             .attr("visibility", "hidden")
             .interrupt("foo")
             .transition("foo").delay(280).duration(0)
                 .attr("visibility", "");
-    
+
         links.exit().remove();
-    
+
         let nodes = this.G_NODE.selectAll("rect").data(this.NODE_DATA, d => d.id);
         let new_nodes = nodes.enter().append("rect");
-    
+
         nodes.merge(new_nodes)
             .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
             .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
             .transition("nodes").duration(280)
                 .attr("width", props.radius * 2)
                 .attr("height", props.radius * 2);
-    
+
         new_nodes
             .attr("rx", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
             .attr("ry", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
@@ -395,7 +395,7 @@ class D3Graph {
             })
             .append("title")
               .text(d => d.id);
-    
+
         nodes.exit()
             .transition("nodes")
                 .delay(0)
@@ -403,16 +403,17 @@ class D3Graph {
                 .attr("width", 0)
                 .attr("height", 0)
                 .remove();
-    
+
         let group_selected = undefined;
         let selected_nodes = [];
-        if (state.highlight !== null) {
-            group_selected = state.highlight.group;
-            selected_nodes = state.highlight.nodes;
+
+        if (props.highlight !== null && props.highlight !== undefined) {
+            group_selected = props.highlight.group;
+            selected_nodes = props.highlight.nodes;
         }
-        
+
         state.graph.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
-    
+
         nodes.merge(new_nodes)
             .style("fill", d => {
                 if (d.is_node_in_background) {
@@ -432,20 +433,20 @@ class D3Graph {
                     return "none";
             })
             .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d) ? "5px" : "");
-    
+
         let all_links = this.G_LINK.selectAll("line");
         let all_nodes = this.G_NODE.selectAll("rect");
-    
+
         // don't swap simulation.nodes and simulation.force
         this.SIMULATION
             .nodes(this.NODE_DATA)
             .on("tick", () => this.ticked(all_links, all_nodes, el, props));
-    
+
         // scale the distance (inverse of similarity) to 10 to 50
         let min_score = Math.min.apply(null, state.graph.links.map(link => link.value));
         let max_score = 10;
         let delta_score = max_score - min_score;
-    
+
         this.SIMULATION.force("link")
             .links(this.LINK_DATA)
             .distance(d => 50 - (d.value - min_score) / delta_score * 40);
