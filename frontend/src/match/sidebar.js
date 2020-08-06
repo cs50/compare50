@@ -50,7 +50,7 @@ function SideBar(props) {
                 <ExportMenu/>
             </div>
             <div className="row fill" style={style}>
-                <Graph graph={props.graphData}/>
+                <Graph graph={props.graphData} slider={false} sliderTip={false}/>
             </div>
         </div>
     )
