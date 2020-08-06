@@ -14,7 +14,8 @@ class Graph extends React.Component {
     }
 
     static defaultProps = {
-        callbacks: {loaded: () => {}, mouseenter: () => {}, mouseleave: () => {}, select: () => {}, deselect: () => {}},
+        // mouseenter, mouseleave, select callbacks take in a node; the others take in nothing
+        callbacks: {loaded: () => {}, mouseenter: (node) => {}, mouseleave: (node) => {}, select: (node) => {}, deselect: () => {}},
         color: null,
         slider: true,
         sliderTip: true

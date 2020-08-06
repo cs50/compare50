@@ -106,7 +106,7 @@ class HomeView extends React.Component {
             color: null,
             graph: JSON.parse(this.props.data),
             highlight: null,
-            table_highlight: null,
+            table_highlighted: null,
             table_selected: null,
             update_graph: false,
             update_table: true
@@ -131,13 +131,13 @@ class HomeView extends React.Component {
         },
 
         mouseenter: (d) => {
-            if (this.state.table_highlight === null || !this.state.table_highlight.clicked) {
-                this.setState({table_highlight: d});
+            if (this.state.table_highlighted === null || !this.state.table_highlighted.clicked) {
+                this.setState({table_highlighted: d});
             }
         },
 
         mouseleave: (d) => {
-            this.setState({table_highlight: null});
+            this.setState({table_highlighted: null});
         },
 
         select: (d) => {
@@ -191,7 +191,7 @@ class HomeView extends React.Component {
                         callbacks={this.table_callbacks}
                         color={this.state.color}
                         data={this.state.graph}
-                        highlight={this.state.table_highlight}
+                        highlight={this.state.table_highlighted}
                         selected={this.state.table_selected} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>

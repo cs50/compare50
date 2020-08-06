@@ -424,14 +424,14 @@ class D3Graph {
                 return "grey";
             })
             .attr("stroke", function(d) {
-                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selected_nodes.includes(d.id))
+                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selected_nodes.includes(d))
                     return "black";
                 else if (d.is_group_focused)
                     return d3.select(this).style("fill");
                 else
                     return "none";
             })
-            .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d.id) ? "5px" : "");
+            .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d) ? "5px" : "");
     
         let all_links = this.G_LINK.selectAll("line");
         let all_nodes = this.G_NODE.selectAll("rect");
