@@ -19,8 +19,9 @@ function MatchView() {
     });
 
     const [match] = useState(API.getMatch());
+    const [graphData] = useState(API.getGraph(match));
 
-    const [spanManager] = useSpanManager(match.getPass(globalState.currentPass));
+    const spanManager = useSpanManager(match.getPass(globalState.currentPass));
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>
@@ -30,7 +31,7 @@ function MatchView() {
                       <Logo height="2.5em"/>
                   </div>
                   <div className="row fill">
-                      <SideBar globalState={globalState} setGlobalState={setGlobalState} spanManager={spanManager}/>
+                      <SideBar globalState={globalState} setGlobalState={setGlobalState} spanManager={spanManager} graphData={graphData}/>
                   </div>
               </div>
           </div>
