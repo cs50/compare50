@@ -57,6 +57,15 @@ function SideBar(props) {
                 <div className="row fill" style={style}>
                     <Graph graph={props.graphData} slider={false} sliderTip={false}/>
                 </div>
+                <div className="row auto" style={style}>
+                    <span
+                        className="tooltip-marker"
+                        data-tip="This graph shows any known links from the submissions in the match to archives."
+                        data-for="sidebar-tooltip"
+                    >
+                        ?
+                    </span>
+                </div>
             </div>
         </React.Fragment>
     )
@@ -74,7 +83,7 @@ function MatchNavigation(props) {
             }}>
                 {formatFraction(props.current, props.n)}
             </div>
-            <div className="btn-group horizontal">
+            <div className="btn-group horizontal" data-tip="Go to the previous and next match" data-for="sidebar-tooltip">
                 <span className="btn">
                     <button type="button" style={{"width":"50%"}}>{"<<"}</button>
                 </span>
