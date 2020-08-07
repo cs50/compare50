@@ -2,6 +2,8 @@ import React, {useRef, useEffect} from 'react';
 import ReactTooltip from 'react-tooltip';
 
 import Graph from '../home/graph';
+import API from '../api';
+import render50 from "./code/render50";
 
 import './matchview.css';
 import './sidebar.css';
@@ -203,14 +205,30 @@ function GroupNavigation(props) {
 }
 
 
-function ExportMenu(props) {
-    return (
+class ExportMenu extends React.Component {
+    constructor(props) {
+        super(props);
+    }
+
+    exportPDF() {
+        const match = API.getMatch();
+
+        // Reduce all files to one file
+        let sub_a = match.filesA().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
+        let sub_b = match.filesB().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
+
+        render50(sub_a, sub_b, "submission_1", "submission_2");
+    }
+
+    render() {
+        return (
         <div className="btn-group vertical" data-tip="Export both submissions side-by-side as PDF" data-for="sidebar-tooltip">
             <span className="btn">
-                <button type="button" style={{"width":"100%"}}>PDF</button>
+                <button type="button" style={{"width":"100%"}} onClick={this.exportPDF}>PDF</button>
             </span>
         </div>
-    )
+        )
+    }
 }
 
 
