@@ -1,4 +1,4 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import ReactTooltip from 'react-tooltip';
 
 import Graph from '../home/graph';
@@ -54,7 +54,9 @@ function SideBar(props) {
                     />
                 </div>
                 <div className="row auto" style={style}>
-                    <ExportMenu/>
+                    <ExportMenu
+                        match={props.match}
+                    />
                 </div>
                 <div className="row fill" style={style}>
                     <Graph graph={props.graphData} slider={false} sliderTip={false}/>
@@ -205,47 +207,35 @@ function GroupNavigation(props) {
 }
 
 
-class ExportMenu extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {pdf: {bg: "", text: "PDF", disabled: false}};
-    }
+function ExportMenu(props) {
+    const [busy, setBusy] = useState(false);
 
-    exportPDF = () => {
-        this.setState({pdf: {bg: "#2196F3", text: "Exporting...", disabled: true}});
-        const match = API.getMatch();
+    const exportPDF = () => {
+        // Only enable syntax highlighting if all the same language
+        const getExtension = files => files.every(file => file.language === files[0].language) ? `.${files[0].language.toLowerCase()}` : "";
 
-        // Reduce all files to one file
-        let sub_a = match.filesA().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
-        let sub_b = match.filesB().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
+        // Concatenate all files to one file
+        const concatFiles = files => files.reduce((prev, next) => `${prev}/** ${next.name} **/\n\n${next.content}\n\n\n`, "")
 
-        // Come up with a file extension to enable syntax highlighting
-        // (will only enable syntax highlighting if all the same language)
-        function ext(files) {
-            let e = null;
-            for (let i = 0; i < files.length; i++) {
-                if (e === null) e = files[i].language;
-                if (e !== files[i].language) return "";
-            }
-            return "." + e.toLowerCase();
-        }
+        setBusy(true);
 
-        let pr = new Promise((resolve) => {
-            render50(sub_a, sub_b, "submission_1" + ext(match.filesA()), "submission_2" + ext(match.filesB()), resolve);
+        const filesA = props.match.filesA();
+        const filesB = props.match.filesB();
+
+        new Promise((resolve) => {
+            render50(concatFiles(filesA), concatFiles(filesB), "submission_1" + getExtension(filesA), "submission_2" + getExtension(filesB), resolve);
         }).then(() => {
-            this.setState({pdf: {bg: "", text: "PDF", disabled: false}});
+            setBusy(false);
         });
     }
 
-    render() {
-        return (
+    return (
         <div className="btn-group vertical" data-tip="Export both submissions side-by-side as PDF" data-for="sidebar-tooltip">
             <span className="btn">
-                <button type="button" style={{"width":"100%", "backgroundColor": this.state.pdf.bg}} onClick={this.exportPDF} disabled={this.state.pdf.disabled}>{this.state.pdf.text}</button>
+                <button className={"export-button" + (busy ? " busy" : "")} type="button" style={{"width":"100%"}} onClick={exportPDF} disabled={busy}>{busy ? "Exporting..." : "PDF"}</button>
             </span>
         </div>
-        )
-    }
+    )
 }
 
 
