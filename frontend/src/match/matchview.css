@@ -88,33 +88,3 @@ body {
     clear: both;
     display: table;
 }
-
-.tooltip {
-    position: relative;
-}
-
-.tooltip .tooltiptext {
-    visibility: hidden;
-    white-space: nowrap;
-    background-color: gray;
-    color: white;
-    text-align: center;
-    border: 1px solid #ddd !important;
-    font-weight: normal;
-    border-radius: 10px;
-    padding: 5px 5px !important;
-
-    z-index: 1;
-    position: absolute;
-    top: -3px;
-    left: 105%;
-}
-
-.tooltip .bottom {
-    top: 100%;
-    left: 0%;
-}
-
-.tooltip:hover .tooltiptext {
-    visibility: visible;
-}
