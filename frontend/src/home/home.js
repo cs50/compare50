@@ -104,7 +104,7 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             color: null,
-            graph: JSON.parse(this.props.data),
+            graph: this.props.data,
             highlight: null,
             table_highlighted: null,
             table_selected: null,

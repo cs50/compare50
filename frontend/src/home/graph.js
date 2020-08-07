@@ -31,6 +31,12 @@ class Graph extends React.Component {
     }
 
     componentDidUpdate() {
+        // Resize the graph
+        this.d3Graph.on_resize(
+            this.graph.current,
+            this.getProps(),
+            this.getGraphState());
+
         // Update the graph
         this.d3Graph.update(
             this.graph.current,
