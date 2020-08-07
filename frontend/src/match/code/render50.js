@@ -1,4 +1,4 @@
-function render50(str_a, str_b, name_a="a.txt", name_b="b.txt") {
+function render50(str_a, str_b, name_a="a.txt", name_b="b.txt", resolve=()=>{}) {
     // form data
     let formData = new FormData();
     formData.set("size", "letter landscape")
@@ -27,6 +27,8 @@ function render50(str_a, str_b, name_a="a.txt", name_b="b.txt") {
         setTimeout(function() {
             anchor.click();
             document.body.removeChild(anchor);
+
+            resolve();
         }, 66);
     });
 }
