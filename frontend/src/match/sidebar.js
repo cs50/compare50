@@ -208,11 +208,11 @@ function GroupNavigation(props) {
 class ExportMenu extends React.Component {
     constructor(props) {
         super(props);
-        this.state = {pdf: {bg: "", text: "PDF"}};
+        this.state = {pdf: {bg: "", text: "PDF", disabled: false}};
     }
 
     exportPDF = () => {
-        this.setState({pdf: {bg: "#2196F3", text: "Exporting..."}});
+        this.setState({pdf: {bg: "#2196F3", text: "Exporting...", disabled: true}});
         const match = API.getMatch();
 
         // Reduce all files to one file
@@ -233,7 +233,7 @@ class ExportMenu extends React.Component {
         let pr = new Promise((resolve) => {
             render50(sub_a, sub_b, "submission_1" + ext(match.filesA()), "submission_2" + ext(match.filesB()), resolve);
         }).then(() => {
-            this.setState({pdf: {bg: "", text: "PDF"}});
+            this.setState({pdf: {bg: "", text: "PDF", disabled: false}});
         });
     }
 
@@ -241,7 +241,7 @@ class ExportMenu extends React.Component {
         return (
         <div className="btn-group vertical" data-tip="Export both submissions side-by-side as PDF" data-for="sidebar-tooltip">
             <span className="btn">
-                <button type="button" style={{"width":"100%", "backgroundColor": this.state.pdf.bg}} onClick={this.exportPDF}>{this.state.pdf.text}</button>
+                <button type="button" style={{"width":"100%", "backgroundColor": this.state.pdf.bg}} onClick={this.exportPDF} disabled={this.state.pdf.disabled}>{this.state.pdf.text}</button>
             </span>
         </div>
         )
