@@ -217,7 +217,20 @@ class ExportMenu extends React.Component {
         let sub_a = match.filesA().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
         let sub_b = match.filesB().reduce((prev, next) => prev + '/** ' + next.name + " **/\n\n" + next.content + "\n\n\n", "");
 
-        render50(sub_a, sub_b, "submission_1", "submission_2");
+        // Come up with a file extension to enable syntax highlighting
+        // (this works with single-language file sets)
+        const extension_rewrites = {"h": "c", "htm": "html"};
+        function ext(file) {
+            let split = file.name.split(".");
+            if (split[split.length - 1] in extension_rewrites) {
+                return extension_rewrites[split[split.length - 1]];
+            }
+            else {
+                return split[split.length - 1];
+            }
+        }
+
+        render50(sub_a, sub_b, "submission_1." + ext(match.filesA()[0]), "submission_2." + ext(match.filesB()[0]));
     }
 
     render() {
