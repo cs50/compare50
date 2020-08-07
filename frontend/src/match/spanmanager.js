@@ -216,8 +216,6 @@ class RegionMap {
         // Memoization map, maps a this._key() to a span
         this._map = {};
 
-        console.log(this.spans);
-
         this.nGroups = new Set(this.spans.map(span => span.groupId)).size;
     }
 
