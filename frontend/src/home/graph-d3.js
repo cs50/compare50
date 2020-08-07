@@ -358,9 +358,7 @@ class D3Graph {
     update(el, props, state) {
         if (!this.INITIALIZED) return false;
 
-        this.on_resize(el, props, state);
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
-
         links.enter().append("line")
             .attr("stroke-width", 2)
             .attr("visibility", "hidden")
@@ -408,9 +406,9 @@ class D3Graph {
         let group_selected = undefined;
         let selected_nodes = [];
 
-        if (props.highlight !== null && props.highlight !== undefined) {
-            group_selected = props.highlight.group;
-            selected_nodes = props.highlight.nodes;
+        if (state.highlight !== null && state.highlight !== undefined) {
+            group_selected = state.highlight.group;
+            selected_nodes = state.highlight.nodes;
         }
 
         state.graph.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
