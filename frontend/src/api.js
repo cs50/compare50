@@ -1,15 +1,15 @@
 import subA from './spoofed_data/sub_a.json'
 import subB from './spoofed_data/sub_b.json'
-import matchStructure from './spoofed_data/match_structure.json'
-import matchText from './spoofed_data/match_text.json'
-import matchExact from './spoofed_data/match_exact.json'
+import passStructure from './spoofed_data/pass_structure.json'
+import passText from './spoofed_data/pass_text.json'
+import passExact from './spoofed_data/pass_exact.json'
 import graphData from './spoofed_data/graph.json'
-import passes from './spoofed_data/passes.json'
-
 
 class API {
     static getPasses() {
-        return passes;
+        return [{"name":passStructure.pass, "docs": passStructure.docs},
+                {"name":passText.pass, "docs": passText.docs},
+                {"name":passExact.pass, "docs": passExact.docs}];
     }
 
     static getMatch() {
@@ -33,13 +33,13 @@ class Match {
 
     getPass(pass) {
         if (pass.name === "exact") {
-            return matchExact;
+            return passExact;
         }
         if (pass.name === "text") {
-            return matchText;
+            return passText;
         }
         if (pass.name === "structure") {
-            return matchStructure;
+            return passStructure;
         }
     }
 }

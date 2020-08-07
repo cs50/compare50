@@ -160,10 +160,10 @@ class SpanManager {
         return this._ignoredRegionMap.getSpan(region) !== null;
     }
 
-    selectedGroupIndex() {
+    selectedGroupId() {
         for (let span of this.spans) {
             if (this._spanStates[span.id] === Span.STATES.SELECTED || this._spanStates[span.id] === Span.STATES.HIGHLIGHTED) {
-                return span.groupId + 1;
+                return span.groupId;
             }
         }
         return 0;
@@ -174,20 +174,19 @@ class SpanManager {
     }
 
     _selectAdjacentGroup(direction) {
-        let groupIndex = this.selectedGroupIndex();
+        let groupId = this.selectedGroupId();
 
         // increment index
-        groupIndex += direction;
+        groupId += direction;
 
         // wrap around
-        if (groupIndex > this.nGroups()) {
-            groupIndex = 1;
+        if (groupId > this.nGroups()) {
+            groupId = 1;
         }
-        else if (groupIndex < 1) {
-            groupIndex = this.nGroups();
+        else if (groupId < 1) {
+            groupId = this.nGroups();
         }
 
-        const groupId = groupIndex - 1;
 
         for (let span of this.spans) {
             if (span.groupId === groupId) {
@@ -216,6 +215,8 @@ class RegionMap {
 
         // Memoization map, maps a this._key() to a span
         this._map = {};
+
+        console.log(this.spans);
 
         this.nGroups = new Set(this.spans.map(span => span.groupId)).size;
     }
@@ -282,16 +283,17 @@ class Span {
 function useSpanManager(pass) {
     const initSpans = () => {
         const spans = [];
-        pass.groups.forEach((group, groupId) => {
-            group.forEach(span => {
-                spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end));
-            });
+        pass.spans.forEach(span => {
+            if (!span.ignored) {
+                const groupId = pass.groups.find(group => group.spans.includes(span.id)).id;
+                spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end, span.ignored));
+            }
         });
         return spans;
     }
 
     const initIgnoredSpans = () =>
-        pass.ignoredSpans.map(span => new Span(span.id, span.subId, span.fileId, null, span.start, span.end, true));
+        pass.spans.filter(span => span.ignored).map(span => new Span(span.id, span.subId, span.fileId, null, span.start, span.end, span.ignored));
 
     const initSpanStates = () => {
         const spanStates = spans.reduce((acc, span) => {

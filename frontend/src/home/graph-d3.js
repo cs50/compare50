@@ -81,7 +81,7 @@ function get_real_height(elem, props) {
         return Math.max(props.height, MIN_HEIGHT);
     }
 
-    // calculate width of provided (likely, parent) element
+    // calculate height of provided (likely, parent) element
     return Math.max(elem.offsetHeight - (props.slider ? SLIDER_HEIGHT : 0) - 3, MIN_HEIGHT);
 }
 

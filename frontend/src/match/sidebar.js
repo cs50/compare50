@@ -172,7 +172,7 @@ function GroupNavigation(props) {
                 "paddingBottom": ".1em",
                 "color": "black"
             }}>
-                {formatFraction(props.spanManager.selectedGroupIndex(), props.spanManager.nGroups())}
+                {formatFraction(props.spanManager.selectedGroupId(), props.spanManager.nGroups())}
             </div>
             <div className="btn-group horizontal" style={{"width":"100%"}} data-tip={`Press Q E`} data-for="sidebar-tooltip" data-place="bottom">
                 <span className="btn">

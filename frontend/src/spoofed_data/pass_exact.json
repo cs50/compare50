@@ -1,0 +1,29 @@
+{
+    "pass": "exact",
+    "docs": "Removes nothing, not even whitespace, then uses the winnowing algorithm to compare submissions.",
+    "score": 56,
+    "submissionData": [
+        {"submissionId": 1, "percentage": 40},
+        {"submissionId": 2, "percentage": 50}
+    ],
+    "fileData": [
+        {"fileId": 1, "percentage": 40},
+        {"fileId": 2, "percentage": 50},
+        {"fileId": 3, "percentage": 60},
+        {"fileId": 4, "percentage": 70}
+    ],
+    "spans": [
+        {"id": 1, "subId": 1, "fileId": 1, "start": 5, "end": 10, "ignored": false},
+        {"id": 2, "subId": 2, "fileId": 3, "start": 20, "end": 60, "ignored": false},
+        {"id": 3, "subId": 1, "fileId": 2, "start": 10, "end": 40, "ignored": false},
+        {"id": 4, "subId": 2, "fileId": 4, "start": 20, "end": 100, "ignored": false},
+        {"id": 5, "subId": 1, "fileId": 2, "start": 60, "end": 150, "ignored": false},
+        {"id": 6, "subId": 2, "fileId": 4, "start": 200, "end": 290, "ignored": false},
+        {"id": 7, "subId": 1, "fileId": 2, "start": 0, "end": 25, "ignored": true}
+    ],
+    "groups": [
+        {"id": 1, "spans": [1, 2]},
+        {"id": 2, "spans": [3, 4]},
+        {"id": 3, "spans": [5, 6]}
+    ]
+}
