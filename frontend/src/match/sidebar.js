@@ -138,11 +138,11 @@ function GroupNavigation(props) {
 
     useEffect(() => {
         const eventListener = (event) =>  {
-            if (event.key === "e") {
+            if (event.key.toLowerCase() === "e") {
                 event.preventDefault();
                 nextRef.current.click();
             }
-            else if (event.key === "q") {
+            else if (event.key.toLowerCase() === "q") {
                 event.preventDefault();
                 prevRef.current.click();
             }
