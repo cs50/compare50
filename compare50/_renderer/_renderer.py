@@ -83,7 +83,7 @@ def render(pass_to_results, dest):
     dest.mkdir(exist_ok=True)
     for i, ((sub_a, sub_b), results) in enumerate(sub_pair_to_results.items()):
         match = render_match(sub_a, sub_b, results)
-        print(match)
+
         with open(dest / f"match_{i}.html", "w") as f:
             f.write(match)
 
