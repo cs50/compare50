@@ -312,11 +312,11 @@ function useSpanManager(pass) {
     }
 
     // Memoize the (expensive) mapping from regions to spans on the selected pass
-    const spans = useMemo(initSpans, [pass.pass]);
+    const spans = useMemo(initSpans, [pass.name]);
     const regionMap = useMemo(() => new RegionMap(spans), [spans]);
 
     // Memoize the (expensive) mapping from regions to ignoredSpans on the selected pass
-    const ignoredSpans = useMemo(initIgnoredSpans, [pass.pass]);
+    const ignoredSpans = useMemo(initIgnoredSpans, [pass.name]);
     const ignoredRegionMap = useMemo(() => new RegionMap(ignoredSpans), [spans]);
 
     // A map from pass.name => span.id => state
@@ -326,7 +326,7 @@ function useSpanManager(pass) {
     const passRef = useRef(pass);
 
     // Retrieve the spanStates from the map, otherwise create new
-    let spanStates = allSpanStates[pass.pass]
+    let spanStates = allSpanStates[pass.name]
     if (spanStates === undefined) {
         spanStates = initSpanStates();
     }
@@ -340,7 +340,7 @@ function useSpanManager(pass) {
     // Callback to set the spanStates for the current pass
     const setSpanStates = spanStates => {
         const temp = {}
-        temp[pass.pass] = {...(allSpanStates[pass.pass]), ...spanStates}
+        temp[pass.name] = {...(allSpanStates[pass.name]), ...spanStates}
         setAllSpanStates({...allSpanStates, ...temp})
     };
 

@@ -1,33 +1,5 @@
-
-
-<div id="{{name}}" class="container-fluid h-100 view {{name}}">
-    <div class="row sticky-top bg-dark text-light" id="{{name}}sub_names">
-        {% for sub in sub_a, sub_b %}
-            <div class="col-sm-6 col-2 sub_name">
-                <h5>{{sub.name}} ({{sub.percentage}}%)</h5>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="row diff">
-        {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
-            <div class="col-sm-6 col-2 side {{side}}" id="{{name}}{{side}}">
-                {% for file in sub.files %}
-                    <div class="submission-file">
-                        <h4 class="file_name">{{file.name}} <span class="text-secondary small">({{file.percentage}}%)</span></h4>
-                            <pre>
-                                {%- set ns = namespace(is_newline=true) -%}
-                                {%- for frag in file.fragments -%}
-                                    <code class="fragment{{' text-muted' if frag.is_ignored else ''}}" id="{{frag.id}}">
-                                        {%- for line in frag.content -%}
-                                            <code class="line{{' newline' if ns.is_newline else ''}}">{{line}}</code>
-                                            {%- set ns.is_newline = line.endswith('\n') -%}
-                                        {%- endfor -%}
-                                    </code>
-                                {%- endfor -%}
-                            </pre>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endfor %}
-    </div>
-</div>
+<script>
+    window.SUB_A = {{FILES_A|tojson|safe}};
+    window.SUB_B = {{FILES_B|tojson|safe}};
+    window.PASSES = {{PASSES|tojson|safe}};
+</script>
