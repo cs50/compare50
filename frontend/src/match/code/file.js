@@ -26,7 +26,7 @@ function File(props) {
     let onNewline = true;
 
     const fragmentElems = fragments.map((frag, i) => {
-        const id = `fragment_${props.file.id}_${i}`;
+        const id = `frag_${props.file.id}_${frag.start}`;
         const fragElem = <Fragment
                             key={id}
                             fragment={frag}

@@ -31,8 +31,18 @@ function slice(file, spans) {
 }
 
 
+function filterIgnoredWhitespaceSpans(file, spans) {
+    return spans.filter(span => {
+        if (span.end - span.start === 1 && file.content[span.start] === " ") {
+            return false;
+        }
+        return true;
+    });
+}
+
+
 function createFragments(file, spans) {
-    return slice(file, spans);
+    return slice(file, filterIgnoredWhitespaceSpans(file, spans));
 }
 
 
