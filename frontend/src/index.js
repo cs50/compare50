@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import * as serviceWorker from './serviceWorker';
 
-
+// https://blog.logrocket.com/multiple-entry-points-in-create-react-app-without-ejecting/
 let BuildTarget = null;
 if (process.env.REACT_APP_BUILD_TARGET === "home") {
     BuildTarget = require("./home/home").default;

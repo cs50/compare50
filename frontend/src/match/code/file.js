@@ -14,12 +14,13 @@ function File(props) {
         props.updateFileVisibility(props.file.name, entry.intersectionRatio);
     });
 
-    const fromFile = span => span.fileId === props.file.id;
-    const spans = props.spanManager.spans.filter(fromFile);
-    const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
-    const allSpans = spans.concat(ignoredSpans);
-
-    const fragments = useMemo(() => createFragments(props.file, allSpans), [props.file, allSpans]);
+    const fragments = useMemo(() => {
+        const fromFile = span => span.fileId === props.file.id;
+        const spans = props.spanManager.spans.filter(fromFile);
+        const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
+        const allSpans = spans.concat(ignoredSpans);
+        return createFragments(props.file, allSpans)
+    }, [props.file.id, props.spanManager.spans]);
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
