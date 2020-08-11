@@ -1,5 +1,4 @@
 // https://stackoverflow.com/questions/61971615/how-can-i-create-one-bundle-file-from-react-create-app
-
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackInlineSourcePlugin = require('html-webpack-inline-source-plugin');
 

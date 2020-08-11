@@ -58,18 +58,22 @@ function SideBar(props) {
                         match={props.match}
                     />
                 </div>
-                <div className="row fill" style={style}>
-                    <Graph graph={props.graphData} slider={false} sliderTip={false}/>
-                </div>
-                <div className="row auto" style={style}>
-                    <span
-                        className="tooltip-marker"
-                        data-tip="This graph shows any known links from the submissions in the match to archives."
-                        data-for="sidebar-tooltip"
-                    >
-                        ?
-                    </span>
-                </div>
+                {props.globalState.isDataLoaded &&
+                    <React.Fragment>
+                        <div className="row fill" style={style}>
+                            <Graph graph={props.graphData} slider={false} sliderTip={false}/>
+                        </div>
+                        <div className="row auto" style={style}>
+                            <span
+                                className="tooltip-marker"
+                                data-tip="This graph shows any known links from the submissions in the match to archives."
+                                data-for="sidebar-tooltip"
+                            >
+                                ?
+                            </span>
+                        </div>
+                    </React.Fragment>
+                }
             </div>
         </React.Fragment>
     )
