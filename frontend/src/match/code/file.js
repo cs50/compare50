@@ -70,19 +70,21 @@ function Fragment(props) {
 
     let className = getClassName(props.fragment, props.spanManager, props.hideIgnored);
 
+    const isGrouped = props.spanManager.isGrouped(props.fragment);
+
     return (
         <span
             ref={ref}
             className={className}
             key={props.id}
-            onMouseEnter={event => props.spanManager.activate(props.fragment)}
-            onMouseDown={event => {
+            onMouseEnter={isGrouped ? event => props.spanManager.activate(props.fragment) : undefined}
+            onMouseDown={isGrouped ? event => {
                 // Prevent text selection when clicking on highlighted fragments
                 if (props.spanManager.isHighlighted(props.fragment)) {
                     event.preventDefault();
                 }
-            }}
-            onMouseUp={event => props.spanManager.select(props.fragment)}
+            } : undefined}
+            onMouseUp={isGrouped ? event => props.spanManager.select(props.fragment) : undefined}
         >
             {lines.map((line, lineIndex) => {
                 const onNewline = props.onNewline || lineIndex > 0

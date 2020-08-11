@@ -220,6 +220,8 @@ class RegionMap {
     }
 
     getSpan(region) {
+
+
         const key = this._key(region);
 
         // Get span from memory if possible
