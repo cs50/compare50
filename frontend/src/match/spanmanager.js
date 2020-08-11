@@ -140,6 +140,10 @@ class SpanManager {
         this._selectAdjacentGroup(-1);
     }
 
+    isFirstInSpan(region) {
+        return this._regionMap.getSpan(region).start === region.start;
+    }
+
     isHighlighted(region) {
         return this._getState(region) === Span.STATES.HIGHLIGHTED;
     }
@@ -220,8 +224,6 @@ class RegionMap {
     }
 
     getSpan(region) {
-
-
         const key = this._key(region);
 
         // Get span from memory if possible

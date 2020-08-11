@@ -31,6 +31,9 @@ function slice(file, spans) {
 }
 
 
+// Spans of individual spaces are never relevant for the view,
+// but do cause many more fragments to be created.
+// For performance reasons, this filters out any spans containing just a space.
 function filterIgnoredWhitespaceSpans(file, spans) {
     return spans.filter(span => {
         if (span.end - span.start === 1 && file.content[span.start] === " ") {

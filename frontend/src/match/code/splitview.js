@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useCallback} from 'react';
 import Split from 'react-split';
 
 import File from './file'
@@ -8,6 +8,8 @@ import '../../split.css';
 
 
 function SplitView(props) {
+    const [interactionBlocked, setInteractionBlocked] = useState(false);
+
     return (
         <Split
             sizes={[50, 50]}
@@ -26,6 +28,8 @@ function SplitView(props) {
                     <Side
                         pass={props.pass}
                         files={files}
+                        interactionBlocked={interactionBlocked}
+                        setInteractionBlocked={setInteractionBlocked}
                         spanManager={props.spanManager}
                         globalState={props.globalState}
                         topHeight={props.topHeight}
@@ -41,6 +45,7 @@ function Side(props) {
     const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
     const ref = useRef(null);
+    const scrollToCallback = useCallback(domElement => scrollTo(domElement, ref.current, props.setInteractionBlocked), [ref, props.setInteractionBlocked]);
 
     return (
         <div className="column-box">
@@ -66,7 +71,8 @@ function Side(props) {
                             hideIgnored={props.globalState.hideIgnored}
                             showWhiteSpace={props.globalState.showWhiteSpace}
                             updateFileVisibility={updateFileVisibility}
-                            scrollTo={domElement => scrollTo(domElement, ref.current)}
+                            scrollTo={scrollToCallback}
+                            interactionBlocked={props.interactionBlocked}
                         />
                     )}
                 </div>
@@ -126,7 +132,7 @@ function useMax(items, initial=null) {
     }, {}));
 
     // Callback for when the value of an item changes
-    const update = (item, value) => {
+    const update = useCallback((item, value) => {
         values.current[item] = value;
 
         // Find the item with the highest value
@@ -143,7 +149,7 @@ function useMax(items, initial=null) {
         if (item !== maxItem) {
             setItem(maxItem);
         }
-    }
+    }, []);
 
     return [item, update];
 }
@@ -169,7 +175,7 @@ function findPos(domElement) {
 //     this.dom_element.scrollIntoView({"behavior":"smooth"});
 // Also see: https://github.com/iamdustan/smoothscroll
 // Credits: https://gist.github.com/andjosh/6764939
-function scrollTo(domElement, scrollable=document, offset=200) {
+function scrollTo(domElement, scrollable=document, setInteractionBlock=block => {}, offset=200) {
     let easeInOutQuad = (t, b, c, d) => {
         t /= d / 2;
         if (t < 1) return c / 2 * t * t + b;
@@ -188,15 +194,17 @@ function scrollTo(domElement, scrollable=document, offset=200) {
     let animateScroll = () => {
         currentTime += increment;
         let val = easeInOutQuad(currentTime, start, change, duration);
+
         scrollable.scrollTop = val;
         if (currentTime < duration) {
             setTimeout(animateScroll, increment);
         }
         else {
-            let event = new Event("finished_scrolling");
-            domElement.dispatchEvent(event);
+            setInteractionBlock(false);
         }
     };
+
+    setInteractionBlock(true);
     animateScroll();
 }
 

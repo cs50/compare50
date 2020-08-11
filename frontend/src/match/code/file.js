@@ -4,6 +4,21 @@ import createFragments from './fragmentslicer'
 import "../matchview.css"
 import "./file.css";
 
+// function useTraceUpdate(props) {
+//   const prev = useRef(props);
+//   useEffect(() => {
+//     const changedProps = Object.entries(props).reduce((ps, [k, v]) => {
+//       if (prev.current[k] !== v) {
+//         ps[k] = [prev.current[k], v];
+//       }
+//       return ps;
+//     }, {});
+//     if (Object.keys(changedProps).length > 0) {
+//       console.log('Changed props:', changedProps);
+//     }
+//     prev.current = props;
+//   });
+// }
 
 function File(props) {
     const [visibilityRef, entry] = useIntersect({
@@ -36,7 +51,9 @@ function File(props) {
                             hideIgnored={props.hideIgnored}
                             showWhiteSpace={props.showWhiteSpace}
                             scrollTo={props.scrollTo}
-                            spanManager={props.spanManager}/>
+                            spanManager={props.spanManager}
+                            interactionBlocked={props.interactionBlocked}
+        />
         onNewline = frag.text.endsWith("\n");
         return fragElem;
     });
@@ -60,8 +77,9 @@ function Fragment(props) {
     const classNameRef = useRef("");
 
     useEffect(() => {
-        // If this fragment was not highlighted before, but now it is, scroll to it
-        if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")) {
+        // If this fragment was not highlighted before, but now it is, and this fragment is the first of its span, scroll to it
+        if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")
+            && props.spanManager.isFirstInSpan(props.fragment)) {
             props.scrollTo(ref.current);
         }
 
@@ -70,21 +88,21 @@ function Fragment(props) {
 
     let className = getClassName(props.fragment, props.spanManager, props.hideIgnored);
 
-    const isGrouped = props.spanManager.isGrouped(props.fragment);
+    const hasMouseOvers = !props.interactionBlocked && props.spanManager.isGrouped(props.fragment);
 
     return (
         <span
             ref={ref}
             className={className}
             key={props.id}
-            onMouseEnter={isGrouped ? event => props.spanManager.activate(props.fragment) : undefined}
-            onMouseDown={isGrouped ? event => {
+            onMouseEnter={hasMouseOvers ? event => props.spanManager.activate(props.fragment) : undefined}
+            onMouseDown={hasMouseOvers ? event => {
                 // Prevent text selection when clicking on highlighted fragments
                 if (props.spanManager.isHighlighted(props.fragment)) {
                     event.preventDefault();
                 }
             } : undefined}
-            onMouseUp={isGrouped ? event => props.spanManager.select(props.fragment) : undefined}
+            onMouseUp={hasMouseOvers ? event => props.spanManager.select(props.fragment) : undefined}
         >
             {lines.map((line, lineIndex) => {
                 const onNewline = props.onNewline || lineIndex > 0
