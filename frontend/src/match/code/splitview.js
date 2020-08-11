@@ -28,6 +28,7 @@ function SplitView(props) {
                         files={files}
                         spanManager={props.spanManager}
                         globalState={props.globalState}
+                        topHeight={props.topHeight}
                     />
                 </div>
             )}
@@ -50,7 +51,8 @@ function Side(props) {
                 <StatusBar
                     filepath="looooooooooooooooooooooooooooooooooooooooooooong/file/path/to/submission_a"
                     percentage={70}
-                    file={fileInView}/>
+                    file={fileInView}
+                    height={props.topHeight}/>
             </div>
             <div ref={ref} className="scrollable-side row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
@@ -82,7 +84,11 @@ function StatusBar(props) {
     });
 
     return (
-        <div className="row-box" style={{"fontWeight":"bold"}}>
+        <div className="row-box" style={{
+            "fontWeight":"bold",
+            "height":props.height,
+            "lineHeight":props.height
+        }}>
             <div ref={filepathRef} className="row fill" style={{
                 "overflow":"scroll",
                 "marginLeft":"5px",

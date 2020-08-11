@@ -1,8 +1,9 @@
 import React, {useState, useRef, useEffect} from 'react';
 import ReactTooltip from 'react-tooltip';
 
-import Graph from '../home/graph';
+import Graph from '../graph/graph';
 import API from '../api';
+import Logo from '../logo';
 import render50 from "./code/render50";
 
 import './matchview.css';
@@ -23,6 +24,9 @@ function SideBar(props) {
         <React.Fragment>
             <ReactTooltip place="right" type="dark" effect="solid" id="sidebar-tooltip"/>
             <div className="column-box">
+                <div className="row auto">
+                    <Logo height="2.5em"/>
+                </div>
                 <div className="row auto" style={style}>
                     <MatchNavigation
                         current={props.globalState.currentMatch}

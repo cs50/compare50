@@ -1,7 +1,5 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-// import './index.css';
-// import './bootstrap.min.css';
 import MatchView from './match/matchview';
 import HomeView from './home/home';
 import * as serviceWorker from './serviceWorker';
