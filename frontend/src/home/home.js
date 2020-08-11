@@ -5,6 +5,7 @@ import ReactTooltip from "react-tooltip";
 
 import '../index.css';
 import '../split.css';
+import API from '../api';
 import Logo from '../logo';
 import Graph from '../graph/graph';
 import GraphFxns from '../graph/graph-d3';
@@ -104,7 +105,7 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             color: null,
-            graph: this.props.data,
+            graph: API.getGraph(),
             highlight: null,
             table_highlighted: null,
             table_selected: null,

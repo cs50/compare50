@@ -2,7 +2,6 @@ import React, {useState, useRef, useEffect} from 'react';
 import ReactTooltip from 'react-tooltip';
 
 import Graph from '../graph/graph';
-import API from '../api';
 import Logo from '../logo';
 import render50 from "./code/render50";
 

@@ -25,7 +25,7 @@ class API {
         return new Match(window.SUB_A, window.SUB_B, window.PASSES);
     }
 
-    static async getGraph() {
+    static getGraph() {
         return window.GRAPH_DATA;
     }
 }
