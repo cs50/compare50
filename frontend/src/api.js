@@ -1,59 +1,53 @@
-import GRAPH_DATA from './spoofed_data/graph.json'
+import GRAPH_DATA from './mock_data/graph.json'
 
 window.GRAPH_DATA = GRAPH_DATA;
 
 const IN_DEVELOPMENT = process.env.NODE_ENV === "development";
 
-if (IN_DEVELOPMENT) {
-    _load_data = Promise.all([
-        import('./spoofed_data/sub_a.json'),
-        import('./spoofed_data/sub_b.json'),
-        import('./spoofed_data/pass_structure.json'),
-        import('./spoofed_data/pass_text.json'),
-        import('./spoofed_data/pass_exact.json')
-    ])
-    .then(([subA, subB, passStructure, passText, passExact]) => {
-        window.SUB_A = subA;
-        window.SUB_B = subB;
-        window.PASSES = [
-            passStructure,
-            passText,
-            passExact
-        ];
-    })
-} else {
-    var _load_data = (async () => {})();
-}
-
 
 class API {
     static async getMatch() {
-        await _load_data;
-        return new Match();
+        // In development use mock data
+        if (IN_DEVELOPMENT) {
+            return await Promise.all([
+                import('./mock_data/sub_a.json'),
+                import('./mock_data/sub_b.json'),
+                import('./mock_data/pass_structure.json'),
+                import('./mock_data/pass_text.json'),
+                import('./mock_data/pass_exact.json')
+            ])
+            .then(([subA, subB, passStructure, passText, passExact]) => {
+                return new Match(subA, subB, [passStructure, passText, passExact]);
+            });
+        }
+
+        // In production use static data attached to the window by compare50
+        return new Match(window.SUB_A, window.SUB_B, window.PASSES);
     }
 
     static async getGraph() {
-        await _load_data;
         return window.GRAPH_DATA;
     }
 }
 
 
 class Match {
-    passes() {
-        return window.PASSES
+    constructor(subA, subB, passes) {
+        this.subA = subA;
+        this.subB = subB;
+        this.passes = passes;
     }
 
     getPass(pass) {
-        return window.PASSES.find(p => p.name === pass.name);
+        return this.passes.find(p => p.name === pass.name);
     }
 
     filesA() {
-        return window.SUB_A.files;
+        return this.subA.files;
     }
 
     filesB() {
-        return window.SUB_B.files;
+        return this.subB.files;
     }
 }
 

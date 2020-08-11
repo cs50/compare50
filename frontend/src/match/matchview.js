@@ -25,8 +25,8 @@ function MatchView() {
             setMatch(match);
             setGlobalState({
                 ...globalState,
-                ...{"passes": match.passes(),
-                    "currentPass": match.passes()[0],
+                ...{"passes": match.passes,
+                    "currentPass": match.passes[0],
                     "isDataLoaded": true
                 }
             });
