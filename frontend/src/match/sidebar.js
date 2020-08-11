@@ -139,6 +139,11 @@ function PassButton(props) {
         return () => document.removeEventListener("keyup", eventListener);
     });
 
+    // https://github.com/wwayne/react-tooltip/issues/231
+    useEffect(() => {
+        ReactTooltip.rebuild();
+    }, []);
+
     return (
         <span className="btn" data-tip={`Press ${props.index}`} data-for="sidebar-tooltip">
             <button
