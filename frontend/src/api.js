@@ -6,6 +6,24 @@ const IN_DEVELOPMENT = process.env.NODE_ENV === "development";
 
 
 class API {
+    static placeHolderMatch() {
+        return new Match(
+            {
+                "name": "...",
+                "files": [],
+                "id": -1,
+                "isArchive": false
+            },
+            {
+                "name": "...",
+                "files": [],
+                "id": -2,
+                "isArchive": false
+            },
+            []
+        )
+    }
+
     static async getMatch() {
         // In development use mock data
         if (IN_DEVELOPMENT) {

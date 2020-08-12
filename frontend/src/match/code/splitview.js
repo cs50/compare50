@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect, useCallback} from 'react';
+import React, {useState, useRef, useEffect, useCallback, useMemo} from 'react';
 import Split from 'react-split';
 
 import File from './file'
@@ -23,10 +23,11 @@ function SplitView(props) {
                 "height":"100%"
             }}
         >
-            {[props.match.filesA(), props.match.filesB()].map((files, i) =>
+            {[[props.match.filesA(), props.match.subA], [props.match.filesB(), props.match.subB]].map(([files, sub], i) =>
                 <div key={`side_${i}`} style={{"height":"100%", "margin":0, "float":"left"}}>
                     <Side
                         pass={props.pass}
+                        submission={sub}
                         files={files}
                         interactionBlocked={interactionBlocked}
                         setInteractionBlocked={setInteractionBlocked}
@@ -44,39 +45,11 @@ function SplitView(props) {
 function Side(props) {
     const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
+    const [submissionCoverage, fileCoverages] = useCoverages(props.files, props.spanManager.spans);
+
     const ref = useRef(null);
 
-    const didScroll = useRef(false);
-
-    const highlightedSpans = props.spanManager.highlightedSpans().map(span => span.id);
-    const prevHighlightedSpans = useRef(highlightedSpans);
-
-    const didHighlightChange = () => {
-        if (highlightedSpans.length !== prevHighlightedSpans.current.length) {
-            return true;
-        }
-
-        for (let i = 0; i < highlightedSpans.length; i++) {
-            if (highlightedSpans[i] !== prevHighlightedSpans.current[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    // In case the highlighted spans changed, re-enable scrolling
-    if (didHighlightChange()) {
-        didScroll.current = false;
-        prevHighlightedSpans.current = highlightedSpans;
-    }
-
-    const scrollToCallback = useCallback(domElement => {
-        if (didScroll.current) {
-            return;
-        }
-        didScroll.current = true;
-        scrollTo(domElement, ref.current, props.setInteractionBlocked);
-    }, [ref, props.setInteractionBlocked]);
+    const scrollToCallback = useScroll(ref, props.spanManager, props.setInteractionBlocked);
 
     return (
         <div className="column-box">
@@ -85,19 +58,19 @@ function Side(props) {
                 "lineHeight":props.height
             }}>
                 <StatusBar
-                    filepath="looooooooooooooooooooooooooooooooooooooooooooong/file/path/to/submission_a"
-                    percentage={70}
+                    filepath={props.submission.name}
+                    percentage={submissionCoverage * 100}
                     file={fileInView}
                     height={props.topHeight}/>
             </div>
             <div ref={ref} className="scrollable-side row fill" style={{"overflow":"scroll"}}>
                 <div style={{"paddingLeft":".5em"}}>
-                    {props.files.map(file =>
+                    {props.files.map((file, i) =>
                         <File
                             key={file.name}
                             file={file}
                             spanManager={props.spanManager}
-                            percentage={20}
+                            percentage={fileCoverages[i] * 100}
                             softWrap={props.globalState.softWrap}
                             hideIgnored={props.globalState.hideIgnored}
                             showWhiteSpace={props.globalState.showWhiteSpace}
@@ -129,8 +102,8 @@ function StatusBar(props) {
         }}>
             <div ref={filepathRef} className="row fill" style={{
                 "overflow":"scroll",
-                "marginLeft":"5px",
-                "marginRight":"5px"
+                "marginRight":"5px",
+                "paddingLeft":".5em"
             }}>
                 {props.filepath}
             </div>
@@ -138,7 +111,7 @@ function StatusBar(props) {
                 "width":"4em",
                 "textAlign":"center"
             }}>
-                {`${props.percentage}%`}
+                {`${props.percentage.toFixed(0)}%`}
             </div>
             <div className="row auto" style={{
                 "width":"10em",
@@ -184,6 +157,66 @@ function useMax(items, initial=null) {
     }, []);
 
     return [item, update];
+}
+
+
+function useCoverages(files, spans) {
+    const compute = () => {
+        spans = spans.filter(span => !span.isIgnored);
+
+        let totalNumMatchedChars = 0;
+
+        const filesCoverages = files.map(file => {
+            const numMatchedChars = spans.reduce((acc, span) => acc + (span.fileId === file.id ? span.end - span.start : 0), 0);
+            totalNumMatchedChars += numMatchedChars;
+            return (numMatchedChars / file.content.length);
+        });
+
+        const totalNumChars = files.reduce((acc, file) => acc + file.content.length, 0)
+
+        const submissionCoverage = totalNumChars === 0 ? 0 : totalNumMatchedChars / totalNumChars;
+
+        return [submissionCoverage, filesCoverages];
+    }
+
+    return useMemo(compute, [files, spans]);
+}
+
+
+function useScroll(scrollableRef, spanManager, setInteractionBlocked) {
+    const didScroll = useRef(false);
+
+    const highlightedSpans = spanManager.highlightedSpans().map(span => span.id);
+    const prevHighlightedSpans = useRef(highlightedSpans);
+
+    const didHighlightChange = () => {
+        if (highlightedSpans.length !== prevHighlightedSpans.current.length) {
+            return true;
+        }
+
+        for (let i = 0; i < highlightedSpans.length; i++) {
+            if (highlightedSpans[i] !== prevHighlightedSpans.current[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // In case the highlighted spans changed, re-enable scrolling
+    if (didHighlightChange()) {
+        didScroll.current = false;
+        prevHighlightedSpans.current = highlightedSpans;
+    }
+
+    const scrollToCallback = useCallback(domElement => {
+        if (didScroll.current) {
+            return;
+        }
+        didScroll.current = true;
+        scrollTo(domElement, scrollableRef.current, setInteractionBlocked);
+    }, [scrollableRef, setInteractionBlocked]);
+
+    return scrollToCallback;
 }
 
 

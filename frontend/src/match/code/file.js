@@ -60,7 +60,7 @@ function File(props) {
 
     return (
         <>
-            <h4> {props.file.name} <span>({props.percentage}%)</span></h4>
+            <h4> {props.file.name} <span>{props.percentage.toFixed(0)}%</span></h4>
             <pre ref={visibilityRef} className={(props.softWrap ? "softwrap" : "") + " monospace-text"}>
                 {(fragmentElems)}
             </pre>

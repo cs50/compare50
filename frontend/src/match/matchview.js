@@ -48,10 +48,7 @@ function MatchView() {
         "isDataLoaded": false
     });
 
-    const [match, setMatch] = useState({
-        "filesA": () => [],
-        "filesB": () => []
-    });
+    const [match, setMatch] = useState(API.placeHolderMatch());
 
     const [graphData, setGraph] = useState({});
 
