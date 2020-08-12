@@ -240,7 +240,12 @@ class RegionMap {
         // Memoization map, maps a this._key() to a span
         this._map = {};
 
-        this.groupIds = Array.from(new Set(this.spans.map(span => span.groupId))).sort((a, b) => a-b);
+        this.groupIds = [];
+        this.spans.forEach(span => {
+            if (!this.groupIds.includes(span.groupId)) {
+                this.groupIds.push(span.groupId);
+            }
+        })
         this.nGroups = this.groupIds.length;
     }
 
@@ -316,7 +321,7 @@ class Span {
 }
 
 
-function useSpanManager(pass) {
+function useSpanManager(pass, match) {
     const initSpans = () => {
         const spans = [];
         pass.spans.forEach(span => {
@@ -325,7 +330,19 @@ function useSpanManager(pass) {
                 spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end, span.ignored));
             }
         });
-        return spans;
+
+        const fileIdsInOrder = match.filesA().map(file => file.id).concat(match.filesB().map(file => file.id));
+
+        return spans.sort((a, b) => {
+            const indexA = fileIdsInOrder.indexOf(a.fileId);
+            const indexB = fileIdsInOrder.indexOf(b.fileId);
+
+            if (indexA !== indexB) {
+                return indexA > indexB ? 1 : -1;
+            }
+
+            return a.start > b.start ? 1 : -1;
+        });
     }
 
     const initIgnoredSpans = () =>
@@ -351,6 +368,7 @@ function useSpanManager(pass) {
 
     // Memoize the (expensive) mapping from regions to spans on the selected pass
     const spans = useMemo(initSpans, [pass.name]);
+
     const regionMap = useMemo(() => new RegionMap(spans), [spans]);
 
     // Memoize the (expensive) mapping from regions to ignoredSpans on the selected pass

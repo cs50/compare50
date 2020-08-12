@@ -59,7 +59,7 @@ function MatchView() {
         getData();
     }
 
-    const spanManager = useSpanManager(globalState.currentPass);
+    const spanManager = useSpanManager(globalState.currentPass, match);
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>
