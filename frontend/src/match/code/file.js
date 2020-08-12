@@ -74,16 +74,14 @@ function Fragment(props) {
     const lines = props.fragment.text.split(/(?<=\n)/g);
 
     const ref = useRef(null);
-    const classNameRef = useRef("");
+
+    const isHighlighted = props.spanManager.isHighlighted(props.fragment);
 
     useEffect(() => {
-        // If this fragment was not highlighted before, but now it is, and this fragment is the first of its span, scroll to it
-        if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")
-            && props.spanManager.isFirstInHighlightedSpan(props.fragment)) {
+        // If this fragment is highlighted, and it's the first in its span, scroll to it
+        if (isHighlighted && props.spanManager.isFirstInHighlightedSpan(props.fragment)) {
             props.scrollTo(ref.current);
         }
-
-        classNameRef.current = ref.current.className;
     })
 
     let className = getClassName(props.fragment, props.spanManager, props.hideIgnored);
@@ -102,7 +100,9 @@ function Fragment(props) {
                     event.preventDefault();
                 }
             } : undefined}
-            onMouseUp={hasMouseOvers ? event => props.spanManager.select(props.fragment) : undefined}
+            onMouseUp={hasMouseOvers ? event => {
+                props.spanManager.select(props.fragment);
+            } : undefined}
         >
             {lines.map((line, lineIndex) => {
                 const onNewline = props.onNewline || lineIndex > 0

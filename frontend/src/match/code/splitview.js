@@ -45,7 +45,38 @@ function Side(props) {
     const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
     const ref = useRef(null);
-    const scrollToCallback = useCallback(domElement => scrollTo(domElement, ref.current, props.setInteractionBlocked), [ref, props.setInteractionBlocked]);
+
+    const didScroll = useRef(false);
+
+    const highlightedSpans = props.spanManager.highlightedSpans().map(span => span.id);
+    const prevHighlightedSpans = useRef(highlightedSpans);
+
+    const didHighlightChange = () => {
+        if (highlightedSpans.length !== prevHighlightedSpans.current.length) {
+            return true;
+        }
+
+        for (let i = 0; i < highlightedSpans.length; i++) {
+            if (highlightedSpans[i] !== prevHighlightedSpans.current[i]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // In case the highlighted spans changed, re-enable scrolling
+    if (didHighlightChange()) {
+        didScroll.current = false;
+        prevHighlightedSpans.current = highlightedSpans;
+    }
+
+    const scrollToCallback = useCallback(domElement => {
+        if (didScroll.current) {
+            return;
+        }
+        didScroll.current = true;
+        scrollTo(domElement, ref.current, props.setInteractionBlocked);
+    }, [ref, props.setInteractionBlocked]);
 
     return (
         <div className="column-box">
@@ -75,6 +106,7 @@ function Side(props) {
                             interactionBlocked={props.interactionBlocked}
                         />
                     )}
+                    <div style={{"height":"75vh"}}></div>
                 </div>
             </div>
         </div>
@@ -184,10 +216,10 @@ function scrollTo(domElement, scrollable=document, setInteractionBlock=block => 
     };
 
     let to = findPos(domElement) - offset;
-    let duration = 300;
 
     let start = scrollable.scrollTop;
     let change = to - start;
+    let duration = Math.min(300, Math.max(change, 40));
     let currentTime = 0;
     let increment = 20;
 

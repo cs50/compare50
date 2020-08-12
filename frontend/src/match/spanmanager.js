@@ -58,8 +58,6 @@ class SpanManager {
         // Grab the span that is selected
         const selectedSpan = this._getSpan(region);
 
-        const groupId = selectedSpan.groupId;
-
         // If this span was selected before, highlight the next span in the other sub
         if (this._spanStates[selectedSpan.id] === Span.STATES.HIGHLIGHTED) {
             this._reselect(selectedSpan);
@@ -158,7 +156,7 @@ class SpanManager {
     isFirstInHighlightedSpan(region) {
         const spans = this._regionMap.getSpans(region);
         const span = spans.find(span => this._spanStates[span.id] === Span.STATES.HIGHLIGHTED);
-        if (span === null) {
+        if (span === undefined) {
             return false;
         }
         return span.start === region.start;
@@ -191,6 +189,10 @@ class SpanManager {
 
     nGroups() {
         return this._regionMap.nGroups;
+    }
+
+    highlightedSpans() {
+        return this.spans.filter(span => this._spanStates[span.id] === Span.STATES.HIGHLIGHTED);
     }
 
     _getSpan(region) {
