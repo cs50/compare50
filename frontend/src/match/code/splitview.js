@@ -219,7 +219,7 @@ function scrollTo(domElement, scrollable=document, setInteractionBlock=block => 
 
     let start = scrollable.scrollTop;
     let change = to - start;
-    let duration = Math.min(300, Math.max(change, 40));
+    let duration = Math.min(300, Math.max(Math.abs(change), 40));
     let currentTime = 0;
     let increment = 20;
 
