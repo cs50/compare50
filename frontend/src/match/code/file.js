@@ -79,7 +79,7 @@ function Fragment(props) {
     useEffect(() => {
         // If this fragment was not highlighted before, but now it is, and this fragment is the first of its span, scroll to it
         if (!classNameRef.current.includes("highlighted-span") && ref.current.className.includes("highlighted-span")
-            && props.spanManager.isFirstInSpan(props.fragment)) {
+            && props.spanManager.isFirstInHighlightedSpan(props.fragment)) {
             props.scrollTo(ref.current);
         }
 
