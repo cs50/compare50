@@ -32,12 +32,8 @@ class SpanManager {
 
         const spanStates = this.spans.reduce((acc, span) => {
             // Don't overwrite a selected span
-            if (this.isSelected(span)) {
-                acc[span.id] = Span.STATES.SELECTED;
-            }
-            // Don't overwrite a highlighted span
-            else if (this.isHighlighted(span)) {
-                acc[span.id] = Span.STATES.HIGHLIGHTED;
+            if (this._spanStates[span.id] === Span.STATES.SELECTED || this._spanStates[span.id] === Span.STATES.HIGHLIGHTED) {
+                acc[span.id] = this._spanStates[span.id];
             }
             // Set all spans in group to
             else if (span.groupId === groupId) {
