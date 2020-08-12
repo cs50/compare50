@@ -48,19 +48,20 @@ class SpanManager {
     }
 
     select(region) {
-        const groupId = this._regionMap.getGroupId(region);
+        // Grab the span that is selected
+        const selectedSpan = region instanceof Span ? region : this._regionMap.getSpan(region);
+
+        const groupId = selectedSpan.groupId;
+
         if (groupId === null) {
             return;
         }
 
         // If this span was selected before, highlight the next span in the other sub
-        if (this.isHighlighted(region)) {
-            this._reselect(region);
+        if (this._spanStates[selectedSpan.id] === Span.STATES.HIGHLIGHTED) {
+            this._reselect(selectedSpan);
             return;
         }
-
-        // Grab the span that is selected
-        const selectedSpan = this._regionMap.getSpan(region);
 
         // Grab all spans in the same group
         const groupedSpans = this.spans.filter(span => span.groupId === selectedSpan.groupId);
@@ -94,10 +95,7 @@ class SpanManager {
         this._setSpanStates(spanStates);
     }
 
-    _reselect(region) {
-        // Find which span was reselected
-        const selectedSpan = this._regionMap.getSpan(region);
-
+    _reselect(selectedSpan) {
         // Grab all spans from the other submission in the same group
         const groupedSpans = this.spans.filter(span => span.groupId === selectedSpan.groupId);
 
@@ -133,11 +131,25 @@ class SpanManager {
     }
 
     selectNextGroup() {
-        this._selectAdjacentGroup(1);
+        const groupId = this._regionMap.getNextGroupId(this._selectedGroupId())
+
+        for (let span of this.spans) {
+            if (span.groupId === groupId) {
+                this.select(span);
+                return;
+            }
+        }
     }
 
     selectPreviousGroup() {
-        this._selectAdjacentGroup(-1);
+        const groupId = this._regionMap.getPreviousGroupId(this._selectedGroupId())
+        
+        for (let span of this.spans) {
+            if (span.groupId === groupId) {
+                this.select(span);
+                return;
+            }
+        }
     }
 
     isFirstInSpan(region) {
@@ -164,40 +176,21 @@ class SpanManager {
         return this._ignoredRegionMap.getSpan(region) !== null;
     }
 
-    selectedGroupId() {
-        for (let span of this.spans) {
-            if (this._spanStates[span.id] === Span.STATES.SELECTED || this._spanStates[span.id] === Span.STATES.HIGHLIGHTED) {
-                return span.groupId;
-            }
-        }
-        return 0;
+    selectedGroupIndex() {
+        return this._regionMap.getGroupIndex(this._selectedGroupId());
     }
 
     nGroups() {
         return this._regionMap.nGroups;
     }
 
-    _selectAdjacentGroup(direction) {
-        let groupId = this.selectedGroupId();
-
-        // increment index
-        groupId += direction;
-
-        // wrap around
-        if (groupId > this.nGroups()) {
-            groupId = 1;
-        }
-        else if (groupId < 1) {
-            groupId = this.nGroups();
-        }
-
-
+    _selectedGroupId() {
         for (let span of this.spans) {
-            if (span.groupId === groupId) {
-                this.select(span);
-                return;
+            if (this._spanStates[span.id] === Span.STATES.SELECTED || this._spanStates[span.id] === Span.STATES.HIGHLIGHTED) {
+                return span.groupId;
             }
         }
+        return -1;
     }
 
     _getState(region) {
@@ -220,7 +213,8 @@ class RegionMap {
         // Memoization map, maps a this._key() to a span
         this._map = {};
 
-        this.nGroups = new Set(this.spans.map(span => span.groupId)).size;
+        this.groupIds = Array.from(new Set(this.spans.map(span => span.groupId))).sort((a, b) => a-b);
+        this.nGroups = this.groupIds.length;
     }
 
     getSpan(region) {
@@ -254,6 +248,32 @@ class RegionMap {
     getGroupId(region, state) {
         const span = this.getSpan(region);
         return span !== null ? span.groupId : null;
+    }
+
+    getGroupIndex(groupId) {
+        return this.groupIds.indexOf(groupId);
+    }
+
+    getPreviousGroupId(groupId) {
+        let groupIndex = this.getGroupIndex(groupId);
+        groupIndex -= 1;
+
+        if (groupIndex < 0) {
+            groupIndex = this.nGroups - 1;
+        }
+
+        return this.groupIds[groupIndex];
+    }
+
+    getNextGroupId(groupId) {
+        let groupIndex = this.getGroupIndex(groupId);
+        groupIndex += 1;
+
+        if (groupIndex >= this.nGroups) {
+            groupIndex = 0;
+        }
+
+        return this.groupIds[groupIndex];
     }
 
     _key(region) {
