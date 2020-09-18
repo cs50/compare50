@@ -16,6 +16,20 @@
 .. * :ref:`modindex`
 .. * :ref:`search`
 
+
+.. code-block:: bash
+
+    compare50 course/submission/* -a last/years/submissions/* -d distro/code/*
+
+|index_pic| |match_pic|
+
+.. |index_pic| image:: images/index.png
+    :width: 49%
+
+.. |match_pic| image:: images/match.png
+    :width: 49%
+
+
 compare50 is a tool for detecting similarity in code that supports well over 300 programming and templating languages. The tool itself is open-source and by design extensible in its comparison methods. There is no need to upload code to an external host, compare50 runs locally from the command-line. As a local tool, compare50 presents its findings in static and interactive HTML files that allow for easy sharing. And it does so blazingly fast, easily comparing 1000s of source files within seconds.
 
 
@@ -100,7 +114,7 @@ In order to exclude distribution code from comparison, supply the distribution f
 
 Any code found in `foo.java` and in the folder `bar` will be subtracted from the submissions up for comparison. This subtraction is performed depending on the type of comparison. For instance, if compare50 does an exact comparison it will subtract only exact occurrences of the distribution code. If compare50 does a structure comparison it will subtract structurally equivalent occurrences in the submissions.
 
-Distribution code is ignored, and is thus colored gray in the html view.
+Distribution code is ignored, and is colored gray in the html view.
 
 
 Comparing archived submissions
@@ -196,7 +210,43 @@ All configurable options
 
 
 
-Viewing and interpreting results
-********************************
+Viewing results
+***************
 
-Upon each run compare50 will create a folder with self contained html files. Each file represents a match, and there is an index.html page to quickly get an overview and navigate between the matches.
+Upon each run compare50 will create a folder with self contained html files. There is a file for each match, and one additional file for the index.
+
+
+index.html
+----------
+
+.. image:: images/index.png
+
+The index page as shown above consists of two parts, a table on the left to allow for jumping between matches, and an interactive graph to identify clusters of matches.
+
+Note that archive submissions are marked with an archive folder sign in the table, and appear as squares in the graph on the right. As matches with archives, which could be last year's solutions or known online solutions, are often quite telling.
+
+How to interpret the score
+--------------------------
+
+The table on the left of the index page is sorted in descending order by a score ranging from 1 to 10. It is important to note that this represents a normalized score based on the original score of the comparison algorithm used. That means a score is relative to that specific run of compare50 and that the score has no meaning on its own. Its only value is to give an indication of the level of similarity of one match in comparison to other matches. Simply put, a higher score shows more similarity than a lower score.
+
+match.html
+----------
+
+.. image:: images/match.png
+
+The match page shows both submissions side by side and highlights each region of code that matches. Clicking on any region will align the matching regions.
+
+In the sidebar there are navigational buttons for switching between matches and to jump between matching regions in the submissions. Additionally there is the option to switch views between the different comparisons. In the image above the "structure", "text" and "exact" view are available. Clicking on any will highlight the matching regions identified by those comparisons.
+
+
+Comparison algorithms
+*********************
+
+compare50 currently supports five different comparison methods: "structure", "text", "exact", "nocomments" and "misspellings". The first four all use the `Winnowing algorithm <https://theory.stanford.edu/~aiken/publications/papers/sigmod03.pdf>`_ to compare code for similarity. This is the same algorithm used by `Moss <https://theory.stanford.edu/~aiken/moss/>`_, another popular software similarity service.
+
+Winnowing is a local fingerprinting algorithm that in short takes fingerprints, short sequences of a document's contents, and counts the number of fingerprints matching other documents. The novelty comes from the guarantee provided by the algorithm to always dismiss matches below a noise threshold, and to be guaranteed to find all matches above another threshold. While simultaneously not exhaustively comparing all possible sequences of each file.
+
+compare50 has the winnowing algorithm operate on tokens created by a language specific lexer. It does so by pulling each code file through a lexer provided by the open source `Pygments <https://pygments.org/>`_ syntax highlighting library. Pygments is well maintained and comes with built-in lexers for over 300 programming and templating languages. It also provides an easy standard route to add additional lexers. The use of a lexer allows Winnowing to take language specific information into account when comparing submissions, while also enabling compare50 to treat different parts of a language differently. For instance, the structure comparison will ignore all comments, and normalize easily changed parts of code such as variable names and types.
+
+"misspellings" then looks for misspellings in the comments of code, by comparing each word versus an English dictionary. This comparison method is designed to look for surprising similarities, gotcha's if you will. It is currently one of its kind, but the intent is to add more small comparison methods like these to aide in quickly finding clues in similar looking submissions.
