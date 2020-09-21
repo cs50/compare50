@@ -230,6 +230,8 @@ How to interpret the score
 
 The table on the left of the index page is sorted in descending order by a score ranging from 1 to 10. It is important to note that this represents a normalized score based on the original score of the comparison algorithm used. That means a score is relative to that specific run of compare50 and that the score has no meaning on its own. Its only value is to give an indication of the level of similarity of one match in comparison to other matches. Simply put, a higher score shows more similarity than a lower score.
 
+The score for the default and most commonly used comparison method *structure* consists of two things. First, the number of unique snippets of code that match in each file. However, it is quite likely that there are some snippets that match between every submission, just on the basis of common structures in code and common solutions to problems. That is then where the second part kicks in, each snippet is weighed on how rare it is in comparison to all other submissions via an information retrieval technique called Term Frequency-Inverse Document Frequency (tf-idf). In short, this weighs in the occurrence of a snippet (the term frequency) to the inverse of the number of times that snippet appears in any other document.   
+
 match.html
 ----------
 
