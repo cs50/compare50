@@ -1,0 +1,27 @@
+{
+  "0": {
+    "id": 0,
+    "isArchive": false,
+    "path": "/foo/1"
+  },
+  "1": {
+    "id": 1,
+    "isArchive": false,
+    "path": "/foo/2"
+  },
+  "7": {
+    "id": 7,
+    "isArchive": false,
+    "path": "/foo/3"
+  },
+  "10": {
+    "id": 10,
+    "isArchive": false,
+    "path": "/foo/4"
+  },
+  "13": {
+    "id": 13,
+    "isArchive": false,
+    "path": "/foo/5"
+  },
+}
