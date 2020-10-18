@@ -18,8 +18,8 @@ TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", 
 
 @attr.s(slots=True)
 class Fragment:
-    content = attr.ib(convert=lambda c: tuple(c.splitlines(True)))
-    spans = attr.ib(default=attr.Factory(tuple), convert=tuple)
+    content = attr.ib(converter=lambda c: tuple(c.splitlines(True)))
+    spans = attr.ib(default=attr.Factory(tuple), converter=tuple)
 
 
 @attr.s(slots=True)
