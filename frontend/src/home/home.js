@@ -105,21 +105,14 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             color: null,
-            graph: API.getGraph(),
+            graph: null,
             highlight: null,
             table_highlighted: null,
             table_selected: null,
             update_graph: false,
-            update_table: true
+            update_table: true,
+            is_data_loaded: false
         };
-
-        // assign groups to nodes
-        let group_map = GraphFxns.get_group_map(this.state.graph.links);
-        this.state.graph.nodes.forEach(d => d.group = group_map[d.id]);
-
-        // set COLOR (function from group => color)
-        let n_groups = Math.max.apply(0, this.state.graph.nodes.map(node => node.group));
-        this.state.color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
     }
 
     drag = () => {
@@ -164,7 +157,31 @@ class HomeView extends React.Component {
         }
     }
 
+    componentDidMount() {
+        API.getGraph().then(graph => {
+            // assign groups to nodes
+            const group_map = GraphFxns.get_group_map(graph.links);
+            graph.nodes.forEach(d => d.group = group_map[d.id]);
+
+            // set COLOR (function from group => color)
+            const n_groups = Math.max.apply(0, graph.nodes.map(node => node.group));
+            const color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
+
+            this.setState({
+                graph: graph,
+                color: color,
+                is_data_loaded: true
+            });
+        });
+    }
+
     render() {
+        if (!this.state.is_data_loaded) {
+            return (
+                <div></div>
+            );
+        }
+
         let sizes = this.state.graph.nodes.length > 50 ? [55, 45] : [60, 40];
 
         return (

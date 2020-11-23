@@ -4,7 +4,7 @@ from ._renderer import STATIC, TEMPLATES
 from .._data import IdStore
 
 
-def render_match(sub_a, sub_b, results):
+def render_match(sub_a, sub_b, results, cluster):
     files_a = files_as_dict(sub_a)
     files_b = files_as_dict(sub_b)
 
@@ -19,7 +19,14 @@ def render_match(sub_a, sub_b, results):
     with open(STATIC / "match.html") as f:
         match_page = f.read()
 
-    rendered_data = template.render(match_page=match_page, FILES_A=files_a, FILES_B=files_b, PASSES=passes)
+    rendered_data = template.render(
+        match_page=match_page, 
+        FILES_A=files_a, 
+        FILES_B=files_b, 
+        PASSES=passes, 
+        SUBMISSIONS=cluster.submissions_as_dict(), 
+        LINKS=cluster.links_as_dict()
+    )
 
     return rendered_data + "\n" + match_page
 

@@ -1,7 +1,3 @@
-import GRAPH_DATA from './mock_data/graph.json'
-
-window.GRAPH_DATA = GRAPH_DATA;
-
 const IN_DEVELOPMENT = process.env.NODE_ENV === "development";
 
 
@@ -43,8 +39,20 @@ class API {
         return new Match(window.SUB_A, window.SUB_B, window.PASSES);
     }
 
-    static getGraph() {
-        return window.GRAPH_DATA;
+    static async getGraph() {
+        // In development use mock data
+        if (IN_DEVELOPMENT) {
+            return await Promise.all([
+                import('./mock_data/home_links.json'),
+                import('./mock_data/home_submissions.json')
+            ])
+            .then(([links, submissions]) => {
+                return new Graph(links.default, submissions.default).inD3Format();
+            });
+        }
+
+        // In production use static data attached to the window by compare50
+        return new Graph(window.LINKS, window.SUBMISSIONS).inD3Format();
     }
 }
 
@@ -66,6 +74,50 @@ class Match {
 
     filesB() {
         return this.subB.files;
+    }
+}
+
+
+class Graph {
+    constructor(links, submissions) {
+        this.links = links;
+        this.submissions = submissions;
+    }
+
+    inD3Format() {
+        const d3Format = {};
+
+        // Create data field
+        const data = {};
+        for (let id in this.submissions) {
+            let sub = this.submissions[id];
+            data[sub.path] = {
+                "is_archive": sub.isArchive
+            }
+        }
+        d3Format["data"] = data;
+
+        // Create links field
+        d3Format["links"] = this.links.map(link => {
+            return {
+                "index": link.index,
+                "source": this.submissions[link.submissionIdA].path,
+                "target": this.submissions[link.submissionIdB].path,
+                "value": link.normalized_score
+            };
+        });
+
+        // Create nodes field
+        const nodes = [];
+        for (let id in this.submissions) {
+            let sub = this.submissions[id];
+            nodes.push({
+                "id": sub.path
+            });
+        }
+        d3Format["nodes"] = nodes;
+
+        return d3Format;
     }
 }
 
