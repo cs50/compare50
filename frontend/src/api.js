@@ -28,10 +28,11 @@ class API {
                 import('./mock_data/sub_b.json'),
                 import('./mock_data/pass_structure.json'),
                 import('./mock_data/pass_text.json'),
-                import('./mock_data/pass_exact.json')
+                import('./mock_data/pass_exact.json'),
+                import('./mock_data/match_metadata.json')
             ])
-            .then(([subA, subB, passStructure, passText, passExact]) => {
-                return new Match(subA, subB, [passStructure, passText, passExact]);
+            .then(([subA, subB, passStructure, passText, passExact, metadata]) => {
+                return new Match(subA, subB, [passStructure, passText, passExact], metadata);
             });
         }
 
@@ -107,9 +108,10 @@ class Graph {
         d3Format["data"] = data;
 
         // Create links field
-        d3Format["links"] = this.links.map(link => {
+        d3Format["links"] = this.links.map((link, i) => {
             return {
-                "index": link.index,
+                "index": i,
+                "link_index": link.index,
                 "source": this.submissions[link.submissionIdA].path,
                 "target": this.submissions[link.submissionIdB].path,
                 "value": link.normalized_score

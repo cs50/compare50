@@ -321,7 +321,7 @@ class D3Graph {
         let WIDTH = get_real_width(el.parentNode, props);
         let HEIGHT = get_real_height(el.parentNode, props);
 
-        if (props.slider) {
+        if (props.slider && this.SLIDER) {
             this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
 
             this.SLIDER_EL
@@ -332,7 +332,9 @@ class D3Graph {
                 .call(this.SLIDER);
         }
 
-        this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
+        if (this.SVG) {
+            this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
+        }
 
         this.jiggle();
     }

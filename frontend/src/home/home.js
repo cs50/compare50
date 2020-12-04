@@ -24,7 +24,7 @@ class MatchTableRow extends React.Component {
     }
 
     goTo = () => {
-        window.location = "/match_" + this.props.link.index + ".html";
+        window.location.href = "match_" + this.props.link.link_index + ".html";
     }
 
     render() {
@@ -49,18 +49,18 @@ class MatchTableRow extends React.Component {
         }
 
         return (
-        <tr
-            style={tr_style}
-            key={this.props.link.index}
-            onClick={this.goTo}
-            onMouseEnter={this.callbacks.mouseenter}
-            onMouseLeave={this.props.callbacks.mouseleave}
-        >
-            <td>{this.props.link.index + 1}</td>
-            <td style={source_style} data-tip={this.props.link.source.id}>{this.props.link.source.id}</td>
-            <td style={target_style} data-tip={this.props.link.target.id}>{this.props.link.target.id}</td>
-            <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
-        </tr>
+            <tr
+                style={tr_style}
+                key={this.props.link.index}
+                onClick={this.goTo}
+                onMouseEnter={this.callbacks.mouseenter}
+                onMouseLeave={this.props.callbacks.mouseleave}
+            >
+                <td>{this.props.link.index + 1}</td>
+                <td style={source_style} data-tip={this.props.link.source.id}>{this.props.link.source.id}</td>
+                <td style={target_style} data-tip={this.props.link.target.id}>{this.props.link.target.id}</td>
+                <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
+            </tr>
         );
     }
 }
@@ -81,7 +81,18 @@ class MatchTable extends React.Component {
         let data = this.props.data;
         let node_groups = {};
         data.nodes.forEach(n => {node_groups[n.id] = n.group});
-        let rows = data.links.map(link => <MatchTableRow link={link} key={link.index} color={this.props.color(node_groups[link.source.id])} callbacks={this.callbacks} nodeGroup={node_groups[link.source.id]} highlight={this.props.highlight} selected={this.props.selected} />)
+
+        let rows = data.links.map(link => 
+            <MatchTableRow 
+                link={link} 
+                key={link.index} 
+                color={this.props.color(node_groups[link.source.id])} 
+                callbacks={this.callbacks} 
+                nodeGroup={node_groups[link.source.id]} 
+                highlight={this.props.highlight} 
+                selected={this.props.selected}
+            />
+        )
 
         return (
             <table>

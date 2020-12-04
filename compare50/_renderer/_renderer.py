@@ -39,7 +39,7 @@ class Cluster:
             score = results[0].score.score
 
             links.append({
-                "index": i,
+                "index": i + 1,
                 "submissionIdA": sub_a.id,
                 "submissionIdB": sub_b.id,
                 "score": score,

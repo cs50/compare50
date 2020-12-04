@@ -1,27 +1,27 @@
 [
   {
-    "index": 0,
+    "index": 1,
     "normalized_score": 10,
     "score": 79.56082757485429,
     "submissionIdA": 0,
     "submissionIdB": 1
   },
   {
-    "index": 1,
+    "index": 2,
     "normalized_score": 9.928622348910807,
     "score": 78.99294107575375,
     "submissionIdA": 1,
     "submissionIdB": 7
   },
   {
-    "index": 2,
+    "index": 3,
     "normalized_score": 9.920332439658733,
     "score": 78.9269858716922,
     "submissionIdA": 10,
     "submissionIdB": 13
   },
   {
-    "index": 3,
+    "index": 4,
     "normalized_score": 9.917990279924322,
     "score": 78.90835145501399,
     "submissionIdA": 7,
