@@ -3,13 +3,17 @@ import React from 'react';
 
 function Logo(props) {
     return (
-        <div style={{
-            "fontWeight":"bold",
-            "width":"100%",
-            "height":props.height,
-            "lineHeight":props.height,
-            "textAlign":"center"
-        }}>
+        <div 
+            onClick={() => window.location.href = "home.html"}
+            style={{
+                "fontWeight": "bold",
+                "width": "100%",
+                "height": props.height,
+                "lineHeight": props.height,
+                "textAlign": "center",
+                "cursor": "pointer"
+            }}
+        >
             compare50
         </div>
     )

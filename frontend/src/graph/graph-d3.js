@@ -329,7 +329,7 @@ class D3Graph {
         const height = get_real_height(el.parentNode, props);
 
         // if width and height didn't change, do nothing
-        if (this.width == width && this.height == height) {
+        if (this.width === width && this.height === height) {
             return;
         }
 
