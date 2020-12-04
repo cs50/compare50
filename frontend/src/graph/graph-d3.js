@@ -82,7 +82,7 @@ function get_real_height(elem, props) {
     }
 
     // calculate height of provided (likely, parent) element
-    return Math.max(elem.offsetHeight - (props.slider ? SLIDER_HEIGHT : 0) - 3, MIN_HEIGHT);
+    return Math.max(elem.offsetHeight - (props.slider ? SLIDER_HEIGHT : 0) - 4, MIN_HEIGHT);
 }
 
 
@@ -100,6 +100,10 @@ class D3Graph {
         this.SIMULATION = null;
 
         this.INITIALIZED = false;
+
+        // width & height of graph in pixels
+        this.width = 0;
+        this.height = 0;
 
         // When there are exactly two nodes in the graph, d3 sets all kinds of things to
         // NaN for an unknown reason
@@ -162,7 +166,7 @@ class D3Graph {
         if (props.slider) {
             let slider_start = null;
             if (this.HORRIBLE_TWO_NODE_HACK) {
-                // Since the hack adds an edge with weight -1, filter it out
+                // Because the hack adds an edge with weight -1, filter it out
                 slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
             } else {
                 slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
@@ -189,10 +193,10 @@ class D3Graph {
                 );
 
             this.SLIDER_EL
-            .append("svg")
-                .attr("height", SLIDER_HEIGHT)
-            .append("g")
-                .attr("transform", "translate(30,30)");
+                .append("svg")
+                    .attr("height", SLIDER_HEIGHT)
+                .append("g")
+                    .attr("transform", "translate(30,30)");
         }
 
         this.G_LINK = this.SVG.append("g").attr("class", "links");
@@ -204,10 +208,8 @@ class D3Graph {
         // add data to graph
         this.update(el, props, state);
 
-        let width = get_real_width(el.parentNode, props);
-        let height = get_real_height(el.parentNode, props);
-        let choseX = d3.randomUniform(width / 4, 3 * width / 4);
-        let choseY = d3.randomUniform(height / 4, 3 * height / 4);
+        let choseX = d3.randomUniform(this.width / 4, 3 * this.width / 4);
+        let choseY = d3.randomUniform(this.height / 4, 3 * this.height / 4);
         let pos_map = []
         this.NODE_DATA.forEach(d => {
             if (pos_map[d.group] === undefined) {
@@ -318,23 +320,35 @@ class D3Graph {
     }
 
     on_resize(el, props, state) {
-        let WIDTH = get_real_width(el.parentNode, props);
-        let HEIGHT = get_real_height(el.parentNode, props);
+        // if SVG hasn't loaded yet, do nothing
+        if (!this.SVG) {
+            return;
+        }
 
-        if (props.slider && this.SLIDER) {
-            this.SLIDER.width(Math.floor(0.8 * WIDTH) - 60);
+        const width = get_real_width(el.parentNode, props);
+        const height = get_real_height(el.parentNode, props);
+
+        // if width and height didn't change, do nothing
+        if (this.width == width && this.height == height) {
+            return;
+        }
+
+        this.width = width;
+        this.height = height;
+
+        // resize slider iff it's loaded
+        if (props.slider) {
+            this.SLIDER.width(Math.floor(0.8 * this.width) - 60);
 
             this.SLIDER_EL
-            .style("width", WIDTH + "px")
+            .style("width", this.width + "px")
             .select("svg")
-                .attr("width", Math.floor(0.8 * WIDTH))
+                .attr("width", Math.floor(0.8 * this.width))
                 .select("g")
                 .call(this.SLIDER);
         }
 
-        if (this.SVG) {
-            this.SVG.attr("width", WIDTH).attr("height", HEIGHT);
-        }
+        this.SVG.attr("width", this.width).attr("height", this.height);
 
         this.jiggle();
     }
