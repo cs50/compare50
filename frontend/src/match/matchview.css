@@ -48,7 +48,11 @@ body {
     border: 3px solid #2196F3;
 }
 
-.btn-group button:hover {
+.btn-group button:disabled {
+    opacity: 0.25;
+}
+
+.btn-group button:hover:not([disabled]) {
     background-color: #ddd; /* Add a background color on hover */
 }
 

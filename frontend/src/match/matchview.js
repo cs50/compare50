@@ -26,7 +26,9 @@ function MatchView() {
                 ...globalState,
                 ...{"passes": match.passes,
                     "currentPass": match.passes[0],
-                    "isDataLoaded": true
+                    "isDataLoaded": true,
+                    "currentMatch": match.index(),
+                    "nMatches": match.numberOfMatches()
                 }
             });
         });
@@ -60,16 +62,16 @@ function MatchView() {
 
     return (
         <div className="row-box" style={{"height":"100vh"}}>
-          <div className="row auto" style={{"width":"9em"}}>
-              <div className="column-box" style={{"borderRight": "1px solid #a7adba"}}>
-                  <div className="row fill">
-                      <SideBar globalState={globalState} setGlobalState={setGlobalState} match={match} spanManager={spanManager} graphData={graphData}/>
-                  </div>
-              </div>
-          </div>
-          <div className="row fill">
-              <SplitView topHeight="2.5em" globalState={globalState} match={match} spanManager={spanManager}/>
-          </div>
+            <div className="row auto" style={{"width":"9em"}}>
+                <div className="column-box" style={{"borderRight": "1px solid #a7adba"}}>
+                    <div className="row fill">
+                        <SideBar globalState={globalState} setGlobalState={setGlobalState} match={match} spanManager={spanManager} graphData={graphData}/>
+                    </div>
+                </div>
+            </div>
+            <div className="row fill">
+                <SplitView topHeight="2.5em" globalState={globalState} match={match} spanManager={spanManager}/>
+            </div>
         </div>
     );
 }

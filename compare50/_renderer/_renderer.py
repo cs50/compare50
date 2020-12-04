@@ -98,9 +98,15 @@ def render(pass_to_results, dest):
     # Render matches
     for i, ((sub_a, sub_b), results) in enumerate(sub_pair_to_results.items()):
         subcluster = cluster.get_subcluster(sub_a)
-        match = render_match(sub_a, sub_b, results, subcluster)
 
-        with open(dest / f"match_{i}.html", "w") as f:
+        metadata = {
+            "index": i + 1,
+            "numberOfMatches": len(sub_pair_to_results)
+        }
+
+        match = render_match(sub_a, sub_b, results, subcluster, metadata)
+
+        with open(dest / f"match_{i + 1}.html", "w") as f:
             f.write(match)
 
     # Render home page

@@ -36,7 +36,7 @@ class API {
         }
 
         // In production use static data attached to the window by compare50
-        return new Match(window.SUB_A, window.SUB_B, window.PASSES);
+        return new Match(window.COMPARE50.SUB_A, window.COMPARE50.SUB_B, window.COMPARE50.PASSES, window.COMPARE50.METADATA);
     }
 
     static async getGraph() {
@@ -52,16 +52,17 @@ class API {
         }
 
         // In production use static data attached to the window by compare50
-        return new Graph(window.LINKS, window.SUBMISSIONS).inD3Format();
+        return new Graph(window.COMPARE50.LINKS, window.COMPARE50.SUBMISSIONS).inD3Format();
     }
 }
 
 
 class Match {
-    constructor(subA, subB, passes) {
+    constructor(subA, subB, passes, metadata) {
         this.subA = subA;
         this.subB = subB;
         this.passes = passes;
+        this.metadata = metadata;
     }
 
     getPass(pass) {
@@ -74,6 +75,14 @@ class Match {
 
     filesB() {
         return this.subB.files;
+    }
+
+    index() {
+        return this.metadata.index;
+    }
+
+    numberOfMatches() {
+        return this.metadata.numberOfMatches;
     }
 }
 

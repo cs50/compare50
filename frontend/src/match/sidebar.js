@@ -96,10 +96,24 @@ function MatchNavigation(props) {
             </div>
             <div className="btn-group horizontal" data-tip="Go to the previous and next match" data-for="sidebar-tooltip">
                 <span className="btn">
-                    <button type="button" style={{"width":"50%"}}>{"<<"}</button>
+                    <button 
+                        type="button" 
+                        style={{"width":"50%"}}
+                        onClick={() => window.location.href = "match_" + (props.current - 1) + ".html"}
+                        disabled={props.current === 1}
+                    >
+                        {"<<"}
+                    </button>
                 </span>
                 <span className="btn">
-                    <button type="button" style={{"width":"50%"}}>{">>"}</button>
+                    <button 
+                        type="button" 
+                        style={{"width":"50%"}}
+                        onClick={() => window.location.href = "match_" + (props.current + 1) + ".html"}
+                        disabled={props.current === props.n}
+                    >
+                        {">>"}
+                    </button>
                 </span>
             </div>
         </div>
