@@ -30,27 +30,37 @@ class D3Graph {
         // NaN for an unknown reason
         // This bool exists to mark all the places in the code where we implement the hack to fix this issue.
         this.HORRIBLE_TWO_NODE_HACK = true;
+
+        this.props = {};
+        this.state = {};
+        this.domElement = null;
+        this.sliderDomElement = null;
     }
 
     create(el, slider_el, props, state) {
         if (props.color !== null) this.COLOR = props.color;
 
-        this._init_data(props, state);
-        this.SLIDER_EL = d3.select(slider_el);
+        this.props = props;
+        this.state = state;
+        this.domElement = el;
+        this.sliderDomElement = slider_el;
+
+        this._init_data();
+        this.SLIDER_EL = d3.select(this.sliderDomElement);
 
         // Most problems with the split.js layout can be resolved by waiting a bit
         setTimeout(() => {
-            this._init_graph(el, props, state);
+            this._init_graph();
             this.INITIALIZED = true;
-            if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0, el, props, state);
+            if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
             this._jiggle();
-            this.on_resize(el, props, state);
+            this.on_resize();
 
             props.callbacks.loaded();
         }, 66);
     }
 
-    update(el, props, state) {
+    update(props, state) {
         if (!this.INITIALIZED) return false;
 
         let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
@@ -77,15 +87,15 @@ class D3Graph {
             .attr("rx", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
             .attr("ry", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
             .call(d3.drag()
-              .on("start", (event) => {this._dragstarted(event, el, props, state)})
+              .on("start", (event) => {this._dragstarted(event)})
               .on("drag", this._dragged)
-              .on("end", (event) => {this._dragended(event, el, props, state)}))
-            .on("click", (event) => {this._on_click_node(event, el, props, state)})
+              .on("end", (event) => {this._dragended(event)}))
+            .on("click", (event) => {this._on_click_node(event)})
             .on("mouseover", (event) => {
-                this._on_mouseover_node(event, el, props, state)
+                this._on_mouseover_node(event)
             })
             .on("mouseout", (event) => {
-                this._on_mouseout_node(event, el, props, state)
+                this._on_mouseout_node(event)
             })
             .append("title")
               .text(d => d.id);
@@ -134,7 +144,7 @@ class D3Graph {
         // don't swap simulation.nodes and simulation.force
         this.SIMULATION
             .nodes(this.NODE_DATA)
-            .on("tick", () => this._ticked(all_links, all_nodes, el, props));
+            .on("tick", () => this._ticked(all_links, all_nodes));
 
         // scale the distance (inverse of similarity) to 10 to 50
         let min_score = Math.min.apply(null, state.graph.links.map(link => link.value));
@@ -146,18 +156,18 @@ class D3Graph {
             .distance(d => 50 - (d.value - min_score) / delta_score * 40);
     }
 
-    destroy(el) {
-        d3.select(el).remove();
+    destroy() {
+        d3.select(this.domElement).remove();
     }
 
-    on_resize(el, props) {
+    on_resize() {
         // if SVG hasn't loaded yet, do nothing
         if (!this.SVG) {
             return;
         }
 
-        const width = get_real_width(el.parentNode, props);
-        const height = get_real_height(el.parentNode, props);
+        const width = get_real_width(this.domElement.parentNode, this.props);
+        const height = get_real_height(this.domElement.parentNode, this.props);
 
         // if width and height didn't change, do nothing
         if (this.width === width && this.height === height) {
@@ -168,7 +178,7 @@ class D3Graph {
         this.height = height;
 
         // resize slider iff it's loaded
-        if (props.slider) {
+        if (this.props.slider) {
             this.SLIDER.width(Math.floor(0.8 * this.width) - 60);
 
             this.SLIDER_EL
@@ -185,24 +195,24 @@ class D3Graph {
     }
 
     // Initialize the data
-    _init_data(props, state) {
+    _init_data() {
         if (this.HORRIBLE_TWO_NODE_HACK) {
             /// When there are exactly two nodes, add an additional one with an id of "" and an edge with value -1
-            if (state.graph.nodes.length === 2) {
-                state.graph.nodes.push({id: ""});
-                state.graph.links.push({source: state.graph.nodes[0], target: "", value: -1});
-                state.graph.data[""] = {is_archive: false};
+            if (this.state.graph.nodes.length === 2) {
+                this.state.graph.nodes.push({id: ""});
+                this.state.graph.links.push({source: this.state.graph.nodes[0], target: "", value: -1});
+                this.state.graph.data[""] = {is_archive: false};
             }
         }
 
-        this.NODE_DATA = state.graph.nodes;
-        this.LINK_DATA = state.graph.links;
+        this.NODE_DATA = this.state.graph.nodes;
+        this.LINK_DATA = this.state.graph.links;
 
         // simulation
         this.SIMULATION = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id))
             .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
-            .force("collision", d3.forceCollide().radius(d => props.radius * 2));
+            .force("collision", d3.forceCollide().radius(d => this.props.radius * 2));
 
         this.SIMULATION
             .nodes(this.NODE_DATA);
@@ -211,31 +221,31 @@ class D3Graph {
             .links(this.LINK_DATA);
 
         // assign groups to nodes
-        let group_map = get_group_map(state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
-        state.graph.nodes.forEach(d => d.group = group_map[d.id]);
+        let group_map = get_group_map(this.state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
+        this.state.graph.nodes.forEach(d => d.group = group_map[d.id]);
 
         if (this.COLOR === null) {
             // set COLOR (function from group => color)
-            let n_groups = Math.max.apply(0, state.graph.nodes.map(node => node.group));
+            let n_groups = Math.max.apply(0, this.state.graph.nodes.map(node => node.group));
             this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
         }
     }
 
     // Initialize the graph visualization
-    _init_graph(el, props, state) {
-        this.SVG = d3.select(el);
+    _init_graph() {
+        this.SVG = d3.select(this.domElement);
 
         // If svg is clicked, unselect node
         this.SVG.on("click", () => {
-            state.graph.nodes.forEach(node =>
+            this.state.graph.nodes.forEach(node =>
                 node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
 
-            props.callbacks.deselect();
-            this.update(el, props, state);
+            this.props.callbacks.deselect();
+            this.update(this.props, this.state);
         });
 
         // Slider
-        if (props.slider) {
+        if (this.props.slider) {
             let slider_start = null;
             if (this.HORRIBLE_TWO_NODE_HACK) {
                 // Because the hack adds an edge with weight -1, filter it out
@@ -256,7 +266,7 @@ class D3Graph {
                 .ticks(10 - slider_start + 1)
                 .default(0)
                 .fill("#2196f3")
-                .on("onchange", (event) => { this._cutoff(event, el, props, state) })
+                .on("onchange", (event) => { this._cutoff(event) })
                 .handle(
                     d3
                     .symbol()
@@ -275,10 +285,10 @@ class D3Graph {
         this.G_NODE = this.SVG.append("g").attr("class", "nodes");
 
         // scale graph and slider
-        this.on_resize(el, props, state);
+        this.on_resize();
 
         // add data to graph
-        this.update(el, props, state);
+        this.update(this.props, this.state);
 
         let choseX = d3.randomUniform(this.width / 4, 3 * this.width / 4);
         let choseY = d3.randomUniform(this.height / 4, 3 * this.height / 4);
@@ -298,12 +308,12 @@ class D3Graph {
         setTimeout(() => this.SIMULATION.force("x", null).force("y", null), 300);
     }
 
-    _cutoff(n, el, props, state) {
-        this.LINK_DATA = state.graph.links.filter(d => (d.value) >= n);
+    _cutoff(n) {
+        this.LINK_DATA = this.state.graph.links.filter(d => (d.value) >= n);
         let node_ids = new Set(this.LINK_DATA.map(d => d.source.id).concat(this.LINK_DATA.map(d => d.target.id)));
-        this.NODE_DATA = state.graph.nodes.filter(d => node_ids.has(d.id));
+        this.NODE_DATA = this.state.graph.nodes.filter(d => node_ids.has(d.id));
 
-        this.update(el, props, state);
+        this.update(this.props, this.state);
 
         this._jiggle(.1);
     }
@@ -313,10 +323,14 @@ class D3Graph {
         setTimeout(() => this.SIMULATION.alphaTarget(0).restart(), duration);
     }
 
-    _ticked(links, nodes, el, props) {
+    _ticked(links, nodes) {
+        let props = this.props;
+        let state = this.state;
+        let parentNode = this.domElement.parentNode;
+
         nodes
-            .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(el.parentNode, props) - props.radius * 3, d.x)); })
-            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(el.parentNode, props) - props.radius * 3, d.y)); });
+            .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(parentNode, props) - props.radius * 3, d.x)); })
+            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(parentNode, props) - props.radius * 3, d.y)); });
 
         links
             .attr("x1", function(d) { return d.source.x + props.radius; })
@@ -325,7 +339,7 @@ class D3Graph {
             .attr("y2", function(d) { return d.target.y + props.radius; });
     }
 
-    _dragstarted(d, el, props, state) {
+    _dragstarted(d) {
         if (!d3.event.active) this.SIMULATION.alphaTarget(0.15).restart();
         d.fx = d.x;
         d.fy = d.y;
@@ -338,7 +352,7 @@ class D3Graph {
         d.fy = d3.event.y;
     }
 
-    _dragended(d, el, props, state) {
+    _dragended(d) {
         if (!d3.event.active) this.SIMULATION.alphaTarget(0);
         d.fx = null;
         d.fy = null;
@@ -346,47 +360,47 @@ class D3Graph {
         let drag_target = this.DRAG_TARGET;
         this.DRAG_TARGET = null;
 
-        this._on_mouseout_node(drag_target, el, props, state);
+        this._on_mouseout_node(drag_target);
     }
 
-    _on_mouseover_node(d, el, props, state) {
+    _on_mouseover_node(d) {
         if (this.DRAG_TARGET !== null) {
           return;
         }
 
-        state.graph.nodes.forEach(node => {
+        this.state.graph.nodes.forEach(node => {
             node.is_group_focused = node.group === d.group;
             node.is_node_focused = node.id === d.id;
         });
 
-        props.callbacks.mouseenter(d);
+        this.props.callbacks.mouseenter(d);
 
-        this.update(el, props, state);
+        this.update(this.props, this.state);
     }
 
-    _on_mouseout_node(d, el, props, state) {
+    _on_mouseout_node(d) {
         if (this.DRAG_TARGET !== null) {
             return;
         }
 
-        state.graph.nodes.forEach(node => {
+        this.state.graph.nodes.forEach(node => {
             node.is_group_focused = node.is_node_focused = false;
         });
 
-        props.callbacks.mouseleave(d);
+        this.props.callbacks.mouseleave(d);
 
-        this.update(el, props, state);
+        this.update(this.props, this.state);
     }
 
-    _on_click_node(d, el, props, state) {
-        state.graph.nodes.forEach(node => {
+    _on_click_node(d) {
+        this.state.graph.nodes.forEach(node => {
             node.is_node_selected = node.is_node_focused = node.id === d.id;
             node.is_group_selected = node.is_group_focused = node.group === d.group;
         });
 
-        this.update(el, props, state);
+        this.update(this.props, this.state);
 
-        props.callbacks.select(d);
+        this.props.callbacks.select(d);
 
         d3.event.stopPropagation();
     }

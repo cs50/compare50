@@ -32,15 +32,10 @@ class Graph extends React.Component {
 
     componentDidUpdate() {
         // Resize the graph
-        this.d3Graph.on_resize(
-            this.graph.current,
-            this.getProps());
+        this.d3Graph.on_resize();
 
         // Update the graph
-        this.d3Graph.update(
-            this.graph.current,
-            this.getProps(),
-            this.getGraphState());
+        this.d3Graph.update(this.getProps(), this.getGraphState());
     }
 
     getGraphState() {
@@ -64,7 +59,7 @@ class Graph extends React.Component {
     }
 
     componentWillUnmount() {
-        this.d3Graph.destroy(this.graph.current);
+        this.d3Graph.destroy();
     }
 
     render() {
