@@ -34,8 +34,7 @@ class Graph extends React.Component {
         // Resize the graph
         this.d3Graph.on_resize(
             this.graph.current,
-            this.getProps(),
-            this.getGraphState());
+            this.getProps());
 
         // Update the graph
         this.d3Graph.update(

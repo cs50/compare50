@@ -319,7 +319,7 @@ class D3Graph {
         d3.event.stopPropagation();
     }
 
-    on_resize(el, props, state) {
+    on_resize(el, props) {
         // if SVG hasn't loaded yet, do nothing
         if (!this.SVG) {
             return;
