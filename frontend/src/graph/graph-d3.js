@@ -9,9 +9,9 @@ const SLIDER_HEIGHT = 100;
 class D3Graph {
     constructor() {
         this.SVG = null;
-        this.SLIDER = null;
         this.G_NODE = null;
         this.G_LINK = null;
+        this.slider = null;
 
         this.NODE_DATA = null;
         this.LINK_DATA = null;
@@ -34,7 +34,6 @@ class D3Graph {
         this.props = {};
         this.state = {};
         this.domElement = null;
-        this.sliderDomElement = null;
     }
 
     create(el, slider_el, props, state) {
@@ -43,15 +42,27 @@ class D3Graph {
         this.props = props;
         this.state = state;
         this.domElement = el;
-        this.sliderDomElement = slider_el;
 
         this._init_data();
-        this.SLIDER_EL = d3.select(this.sliderDomElement);
 
         // Most problems with the split.js layout can be resolved by waiting a bit
         setTimeout(() => {
+            // Create slider
+            if (this.props.slider) {
+                let start = null;
+                if (this.HORRIBLE_TWO_NODE_HACK) {
+                    // Because the hack adds an edge with weight -1, filter it out
+                    start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+                } else {
+                    start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+                }
+
+                this.slider = new D3Slider(slider_el, start, this._cutoff.bind(this));
+            }
+
             this._init_graph();
             this.INITIALIZED = true;
+
             if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
             this._jiggle();
             this.on_resize();
@@ -179,14 +190,7 @@ class D3Graph {
 
         // resize slider iff it's loaded
         if (this.props.slider) {
-            this.SLIDER.width(Math.floor(0.8 * this.width) - 60);
-
-            this.SLIDER_EL
-            .style("width", this.width + "px")
-            .select("svg")
-                .attr("width", Math.floor(0.8 * this.width))
-                .select("g")
-                .call(this.SLIDER);
+            this.slider.resize(width);
         }
 
         this.SVG.attr("width", this.width).attr("height", this.height);
@@ -243,43 +247,6 @@ class D3Graph {
             this.props.callbacks.deselect();
             this.update(this.props, this.state);
         });
-
-        // Slider
-        if (this.props.slider) {
-            let slider_start = null;
-            if (this.HORRIBLE_TWO_NODE_HACK) {
-                // Because the hack adds an edge with weight -1, filter it out
-                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
-            } else {
-                slider_start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
-            }
-
-            this.SLIDER = slider
-                .sliderBottom()
-                .min(slider_start)
-                .max(10)
-                .tickFormat(d => {
-                    let num = d3.format(".1f")(d)
-                    let [whole, fraction] = num.split(".");
-                    return fraction === "0" ? whole : num;
-                })
-                .ticks(10 - slider_start + 1)
-                .default(0)
-                .fill("#2196f3")
-                .on("onchange", (event) => { this._cutoff(event) })
-                .handle(
-                    d3
-                    .symbol()
-                    .type(d3.symbolCircle)
-                    .size(200)()
-                );
-
-            this.SLIDER_EL
-                .append("svg")
-                    .attr("height", SLIDER_HEIGHT)
-                .append("g")
-                    .attr("transform", "translate(30,30)");
-        }
 
         this.G_LINK = this.SVG.append("g").attr("class", "links");
         this.G_NODE = this.SVG.append("g").attr("class", "nodes");
@@ -403,6 +370,51 @@ class D3Graph {
         this.props.callbacks.select(d);
 
         d3.event.stopPropagation();
+    }
+}
+
+
+class D3Slider {
+    constructor(domElement, start, callback) {
+        this.domElement = d3.select(domElement);
+        this.callback = callback;
+
+        this.d3Slider = slider
+            .sliderBottom()
+            .min(start)
+            .max(10)
+            .tickFormat(d => {
+                let num = d3.format(".1f")(d)
+                let [whole, fraction] = num.split(".");
+                return fraction === "0" ? whole : num;
+            })
+            .ticks(10 - start + 1)
+            .default(0)
+            .fill("#2196f3")
+            .on("onchange", this.callback)
+            .handle(
+                d3
+                .symbol()
+                .type(d3.symbolCircle)
+                .size(200)()
+            );
+        
+        this.domElement
+            .append("svg")
+                .attr("height", SLIDER_HEIGHT)
+            .append("g")
+                .attr("transform", "translate(30,30)");
+    }
+
+    resize(width) {
+        this.d3Slider.width(Math.floor(0.8 * width) - 60);
+        
+        this.domElement
+            .style("width", width + "px")
+            .select("svg")
+                .attr("width", Math.floor(0.8 * width))
+                .select("g")
+                .call(this.d3Slider);
     }
 }
 
