@@ -7,7 +7,9 @@ const SLIDER_HEIGHT = 100;
 
 // Graph -- store in an object to maintain state
 class D3Graph {
-    constructor() {
+    constructor(domElement) {
+        this.domElement = domElement;
+
         this.SVG = null;
         this.G_NODE = null;
         this.G_LINK = null;
@@ -33,15 +35,13 @@ class D3Graph {
 
         this.props = {};
         this.state = {};
-        this.domElement = null;
     }
 
-    create(el, slider_el, props, state) {
+    load(props, state) {
         if (props.color !== null) this.COLOR = props.color;
 
         this.props = props;
         this.state = state;
-        this.domElement = el;
 
         this._init_data();
 
@@ -57,7 +57,7 @@ class D3Graph {
                     start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
                 }
 
-                this.slider = new D3Slider(slider_el, start, this._cutoff.bind(this));
+                this.slider.load(start, this._cutoff.bind(this));
             }
 
             this._init_graph();
@@ -165,6 +165,10 @@ class D3Graph {
         this.SIMULATION.force("link")
             .links(this.LINK_DATA)
             .distance(d => 50 - (d.value - min_score) / delta_score * 40);
+    }
+
+    addSlider(sliderDomElement) {
+        this.slider = new D3Slider(sliderDomElement);
     }
 
     destroy() {
@@ -375,8 +379,11 @@ class D3Graph {
 
 
 class D3Slider {
-    constructor(domElement, start, callback) {
+    constructor(domElement) {
         this.domElement = d3.select(domElement);
+    }
+
+    load(start, callback) {
         this.callback = callback;
 
         this.d3Slider = slider

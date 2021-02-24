@@ -22,10 +22,14 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
+        this.d3Graph = new D3Graph.D3Graph(this.graph.current);
+
+        if (this.props.slider) {
+            this.d3Graph.addSlider(this.slider.current);
+        }
+
         // Initialize the graph
-        this.d3Graph.create(
-            this.graph.current,
-            this.slider.current,
+        this.d3Graph.load(
             this.getProps(),
             this.getGraphState());
     }
