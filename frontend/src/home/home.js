@@ -13,10 +13,6 @@ import GraphFxns from '../graph/graph-d3';
 var d3 = require("d3");
 
 class MatchTableRow extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
     callbacks = {
         mouseenter: () => {
             this.props.callbacks.mouseenter({link: this.props.link, group: this.props.nodeGroup});
@@ -66,10 +62,6 @@ class MatchTableRow extends React.Component {
 }
 
 class MatchTable extends React.Component {
-    constructor(props) {
-        super(props);
-    }
-
     callbacks = {
         mouseenter: (evt) => {
             this.props.callbacks.mouseenter(evt)
