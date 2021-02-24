@@ -181,8 +181,8 @@ class D3Graph {
             return;
         }
 
-        const width = get_real_width(this.domElement.parentNode, this.props);
-        const height = get_real_height(this.domElement.parentNode, this.props);
+        const width = this._getWidth();
+        const height = this._getHeight();
 
         // if width and height didn't change, do nothing
         if (this.width === width && this.height === height) {
@@ -200,6 +200,31 @@ class D3Graph {
         this.SVG.attr("width", this.width).attr("height", this.height);
 
         this._jiggle();
+    }
+
+    _getWidth() {
+        const el = this.domElement.parentNode;
+
+        // if we're given a static width, use it
+        if (this.props.width !== undefined) {
+            return Math.max(this.props.width, MIN_WIDTH);
+        }
+    
+        // calculate width of provided (likely, parent) element
+        const style = getComputedStyle(el);
+        return Math.max(el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), MIN_WIDTH);
+    }
+    
+    _getHeight() {
+        const el = this.domElement.parentNode;
+
+        // if we're given a static height, use it
+        if (this.props.height !== undefined) {
+            return Math.max(this.props.height, MIN_HEIGHT);
+        }
+    
+        // calculate height of provided (likely, parent) element
+        return Math.max(el.offsetHeight - (this.slider ? SLIDER_HEIGHT : 0) - 4, MIN_HEIGHT);
     }
 
     // Initialize the data
@@ -296,12 +321,12 @@ class D3Graph {
 
     _ticked(links, nodes) {
         let props = this.props;
-        let state = this.state;
-        let parentNode = this.domElement.parentNode;
+        const width = this._getWidth();
+        const height = this._getHeight();
 
         nodes
-            .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(get_real_width(parentNode, props) - props.radius * 3, d.x)); })
-            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(get_real_height(parentNode, props) - props.radius * 3, d.y)); });
+            .attr("x", function(d) { return d.x = Math.max(props.radius, Math.min(width - props.radius * 3, d.x)); })
+            .attr("y", function(d) { return d.y = Math.max(props.radius, Math.min(height - props.radius * 3, d.y)); });
 
         links
             .attr("x1", function(d) { return d.source.x + props.radius; })
@@ -483,29 +508,6 @@ function get_group_map(links) {
 
     return group_map;
 }
-
-function get_real_width(elem, props) {
-    // if we're given a static width, use it
-    if (props.width !== undefined) {
-        return Math.max(props.width, MIN_WIDTH);
-    }
-
-    // calculate width of provided (likely, parent) element
-    let style = getComputedStyle(elem);
-    return Math.max(elem.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight), MIN_WIDTH);
-}
-
-function get_real_height(elem, props) {
-    // if we're given a static height, use it
-    if (props.height !== undefined) {
-        return Math.max(props.height, MIN_HEIGHT);
-    }
-
-    // calculate height of provided (likely, parent) element
-    return Math.max(elem.offsetHeight - (props.slider ? SLIDER_HEIGHT : 0) - 4, MIN_HEIGHT);
-}
-
-
 
 
 export default {
