@@ -139,16 +139,12 @@ class D3Graph {
             .attr("rx", d => this.graph.data[d.id].is_archive ? this.props.radius * 0.4 : this.props.radius)
             .attr("ry", d => this.graph.data[d.id].is_archive ? this.props.radius * 0.4 : this.props.radius)
             .call(d3.drag()
-              .on("start", (event) => {this._dragstarted(event)})
+              .on("start", this._dragstarted.bind(this))
               .on("drag", this._dragged)
-              .on("end", (event) => {this._dragended(event)}))
-            .on("click", (event) => {this._on_click_node(event)})
-            .on("mouseover", (event) => {
-                this._on_mouseover_node(event)
-            })
-            .on("mouseout", (event) => {
-                this._on_mouseout_node(event)
-            })
+              .on("end", this._dragended.bind(this)))
+            .on("click", this._on_click_node.bind(this))
+            .on("mouseover", this._on_mouseover_node.bind(this))
+            .on("mouseout", this._on_mouseout_node.bind(this))
             .append("title")
               .text(d => d.id);
         
