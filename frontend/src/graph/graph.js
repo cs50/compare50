@@ -55,7 +55,6 @@ class Graph extends React.Component {
             radius: 10,
             width: this.props.width,
             height: this.props.height,
-            slider: this.props.slider,
             color: this.props.color,
             callbacks: this.props.callbacks,
             sliderTip: this.props.sliderTip

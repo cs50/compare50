@@ -66,7 +66,7 @@ class D3Graph {
         // Most problems with the split.js layout can be resolved by waiting a bit
         setTimeout(() => {
             // Create slider
-            if (this.props.slider) {
+            if (this.slider) {
                 let start = null;
                 if (this.HORRIBLE_TWO_NODE_HACK) {
                     // Because the hack adds an edge with weight -1, filter it out
@@ -219,7 +219,7 @@ class D3Graph {
         this.height = height;
 
         // resize slider iff it's loaded
-        if (this.props.slider) {
+        if (this.slider) {
             this.slider.resize(width);
         }
 
