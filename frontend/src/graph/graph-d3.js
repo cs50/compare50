@@ -10,19 +10,32 @@ class D3Graph {
     constructor(domElement) {
         this.domElement = domElement;
 
-        this.SVG = null;
-        this.G_NODE = null;
-        this.G_LINK = null;
+        // SVG and 2 contained g elements for nodes and links respectively
+        this.svg = null;
+        this.gNode = null;
+        this.gLink = null;
+
+        // a D3Slider if added
         this.slider = null;
 
-        this.NODE_DATA = null;
-        this.LINK_DATA = null;
+        // nodes and links in the simulation, as orignally "loaded"
+        this.allNodes = null;
+        this.allLinks = null;
+
+        // just the nodes and links that are currently in view, part of the simulation
+        this.nodesInView = null;
+        this.linksInView = null;
         
         this.COLOR = null;
-        this.DRAG_TARGET = null;
-        this.SIMULATION = null;
+        
+        // the node that is currently being dragged by the user
+        this.dragTarget = null;
+        
+        // the d3 simulation (force-graph)
+        this.simulation = null;
 
-        this.INITIALIZED = false;
+        // flag to check whether `load()` has completed
+        this.hasLoaded = false;
 
         // width & height of graph in pixels
         this.width = 0;
@@ -43,6 +56,11 @@ class D3Graph {
         this.props = props;
         this.state = state;
 
+        // create a shallow copy of the nodes and links, as this simulation can modify the array
+        // specifically this.HORRIBLE_TWO_NODE_HACK adds an additional node
+        this.allNodes = [...state.graph.nodes];
+        this.allLinks = [...state.graph.links];
+
         this._init_data();
 
         // Most problems with the split.js layout can be resolved by waiting a bit
@@ -52,16 +70,16 @@ class D3Graph {
                 let start = null;
                 if (this.HORRIBLE_TWO_NODE_HACK) {
                     // Because the hack adds an edge with weight -1, filter it out
-                    start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value).filter(v => v >= 0)));
+                    start = Math.floor(Math.min(...this.linksInView.map(d => d.value).filter(v => v >= 0)));
                 } else {
-                    start = Math.floor(Math.min(...this.LINK_DATA.map(d => d.value)))
+                    start = Math.floor(Math.min(...this.linksInView.map(d => d.value)))
                 }
 
                 this.slider.load(start, this._cutoff.bind(this));
             }
 
             this._init_graph();
-            this.INITIALIZED = true;
+            this.hasLoaded = true;
 
             if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
             this._jiggle();
@@ -72,9 +90,11 @@ class D3Graph {
     }
 
     update(props, state) {
-        if (!this.INITIALIZED) return false;
+        if (!this.hasLoaded) return false;
 
-        let links = this.G_LINK.selectAll("line").data(this.LINK_DATA, d => d.index);
+        let links = this.gLink.selectAll("line").data(this.linksInView, d => d.index);
+
+        // Add any new links with a transition
         links.enter().append("line")
             .attr("stroke-width", 2)
             .attr("visibility", "hidden")
@@ -82,11 +102,14 @@ class D3Graph {
             .transition("foo").delay(280).duration(0)
                 .attr("visibility", "");
 
+        // Remove and exiting links
         links.exit().remove();
 
-        let nodes = this.G_NODE.selectAll("rect").data(this.NODE_DATA, d => d.id);
+        // 
+        let nodes = this.gNode.selectAll("rect").data(this.nodesInView, d => d.id);
         let new_nodes = nodes.enter().append("rect");
 
+        // Have existing nodes or new nodes that are newly bound transition into view
         nodes.merge(new_nodes)
             .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
             .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
@@ -94,6 +117,7 @@ class D3Graph {
                 .attr("width", props.radius * 2)
                 .attr("height", props.radius * 2);
 
+        // Bind all necessary callbacks to newly created nodes
         new_nodes
             .attr("rx", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
             .attr("ry", d => state.graph.data[d.id].is_archive ? props.radius * 0.4 : props.radius)
@@ -110,7 +134,8 @@ class D3Graph {
             })
             .append("title")
               .text(d => d.id);
-
+        
+        // Remove any exiting nodes with a transition 
         nodes.exit()
             .transition("nodes")
                 .delay(0)
@@ -127,8 +152,9 @@ class D3Graph {
             selected_nodes = state.highlight.nodes;
         }
 
-        state.graph.nodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+        this.allNodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
 
+        // add strokes and fill depending on the state of the node (in_focus, in_spotlught, is_selected)
         nodes.merge(new_nodes)
             .style("fill", d => {
                 if (d.is_node_in_background) {
@@ -149,21 +175,21 @@ class D3Graph {
             })
             .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d) ? "5px" : "");
 
-        let all_links = this.G_LINK.selectAll("line");
-        let all_nodes = this.G_NODE.selectAll("rect");
+        let all_links = this.gLink.selectAll("line");
+        let all_nodes = this.gNode.selectAll("rect");
 
         // don't swap simulation.nodes and simulation.force
-        this.SIMULATION
-            .nodes(this.NODE_DATA)
+        this.simulation
+            .nodes(this.nodesInView)
             .on("tick", () => this._ticked(all_links, all_nodes));
 
         // scale the distance (inverse of similarity) to 10 to 50
-        let min_score = Math.min.apply(null, state.graph.links.map(link => link.value));
+        let min_score = Math.min.apply(null, this.allLinks.map(link => link.value));
         let max_score = 10;
         let delta_score = max_score - min_score;
 
-        this.SIMULATION.force("link")
-            .links(this.LINK_DATA)
+        this.simulation.force("link")
+            .links(this.linksInView)
             .distance(d => 50 - (d.value - min_score) / delta_score * 40);
     }
 
@@ -177,7 +203,7 @@ class D3Graph {
 
     on_resize() {
         // if SVG hasn't loaded yet, do nothing
-        if (!this.SVG) {
+        if (!this.svg) {
             return;
         }
 
@@ -197,7 +223,7 @@ class D3Graph {
             this.slider.resize(width);
         }
 
-        this.SVG.attr("width", this.width).attr("height", this.height);
+        this.svg.attr("width", this.width).attr("height", this.height);
 
         this._jiggle();
     }
@@ -231,54 +257,55 @@ class D3Graph {
     _init_data() {
         if (this.HORRIBLE_TWO_NODE_HACK) {
             /// When there are exactly two nodes, add an additional one with an id of "" and an edge with value -1
-            if (this.state.graph.nodes.length === 2) {
-                this.state.graph.nodes.push({id: ""});
-                this.state.graph.links.push({source: this.state.graph.nodes[0], target: "", value: -1});
+            if (this.allNodes.length === 2) {
+                this.allNodes.push({id: ""});
+                this.allLinks.push({source: this.allNodes[0], target: "", value: -1});
                 this.state.graph.data[""] = {is_archive: false};
             }
         }
 
-        this.NODE_DATA = this.state.graph.nodes;
-        this.LINK_DATA = this.state.graph.links;
+        // start with all nodes and links in view
+        this.nodesInView = this.allNodes;
+        this.linksInView = this.allLinks;
 
-        // simulation
-        this.SIMULATION = d3.forceSimulation()
+        // start the simulation
+        this.simulation = d3.forceSimulation()
             .force("link", d3.forceLink().id(d => d.id))
             .force("charge", d3.forceManyBody().strength(-200).distanceMax(50).distanceMin(10))
             .force("collision", d3.forceCollide().radius(d => this.props.radius * 2));
 
-        this.SIMULATION
-            .nodes(this.NODE_DATA);
+        this.simulation
+            .nodes(this.nodesInView);
 
-        this.SIMULATION.force("link")
-            .links(this.LINK_DATA);
+        this.simulation.force("link")
+            .links(this.linksInView);
 
         // assign groups to nodes
-        let group_map = get_group_map(this.state.graph.links.map(d => ({source: d.source.id, target: d.target.id})));
-        this.state.graph.nodes.forEach(d => d.group = group_map[d.id]);
+        let group_map = get_group_map(this.allLinks.map(d => ({source: d.source.id, target: d.target.id})));
+        this.allNodes.forEach(d => d.group = group_map[d.id]);
 
         if (this.COLOR === null) {
             // set COLOR (function from group => color)
-            let n_groups = Math.max.apply(0, this.state.graph.nodes.map(node => node.group));
+            let n_groups = Math.max.apply(0, this.allNodes.map(node => node.group));
             this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
         }
     }
 
     // Initialize the graph visualization
     _init_graph() {
-        this.SVG = d3.select(this.domElement);
+        this.svg = d3.select(this.domElement);
 
         // If svg is clicked, unselect node
-        this.SVG.on("click", () => {
-            this.state.graph.nodes.forEach(node =>
+        this.svg.on("click", () => {
+            this.allNodes.forEach(node =>
                 node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
 
             this.props.callbacks.deselect();
             this.update(this.props, this.state);
         });
 
-        this.G_LINK = this.SVG.append("g").attr("class", "links");
-        this.G_NODE = this.SVG.append("g").attr("class", "nodes");
+        this.gLink = this.svg.append("g").attr("class", "links");
+        this.gNode = this.svg.append("g").attr("class", "nodes");
 
         // scale graph and slider
         this.on_resize();
@@ -289,7 +316,7 @@ class D3Graph {
         let choseX = d3.randomUniform(this.width / 4, 3 * this.width / 4);
         let choseY = d3.randomUniform(this.height / 4, 3 * this.height / 4);
         let pos_map = []
-        this.NODE_DATA.forEach(d => {
+        this.nodesInView.forEach(d => {
             if (pos_map[d.group] === undefined) {
                 pos_map[d.group] = {
                     x: choseX(),
@@ -298,16 +325,16 @@ class D3Graph {
             }
         });
 
-        this.SIMULATION.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
+        this.simulation.force("x", d3.forceX(d => pos_map[d.group].x).strength(0.2))
                 .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
-        setTimeout(() => this.SIMULATION.force("x", null).force("y", null), 300);
+        setTimeout(() => this.simulation.force("x", null).force("y", null), 300);
     }
 
     _cutoff(n) {
-        this.LINK_DATA = this.state.graph.links.filter(d => (d.value) >= n);
-        let node_ids = new Set(this.LINK_DATA.map(d => d.source.id).concat(this.LINK_DATA.map(d => d.target.id)));
-        this.NODE_DATA = this.state.graph.nodes.filter(d => node_ids.has(d.id));
+        this.linksInView = this.allLinks.filter(d => (d.value) >= n);
+        let node_ids = new Set(this.linksInView.map(d => d.source.id).concat(this.linksInView.map(d => d.target.id)));
+        this.nodesInView = this.allNodes.filter(d => node_ids.has(d.id));
 
         this.update(this.props, this.state);
 
@@ -315,8 +342,8 @@ class D3Graph {
     }
 
     _jiggle(alpha=0.3, duration=300) {
-        this.SIMULATION.alphaTarget(alpha).restart();
-        setTimeout(() => this.SIMULATION.alphaTarget(0).restart(), duration);
+        this.simulation.alphaTarget(alpha).restart();
+        setTimeout(() => this.simulation.alphaTarget(0).restart(), duration);
     }
 
     _ticked(links, nodes) {
@@ -336,11 +363,11 @@ class D3Graph {
     }
 
     _dragstarted(d) {
-        if (!d3.event.active) this.SIMULATION.alphaTarget(0.15).restart();
+        if (!d3.event.active) this.simulation.alphaTarget(0.15).restart();
         d.fx = d.x;
         d.fy = d.y;
 
-        this.DRAG_TARGET = d;
+        this.dragTarget = d;
     }
 
     _dragged(d) {
@@ -349,22 +376,22 @@ class D3Graph {
     }
 
     _dragended(d) {
-        if (!d3.event.active) this.SIMULATION.alphaTarget(0);
+        if (!d3.event.active) this.simulation.alphaTarget(0);
         d.fx = null;
         d.fy = null;
 
-        let drag_target = this.DRAG_TARGET;
-        this.DRAG_TARGET = null;
+        let dragTarget = this.dragTarget;
+        this.dragTarget = null;
 
-        this._on_mouseout_node(drag_target);
+        this._on_mouseout_node(dragTarget);
     }
 
     _on_mouseover_node(d) {
-        if (this.DRAG_TARGET !== null) {
+        if (this.dragTarget !== null) {
           return;
         }
 
-        this.state.graph.nodes.forEach(node => {
+        this.allNodes.forEach(node => {
             node.is_group_focused = node.group === d.group;
             node.is_node_focused = node.id === d.id;
         });
@@ -375,11 +402,11 @@ class D3Graph {
     }
 
     _on_mouseout_node(d) {
-        if (this.DRAG_TARGET !== null) {
+        if (this.dragTarget !== null) {
             return;
         }
 
-        this.state.graph.nodes.forEach(node => {
+        this.allNodes.forEach(node => {
             node.is_group_focused = node.is_node_focused = false;
         });
 
@@ -389,7 +416,7 @@ class D3Graph {
     }
 
     _on_click_node(d) {
-        this.state.graph.nodes.forEach(node => {
+        this.allNodes.forEach(node => {
             node.is_node_selected = node.is_node_focused = node.id === d.id;
             node.is_group_selected = node.is_group_focused = node.group === d.group;
         });
@@ -405,7 +432,8 @@ class D3Graph {
 
 class D3Slider {
     constructor(domElement) {
-        this.domElement = d3.select(domElement);
+        this.domElement = domElement
+        this.d3Element = d3.select(this.domElement);
     }
 
     load(start, callback) {
@@ -431,7 +459,7 @@ class D3Slider {
                 .size(200)()
             );
         
-        this.domElement
+        this.d3Element
             .append("svg")
                 .attr("height", SLIDER_HEIGHT)
             .append("g")
@@ -441,7 +469,7 @@ class D3Slider {
     resize(width) {
         this.d3Slider.width(Math.floor(0.8 * width) - 60);
         
-        this.domElement
+        this.d3Element
             .style("width", width + "px")
             .select("svg")
                 .attr("width", Math.floor(0.8 * width))
