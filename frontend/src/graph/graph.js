@@ -10,7 +10,7 @@ class Graph extends React.Component {
         this.divRef = React.createRef();
         this.graph = React.createRef();
         this.slider = React.createRef();
-        this.d3Graph = new D3Graph.D3Graph();
+        this.d3Graph = null;
     }
 
     static defaultProps = {
@@ -22,16 +22,20 @@ class Graph extends React.Component {
     }
 
     componentDidMount() {
-        this.d3Graph = new D3Graph.D3Graph(this.graph.current);
+        this.d3Graph = new D3Graph.D3Graph(this.graph.current, {
+            radius: 10,
+            width: this.props.width,
+            height: this.props.height,
+            color: this.props.color,
+            callbacks: this.props.callbacks,
+        });
 
         if (this.props.slider) {
             this.d3Graph.addSlider(this.slider.current);
         }
 
         // Initialize the graph
-        this.d3Graph.load(
-            this.getProps(),
-            this.getGraphState());
+        this.d3Graph.load(this.props.graph);
     }
 
     componentDidUpdate() {
@@ -39,26 +43,9 @@ class Graph extends React.Component {
         this.d3Graph.on_resize();
 
         // Update the graph
-        this.d3Graph.update(this.getProps(), this.getGraphState());
-    }
+        this.d3Graph.update();
 
-    getGraphState() {
-        return {
-            graph: this.props.graph,
-            highlight: this.props.highlight
-        };
-    }
-
-    getProps() {
-        // Important information about displaying the graph
-        return {
-            radius: 10,
-            width: this.props.width,
-            height: this.props.height,
-            color: this.props.color,
-            callbacks: this.props.callbacks,
-            sliderTip: this.props.sliderTip
-        }
+        this.d3Graph.setHighlight(this.props.highlight);
     }
 
     componentWillUnmount() {
