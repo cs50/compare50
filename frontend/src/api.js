@@ -100,16 +100,6 @@ class Graph {
     inD3Format() {
         const d3Format = {};
 
-        // Create data field
-        const data = {};
-        for (let id in this.submissions) {
-            const sub = this.submissions[id];
-            data[sub.path] = {
-                "is_archive": sub.isArchive
-            }
-        }
-        d3Format["data"] = data;
-
         // Create links field
         d3Format["links"] = this.links.map((link, i) => {
             return {
@@ -128,7 +118,8 @@ class Graph {
             nodes.push({
                 "id": sub.path,
                 "group": sub.group,
-                "color": sub.color
+                "color": sub.color,
+                "isArchive": sub.isArchive
             });
         }
         d3Format["nodes"] = nodes;

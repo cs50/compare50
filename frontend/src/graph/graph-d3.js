@@ -133,8 +133,8 @@ class D3Graph {
 
         // Bind all necessary callbacks to newly created nodes
         new_nodes
-            .attr("rx", d => this.graph.data[d.id].is_archive ? this.props.radius * 0.4 : this.props.radius)
-            .attr("ry", d => this.graph.data[d.id].is_archive ? this.props.radius * 0.4 : this.props.radius)
+            .attr("rx", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
+            .attr("ry", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
             .call(d3.drag()
               .on("start", this._dragstarted.bind(this))
               .on("drag", this._dragged)
@@ -275,7 +275,6 @@ class D3Graph {
             if (this.allNodes.length === 2) {
                 this.allNodes.push({id: ""});
                 this.allLinks.push({source: this.allNodes[0], target: "", value: -1});
-                this.graph.data[""] = {is_archive: false};
             }
         }
 
