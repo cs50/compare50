@@ -8,9 +8,6 @@ import '../split.css';
 import API from '../api';
 import Logo from '../logo';
 import Graph from '../graph/graph';
-import GraphFxns from '../graph/graph-d3';
-
-var d3 = require("d3");
 
 class MatchTableRow extends React.Component {
     callbacks = {
@@ -70,17 +67,20 @@ class MatchTable extends React.Component {
     }
 
     render() {
-        let data = this.props.data;
-        let node_groups = {};
-        data.nodes.forEach(n => {node_groups[n.id] = n.group});
+        const graph = this.props.graph;
+        const nodeGroups = {};
+        graph.nodes.forEach(n => {nodeGroups[n.id] = n.group});
 
-        let rows = data.links.map(link => 
+        const nodeColors = {};
+        graph.nodes.forEach(n => {nodeColors[n.id] = n.color});
+
+        let rows = graph.links.map(link => 
             <MatchTableRow 
                 link={link} 
                 key={link.index} 
-                color={this.props.color(node_groups[link.source.id])} 
+                color={nodeColors[link.source.id]} 
                 callbacks={this.callbacks} 
-                nodeGroup={node_groups[link.source.id]} 
+                nodeGroup={nodeGroups[link.source.id]} 
                 highlight={this.props.highlight} 
                 selected={this.props.selected}
             />
@@ -107,7 +107,6 @@ class HomeView extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
-            color: null,
             graph: null,
             highlight: null,
             table_highlighted: null,
@@ -162,17 +161,8 @@ class HomeView extends React.Component {
 
     componentDidMount() {
         API.getGraph().then(graph => {
-            // assign groups to nodes
-            const group_map = GraphFxns.get_group_map(graph.links);
-            graph.nodes.forEach(d => d.group = group_map[d.id]);
-
-            // set COLOR (function from group => color)
-            const n_groups = Math.max.apply(0, graph.nodes.map(node => node.group));
-            const color = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
-
             this.setState({
                 graph: graph,
-                color: color,
                 is_data_loaded: true
             });
         });
@@ -210,8 +200,7 @@ class HomeView extends React.Component {
                     <MatchTable
                         forceUpdate={this.update_table}
                         callbacks={this.table_callbacks}
-                        color={this.state.color}
-                        data={this.state.graph}
+                        graph={this.state.graph}
                         highlight={this.state.table_highlighted}
                         selected={this.state.table_selected} />
                 </div>
@@ -220,7 +209,6 @@ class HomeView extends React.Component {
                         callbacks={this.graph_callbacks}
                         highlight={this.state.highlight}
                         forceUpdate={this.state.update_graph}
-                        color={this.state.color}
                         graph={this.state.graph}
                         sliderTip={true} />
                 </div>

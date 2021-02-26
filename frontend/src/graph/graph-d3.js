@@ -15,7 +15,6 @@ class D3Graph {
             radius: radius of each node in pixels (int)
             width: width of the graph in pixels (int)
             height: height of the graph in pixels (int)
-            color: function mapping a node to a color (node => color)
             callbacks: {
                 deselect: a node is deselected (node => null)
                 loaded: the graph is loaded (event => null)
@@ -42,8 +41,6 @@ class D3Graph {
         // just the nodes and links that are currently in view, part of the simulation
         this.nodesInView = null;
         this.linksInView = null;
-        
-        this.COLOR = this.props.color;
 
         // the node that is currently being dragged by the user
         this.dragTarget = null;
@@ -201,7 +198,7 @@ class D3Graph {
                     return "grey";
                 }
                 if (group_selected === undefined || group_selected === d.group) {
-                    return this.COLOR(d.group)
+                    return d.color;
                 }
                 return "grey";
             })
@@ -209,7 +206,7 @@ class D3Graph {
                 if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selected_nodes.includes(d)) {
                     return "black";
                 }
-                else if (d.is_group_focused) {
+                if (d.is_group_focused) {
                     return d3.select(this).style("fill");
                 }
                 return "none";
@@ -295,16 +292,6 @@ class D3Graph {
 
         this.simulation.force("link")
             .links(this.linksInView);
-
-        // assign groups to nodes
-        let group_map = get_group_map(this.allLinks.map(d => ({source: d.source.id, target: d.target.id})));
-        this.allNodes.forEach(d => d.group = group_map[d.id]);
-
-        if (this.COLOR === null) {
-            // set COLOR (function from group => color)
-            let n_groups = Math.max.apply(0, this.allNodes.map(node => node.group));
-            this.COLOR = d3.scaleSequential().domain([0, n_groups + 1]).interpolator(d3.interpolateRainbow);
-        }
     }
 
     // Initialize the graph visualization
@@ -494,67 +481,7 @@ class D3Slider {
     }
 }
 
-// Helper functions
-function get_group_map(links) {
-    // create a map from node_id to node
-    let group_map = {};
-    links.forEach(d => {
-        group_map[d.source] = null;
-        group_map[d.target] = null;
-    });
-
-    // create a map from node.id to directly connected node.ids
-    let link_map = {};
-    links.forEach(d => {
-        if (d.source in link_map) {
-            link_map[d.source].push(d.target);
-        } else {
-            link_map[d.source] = [d.target];
-        }
-
-        if (d.target in link_map) {
-            link_map[d.target].push(d.source);
-        } else {
-            link_map[d.target] = [d.source];
-        }
-    })
-
-    let group_id = 0;
-    let visited = new Set();
-    let unseen = new Set(Object.keys(group_map));
-
-    // visit all nodes
-    while (unseen.size > 0) {
-        // start with an unseen node
-        let node = unseen.values().next().value;
-        unseen.delete(node);
-
-        // DFS for all reachable nodes, start with all directly reachable
-        let stack = [node];
-        while (stack.length > 0) {
-            // take top node on stack
-            let cur_node = stack.pop();
-
-            // visit it, give it a group
-            visited.add(cur_node);
-            group_map[cur_node] = group_id;
-
-            // add all directly reachable (and unvisited nodes) to stack
-            let directly_reachable = link_map[cur_node].filter(n => unseen.has(n));
-            stack = stack.concat(directly_reachable);
-
-            // remove all directly reachable elements from unseen
-            directly_reachable.forEach(n => unseen.delete(n));
-        }
-
-        group_id++;
-    }
-
-    return group_map;
-}
-
 
 export default {
-    D3Graph: D3Graph,
-    get_group_map: get_group_map
+    D3Graph: D3Graph
 };

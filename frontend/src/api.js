@@ -1,3 +1,5 @@
+var d3 = require("d3");
+
 const IN_DEVELOPMENT = process.env.NODE_ENV === "development";
 
 
@@ -92,6 +94,7 @@ class Graph {
     constructor(links, submissions) {
         this.links = links;
         this.submissions = submissions;
+        this._assignGroups();
     }
 
     inD3Format() {
@@ -100,7 +103,7 @@ class Graph {
         // Create data field
         const data = {};
         for (let id in this.submissions) {
-            let sub = this.submissions[id];
+            const sub = this.submissions[id];
             data[sub.path] = {
                 "is_archive": sub.isArchive
             }
@@ -121,14 +124,99 @@ class Graph {
         // Create nodes field
         const nodes = [];
         for (let id in this.submissions) {
-            let sub = this.submissions[id];
+            const sub = this.submissions[id];
             nodes.push({
-                "id": sub.path
+                "id": sub.path,
+                "group": sub.group,
+                "color": sub.color
             });
         }
         d3Format["nodes"] = nodes;
 
         return d3Format;
+    }
+
+    _assignGroups() {
+        // map each submission id to a group
+        const groupMap = this._getGroupMap();
+
+        // find the number of groups
+        let maxGroup = 0;
+        for (let id in groupMap) {
+            const group = groupMap[id];
+            if (group > maxGroup) {
+                maxGroup = group;
+            }
+        }
+
+        // map each group to a color
+        const getColor = d3.scaleSequential().domain([0, maxGroup + 1]).interpolator(d3.interpolateRainbow);        
+
+        // assign groups and their colors to nodes
+        for (let id in this.submissions) {
+            const sub = this.submissions[id];
+            const group = groupMap[id];
+            sub.group = group;
+            sub.color = getColor(group);
+        }
+    }
+
+    _getGroupMap() {
+        // create a map from node_id to node
+        let groupMap = {};
+        this.links.forEach(d => {
+            groupMap[d.submissionIdA] = null;
+            groupMap[d.submissionIdB] = null;
+        });
+
+        // create a map from node.id to directly connected node.ids
+        let linkMap = {};
+        this.links.forEach(d => {
+            if (d.submissionIdA in linkMap) {
+                linkMap[d.submissionIdA].push(d.submissionIdB);
+            } else {
+                linkMap[d.submissionIdA] = [d.submissionIdB];
+            }
+
+            if (d.submissionIdB in linkMap) {
+                linkMap[d.submissionIdB].push(d.submissionIdA);
+            } else {
+                linkMap[d.submissionIdB] = [d.submissionIdA];
+            }
+        });
+
+        let groupId = 0;
+        let visited = new Set();
+        let unseen = new Set(Object.keys(groupMap).map(id => Number(id)));
+
+        // visit all nodes
+        while (unseen.size > 0) {
+            // start with an unseen node
+            let node = unseen.values().next().value;
+            unseen.delete(node);
+
+            // DFS for all reachable nodes, start with all directly reachable
+            let stack = [node];
+            while (stack.length > 0) {
+                // take top node on stack
+                let curNode = stack.pop();
+
+                // visit it, give it a group
+                visited.add(curNode);
+                groupMap[curNode] = groupId;
+                
+                // add all directly reachable (and unvisited nodes) to stack
+                let directlyReachable = linkMap[curNode].filter(n => unseen.has(n));
+                stack = stack.concat(directlyReachable);
+
+                // remove all directly reachable elements from unseen
+                directlyReachable.forEach(n => unseen.delete(n));
+            }
+
+            groupId++;
+        }
+
+        return groupMap;
     }
 }
 
