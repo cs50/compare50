@@ -3,6 +3,7 @@ import React from 'react';
 import Split from 'react-split';
 import ReactTooltip from "react-tooltip";
 
+import "./table.css";
 import '../index.css';
 import '../split.css';
 import API from '../api';
@@ -21,38 +22,56 @@ class MatchTableRow extends React.Component {
     }
 
     render() {
-        let last_td_style = {
+        const firstTdStyle = {
+            borderLeftColor: this.props.color,
+            borderLeftWidth: "10px",
+            borderLeftStyle: "solid"
+        }
+
+        const lastTdStyle = {
             borderRightColor: this.props.color,
             borderRightWidth: "10px",
             borderRightStyle: "solid"
         };
 
-        let tr_style = {}, source_style = {}, target_style = {};
+        let trStyle = {}, sourceStyle = {}, targetStyle = {};
         if (this.props.highlight !== null) {
-            let hl = this.props.highlight;
-            tr_style.backgroundColor = this.props.selected === null && !hl.clicked && hl.group === this.props.nodeGroup ? "#ececec" : undefined;
-            source_style.backgroundColor = !hl.clicked && hl.id === this.props.link.source.id ? "#ccc" : undefined;
-            target_style.backgroundColor = !hl.clicked && hl.id === this.props.link.target.id ? "#ccc" : undefined;
+            const hl = this.props.highlight;
+            const sourceIsHighlighted = !hl.clicked && hl.id === this.props.link.source.id;
+            const targetIsHighlighted = !hl.clicked && hl.id === this.props.link.target.id
+
+            trStyle.backgroundColor = !hl.clicked && hl.group === this.props.nodeGroup ? "#ececec" : undefined;
+            if (sourceIsHighlighted) {
+                sourceStyle.backgroundColor = "#ffe0b2";
+            }
+            if (targetIsHighlighted) {
+                targetStyle.backgroundColor = "#ffe0b2";
+            }
         }
 
         if (this.props.selected !== null) {
-            let sl = this.props.selected;
-            source_style.fontWeight = sl.id === this.props.link.source.id ? "bold" : undefined;
-            target_style.fontWeight = sl.id === this.props.link.target.id ? "bold" : undefined;
+            const sl = this.props.selected;
+            const targetIsSelected = sl.id === this.props.link.target.id;
+            const sourceIsSelected = sl.id === this.props.link.source.id; 
+
+            sourceStyle.color = sourceIsSelected ? "white" : undefined;
+            sourceStyle.backgroundColor = sourceIsSelected ? "#ffb74d" : sourceStyle.backgroundColor;
+            targetStyle.color = targetIsSelected ? "white" : undefined;
+            targetStyle.backgroundColor = targetIsSelected ? "#ffb74d" : targetStyle.backgroundColor;
         }
 
         return (
             <tr
-                style={tr_style}
+                style={trStyle}
                 key={this.props.link.index}
                 onClick={this.goTo}
                 onMouseEnter={this.callbacks.mouseenter}
                 onMouseLeave={this.props.callbacks.mouseleave}
             >
-                <td>{this.props.link.index + 1}</td>
-                <td style={source_style} data-tip={this.props.link.source.id}>{this.props.link.source.id}</td>
-                <td style={target_style} data-tip={this.props.link.target.id}>{this.props.link.target.id}</td>
-                <td style={last_td_style}>{Math.round(this.props.link.value * 10) / 10}</td>
+                <td style={firstTdStyle}>{this.props.link.index + 1}</td>
+                <td style={sourceStyle} data-tip={this.props.link.source.id}>{this.props.link.source.id}</td>
+                <td style={targetStyle} data-tip={this.props.link.target.id}>{this.props.link.target.id}</td>
+                <td style={lastTdStyle}>{Math.round(this.props.link.value * 10) / 10}</td>
             </tr>
         );
     }
@@ -87,7 +106,7 @@ class MatchTable extends React.Component {
         )
 
         return (
-            <table>
+            <table className="styled-table">
                 <thead>
                     <tr>
                         <th>#</th>
@@ -194,9 +213,11 @@ class HomeView extends React.Component {
                 onDrag={this.drag}
             >
                 <div style={{"height":"100%", "margin":0, "float":"left", "overflow": "auto"}}>
-                    <nav>
+                    <div style={{
+                        "margin-top": "20px"
+                    }}>
                         <Logo />
-                    </nav>
+                    </div>
                     <MatchTable
                         forceUpdate={this.update_table}
                         callbacks={this.table_callbacks}

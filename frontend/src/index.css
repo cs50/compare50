@@ -186,38 +186,6 @@ nav {
     background: #ddd;
 }
 
-table {
-    width: calc(100% - 5px);
-    border-collapse: collapse;
-    font-size: 1rem;
-}
-
-tr {
-    cursor: pointer;
-    overflow: hidden;
-}
-
-tbody tr:hover {
-    background: #eeeeee;
-}
-
-tr td:first-child {
-    font-weight: bold;
-}
-
-th, td {
-    padding: 1rem;
-    text-align: left;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100px;
-}
-
-td {
-    border-top: 1px solid #eeeeee;
-}
-
 /* Tooltip marker */
 .tooltip-marker {
     display: inline-block;

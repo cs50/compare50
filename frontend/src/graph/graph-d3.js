@@ -181,6 +181,8 @@ class D3Graph {
     }
 
     setHighlight(highlight) {
+        if (!this.hasLoaded) return;
+
         let group_selected = undefined;
         let selected_nodes = [];
 
