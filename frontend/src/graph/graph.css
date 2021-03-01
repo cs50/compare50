@@ -2,10 +2,11 @@
     stroke: #aaa;
 }
 
-.nodes circle {
+.nodes rect {
     pointer-events: all;
     /* stroke: none; */
-    stroke-width: 3px;
+    stroke-width: 5px;
+    cursor: pointer;
 }
 
 .d3slider svg {
