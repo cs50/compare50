@@ -92,14 +92,12 @@ function MatchTable(props) {
         }
     }
 
-    const rows = graph.links.map(link => {
+    const rows = graph.links.filter(link => {
         const group = nodeGroups[link.source.id];
         
         // if there is a group selected, hide any matches not in that group
-        if (selected !== null && selected.group !== group) {
-            return;
-        }
-
+        return selected === null || selected.group === group;        
+    }).map(link => {
         const subA = new MatchTableRowSubmission(link.source);
         const subB = new MatchTableRowSubmission(link.target);
 
@@ -114,7 +112,7 @@ function MatchTable(props) {
                 "mouseenter": () => props.callbacks.mouseenter({
                     submissionA: subA.id,
                     submissionB: subB.id,
-                    group: group
+                    group: nodeGroups[link.source.id]
                 }),
                 "mouseleave": props.callbacks.mouseleave
             }}
