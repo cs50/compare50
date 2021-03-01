@@ -2,7 +2,6 @@ import React from 'react';
 import Split from 'react-split';
 import ReactTooltip from "react-tooltip";
 
-
 import '../index.css';
 import '../split.css';
 import API from '../api';
@@ -15,54 +14,55 @@ class HomeView extends React.Component {
         super(props);
         this.state = {
             graph: null,
-            highlight: null,
-            tableHighlighted: null,
-            tableSelected: null,
-            updateGraph: false,
-            updateTable: true,
+            highlighted: null,
+            selected: null,
+            forceUpdateGraph: false,
+            forceUpdateTable: true,
             isDataLoaded: false
         };
     }
 
     drag = () => {
-        this.setState({updateGraph: !this.state.updateGraph});
+        this.setState({forceUpdateGraph: !this.state.forceUpdateGraph});
     }
 
     graphCallbacks = {
-        loaded: (evt) => {
-            this.setState({updateTable: !this.state.updateTable});
+        loaded: () => {
+            this.setState({forceUpdateTable: !this.state.forceUpdateTable});
         },
 
-        mouseenter: (d) => {
-            if (this.state.tableHighlighted === null || !this.state.tableHighlighted.clicked) {
-                this.setState({tableHighlighted: d});
-            }
+        mouseenter: (event) => {
+            const nodeId = event.id;
+            const group = event.group;
+            this.setState({highlighted: {
+                "group": group,
+                "nodes": [nodeId]
+            }});
         },
 
-        mouseleave: (d) => {
-            this.setState({tableHighlighted: null});
+        mouseleave: () => {
+            this.setState({highlighted: null});
         },
 
-        select: (d) => {
-            this.setState({tableSelected: d});
+        select: (selected) => {
+            this.setState({selected: selected});
         },
 
-        deselect: (d) => {
-            this.setState({tableSelected: null});
+        deselect: () => {
+            this.setState({selected: null});
         }
     }
 
     tableCallbacks = {
         mouseenter: (event) => {
-            let highlight = {
+            this.setState({highlighted: {
                 group: event.group,
-                nodes: [event.link.source, event.link.target]
-            };
-            this.setState({highlight: highlight});
+                nodes: [event.submissionA, event.submissionB]
+            }});
         },
 
-        mouseleave: (event) => {
-            this.setState({highlight: null});
+        mouseleave: () => {
+            this.setState({highlighted: null});
         }
     }
 
@@ -107,18 +107,19 @@ class HomeView extends React.Component {
                         <Logo />
                     </div>
                     <MatchTable
-                        forceUpdate={this.updateTable}
+                        forceUpdate={this.forceUpdateTable}
                         callbacks={this.tableCallbacks}
                         graph={this.state.graph}
-                        highlight={this.state.tableHighlighted}
-                        selected={this.state.tableSelected} />
+                        highlighted={this.state.highlighted}
+                        selected={this.state.selected} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
+                        forceUpdate={this.state.forceUpdateGraph}
                         callbacks={this.graphCallbacks}
-                        highlight={this.state.highlight}
-                        forceUpdate={this.state.updateGraph}
                         graph={this.state.graph}
+                        highlighted={this.state.highlighted}
+                        slider={true}
                         sliderTip={true} />
                 </div>
             </Split>

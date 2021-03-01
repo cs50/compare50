@@ -14,127 +14,120 @@ function ArchiveImg() {
 }
 
 
-class MatchTableRow extends React.Component {
-    goTo() {
-        window.location.href = "match_" + this.props.index + ".html";
+function MatchTableRow(props) {
+    const firstTdStyle = {
+        borderLeftColor: props.color,
+        borderLeftWidth: "10px",
+        borderLeftStyle: "solid"
     }
 
-    render() {
-        const firstTdStyle = {
-            borderLeftColor: this.props.color,
-            borderLeftWidth: "10px",
-            borderLeftStyle: "solid"
-        }
+    const lastTdStyle = {
+        borderRightColor: props.color,
+        borderRightWidth: "10px",
+        borderRightStyle: "solid"
+    };
 
-        const lastTdStyle = {
-            borderRightColor: this.props.color,
-            borderRightWidth: "10px",
-            borderRightStyle: "solid"
-        };
+    const aStyle = {};
+    const bStyle = {};
 
-        const aStyle = {};
-        const bStyle = {};
+    const subA = props.subA;
+    const subB = props.subB;
 
-        const subA = this.props.subA;
-        const subB = this.props.subB;
-
-        if (subA.isHighlighted) {
-            aStyle.backgroundColor = "#ffe0b2";
-        }
-        if (subB.isHighlighted) {
-            bStyle.backgroundColor = "#ffe0b2";
-        }
-
-        if (subA.isSelected) {
-            aStyle.color = "white";
-            aStyle.backgroundColor = "#ffb74d";
-        }
-        if (subB.isSelected) {
-            bStyle.color = "white";
-            bStyle.backgroundColor = "#ffb74d";
-        }
-
-        return (
-            <tr
-                key={this.props.index}
-                onClick={this.goTo.bind(this)}
-                onMouseEnter={this.props.callbacks.mouseenter}
-                onMouseLeave={this.props.callbacks.mouseleave}
-            >
-                <td style={firstTdStyle}>{this.props.index + 1}</td>
-                <td style={aStyle} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
-                <td style={bStyle} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
-                <td style={lastTdStyle}>{Math.round(this.props.score * 10) / 10}</td>
-            </tr>
-        );
+    if (subA.isHighlighted) {
+        aStyle.backgroundColor = "#ffe0b2";
     }
+    if (subB.isHighlighted) {
+        bStyle.backgroundColor = "#ffe0b2";
+    }
+
+    if (subA.isSelected) {
+        aStyle.color = "white";
+        aStyle.backgroundColor = "#ffb74d";
+    }
+    if (subB.isSelected) {
+        bStyle.color = "white";
+        bStyle.backgroundColor = "#ffb74d";
+    }
+
+    const score = Math.round(props.score * 10) / 10;
+
+    return (
+        <tr
+            key={props.index}
+            onClick={() => window.location.href = "match_" + props.index + ".html"}
+            onMouseEnter={props.callbacks.mouseenter}
+            onMouseLeave={props.callbacks.mouseleave}
+        >
+            <td style={firstTdStyle}>{props.index + 1}</td>
+            <td style={aStyle} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
+            <td style={bStyle} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
+            <td style={lastTdStyle}>{score}</td>
+        </tr>
+    );
 }
 
-class MatchTable extends React.Component {
-    callbacks = {
-        mouseenter: (evt) => {
-            this.props.callbacks.mouseenter(evt)
-        },
-        mouseleave: this.props.callbacks.mouseleave
-    }
 
-    render() {
-        const graph = this.props.graph;
-        const nodeGroups = {};
-        const nodeColors = {};
-        const nodeArchives = {};
+function MatchTable(props) {
+    const graph = props.graph;
 
-        graph.nodes.forEach(n => {
-            nodeGroups[n.id] = n.group;
-            nodeColors[n.id] = n.color;
-            nodeArchives[n.id] = n.isArchive;
-        });
+    // maps from a node.id to groupIds, colors and whether that node is an Archive
+    const nodeGroups = {};
+    const nodeColors = {};
+    const nodeArchives = {};
+    graph.nodes.forEach(n => {
+        nodeGroups[n.id] = n.group;
+        nodeColors[n.id] = n.color;
+        nodeArchives[n.id] = n.isArchive;
+    });
 
-        const selected = this.props.selected;
-        const highlight = this.props.highlight;
+    const selected = props.selected;
+    const highlighted = props.highlighted;
 
-        class MatchTableRowSubmission {
-            constructor(node) {
-                this.id = node.id;
-                this.isArchive = nodeArchives[node.id];
-                this.isSelected = selected !== null && selected.id === node.id;
-                this.isHighlighted = highlight !== null && highlight.clicked && highlight.id === node.id;
-            }
+    class MatchTableRowSubmission {
+        constructor(node) {
+            this.id = node.id;
+            this.isArchive = nodeArchives[node.id];
+            this.isSelected = selected !== null && selected.id === node.id;
+            this.isHighlighted = highlighted !== null && highlighted.nodes.length === 1 && highlighted.nodes.includes(node.id); // highlighted.clicked
         }
-
-        let rows = graph.links.map(link => {
-            const subA = new MatchTableRowSubmission(link.source);
-            const subB = new MatchTableRowSubmission(link.target);
-
-            return <MatchTableRow 
-                key={link.index}
-                subA={subA}
-                subB={subB}
-                index={link.index}
-                score={link.value}
-                color={nodeColors[link.source.id]} 
-                callbacks={{
-                    "mouseenter": () => this.callbacks.mouseenter({link: link, group: nodeGroups[link.source.id]}),
-                    "mouseleave": this.callbacks.mouseleave
-                }}
-            />
-        });
-
-        return (
-            <table className="styled-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th colSpan="2">Submissions</th>
-                        <th colSpan="2">Score <span data-tip="On a scale of 1-10, how similar the files are." className="tooltip-marker">?</span></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows}
-                </tbody>
-            </table>
-        );
     }
+
+    const rows = graph.links.map(link => {
+        const subA = new MatchTableRowSubmission(link.source);
+        const subB = new MatchTableRowSubmission(link.target);
+
+        return <MatchTableRow 
+            key={link.index}
+            subA={subA}
+            subB={subB}
+            index={link.index}
+            score={link.value}
+            color={nodeColors[subA.id]} 
+            callbacks={{
+                "mouseenter": () => props.callbacks.mouseenter({
+                    submissionA: subA.id,
+                    submissionB: subB.id,
+                    group: nodeGroups[subA.id]
+                }),
+                "mouseleave": props.callbacks.mouseleave
+            }}
+        />
+    });
+
+    return (
+        <table className="styled-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th colSpan="2">Submissions</th>
+                    <th colSpan="2">Score <span data-tip="On a scale of 1-10, how similar the files are." className="tooltip-marker">?</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    );
 }
 
 export default MatchTable;

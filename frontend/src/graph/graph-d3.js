@@ -95,7 +95,7 @@ class D3Graph {
             this.hasLoaded = true;
 
             if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
-            this.setHighlight();
+            this.setHighlighted();
             this._jiggle();
             this.on_resize();
 
@@ -180,18 +180,18 @@ class D3Graph {
         d3.select(this.domElement).remove();
     }
 
-    setHighlight(highlight) {
+    setHighlighted(highlighted) {
         if (!this.hasLoaded) return;
 
-        let group_selected = undefined;
-        let selected_nodes = [];
+        let selectedGroup = null;
+        let selectedNodes = [];
 
-        if (highlight !== null && highlight !== undefined) {
-            group_selected = highlight.group;
-            selected_nodes = highlight.nodes;
+        if (highlighted !== null && highlighted !== undefined) {
+            selectedGroup = highlighted.group;
+            selectedNodes = highlighted.nodes;
         }
 
-        this.allNodes.forEach(node => group_selected = node.is_group_selected ? node.group : group_selected);
+        this.allNodes.forEach(node => selectedGroup = node.is_group_selected ? node.group : selectedGroup);
 
         // add strokes and fill depending on the state of the node (in_focus, in_spotlught, is_selected)
         this.svg.selectAll("rect")
@@ -199,13 +199,13 @@ class D3Graph {
                 if (d.is_node_in_background) {
                     return "grey";
                 }
-                if (group_selected === undefined || group_selected === d.group) {
+                if (selectedGroup === null || selectedGroup === d.group) {
                     return d.color;
                 }
                 return "grey";
             })
             .attr("stroke", function(d) {
-                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selected_nodes.includes(d)) {
+                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selectedNodes.includes(d.id)) {
                     return "black";
                 }
                 if (d.is_group_focused) {
@@ -213,7 +213,8 @@ class D3Graph {
                 }
                 return "none";
             })
-            .attr("stroke-width", d => d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selected_nodes.includes(d) ? "5px" : "");
+            .attr("stroke-width", d => 
+                d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selectedNodes.includes(d.id) ? "5px" : "");
     }
 
     on_resize() {

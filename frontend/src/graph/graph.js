@@ -8,21 +8,13 @@ class Graph extends React.Component {
     constructor(props) {
         super(props);
         this.divRef = React.createRef();
-        this.graph = React.createRef();
-        this.slider = React.createRef();
+        this.graphRef = React.createRef();
+        this.sliderRef = React.createRef();
         this.d3Graph = null;
     }
 
-    static defaultProps = {
-        // mouseenter, mouseleave, select callbacks take in a node; the others take in nothing
-        callbacks: {loaded: () => {}, mouseenter: (node) => {}, mouseleave: (node) => {}, select: (node) => {}, deselect: () => {}},
-        color: null,
-        slider: true,
-        sliderTip: true
-    }
-
     componentDidMount() {
-        this.d3Graph = new D3Graph.D3Graph(this.graph.current, {
+        this.d3Graph = new D3Graph.D3Graph(this.graphRef.current, {
             radius: 10,
             width: this.props.width,
             height: this.props.height,
@@ -31,7 +23,7 @@ class Graph extends React.Component {
         });
 
         if (this.props.slider) {
-            this.d3Graph.addSlider(this.slider.current);
+            this.d3Graph.addSlider(this.sliderRef.current);
         }
 
         // Initialize the graph
@@ -45,7 +37,7 @@ class Graph extends React.Component {
         // Update the graph
         this.d3Graph.update();
 
-        this.d3Graph.setHighlight(this.props.highlight);
+        this.d3Graph.setHighlighted(this.props.highlighted);
     }
 
     componentWillUnmount() {
@@ -55,8 +47,8 @@ class Graph extends React.Component {
     render() {
         return (
             <div ref={this.divRef} style={{"width": "100%", "height":"100%"}}>
-                <svg className="d3graph" ref={this.graph}></svg>
-                <div className="d3slider" ref={this.slider}>
+                <svg className="d3graph" ref={this.graphRef}></svg>
+                <div className="d3slider" ref={this.sliderRef}>
                     {this.props.sliderTip &&
                     <small
                         className="tooltip-marker"
