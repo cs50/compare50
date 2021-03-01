@@ -54,7 +54,7 @@ function MatchTableRow(props) {
     return (
         <tr
             key={props.index}
-            onClick={() => window.location.href = "match_" + props.index + ".html"}
+            onClick={() => window.location.href = "match_" + (props.index + 1) + ".html"}
             onMouseEnter={props.callbacks.mouseenter}
             onMouseLeave={props.callbacks.mouseleave}
         >
