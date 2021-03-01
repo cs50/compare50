@@ -15,14 +15,8 @@ function ArchiveImg() {
 
 
 class MatchTableRow extends React.Component {
-    callbacks = {
-        mouseenter: () => {
-            this.props.callbacks.mouseenter({link: this.props.link, group: this.props.nodeGroup});
-        }
-    }
-
-    goTo = () => {
-        window.location.href = "match_" + this.props.link.link_index + ".html";
+    goTo() {
+        window.location.href = "match_" + this.props.index + ".html";
     }
 
     render() {
@@ -38,44 +32,39 @@ class MatchTableRow extends React.Component {
             borderRightStyle: "solid"
         };
 
-        let trStyle = {}, sourceStyle = {}, targetStyle = {};
-        if (this.props.highlight !== null) {
-            const hl = this.props.highlight;
-            const sourceIsHighlighted = !hl.clicked && hl.id === this.props.link.source.id;
-            const targetIsHighlighted = !hl.clicked && hl.id === this.props.link.target.id
+        const aStyle = {};
+        const bStyle = {};
 
-            trStyle.backgroundColor = !hl.clicked && hl.group === this.props.nodeGroup ? "#ececec" : undefined;
-            if (sourceIsHighlighted) {
-                sourceStyle.backgroundColor = "#ffe0b2";
-            }
-            if (targetIsHighlighted) {
-                targetStyle.backgroundColor = "#ffe0b2";
-            }
+        const subA = this.props.subA;
+        const subB = this.props.subB;
+
+        if (subA.isHighlighted) {
+            aStyle.backgroundColor = "#ffe0b2";
+        }
+        if (subB.isHighlighted) {
+            bStyle.backgroundColor = "#ffe0b2";
         }
 
-        if (this.props.selected !== null) {
-            const sl = this.props.selected;
-            const targetIsSelected = sl.id === this.props.link.target.id;
-            const sourceIsSelected = sl.id === this.props.link.source.id; 
-
-            sourceStyle.color = sourceIsSelected ? "white" : undefined;
-            sourceStyle.backgroundColor = sourceIsSelected ? "#ffb74d" : sourceStyle.backgroundColor;
-            targetStyle.color = targetIsSelected ? "white" : undefined;
-            targetStyle.backgroundColor = targetIsSelected ? "#ffb74d" : targetStyle.backgroundColor;
+        if (subA.isSelected) {
+            aStyle.color = "white";
+            aStyle.backgroundColor = "#ffb74d";
+        }
+        if (subB.isSelected) {
+            bStyle.color = "white";
+            bStyle.backgroundColor = "#ffb74d";
         }
 
         return (
             <tr
-                style={trStyle}
-                key={this.props.link.index}
-                onClick={this.goTo}
-                onMouseEnter={this.callbacks.mouseenter}
+                key={this.props.index}
+                onClick={this.goTo.bind(this)}
+                onMouseEnter={this.props.callbacks.mouseenter}
                 onMouseLeave={this.props.callbacks.mouseleave}
             >
-                <td style={firstTdStyle}>{this.props.link.index + 1}</td>
-                <td style={sourceStyle} data-tip={this.props.link.source.id}>{this.props.link.source.id}{this.props.sourceIsArchive && <ArchiveImg/>}</td>
-                <td style={targetStyle} data-tip={this.props.link.target.id}>{this.props.link.target.id}{this.props.targetIsArchive && <ArchiveImg/>}</td>
-                <td style={lastTdStyle}>{Math.round(this.props.link.value * 10) / 10}</td>
+                <td style={firstTdStyle}>{this.props.index + 1}</td>
+                <td style={aStyle} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
+                <td style={bStyle} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
+                <td style={lastTdStyle}>{Math.round(this.props.score * 10) / 10}</td>
             </tr>
         );
     }
@@ -101,19 +90,35 @@ class MatchTable extends React.Component {
             nodeArchives[n.id] = n.isArchive;
         });
 
-        let rows = graph.links.map(link => 
-            <MatchTableRow 
-                link={link}
+        const selected = this.props.selected;
+        const highlight = this.props.highlight;
+
+        class MatchTableRowSubmission {
+            constructor(node) {
+                this.id = node.id;
+                this.isArchive = nodeArchives[node.id];
+                this.isSelected = selected !== null && selected.id === node.id;
+                this.isHighlighted = highlight !== null && highlight.clicked && highlight.id === node.id;
+            }
+        }
+
+        let rows = graph.links.map(link => {
+            const subA = new MatchTableRowSubmission(link.source);
+            const subB = new MatchTableRowSubmission(link.target);
+
+            return <MatchTableRow 
                 key={link.index}
-                sourceIsArchive={nodeArchives[link.source.id]}
-                targetIsArchive={nodeArchives[link.target.id]}
+                subA={subA}
+                subB={subB}
+                index={link.index}
+                score={link.value}
                 color={nodeColors[link.source.id]} 
-                callbacks={this.callbacks} 
-                nodeGroup={nodeGroups[link.source.id]} 
-                highlight={this.props.highlight} 
-                selected={this.props.selected}
+                callbacks={{
+                    "mouseenter": () => this.callbacks.mouseenter({link: link, group: nodeGroups[link.source.id]}),
+                    "mouseleave": this.callbacks.mouseleave
+                }}
             />
-        )
+        });
 
         return (
             <table className="styled-table">
