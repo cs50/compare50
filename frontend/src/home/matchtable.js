@@ -88,11 +88,18 @@ function MatchTable(props) {
             this.id = node.id;
             this.isArchive = nodeArchives[node.id];
             this.isSelected = selected !== null && selected.id === node.id;
-            this.isHighlighted = highlighted !== null && highlighted.nodes.length === 1 && highlighted.nodes.includes(node.id); // highlighted.clicked
+            this.isHighlighted = highlighted !== null && highlighted.nodes.length === 1 && highlighted.nodes.includes(node.id);
         }
     }
 
     const rows = graph.links.map(link => {
+        const group = nodeGroups[link.source.id];
+        
+        // if there is a group selected, hide any matches not in that group
+        if (selected !== null && selected.group !== group) {
+            return;
+        }
+
         const subA = new MatchTableRowSubmission(link.source);
         const subB = new MatchTableRowSubmission(link.target);
 
@@ -107,7 +114,7 @@ function MatchTable(props) {
                 "mouseenter": () => props.callbacks.mouseenter({
                     submissionA: subA.id,
                     submissionB: subB.id,
-                    group: nodeGroups[subA.id]
+                    group: group
                 }),
                 "mouseleave": props.callbacks.mouseleave
             }}

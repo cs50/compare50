@@ -44,8 +44,13 @@ class HomeView extends React.Component {
             this.setState({highlighted: null});
         },
 
-        select: (selected) => {
-            this.setState({selected: selected});
+        select: (event) => {
+            const nodeId = event.id;
+            const group = event.group;
+            this.setState({selected: {
+                "id": nodeId,
+                "group": group
+            }});
         },
 
         deselect: () => {
