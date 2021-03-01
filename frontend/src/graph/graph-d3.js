@@ -145,6 +145,9 @@ class D3Graph {
             .append("title")
               .text(d => d.id);
         
+        // style each node
+        this._styleNodes(new_nodes);
+
         // Remove any exiting nodes with a transition 
         nodes.exit()
             .transition("nodes")
@@ -183,38 +186,14 @@ class D3Graph {
     setHighlighted(highlighted) {
         if (!this.hasLoaded) return;
 
-        let selectedGroup = null;
-        let selectedNodes = [];
-
         if (highlighted !== null && highlighted !== undefined) {
-            selectedGroup = highlighted.group;
-            selectedNodes = highlighted.nodes;
+            this.allNodes.forEach(d => d.is_highlighted = highlighted.nodes.includes(d.id));
         }
-
-        this.allNodes.forEach(node => selectedGroup = node.is_group_selected ? node.group : selectedGroup);
-
-        // add strokes and fill depending on the state of the node (in_focus, in_spotlught, is_selected)
-        this.svg.selectAll("rect")
-            .style("fill", d => {
-                if (d.is_node_in_background) {
-                    return "grey";
-                }
-                if (selectedGroup === null || selectedGroup === d.group) {
-                    return d.color;
-                }
-                return "grey";
-            })
-            .attr("stroke", function(d) {
-                if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || selectedNodes.includes(d.id)) {
-                    return "black";
-                }
-                if (d.is_group_focused) {
-                    return d3.select(this).style("fill");
-                }
-                return "none";
-            })
-            .attr("stroke-width", d => 
-                d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || selectedNodes.includes(d.id) ? "5px" : "");
+        else {
+            this.allNodes.forEach(d => d.is_highlighted = false);
+        }
+        
+        this._styleNodes(this.svg.selectAll("rect"));
     }
 
     on_resize() {
@@ -334,6 +313,33 @@ class D3Graph {
                 .force("y", d3.forceY(d => pos_map[d.group].y).strength(0.2));
 
         setTimeout(() => this.simulation.force("x", null).force("y", null), 300);
+    }
+
+    _styleNodes(nodes) {
+        const selectedNode = this.allNodes.find(node => node.is_highlighted);
+        const selectedGroup = selectedNode !== undefined ? selectedNode.group : null;
+
+        // add strokes and fill depending on the state of the node (in_focus, in_spotlught, is_selected)
+        nodes.style("fill", d => {
+            if (d.is_node_in_background) {
+                return "grey";
+            }
+            if (selectedGroup === null || selectedGroup === d.group) {
+                return d.color;
+            }
+            return "grey";
+        })
+        .attr("stroke", function(d) {
+            if (d.is_node_focused || d.is_node_in_splotlight || d.is_node_selected || d.is_highlighted) {
+                return "black";
+            }
+            if (d.is_group_focused) {
+                return d3.select(this).style("fill");
+            }
+            return "none";
+        })
+        .attr("stroke-width", d => 
+            d.is_node_selected || d.is_node_focused || d.is_group_focused || d.is_node_in_splotlight || d.is_highlighted ? "5px" : "");
     }
 
     _cutoff(n) {
@@ -472,12 +478,12 @@ class D3Slider {
     }
 
     resize(width) {
-        this.d3Slider.width(Math.floor(0.8 * width) - 60);
+        this.d3Slider.width(Math.floor(0.9 * width) - 60);
         
         this.d3Element
             .style("width", width + "px")
             .select("svg")
-                .attr("width", Math.floor(0.8 * width))
+                .attr("width", Math.floor(0.9 * width))
                 .select("g")
                 .call(this.d3Slider);
     }
