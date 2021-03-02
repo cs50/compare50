@@ -20,6 +20,7 @@ class Graph extends React.Component {
             height: this.props.height,
             color: this.props.color,
             callbacks: this.props.callbacks,
+            cutoff: this.props.cutoff
         });
 
         if (this.props.slider) {

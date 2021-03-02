@@ -16,6 +16,7 @@ class HomeView extends React.Component {
             graph: null,
             highlighted: null,
             selected: null,
+            cutoff: 0,
             forceUpdateGraph: false,
             forceUpdateTable: true,
             isDataLoaded: false
@@ -55,6 +56,10 @@ class HomeView extends React.Component {
 
         deselect: () => {
             this.setState({selected: null});
+        },
+
+        cutoff: (score) => {
+            this.setState({cutoff: score});
         }
     }
 
@@ -116,7 +121,8 @@ class HomeView extends React.Component {
                         callbacks={this.tableCallbacks}
                         graph={this.state.graph}
                         highlighted={this.state.highlighted}
-                        selected={this.state.selected} />
+                        selected={this.state.selected} 
+                        cutoff={this.state.cutoff} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
@@ -125,7 +131,8 @@ class HomeView extends React.Component {
                         graph={this.state.graph}
                         highlighted={this.state.highlighted}
                         slider={true}
-                        sliderTip={true} />
+                        sliderTip={true} 
+                        cutoff={this.state.cutoff} />
                 </div>
             </Split>
         </>

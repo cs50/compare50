@@ -89,8 +89,8 @@ function MatchTable(props) {
     const rows = graph.links.filter(link => {
         const group = nodeGroups[link.source.id];
         
-        // if there is a group selected, hide any matches not in that group
-        return selected === null || selected.group === group;        
+        // hide anything below the cutoff threshold and anything that isn't selected
+        return link.value >= props.cutoff && (selected === null || selected.group === group);        
     }).map(link => {
         const subA = new MatchTableRowSubmission(link.source);
         const subB = new MatchTableRowSubmission(link.target);

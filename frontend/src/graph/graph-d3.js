@@ -93,8 +93,7 @@ class D3Graph {
 
             this._initGraph();
             this.hasLoaded = true;
-
-            if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
+            this._cutoff(this.props.cutoff);
             this.setHighlighted();
             this._jiggle();
             this.onResize();
@@ -356,6 +355,8 @@ class D3Graph {
 
         this.update();
         this._jiggle(.1);
+
+        this.props.callbacks.cutoff(n);
     }
 
     _jiggle(alpha=0.3, duration=300) {
