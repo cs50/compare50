@@ -27,28 +27,20 @@ function MatchTableRow(props) {
         borderRightStyle: "solid"
     };
 
-    const aStyle = {};
-    const bStyle = {};
+    const styleSub = (sub) => {
+        const style = {};
+        if (sub.isHighlighted) {
+            style.backgroundColor = "#ffe0b2";
+        }
+        if (sub.isSelected) {
+            style.color = "white";
+            style.backgroundColor = "#ffb74d";
+        }
+        return style;
+    }
 
     const subA = props.subA;
     const subB = props.subB;
-
-    if (subA.isHighlighted) {
-        aStyle.backgroundColor = "#ffe0b2";
-    }
-    if (subB.isHighlighted) {
-        bStyle.backgroundColor = "#ffe0b2";
-    }
-
-    if (subA.isSelected) {
-        aStyle.color = "white";
-        aStyle.backgroundColor = "#ffb74d";
-    }
-    if (subB.isSelected) {
-        bStyle.color = "white";
-        bStyle.backgroundColor = "#ffb74d";
-    }
-
     const score = Math.round(props.score * 10) / 10;
 
     return (
@@ -59,8 +51,8 @@ function MatchTableRow(props) {
             onMouseLeave={props.callbacks.mouseleave}
         >
             <td style={firstTdStyle}>{props.index + 1}</td>
-            <td style={aStyle} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
-            <td style={bStyle} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
+            <td style={styleSub(subA)} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
+            <td style={styleSub(subB)} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
             <td style={lastTdStyle}>{score}</td>
         </tr>
     );
