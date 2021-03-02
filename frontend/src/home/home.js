@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState, useRef} from 'react';
 import Split from 'react-split';
 import ReactTooltip from "react-tooltip";
 
@@ -9,96 +9,90 @@ import Graph from '../graph/graph';
 import MatchTable from './matchtable';
 import Logo from '../logo';
 
-class HomeView extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            graph: null,
-            highlighted: null,
-            selected: null,
-            cutoff: 0,
-            forceUpdateGraph: false,
-            forceUpdateTable: true,
-            isDataLoaded: false
-        };
-    }
 
-    drag = () => {
-        this.setState({forceUpdateGraph: !this.state.forceUpdateGraph});
-    }
+function HomeView() {
+    // graph model of all matches, see getGraph() in api.js
+    const graph = useRef(null);
 
-    graphCallbacks = {
-        loaded: () => {
-            this.setState({forceUpdateTable: !this.state.forceUpdateTable});
-        },
+    // if the graph is loaded, set to null if currently loading
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+    // currently selected node and its group {"id":<str>, "group":<int>}
+    const [selected, setSelected] = useState(null);
+
+    // currently highlighted nodes and their group {"group":<int>, "nodes":[<str>]}
+    const [highlighted, setHighlighted] = useState(null);
+
+    // minimum score to be displayed on screen, <int>
+    const [cutoff, setCutoff] = useState(null);
+
+    // force rerender functions for both the table and graph
+    const [_tableUpdateFlag, _setTableUpdateFlag] = useState(false);
+    const forceUpdateTable = () => _setTableUpdateFlag(!_tableUpdateFlag);
+    const [_graphUpdateFlag, _setGraphUpdateFlag] = useState(false);
+    const forceUpdateGraph = () => _setGraphUpdateFlag(!_graphUpdateFlag);
+
+    const graphCallbacks = {
+        loaded: forceUpdateTable,
 
         mouseenter: (event) => {
             const nodeId = event.id;
             const group = event.group;
-            this.setState({highlighted: {
+            setHighlighted({ 
                 "group": group,
                 "nodes": [nodeId]
-            }});
+            });
         },
 
-        mouseleave: () => {
-            this.setState({highlighted: null});
-        },
+        mouseleave: () => setHighlighted(null),
 
         select: (event) => {
             const nodeId = event.id;
             const group = event.group;
-            this.setState({selected: {
+            setSelected({
                 "id": nodeId,
                 "group": group
-            }});
+            });
         },
 
-        deselect: () => {
-            this.setState({selected: null});
-        },
+        deselect: () => setSelected(null),
 
-        cutoff: (score) => {
-            this.setState({cutoff: score});
-        }
+        cutoff: setCutoff
     }
 
-    tableCallbacks = {
+    const tableCallbacks = {
         mouseenter: (event) => {
-            this.setState({highlighted: {
+            setHighlighted({
                 group: event.group,
                 nodes: [event.submissionA, event.submissionB]
-            }});
+            });
         },
 
-        mouseleave: () => {
-            this.setState({highlighted: null});
-        }
+        mouseleave: () => setHighlighted(null)
     }
 
-    componentDidMount() {
-        API.getGraph().then(graph => {
-            this.setState({
-                graph: graph,
-                isDataLoaded: true
-            });
+    // asynchronously pull the graph data
+    if (isDataLoaded === false) {
+        API.getGraph().then(loadedGraph => {
+            graph.current = loadedGraph;
+            setIsDataLoaded(true);
         });
+        // set isDataLoaded in a tertiary state implying "loading"
+        setIsDataLoaded(null);
     }
 
-    render() {
-        if (!this.state.isDataLoaded) {
-            return (
-                <div></div>
-            );
-        }
-
-        let sizes = this.state.graph.nodes.length > 50 ? [55, 45] : [60, 40];
-
+    // render an empty div if graph hasn't loaded yet
+    if (!isDataLoaded) {
         return (
+            <div></div>
+        );
+    }
+
+    return (
         <>
             <ReactTooltip />
             <Split
-                sizes={sizes}
+                sizes={graph.current.nodes.length > 50 ? [55, 45] : [60, 40]}
                 gutterSize={10}
                 gutterAlign="center"
                 snapOffset={30}
@@ -108,7 +102,7 @@ class HomeView extends React.Component {
                 style={{
                     "height":"100%"
                 }}
-                onDrag={this.drag}
+                onDrag={forceUpdateGraph}
             >
                 <div style={{"height":"100%", "margin":0, "float":"left", "overflow": "auto"}}>
                     <div style={{
@@ -117,27 +111,24 @@ class HomeView extends React.Component {
                         <Logo />
                     </div>
                     <MatchTable
-                        forceUpdate={this.forceUpdateTable}
-                        callbacks={this.tableCallbacks}
-                        graph={this.state.graph}
-                        highlighted={this.state.highlighted}
-                        selected={this.state.selected} 
-                        cutoff={this.state.cutoff} />
+                        callbacks={tableCallbacks}
+                        graph={graph.current}
+                        highlighted={highlighted}
+                        selected={selected} 
+                        cutoff={cutoff} />
                 </div>
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
-                        forceUpdate={this.state.forceUpdateGraph}
-                        callbacks={this.graphCallbacks}
-                        graph={this.state.graph}
-                        highlighted={this.state.highlighted}
+                        callbacks={graphCallbacks}
+                        graph={graph.current}
+                        highlighted={highlighted}
+                        cutoff={cutoff}
                         slider={true}
-                        sliderTip={true} 
-                        cutoff={this.state.cutoff} />
+                        sliderTip={true} />
                 </div>
             </Split>
         </>
-        );
-    }
+    );
 }
 
 export default HomeView;
