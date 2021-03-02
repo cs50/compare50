@@ -18,13 +18,15 @@ function MatchTableRow(props) {
     const firstTdStyle = {
         borderLeftColor: props.color,
         borderLeftWidth: "10px",
-        borderLeftStyle: "solid"
+        borderLeftStyle: "solid",
+        width: "5em"
     }
 
     const lastTdStyle = {
         borderRightColor: props.color,
         borderRightWidth: "10px",
-        borderRightStyle: "solid"
+        borderRightStyle: "solid",
+        width: "5em"
     };
 
     const styleSub = (sub) => {
