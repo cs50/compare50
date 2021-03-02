@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React, {useState, useEffect} from 'react';
 import Split from 'react-split';
 import ReactTooltip from "react-tooltip";
 
@@ -12,10 +12,7 @@ import Logo from '../logo';
 
 function HomeView() {
     // graph model of all matches, see getGraph() in api.js
-    const graph = useRef(null);
-
-    // if the graph is loaded, set to null if currently loading
-    const [isDataLoaded, setIsDataLoaded] = useState(false);
+    const [graph, setGraph] = useState(null);
 
     // currently selected node and its group {"id":<str>, "group":<int>}
     const [selected, setSelected] = useState(null);
@@ -71,18 +68,13 @@ function HomeView() {
         mouseleave: () => setHighlighted(null)
     }
 
-    // asynchronously pull the graph data
-    if (isDataLoaded === false) {
-        API.getGraph().then(loadedGraph => {
-            graph.current = loadedGraph;
-            setIsDataLoaded(true);
-        });
-        // set isDataLoaded in a tertiary state implying "loading"
-        setIsDataLoaded(null);
-    }
+    // asynchronously pull the graph data once this component has mounted
+    useEffect(() => {
+        API.getGraph().then(setGraph);
+    }, [])
 
     // render an empty div if graph hasn't loaded yet
-    if (!isDataLoaded) {
+    if (graph === null) {
         return (
             <div></div>
         );
@@ -92,7 +84,7 @@ function HomeView() {
         <>
             <ReactTooltip />
             <Split
-                sizes={graph.current.nodes.length > 50 ? [55, 45] : [60, 40]}
+                sizes={graph.nodes.length > 50 ? [55, 45] : [60, 40]}
                 gutterSize={10}
                 gutterAlign="center"
                 snapOffset={30}
@@ -112,7 +104,7 @@ function HomeView() {
                     </div>
                     <MatchTable
                         callbacks={tableCallbacks}
-                        graph={graph.current}
+                        graph={graph}
                         highlighted={highlighted}
                         selected={selected} 
                         cutoff={cutoff} />
@@ -120,7 +112,7 @@ function HomeView() {
                 <div style={{"height":"100%", "margin":0, "float":"left", "background": "#ffffff"}}>
                     <Graph
                         callbacks={graphCallbacks}
-                        graph={graph.current}
+                        graph={graph}
                         highlighted={highlighted}
                         cutoff={cutoff}
                         slider={true}
