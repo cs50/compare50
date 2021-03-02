@@ -288,7 +288,7 @@ class D3Graph {
         // If svg is clicked, unselect node
         this.svg.on("click", () => {
             this.allNodes.forEach(node =>
-                node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
+                node.is_node_in_spotlight = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
 
             this.props.callbacks.deselect();
         });
@@ -318,15 +318,21 @@ class D3Graph {
     }
 
     _styleNodes(nodes) {
-        const selectedNode = this.allNodes.find(node => node.is_highlighted);
+        const highlightedNode = this.allNodes.find(node => node.is_highlighted);
+        const highlightedGroup = highlightedNode !== undefined ? highlightedNode.group : null;
+        
+        const selectedNode = this.allNodes.find(node => node.is_node_selected);
         const selectedGroup = selectedNode !== undefined ? selectedNode.group : null;
 
         // add strokes and fill depending on the state of the node (in_focus, in_spotlught, is_selected)
         nodes.style("fill", d => {
-            if (d.is_node_in_background) {
-                return "grey";
+            if (highlightedGroup === null && selectedGroup === null) {
+                return d.color;
             }
-            if (selectedGroup === null || selectedGroup === d.group) {
+            if (highlightedGroup !== null && highlightedGroup === d.group) {
+                return d.color;
+            }
+            if (selectedGroup !== null && selectedGroup === d.group) {
                 return d.color;
             }
             return "grey";

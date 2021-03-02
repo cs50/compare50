@@ -119,7 +119,7 @@ function MatchTable(props) {
                 <tr>
                     <th>#</th>
                     <th colSpan="2">Submissions</th>
-                    <th colSpan="2">Score <span data-tip="On a scale of 1-10, how similar the files are." className="tooltip-marker">?</span></th>
+                    <th colSpan="2">Score <span data-tip="Similarity of submissions on a relative scale from 1 to 10." className="tooltip-marker">?</span></th>
                 </tr>
             </thead>
             <tbody>
