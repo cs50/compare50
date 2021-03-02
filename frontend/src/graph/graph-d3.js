@@ -380,26 +380,28 @@ class D3Graph {
     }
 
     _dragstarted(d) {
-        if (!d3.event.active) this.simulation.alphaTarget(0.15).restart();
+        this._dragstarted.startSimulationTimeout = setTimeout(() => this.simulation.alphaTarget(0.15).restart(), 150);
+    
         d.fx = d.x;
         d.fy = d.y;
-
+    
         this.dragTarget = d;
     }
-
+    
     _dragged(d) {
         d.fx = d3.event.x;
         d.fy = d3.event.y;
     }
-
+    
     _dragended(d) {
-        if (!d3.event.active) this.simulation.alphaTarget(0);
+        clearTimeout(this._dragstarted.startSimulationTimeout);
+        this.simulation.alphaTarget(0);
         d.fx = null;
         d.fy = null;
-
+    
         let dragTarget = this.dragTarget;
         this.dragTarget = null;
-
+    
         this._onMouseoutNode(dragTarget);
     }
 
