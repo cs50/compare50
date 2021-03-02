@@ -107,7 +107,7 @@ class HomeView extends React.Component {
             >
                 <div style={{"height":"100%", "margin":0, "float":"left", "overflow": "auto"}}>
                     <div style={{
-                        "margin-top": "20px"
+                        "marginTop": "20px"
                     }}>
                         <Logo />
                     </div>

@@ -28,19 +28,16 @@ class Graph extends React.Component {
 
         // Initialize the graph
         this.d3Graph.load(this.props.graph);
+
+        window.addEventListener("resize", this.d3Graph.onResize.bind(this.d3Graph));
     }
 
     componentDidUpdate() {
-        // Resize the graph
-        this.d3Graph.on_resize();
-
-        // Update the graph
-        this.d3Graph.update();
-
         this.d3Graph.setHighlighted(this.props.highlighted);
     }
 
     componentWillUnmount() {
+        window.removeEventListener("resize", this.d3Graph.onResize.bind(this.d3Graph));
         this.d3Graph.destroy();
     }
 

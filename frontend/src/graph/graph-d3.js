@@ -97,7 +97,7 @@ class D3Graph {
             if (this.HORRIBLE_TWO_NODE_HACK) this._cutoff(0);
             this.setHighlighted();
             this._jiggle();
-            this.on_resize();
+            this.onResize();
 
             this.props.callbacks.loaded();
         }, 66);
@@ -106,7 +106,7 @@ class D3Graph {
     update() {
         if (!this.hasLoaded) return;
 
-        let links = this.gLink.selectAll("line").data(this.linksInView, d => d.index);
+        const links = this.gLink.selectAll("line").data(this.linksInView, d => d.index);
 
         // Add any new links with a transition
         links.enter().append("line")
@@ -120,13 +120,19 @@ class D3Graph {
         links.exit().remove();
 
         // select all nodes on screen, and bind the new data with the id as key
-        let nodes = this.gNode.selectAll("rect").data(this.nodesInView, d => d.id);
-        let new_nodes = nodes.enter().append("rect");
+        const nodes = this.gNode.selectAll("rect").data(this.nodesInView, d => d.id);
+        const new_nodes = nodes.enter().append("rect");
 
         // Have existing nodes or new nodes that are newly bound transition into view
         nodes.merge(new_nodes)
-            .attr("width", function(d) {let width = d3.select(this).attr("width"); return width ? width : 0;})
-            .attr("height", function(d) {let height = d3.select(this).attr("height"); return height ? height : 0;})
+            .attr("width", function() {
+                const width = d3.select(this).attr("width");
+                return width ? width : 0;
+            })
+            .attr("height", function() {
+                const height = d3.select(this).attr("height");
+                return height ? height : 0;
+            })
             .transition("nodes").duration(280)
                 .attr("width", this.props.radius * 2)
                 .attr("height", this.props.radius * 2);
@@ -157,8 +163,8 @@ class D3Graph {
                 .attr("height", 0)
                 .remove();
 
-        let all_links = this.gLink.selectAll("line");
-        let all_nodes = this.gNode.selectAll("rect");
+        const all_links = this.gLink.selectAll("line");
+        const all_nodes = this.gNode.selectAll("rect");
 
         // don't swap simulation.nodes and simulation.force
         this.simulation
@@ -166,9 +172,9 @@ class D3Graph {
             .on("tick", () => this._ticked(all_links, all_nodes));
 
         // scale the distance (inverse of similarity) to 10 to 50
-        let min_score = Math.min.apply(null, this.allLinks.map(link => link.value));
-        let max_score = 10;
-        let delta_score = max_score - min_score;
+        const min_score = Math.min.apply(null, this.allLinks.map(link => link.value));
+        const max_score = 10;
+        const delta_score = max_score - min_score;
 
         this.simulation.force("link")
             .links(this.linksInView)
@@ -196,7 +202,7 @@ class D3Graph {
         this._styleNodes(this.svg.selectAll("rect"));
     }
 
-    on_resize() {
+    onResize() {
         // if SVG hasn't loaded yet, do nothing
         if (!this.svg) {
             return;
@@ -285,17 +291,13 @@ class D3Graph {
                 node.is_node_in_spotlight = node.is_node_in_background = node.is_node_focused = node.is_group_focused = node.is_group_selected = node.is_node_selected = false)
 
             this.props.callbacks.deselect();
-            this.update();
         });
 
         this.gLink = this.svg.append("g").attr("class", "links");
         this.gNode = this.svg.append("g").attr("class", "nodes");
 
         // scale graph and slider
-        this.on_resize();
-
-        // add data to graph
-        this.update();
+        this.onResize();
 
         let choseX = d3.randomUniform(this.width / 4, 3 * this.width / 4);
         let choseY = d3.randomUniform(this.height / 4, 3 * this.height / 4);
@@ -408,8 +410,6 @@ class D3Graph {
         });
 
         this.props.callbacks.mouseenter(d);
-
-        this.update();
     }
 
     _on_mouseout_node(d) {
@@ -422,8 +422,6 @@ class D3Graph {
         });
 
         this.props.callbacks.mouseleave(d);
-
-        this.update();
     }
 
     _on_click_node(d) {
@@ -431,8 +429,6 @@ class D3Graph {
             node.is_node_selected = node.is_node_focused = node.id === d.id;
             node.is_group_selected = node.is_group_focused = node.group === d.group;
         });
-
-        this.update();
 
         this.props.callbacks.select(d);
 
@@ -448,7 +444,7 @@ class D3Slider {
     }
 
     load(start, callback) {
-        this.callback = callback;
+        const roundToOneDecimal = (n) => Math.round(n * 10) / 10;
 
         this.d3Slider = slider
             .sliderBottom()
@@ -462,7 +458,17 @@ class D3Slider {
             .ticks(10 - start + 1)
             .default(0)
             .fill("#2196f3")
-            .on("onchange", this.callback)
+            .on("onchange", (n) => {
+                n = roundToOneDecimal(n);
+
+                // if slider value didnt change more than one decimal point, ignore
+                if (n === currentN) {
+                    return;
+                }
+
+                currentN = n;
+                callback(n);
+            })
             .handle(
                 d3
                 .symbol()
@@ -470,6 +476,9 @@ class D3Slider {
                 .size(200)()
             );
         
+        // Keep track of current slider value
+        let currentN = roundToOneDecimal(this.d3Slider.value());
+
         this.d3Element
             .append("svg")
                 .attr("height", SLIDER_HEIGHT)
