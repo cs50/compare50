@@ -14,16 +14,35 @@ function ArchiveImg() {
 }
 
 
-function MatchTableRow(props) {
+const defaultMatchTableRowCallbacks = {
+    mouseenter: () => null,
+    mouseleave: () => null
+}
+
+const defaultMatchTableRowSubmission = {
+    id: -1,
+    isArchive: false,
+    isHighlighted: false,
+    isSelected: false
+}
+
+function MatchTableRow({
+    index = -1,
+    subA = defaultMatchTableRowSubmission,
+    subB = defaultMatchTableRowSubmission,
+    score = -1,
+    color = "#ffb74d",
+    callbacks = defaultMatchTableRowCallbacks,
+}) {
     const firstTdStyle = {
-        borderLeftColor: props.color,
+        borderLeftColor: color,
         borderLeftWidth: "10px",
         borderLeftStyle: "solid",
         width: "5em"
     }
 
     const lastTdStyle = {
-        borderRightColor: props.color,
+        borderRightColor: color,
         borderRightWidth: "10px",
         borderRightStyle: "solid",
         width: "5em"
@@ -41,21 +60,19 @@ function MatchTableRow(props) {
         return style;
     }
 
-    const subA = props.subA;
-    const subB = props.subB;
-    const score = Math.round(props.score * 10) / 10;
+    const roundedScore = Math.round(score * 10) / 10;
 
     return (
         <tr
-            key={props.index}
-            onClick={() => window.location.href = "match_" + (props.index + 1) + ".html"}
-            onMouseEnter={props.callbacks.mouseenter}
-            onMouseLeave={props.callbacks.mouseleave}
+            key={index}
+            onClick={() => window.location.href = "match_" + (index) + ".html"}
+            onMouseEnter={callbacks.mouseenter}
+            onMouseLeave={callbacks.mouseleave}
         >
-            <td style={firstTdStyle}>{props.index + 1}</td>
+            <td style={firstTdStyle}>{index}</td>
             <td style={styleSub(subA)} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
             <td style={styleSub(subB)} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
-            <td style={lastTdStyle}>{score}</td>
+            <td style={lastTdStyle}>{roundedScore}</td>
         </tr>
     );
 }
@@ -99,7 +116,7 @@ function MatchTable(props) {
             key={link.index}
             subA={subA}
             subB={subB}
-            index={link.index}
+            index={link.index + 1}
             score={link.value}
             color={nodeColors[subA.id]} 
             callbacks={{
