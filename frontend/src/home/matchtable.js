@@ -78,9 +78,32 @@ function MatchTableRow({
 }
 
 
-function MatchTable(props) {
-    const graph = props.graph;
+const defaultMatchTableGraph = {
+    links: [],
+    nodes: []
+}
 
+const defaultMatchTableHighlighted = {
+    nodes: [],
+    group: -1
+}
+
+const defaultMatchTableCallbacks = {
+    mouseenter: ({
+        submissionA = null,
+        submissionB = null,
+        group = -1
+    }) => null,
+    mouseleave: (event) => null
+}
+
+function MatchTable({
+    graph = defaultMatchTableGraph,
+    selected = null,
+    highlighted = defaultMatchTableHighlighted,
+    callbacks = defaultMatchTableCallbacks,
+    cutoff = 0
+}) {
     // maps from a node.id to groupIds, colors and whether that node is an Archive
     const nodeGroups = {};
     const nodeColors = {};
@@ -90,9 +113,6 @@ function MatchTable(props) {
         nodeColors[n.id] = n.color;
         nodeArchives[n.id] = n.isArchive;
     });
-
-    const selected = props.selected;
-    const highlighted = props.highlighted;
 
     class MatchTableRowSubmission {
         constructor(node) {
@@ -107,7 +127,7 @@ function MatchTable(props) {
         const group = nodeGroups[link.source.id];
         
         // hide anything below the cutoff threshold and anything that isn't selected
-        return link.value >= props.cutoff && (selected === null || selected.group === group);        
+        return link.value >= cutoff && (selected === null || selected.group === group);        
     }).map(link => {
         const subA = new MatchTableRowSubmission(link.source);
         const subB = new MatchTableRowSubmission(link.target);
@@ -120,12 +140,12 @@ function MatchTable(props) {
             score={link.value}
             color={nodeColors[subA.id]} 
             callbacks={{
-                "mouseenter": () => props.callbacks.mouseenter({
+                "mouseenter": () => callbacks.mouseenter({
                     submissionA: subA.id,
                     submissionB: subB.id,
                     group: nodeGroups[link.source.id]
                 }),
-                "mouseleave": props.callbacks.mouseleave
+                "mouseleave": callbacks.mouseleave
             }}
         />
     });
