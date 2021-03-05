@@ -232,7 +232,7 @@ class D3Graph {
         const el = this.domElement.parentNode;
 
         // if we're given a static width, use it
-        if (this.props.width !== undefined) {
+        if (this.props.width !== null && this.props.width !== undefined) {
             return Math.max(this.props.width, MIN_WIDTH);
         }
     
@@ -245,7 +245,7 @@ class D3Graph {
         const el = this.domElement.parentNode;
 
         // if we're given a static height, use it
-        if (this.props.height !== undefined) {
+        if (this.props.height !== null && this.props.height !== undefined) {
             return Math.max(this.props.height, MIN_HEIGHT);
         }
     

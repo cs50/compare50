@@ -5,7 +5,41 @@ import './graph.css';
 import D3Graph from './graph-d3';
 
 
-function Graph(props) {
+const defaultCallbacks = {
+    loaded: () => null,
+    mouseenter: ({
+        id = -1,
+        group = -1
+    }) => null,
+    mouseleave: () => null,
+    select: ({
+        id = -1,
+        group = -1
+    }) => null,
+    deselect: () => null,
+    cutoff: (n) => null
+}
+
+const defaultGraph = {
+    links: [],
+    nodes: []
+}
+
+const defaultHighlighted = {
+    group: -1,
+    nodes: []
+}
+
+function Graph({
+    graph = defaultGraph,
+    highlighted = defaultHighlighted,
+    callbacks = defaultCallbacks,
+    width = undefined,
+    height = undefined,
+    cutoff = 0,
+    slider = false,
+    sliderTip = false
+}) {
     const divRef = useRef(null);
     const graphRef = useRef(null);
     const sliderRef = useRef(null);
@@ -15,18 +49,17 @@ function Graph(props) {
     useEffect(() => {
         d3Graph.current = new D3Graph.D3Graph(graphRef.current, {
             radius: 10,
-            width: props.width,
-            height: props.height,
-            color: props.color,
-            callbacks: props.callbacks,
-            cutoff: props.cutoff
+            width: width,
+            height: height,
+            callbacks: callbacks,
+            cutoff: cutoff
         });
 
-        if (props.slider) {
+        if (slider) {
             d3Graph.current.addSlider(sliderRef.current);
         }
 
-        d3Graph.current.load(props.graph);
+        d3Graph.current.load(graph);
 
         const resizeListener = d3Graph.current.onResize.bind(d3Graph.current);
         window.addEventListener("resize", resizeListener);
@@ -42,13 +75,13 @@ function Graph(props) {
     }, []);
 
     // when this component updates, update the highlighted selection in the d3Graph
-    useEffect(() => d3Graph.current.setHighlighted(props.highlighted));
+    useEffect(() => d3Graph.current.setHighlighted(highlighted));
 
     return (
         <div ref={divRef} style={{"width": "100%", "height":"100%"}}>
             <svg className="d3graph" ref={graphRef}></svg>
             <div className="d3slider" ref={sliderRef}>
-                {props.sliderTip &&
+                {sliderTip &&
                 <small
                     className="tooltip-marker"
                     style={{position: "absolute", marginTop: "20px"}}
