@@ -21,6 +21,7 @@ const defaultMatchTableRowCallbacks = {
 
 const defaultMatchTableRowSubmission = {
     id: -1,
+    path: "/",
     isArchive: false,
     isHighlighted: false,
     isSelected: false
@@ -72,8 +73,8 @@ function MatchTableRow({
             onMouseLeave={callbacks.mouseleave}
         >
             <td style={firstTdStyle}>{index}</td>
-            <td style={styleSub(subA)} data-tip={subA.id}>{subA.id}{subA.isArchive && <ArchiveImg/>}</td>
-            <td style={styleSub(subB)} data-tip={subB.id}>{subB.id}{subB.isArchive && <ArchiveImg/>}</td>
+            <td style={styleSub(subA)}>{subA.path}{subA.isArchive && <ArchiveImg/>}</td>
+            <td style={styleSub(subB)}>{subB.path}{subB.isArchive && <ArchiveImg/>}</td>
             <td style={lastTdStyle}>{roundedScore}</td>
         </tr>
     );
@@ -117,6 +118,7 @@ function MatchTable({
     class MatchTableRowSubmission {
         constructor(node) {
             this.id = node.id;
+            this.path = node.path;
             this.isArchive = nodeMap[node.id].isArchive;
             this.isSelected = selected !== null && selected.id === node.id;
             this.isHighlighted = highlighted !== null && highlighted.nodes.length === 1 && highlighted.nodes.includes(node.id);
@@ -133,10 +135,10 @@ function MatchTable({
         const subB = new MatchTableRowSubmission(nodeMap[link.nodeBId]);
 
         return <MatchTableRow 
-            key={link.index}
+            key={link.link_index}
             subA={subA}
             subB={subB}
-            index={link.index + 1}
+            index={link.link_index}
             score={link.value}
             color={nodeMap[subA.id].color} 
             callbacks={{

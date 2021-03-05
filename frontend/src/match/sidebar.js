@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect} from 'react';
+import React, {useState, useRef, useEffect, useMemo} from 'react';
 import ReactTooltip from 'react-tooltip';
 
 import Graph from '../graph/graph';
@@ -10,7 +10,7 @@ import './sidebar.css';
 
 
 function SideBar(props) {
-    let style = {
+    const style = {
         "margin": "auto",
         "marginBottom": ".5em",
         "marginTop": ".5em",
@@ -18,7 +18,7 @@ function SideBar(props) {
     }
 
     const updateGlobalState = newState => props.setGlobalState({...props.globalState, ...newState})
-
+    
     return (
         <React.Fragment>
             <ReactTooltip place="right" type="dark" effect="solid" id="sidebar-tooltip"/>
@@ -61,33 +61,128 @@ function SideBar(props) {
                         match={props.match}
                     />
                 </div>
-                {props.globalState.isDataLoaded &&
-                    <React.Fragment>
-                        <div className="row fill" style={style}>
-                            <Graph 
-                                graph={props.graphData} 
-                                slider={false} 
-                                sliderTip={false}
-                                callbacks={{
-                                    "select": ({id, group}) => {
-                                        const links = props.graphData.links.filter(link => link.nodeAId === id || link.nodeBId === id);
-                                        const maxLink = links.reduce((a, b) => a.value >= b.value ? a : b);
-                                        window.location.href = "match_" + (maxLink.index + 1) + ".html";
-                                    }
-                                }}
-                            />
-                        </div>
-                        <div className="row auto" style={style}>
-                            <span
-                                className="tooltip-marker"
-                                data-tip="This graph shows any known links from the submissions in the match to archives."
-                                data-for="sidebar-tooltip"
-                            >
-                                ?
-                            </span>
-                        </div>
-                    </React.Fragment>
+                {props.globalState.isDataLoaded && 
+                    <SideGraph 
+                        graph={props.graphData}
+                        subAId={props.match.subA.id}
+                        subBId={props.match.subB.id}
+                    />
                 }
+            </div>
+        </React.Fragment>
+    )
+}
+
+
+function SideGraph({
+    graph=null,
+    subAId=-1,
+    subBId=-2
+}) {
+    const style = {
+        "margin": "auto",
+        "marginBottom": ".5em",
+        "marginTop": ".5em",
+        "width": "90%"
+    }
+
+    const nodeA = graph.nodes.find(node => node.id === subAId);
+    const nodeB = graph.nodes.find(node => node.id === subBId);
+
+    // color the nodes of this match orange
+    nodeA.color = "#ffb74d";
+    nodeB.color = "#ffb74d";
+
+    // Compute the distance from every sub to subA and subB using Dijkstra's algorithm
+    const distanceMap = useMemo(() => {
+        const directDistanceMap = {};
+        graph.nodes.forEach(node => directDistanceMap[node.id] = []);
+        graph.links.forEach(({nodeAId, nodeBId, value}) => {
+            directDistanceMap[nodeAId].push([nodeBId, value]);
+            directDistanceMap[nodeBId].push([nodeAId, value]);
+        });
+
+        // map of node to distance for which the shortest distance is known
+        const distanceMap = {};
+
+        // map of node to distance for which the shortest distance is still unknown
+        const potentialDistanceMap = {};
+        potentialDistanceMap[subAId] = 0;
+        potentialDistanceMap[subBId] = 0;
+
+        // while there's any node to explore
+        while (Object.keys(potentialDistanceMap).length > 0) {
+            // grab the node with the shortest unknown distance
+            const [current, currentDistance] = Object.entries(potentialDistanceMap).reduce((a,b) => a[1] <= b[1] ? a : b);
+
+            // mark it as the shortest distance
+            distanceMap[current] = currentDistance;
+
+            // remove node from unknown distances
+            delete potentialDistanceMap[current];
+
+            // for every direct connection
+            directDistanceMap[current].forEach(([other, otherDistance]) => {
+
+                // if shortest distance is already known, ignore
+                if (distanceMap[other] !== undefined) return;
+
+                // update the shortest distance known so far
+                const distance = currentDistance + otherDistance;
+                if (potentialDistanceMap[other] === undefined || distance < potentialDistanceMap[other]) {
+                    potentialDistanceMap[other] = distance;
+                }
+            });
+        }
+        return distanceMap;
+    }, [graph, subAId, subBId]);
+
+    const getLink = (id) => {
+        const links = graph.links.filter(link => link.nodeAId === id || link.nodeBId === id);
+        const minLink = links.reduce((a, b) => {
+            const distanceA = Math.max(distanceMap[a.nodeAId], distanceMap[a.nodeBId]);
+            const distanceB = Math.max(distanceMap[b.nodeAId], distanceMap[b.nodeBId]);
+            return distanceA <= distanceB ? a : b;
+        });
+        return minLink;
+    }
+
+    const [highlighted, setHighlighted] = useState({
+        nodes: [nodeA.id, nodeB.id],
+        group: nodeA.group
+    });
+
+    return (
+        <React.Fragment>
+            <div className="row fill" style={style}>
+                <Graph 
+                    graph={graph} 
+                    slider={false} 
+                    sliderTip={false}
+                    highlighted={highlighted}
+                    callbacks={{
+                        "select": ({id, group}) => {
+                            if (nodeA.id === id || nodeB.id === id) return;
+                            window.location.href = "match_" + (getLink(id).link_index) + ".html";
+                        },
+                        "mouseenter": ({id, group}) => {
+                            const link = getLink(id);
+                            setHighlighted({
+                                nodes: [link.nodeAId, link.nodeBId],
+                                group: group
+                            })
+                        }
+                    }}
+                />
+            </div>
+            <div className="row auto" style={style}>
+                <span
+                    className="tooltip-marker"
+                    data-tip="This graph shows any known links from the submissions in the match to archives."
+                    data-for="sidebar-tooltip"
+                >
+                    ?
+                </span>
             </div>
         </React.Fragment>
     )

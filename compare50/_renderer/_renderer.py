@@ -13,7 +13,7 @@ from ._match_renderer import render_match
 class Cluster:
     def __init__(self, sub_pair_to_results):
         self._sub_pair_to_results = sub_pair_to_results
-        self.links = set(sub_pair_to_results.keys())
+        self.links = [[a, b, index] for index, (a, b) in enumerate(sub_pair_to_results.keys())]
 
         self.submissions = set()
         for sub_a, sub_b in sub_pair_to_results:
@@ -35,11 +35,12 @@ class Cluster:
 
         links = []
 
-        for i, ((sub_a, sub_b), results) in enumerate(self._sub_pair_to_results.items()):
+        for (sub_a, sub_b, index) in self.links:
+            results = self._sub_pair_to_results[(sub_a, sub_b)]
             score = results[0].score.score
 
             links.append({
-                "index": i + 1,
+                "index": index + 1,
                 "submissionIdA": sub_a.id,
                 "submissionIdB": sub_b.id,
                 "score": score,
@@ -54,7 +55,7 @@ class Cluster:
 
         # Build a dict to quickly access links from either end
         links_dict = collections.defaultdict(list)
-        for a, b in self.links:
+        for a, b, index in self.links:
             links_dict[a].append(b)
             links_dict[b].append(a)
 
@@ -78,7 +79,14 @@ class Cluster:
             if link in self._sub_pair_to_results:
                 cluster[link] = self._sub_pair_to_results[link]
         
-        return Cluster(cluster)
+        new_cluster = Cluster(cluster)
+
+        # Use the link index of this cluster
+        for link in new_cluster.links:
+            index = [index for a, b, index in self.links if a == link[0] and b == link[1]][0]
+            link[2] = index
+
+        return new_cluster
 
 
 def render(pass_to_results, dest):

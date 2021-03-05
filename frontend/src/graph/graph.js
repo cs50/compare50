@@ -62,7 +62,7 @@ function Graph({
             d3Graph.current.addSlider(sliderRef.current);
         }
 
-        d3Graph.current.load(graph);
+        d3Graph.current.load(graph, selected, highlighted);
 
         const resizeListener = d3Graph.current.onResize.bind(d3Graph.current);
         window.addEventListener("resize", resizeListener);

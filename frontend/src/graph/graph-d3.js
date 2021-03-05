@@ -63,7 +63,7 @@ class D3Graph {
         this.graph = null;
     }
 
-    load(graph) {
+    load(graph, selected, highlighted) {
         // Can only load once, return
         if (this.hasLoaded) return;
 
@@ -94,7 +94,7 @@ class D3Graph {
             this._initGraph();
             this.hasLoaded = true;
             this._cutoff(this.props.cutoff);
-            this.update();
+            this.update(selected, highlighted);
             this._jiggle();
             this.onResize();
 
@@ -239,7 +239,6 @@ class D3Graph {
         else {
             this.allNodes.forEach(node => node.isHighlighted = highlighted.nodes.includes(node.id));
         }
-        
     }
 
     _setSelected(selected) {
@@ -340,7 +339,7 @@ class D3Graph {
             .on("mouseover", this._onMouseoverNode.bind(this))
             .on("mouseout", this._onMouseoutNode.bind(this))
             .append("title")
-              .text(d => d.id);
+              .text(d => d.path);
         
         // style each node
         this._styleNodes(newNodes);

@@ -105,10 +105,10 @@ class Graph {
             return {
                 "index": i,
                 "link_index": link.index,
-                "nodeAId": this.submissions[link.submissionIdA].path,
-                "nodeBId":  this.submissions[link.submissionIdB].path,
-                "source": this.submissions[link.submissionIdA].path, // needed for D3 force simulation
-                "target": this.submissions[link.submissionIdB].path, // needed for D3 force simulation
+                "nodeAId": this.submissions[link.submissionIdA].id,
+                "nodeBId":  this.submissions[link.submissionIdB].id,
+                "source": this.submissions[link.submissionIdA].id, // needed for D3 force simulation
+                "target": this.submissions[link.submissionIdB].id, // needed for D3 force simulation
                 "value": link.normalized_score
             };
         });
@@ -118,7 +118,8 @@ class Graph {
         for (let id in this.submissions) {
             const sub = this.submissions[id];
             nodes.push({
-                "id": sub.path,
+                "id": sub.id,
+                "path": sub.path,
                 "group": sub.group,
                 "color": sub.color,
                 "isArchive": sub.isArchive
