@@ -104,33 +104,29 @@ function MatchTable({
     callbacks = defaultMatchTableCallbacks,
     cutoff = 0
 }) {
-    // maps from a node.id to groupIds, colors and whether that node is an Archive
-    const nodeGroups = {};
-    const nodeColors = {};
-    const nodeArchives = {};
-    graph.nodes.forEach(n => {
-        nodeGroups[n.id] = n.group;
-        nodeColors[n.id] = n.color;
-        nodeArchives[n.id] = n.isArchive;
-    });
+    // maps from a node.id to a node
+    const nodeMap = {}
+    graph.nodes.forEach(node => {
+        nodeMap[node.id] = node;
+    })
 
     class MatchTableRowSubmission {
         constructor(node) {
             this.id = node.id;
-            this.isArchive = nodeArchives[node.id];
+            this.isArchive = nodeMap[node.id].isArchive;
             this.isSelected = selected !== null && selected.id === node.id;
             this.isHighlighted = highlighted !== null && highlighted.nodes.length === 1 && highlighted.nodes.includes(node.id);
         }
     }
 
     const rows = graph.links.filter(link => {
-        const group = nodeGroups[link.source.id];
+        const group = nodeMap[link.nodeAId].group;
         
         // hide anything below the cutoff threshold and anything that isn't selected
         return link.value >= cutoff && (selected === null || selected.group === group);        
     }).map(link => {
-        const subA = new MatchTableRowSubmission(link.source);
-        const subB = new MatchTableRowSubmission(link.target);
+        const subA = new MatchTableRowSubmission(nodeMap[link.nodeAId]);
+        const subB = new MatchTableRowSubmission(nodeMap[link.nodeBId]);
 
         return <MatchTableRow 
             key={link.index}
@@ -138,12 +134,12 @@ function MatchTable({
             subB={subB}
             index={link.index + 1}
             score={link.value}
-            color={nodeColors[subA.id]} 
+            color={nodeMap[subA.id].color} 
             callbacks={{
                 "mouseenter": () => callbacks.mouseenter({
                     submissionA: subA.id,
                     submissionB: subB.id,
-                    group: nodeGroups[link.source.id]
+                    group: nodeMap[link.nodeAId].group
                 }),
                 "mouseleave": callbacks.mouseleave
             }}

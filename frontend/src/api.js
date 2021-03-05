@@ -105,8 +105,10 @@ class Graph {
             return {
                 "index": i,
                 "link_index": link.index,
-                "source": this.submissions[link.submissionIdA].path,
-                "target": this.submissions[link.submissionIdB].path,
+                "nodeAId": this.submissions[link.submissionIdA].path,
+                "nodeBId":  this.submissions[link.submissionIdB].path,
+                "source": this.submissions[link.submissionIdA].path, // needed for D3 force simulation
+                "target": this.submissions[link.submissionIdB].path, // needed for D3 force simulation
                 "value": link.normalized_score
             };
         });
