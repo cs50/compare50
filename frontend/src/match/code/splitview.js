@@ -101,8 +101,8 @@ function StatusBar(props) {
             "lineHeight":props.height
         }}>
             <div ref={filepathRef} className="row fill" style={{
-                "overflow-y":"hidden",
-                "overflow-x":"auto",
+                "overflowY":"hidden",
+                "overflowX":"auto",
                 "marginRight":"5px",
                 "paddingLeft":".5em"
             }}>

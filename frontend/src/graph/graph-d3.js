@@ -94,7 +94,7 @@ class D3Graph {
             this._initGraph();
             this.hasLoaded = true;
             this._cutoff(this.props.cutoff);
-            this.setHighlighted();
+            this.update();
             this._jiggle();
             this.onResize();
 
@@ -102,82 +102,11 @@ class D3Graph {
         }, 66);
     }
 
-    update() {
+    update(selected, highlighted) {
         if (!this.hasLoaded) return;
-
-        const links = this.gLink.selectAll("line").data(this.linksInView, d => d.index);
-
-        // Add any new links with a transition
-        links.enter().append("line")
-            .attr("stroke-width", 2)
-            .attr("visibility", "hidden")
-            .interrupt("foo")
-            .transition("foo").delay(280).duration(0)
-                .attr("visibility", "");
-
-        // Remove and exiting links
-        links.exit().remove();
-
-        // select all nodes on screen, and bind the new data with the id as key
-        const nodes = this.gNode.selectAll("rect").data(this.nodesInView, d => d.id);
-        const newNodes = nodes.enter().append("rect");
-
-        // Have existing nodes or new nodes that are newly bound transition into view
-        nodes.merge(newNodes)
-            .attr("width", function() {
-                const width = d3.select(this).attr("width");
-                return width ? width : 0;
-            })
-            .attr("height", function() {
-                const height = d3.select(this).attr("height");
-                return height ? height : 0;
-            })
-            .transition("nodes").duration(280)
-                .attr("width", this.props.radius * 2)
-                .attr("height", this.props.radius * 2);
-
-        // Bind all necessary callbacks to newly created nodes
-        newNodes
-            .attr("rx", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
-            .attr("ry", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
-            .call(d3.drag()
-              .on("start", this._dragstarted.bind(this))
-              .on("drag", this._dragged)
-              .on("end", this._dragended.bind(this)))
-            .on("click", this._onClickNode.bind(this))
-            .on("mouseover", this._onMouseoverNode.bind(this))
-            .on("mouseout", this._onMouseoutNode.bind(this))
-            .append("title")
-              .text(d => d.id);
-        
-        // style each node
-        this._styleNodes(newNodes);
-
-        // Remove any exiting nodes with a transition 
-        nodes.exit()
-            .transition("nodes")
-                .delay(0)
-                .duration(100)
-                .attr("width", 0)
-                .attr("height", 0)
-                .remove();
-
-        const allLinks = this.gLink.selectAll("line");
-        const allNodes = this.gNode.selectAll("rect");
-
-        // don't swap simulation.nodes and simulation.force
-        this.simulation
-            .nodes(this.nodesInView)
-            .on("tick", () => this._ticked(allLinks, allNodes));
-
-        // scale the distance (inverse of similarity) to 10 to 50
-        const minScore = Math.min.apply(null, this.allLinks.map(link => link.value));
-        const maxScore = 10;
-        const deltaScore = maxScore - minScore;
-
-        this.simulation.force("link")
-            .links(this.linksInView)
-            .distance(d => 50 - (d.value - minScore) / deltaScore * 40);
+        this._setHighlighted(highlighted);
+        this._setSelected(selected);
+        this._styleNodes(this.svg.selectAll("rect"));
     }
 
     addSlider(sliderDomElement) {
@@ -186,19 +115,6 @@ class D3Graph {
 
     destroy() {
         d3.select(this.domElement).remove();
-    }
-
-    setHighlighted(highlighted) {
-        if (!this.hasLoaded) return;
-
-        if (highlighted !== null && highlighted !== undefined) {
-            this.allNodes.forEach(d => d.isHighlighted = highlighted.nodes.includes(d.id));
-        }
-        else {
-            this.allNodes.forEach(d => d.isHighlighted = false);
-        }
-        
-        this._styleNodes(this.svg.selectAll("rect"));
     }
 
     onResize() {
@@ -316,6 +232,25 @@ class D3Graph {
         setTimeout(() => this.simulation.force("x", null).force("y", null), 300);
     }
 
+    _setHighlighted(highlighted) {
+        if (highlighted === null || highlighted === undefined) {
+            this.allNodes.forEach(node => node.isHighlighted = false);
+        }
+        else {
+            this.allNodes.forEach(node => node.isHighlighted = highlighted.nodes.includes(node.id));
+        }
+        
+    }
+
+    _setSelected(selected) {
+        if (selected === null || selected === undefined) {
+            this.allNodes.forEach(node => node.isSelected = false);
+        }
+        else {
+            this.allNodes.forEach(node => node.isSelected = node.id === selected.id);
+        }
+    }
+
     _styleNodes(nodes) {
         const highlightedNode = this.allNodes.find(node => node.isHighlighted);
         const highlightedGroup = highlightedNode !== undefined ? highlightedNode.group : null;
@@ -353,10 +288,88 @@ class D3Graph {
         const nodeIds = new Set(this.linksInView.map(d => d.source.id).concat(this.linksInView.map(d => d.target.id)));
         this.nodesInView = this.allNodes.filter(d => nodeIds.has(d.id));
 
-        this.update();
+        this._reloadNodes();
         this._jiggle(.1);
 
         this.props.callbacks.cutoff(n);
+    }
+
+    _reloadNodes() {
+        if (!this.hasLoaded) return;
+
+        const links = this.gLink.selectAll("line").data(this.linksInView, d => d.index);
+
+        // Add any new links with a transition
+        links.enter().append("line")
+            .attr("stroke-width", 2)
+            .attr("visibility", "hidden")
+            .interrupt("foo")
+            .transition("foo").delay(280).duration(0)
+                .attr("visibility", "");
+
+        // Remove and exiting links
+        links.exit().remove();
+
+        // select all nodes on screen, and bind the new data with the id as key
+        const nodes = this.gNode.selectAll("rect").data(this.nodesInView, d => d.id);
+        const newNodes = nodes.enter().append("rect");
+
+        // Have existing nodes or new nodes that are newly bound transition into view
+        nodes.merge(newNodes)
+            .attr("width", function() {
+                const width = d3.select(this).attr("width");
+                return width ? width : 0;
+            })
+            .attr("height", function() {
+                const height = d3.select(this).attr("height");
+                return height ? height : 0;
+            })
+            .transition("nodes").duration(280)
+                .attr("width", this.props.radius * 2)
+                .attr("height", this.props.radius * 2);
+
+        // Bind all necessary callbacks to newly created nodes
+        newNodes
+            .attr("rx", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
+            .attr("ry", d => d.isArchive ? this.props.radius * 0.4 : this.props.radius)
+            .call(d3.drag()
+              .on("start", this._dragstarted.bind(this))
+              .on("drag", this._dragged)
+              .on("end", this._dragended.bind(this)))
+            .on("click", this._onClickNode.bind(this))
+            .on("mouseover", this._onMouseoverNode.bind(this))
+            .on("mouseout", this._onMouseoutNode.bind(this))
+            .append("title")
+              .text(d => d.id);
+        
+        // style each node
+        this._styleNodes(newNodes);
+
+        // Remove any exiting nodes with a transition 
+        nodes.exit()
+            .transition("nodes")
+                .delay(0)
+                .duration(100)
+                .attr("width", 0)
+                .attr("height", 0)
+                .remove();
+
+        const allLinks = this.gLink.selectAll("line");
+        const allNodes = this.gNode.selectAll("rect");
+
+        // don't swap simulation.nodes and simulation.force
+        this.simulation
+            .nodes(this.nodesInView)
+            .on("tick", () => this._ticked(allLinks, allNodes));
+
+        // scale the distance (inverse of similarity) to 10 to 50
+        const minScore = Math.min.apply(null, this.allLinks.map(link => link.value));
+        const maxScore = 10;
+        const deltaScore = maxScore - minScore;
+
+        this.simulation.force("link")
+            .links(this.linksInView)
+            .distance(d => 50 - (d.value - minScore) / deltaScore * 40);
     }
 
     _jiggle(alpha=0.3, duration=300) {
@@ -408,12 +421,8 @@ class D3Graph {
 
     _onMouseoverNode(d) {
         if (this.dragTarget !== null) {
-          return;
+            return;
         }
-
-        this.allNodes.forEach(node => {
-            node.isHighlighted = node.id === d.id;
-        });
 
         this.props.callbacks.mouseenter(d);
     }
@@ -427,12 +436,14 @@ class D3Graph {
     }
 
     _onClickNode(d) {
-        this.allNodes.forEach(node => {
-            node.isSelected = node.isHighlighted = node.id === d.id;
-        });
-
+        if (this.allNodes.find(n => n.id === d.id).isSelected) {
+            this.props.callbacks.deselect();
+            return;
+        }
+        
         this.props.callbacks.select(d);
 
+        // Stops the underlying svg being clicked
         d3.event.stopPropagation();
     }
 }

@@ -15,8 +15,8 @@ function ArchiveImg() {
 
 
 const defaultMatchTableRowCallbacks = {
-    mouseenter: () => null,
-    mouseleave: () => null
+    mouseenter: (event) => null,
+    mouseleave: (event) => null
 }
 
 const defaultMatchTableRowSubmission = {
@@ -34,6 +34,8 @@ function MatchTableRow({
     color = "#ffb74d",
     callbacks = defaultMatchTableRowCallbacks,
 }) {
+    callbacks = {...defaultMatchTableRowCallbacks, ...callbacks};
+
     const firstTdStyle = {
         borderLeftColor: color,
         borderLeftWidth: "10px",
@@ -104,6 +106,8 @@ function MatchTable({
     callbacks = defaultMatchTableCallbacks,
     cutoff = 0
 }) {
+    callbacks = {...defaultMatchTableCallbacks, ...callbacks};
+
     // maps from a node.id to a node
     const nodeMap = {}
     graph.nodes.forEach(node => {

@@ -64,7 +64,18 @@ function SideBar(props) {
                 {props.globalState.isDataLoaded &&
                     <React.Fragment>
                         <div className="row fill" style={style}>
-                            <Graph graph={props.graphData} slider={false} sliderTip={false}/>
+                            <Graph 
+                                graph={props.graphData} 
+                                slider={false} 
+                                sliderTip={false}
+                                callbacks={{
+                                    "select": ({id, group}) => {
+                                        const links = props.graphData.links.filter(link => link.nodeAId === id || link.nodeBId === id);
+                                        const maxLink = links.reduce((a, b) => a.value >= b.value ? a : b);
+                                        window.location.href = "match_" + (maxLink.index + 1) + ".html";
+                                    }
+                                }}
+                            />
                         </div>
                         <div className="row auto" style={style}>
                             <span

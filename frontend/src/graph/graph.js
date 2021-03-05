@@ -33,6 +33,7 @@ const defaultHighlighted = {
 function Graph({
     graph = defaultGraph,
     highlighted = defaultHighlighted,
+    selected = null,
     callbacks = defaultCallbacks,
     width = undefined,
     height = undefined,
@@ -40,6 +41,8 @@ function Graph({
     slider = false,
     sliderTip = false
 }) {
+    callbacks = {...defaultCallbacks, ...callbacks};
+
     const divRef = useRef(null);
     const graphRef = useRef(null);
     const sliderRef = useRef(null);
@@ -74,8 +77,8 @@ function Graph({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // when this component updates, update the highlighted selection in the d3Graph
-    useEffect(() => d3Graph.current.setHighlighted(highlighted));
+    // when this component updates, update the selected and highlighted selection in the d3Graph
+    useEffect(() => d3Graph.current.update(selected, highlighted));
 
     return (
         <div ref={divRef} style={{"width": "100%", "height":"100%"}}>

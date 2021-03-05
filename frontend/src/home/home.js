@@ -114,6 +114,7 @@ function HomeView() {
                         callbacks={graphCallbacks}
                         graph={graph}
                         highlighted={highlighted}
+                        selected={selected}
                         cutoff={cutoff}
                         slider={true}
                         sliderTip={true} />
