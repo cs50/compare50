@@ -424,6 +424,11 @@ def main():
             # Cross compare and rank all submissions, keep only top `n`
             scores = _api.rank(subs, archive_subs, ignored_files, passes[0], n=args.n)
 
+        # If ranking produced no scores, there are no matches, stop
+        if not scores:
+            termcolor.cprint(f"Done, no similarities found.", "yellow")
+            return
+
         # Get the matching spans, group them per submission
         groups = []
         pass_to_results = {}

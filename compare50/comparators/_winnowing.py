@@ -42,6 +42,7 @@ class Winnowing(Comparator):
         bar.reset(total=math.ceil((len(submission_files) + len(archive_files) + len(ignored_files)) / 0.9))
         frequency_map = collections.Counter()
         with _api.Executor() as executor:
+            
             # Subs and archive subs
             for index, files in ((submission_index, submission_files), (archive_index, archive_files)):
                 for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), files):
@@ -49,11 +50,11 @@ class Winnowing(Comparator):
                         frequency_map[hash_] += 1
                     index.include_all(idx)
                     bar.update()
+            
             # Ignored files
             for idx in executor.map(self._index_file(ScoreIndex, (self.k, self.t)), ignored_files):
-                index.include_all(idx)
+                ignored_index.include_all(idx)
                 bar.update()
-
 
         submission_index.ignore_all(ignored_index)
         archive_index.ignore_all(ignored_index)
