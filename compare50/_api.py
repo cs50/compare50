@@ -106,8 +106,7 @@ def compare(scores, ignored_files, pass_):
 def missing_spans(file, original_tokens=None, processed_tokens=None):
     """
     :param file: file to be examined
-    :type file: :class:`compare50.File`
-    :param original_tokens: the unprocessed tokens of ``file``. May be \
+    :type file: :class:`compare50.File` :param original_tokens: the unprocessed tokens of ``file``. May be \
             optionally specified if ``file`` has been tokenized elsewhere to avoid \
             tokenizing it again.
     :param processed_tokens: the result of preprocessing the tokens of ``file``. \
@@ -185,11 +184,8 @@ def expand(span_matches, tokens_a, tokens_b):
     def is_subsumed(span, tree):
         """Determine if span is contained by any interval in the tree.
         Assumes that tree contains no intersecting intervals"""
-        intervals = tree[span.start:span.end]
-        for interval in intervals:
-            if span.start >= interval.begin and span.end <= interval.end:
-                return True
-        return False
+        return any(i.begin <= span.start and i.end >= span.end
+                       for i in tree[span.start:span.end])
 
 
     def _expand_side(cursor_a, cursor_b, step):
