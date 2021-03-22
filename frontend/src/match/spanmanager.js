@@ -305,14 +305,13 @@ class Span {
         HIGHLIGHTED: 3
     }
 
-    constructor(id, subId, fileId, groupId, start, end, isIgnored=false) {
+    constructor(id, subId, fileId, groupId, start, end) {
         this.id = id;
         this.subId = subId;
         this.fileId = fileId;
         this.groupId = groupId;
         this.start = start;
         this.end = end;
-        this.isIgnored = isIgnored;
     }
 }
 
@@ -323,7 +322,7 @@ function useSpanManager(pass, match) {
         pass.spans.forEach(span => {
             if (!span.ignored) {
                 const groupId = pass.groups.find(group => group.spans.includes(span.id)).id;
-                spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end, span.ignored));
+                spans.push(new Span(span.id, span.subId, span.fileId, groupId, span.start, span.end));
             }
         });
 

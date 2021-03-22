@@ -5,11 +5,12 @@
     "spans": [
         {"id": 1, "subId": 1, "fileId": 1, "start": 5, "end": 10, "ignored": false},
         {"id": 2, "subId": 1, "fileId": 1, "start": 20, "end": 30, "ignored": false},
-        {"id": 3, "subId": 2, "fileId": 3, "start": 20, "end": 30, "ignored": false},
+        {"id": 3, "subId": 7, "fileId": 3, "start": 20, "end": 30, "ignored": false},
         {"id": 4, "subId": 1, "fileId": 2, "start": 10, "end": 40, "ignored": false},
-        {"id": 5, "subId": 2, "fileId": 4, "start": 20, "end": 50, "ignored": false},
-        {"id": 6, "subId": 2, "fileId": 4, "start": 300, "end": 350, "ignored": false},
-        {"id": 7, "subId": 1, "fileId": 2, "start": 0, "end": 25, "ignored": true}
+        {"id": 5, "subId": 7, "fileId": 4, "start": 20, "end": 50, "ignored": false},
+        {"id": 6, "subId": 7, "fileId": 4, "start": 300, "end": 350, "ignored": false},
+        {"id": 7, "subId": 1, "fileId": 2, "start": 0, "end": 25, "ignored": true},
+        {"id": 8, "subId": 1, "fileId": 2, "start": 50, "end": 4100, "ignored": true}
     ],
     "groups": [
         {"id": 1, "spans": [1, 2, 3]},

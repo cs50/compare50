@@ -25,17 +25,21 @@ function File(props) {
         threshold: Array.from(Array(100).keys(), i => i / 100),
     });
 
+    const file = props.file;
+    const _updateFileVisibility = props.updateFileVisibility;
     useEffect(() => {
-        props.updateFileVisibility(props.file.name, entry.intersectionRatio);
-    });
+        _updateFileVisibility(file.name, entry.intersectionRatio);
+    }, [file.name, _updateFileVisibility, entry.intersectionRatio]);
 
-    const fragments = useMemo(() => {
-        const fromFile = span => span.fileId === props.file.id;
-        const spans = props.spanManager.spans.filter(fromFile);
-        const ignoredSpans = props.spanManager.ignoredSpans.filter(fromFile);
-        const allSpans = spans.concat(ignoredSpans);
-        return createFragments(props.file, allSpans)
-    }, [props.file.id, props.spanManager.spans]);
+    const fragments = useFragments(file, props.spanManager.spans, props.spanManager.ignoredSpans);
+
+    const coverage = useCoverage(fragments, props.spanManager);
+    const percentage = (coverage.numMatchedChars / coverage.numChars * 100).toFixed(0);
+
+    const _updateCoverage = props.updateCoverage;
+    useEffect(() => {
+        _updateCoverage(coverage);
+    }, [coverage, _updateCoverage]);
 
     // Keep track of whether a line of code starts on a newline (necessary for line numbers through css)
     let onNewline = true;
@@ -60,7 +64,7 @@ function File(props) {
 
     return (
         <>
-            <h4> {props.file.name} <span>{props.percentage.toFixed(0)}%</span></h4>
+            <h4> {props.file.name} <span>{percentage}%</span></h4>
             <pre ref={visibilityRef} className={(props.softWrap ? "softwrap" : "") + " monospace-text"}>
                 {(fragmentElems)}
             </pre>
@@ -170,6 +174,43 @@ function getClassName(fragment, spanManager, hideIgnored) {
     }
 
     return classNames.join(" ");
+}
+
+
+function useFragments(file, spans, ignoredSpans) {
+    return useMemo(() => {
+        const fromFile = span => span.fileId === file.id;
+        const spansFromFile = spans.filter(fromFile);
+        const ignoredSpansFromFile = ignoredSpans.filter(fromFile);
+        const allSpans = spansFromFile.concat(ignoredSpansFromFile);
+        return createFragments(file, allSpans)
+    }, [file, spans, ignoredSpans]);
+}
+
+
+function useCoverage(fragments, spanManager) {
+    const compute = () => {
+        let numChars = 0;
+        let numMatchedChars = 0;
+        fragments.forEach(fragment => {
+            if (spanManager.isIgnored(fragment)) {
+                return;
+            }
+            
+            const size = fragment.end - fragment.start;
+            if (spanManager.isGrouped(fragment)) {
+                numMatchedChars += size;
+            }
+            numChars += size;
+        });
+
+        return {
+            numMatchedChars: numMatchedChars,
+            numChars: numChars
+        };
+    }
+
+    return useMemo(compute, [fragments]);
 }
 
 

@@ -1,4 +1,4 @@
-import React, {useState, useRef, useEffect, useCallback, useMemo} from 'react';
+import React, {useState, useRef, useEffect, useCallback} from 'react';
 import Split from 'react-split';
 
 import File from './file'
@@ -45,7 +45,11 @@ function SplitView(props) {
 function Side(props) {
     const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
 
-    const [submissionCoverage, fileCoverages] = useCoverages(props.files, props.spanManager.spans);
+    const [fileCoverages, setFileCoverages] = useState({});
+
+    const numMatchedChars = Object.values(fileCoverages).reduce((acc, {numMatchedChars}) => acc + numMatchedChars, 0);
+    const numChars = Object.values(fileCoverages).reduce((acc, {numChars}) => acc + numChars, 0);
+    const submissionPercentage = (numMatchedChars / numChars * 100).toFixed(0);
 
     const ref = useRef(null);
 
@@ -59,7 +63,7 @@ function Side(props) {
             }}>
                 <StatusBar
                     filepath={props.submission.name}
-                    percentage={submissionCoverage * 100}
+                    percentage={submissionPercentage}
                     file={fileInView}
                     height={props.topHeight}/>
             </div>
@@ -70,11 +74,14 @@ function Side(props) {
                             key={file.name}
                             file={file}
                             spanManager={props.spanManager}
-                            percentage={fileCoverages[i] * 100}
                             softWrap={props.globalState.softWrap}
                             hideIgnored={props.globalState.hideIgnored}
                             showWhiteSpace={props.globalState.showWhiteSpace}
                             updateFileVisibility={updateFileVisibility}
+                            updateCoverage={(coverage) => {
+                                fileCoverages[file.id] = coverage;
+                                setFileCoverages(fileCoverages);
+                            }}
                             scrollTo={scrollToCallback}
                             interactionBlocked={props.interactionBlocked}
                         />
@@ -112,7 +119,7 @@ function StatusBar(props) {
                 "width":"4em",
                 "textAlign":"center"
             }}>
-                {`${props.percentage.toFixed(0)}%`}
+                {`${props.percentage}%`}
             </div>
             <div className="row auto" style={{
                 "width":"10em",
@@ -158,29 +165,6 @@ function useMax(items, initial=null) {
     }, []);
 
     return [item, update];
-}
-
-
-function useCoverages(files, spans) {
-    const compute = () => {
-        spans = spans.filter(span => !span.isIgnored);
-
-        let totalNumMatchedChars = 0;
-
-        const filesCoverages = files.map(file => {
-            const numMatchedChars = spans.reduce((acc, span) => acc + (span.fileId === file.id ? span.end - span.start : 0), 0);
-            totalNumMatchedChars += numMatchedChars;
-            return (numMatchedChars / file.content.length);
-        });
-
-        const totalNumChars = files.reduce((acc, file) => acc + file.content.length, 0)
-
-        const submissionCoverage = totalNumChars === 0 ? 0 : totalNumMatchedChars / totalNumChars;
-
-        return [submissionCoverage, filesCoverages];
-    }
-
-    return useMemo(compute, [files, spans]);
 }
 
 
