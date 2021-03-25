@@ -167,21 +167,12 @@ function useScroll(scrollableRef, spanManager, setInteractionBlocked) {
     const highlightedSpans = spanManager.highlightedSpans().map(span => span.id);
     const prevHighlightedSpans = useRef(highlightedSpans);
 
-    const didHighlightChange = () => {
-        if (highlightedSpans.length !== prevHighlightedSpans.current.length) {
-            return true;
-        }
-
-        for (let i = 0; i < highlightedSpans.length; i++) {
-            if (highlightedSpans[i] !== prevHighlightedSpans.current[i]) {
-                return true;
-            }
-        }
-        return false;
-    }
+    const highlightChanged =
+        highlightedSpans.length !== prevHighlightedSpans.current.length || 
+        highlightedSpans.some((s, i) => s !== prevHighlightedSpans.current[i]);
 
     // In case the highlighted spans changed, re-enable scrolling
-    if (didHighlightChange()) {
+    if (highlightChanged) {
         didScroll.current = false;
         prevHighlightedSpans.current = highlightedSpans;
     }
