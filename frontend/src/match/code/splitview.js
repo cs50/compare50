@@ -43,7 +43,7 @@ function SplitView(props) {
 
 
 function Side(props) {
-    const [fileInView, updateFileVisibility] = useMax(props.files.map(file => file.name));
+    const [fileInView, updateFileVisibility] = useMax();
 
     const [fileCoverages, setFileCoverages] = useState({});
 
@@ -132,39 +132,32 @@ function StatusBar(props) {
 }
 
 
-function useMax(items, initial=null) {
-    if (initial === null) {
-        initial = items[0];
-    }
+function useMax() {
+    const [maxItem, setMaxItem] = useState(undefined);
 
-    const [item, setItem] = useState(initial);
-
-    const values = useRef(items.reduce((acc, item) => {
-        acc[item] = 0;
-        return acc;
-    }, {}));
+    const values = useRef({});
 
     // Callback for when the value of an item changes
     const update = useCallback((item, value) => {
         values.current[item] = value;
 
         // Find the item with the highest value
-        let maxItem = item;
-        let maxValue = 0;
+        let newMaxItem = item;
+        let newMaxValue = 0;
         Object.entries(values.current).forEach(([item, value]) => {
-            if (value > maxValue) {
-                maxItem = item;
-                maxValue = value;
+            if (value > newMaxValue) {
+                newMaxItem = item;
+                newMaxValue = value;
             }
         });
 
         // If the item with the highest value is different from the last, update maxItem
-        if (item !== maxItem) {
-            setItem(maxItem);
+        if (newMaxItem !== maxItem) {
+            setMaxItem(newMaxItem);
         }
-    }, []);
+    }, [maxItem]);
 
-    return [item, update];
+    return [maxItem, update];
 }
 
 
