@@ -15,12 +15,12 @@ deploy:
 - provider: releases
   api_key: "$GH_TOKEN"
   skip_cleanup: true
-  on: master
+  on: main
 - provider: pypi
   user: "$PYPI_USERNAME"
   password: "$PYPI_PASSWORD"
   skip_cleanup: true
-  on: master
+  on: main
 notifications:
   slack:
     secure: TMIHXjeS0Tb37yuWq5I0dbRISytb1rWsHM15HYjTk8A4xal7B+Y90AFwhXMS9/nzehZKxT1grutH/9TuBEy6ZTHKWFooHmTYFAX7f12ErHy5ycq5/jxis1TnDHjlwG3gc5APW/kOaiVgR8C5T0Rg35SNUd+1o69coHD9Ne76fyt2wUXCMh1AYKfNfqkIuGuOxOgbK3ZVgz57HOlcgR+jbkNSlS3xj8GqtfJyrMiCiaFyCnIAZLq/O3+FBOydxZ+1LkBQnBf3Eju95Q3Zh+KSSIATc4nxOfgmoOXvtk+Sividr7bDcRjOxVPgn4WkuH897W4lQUJZxb5LYPf8jqglulAuRr7dc5GHeoahecmjWPEi6v0o2NroH1vycG0qogh5X7q0ovNXgAIEhh18FCKhxe6zjvIt9xhG4BfbjASIXS37rbN6yhfqZQcJzp0qnPzVOJcwIO6GYSFqvJzjC9yp/wLq6ECmi8WkDfUbRSkCepPQ5jdn0W7lmkEYZTnugtCLncBYX/TIfXH/WU3fh5+G98EfdukxXT11WC7ReXBl2TKGwz/vfLK15gG5sWGYieb6dwwQX+wpzdpt8ZoFaRtD02UwndxPoVad+E21P9uh74KuLQ0k+/6MuRAHO7n7817fXLxLQDstbCwuAw5c7kVAYc5fSwQ/zFnrckWdSbgLwXk=
