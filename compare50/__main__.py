@@ -12,6 +12,8 @@ import string
 import traceback
 import time
 import tempfile
+import requests
+import pkg_resources
 
 import attr
 import lib50
@@ -356,6 +358,12 @@ def main():
                         version=f"%(prog)s {__version__}")
 
     args = parser.parse_args()
+
+    # Check for newer version
+    if __version__:
+        latest = max(requests.get("https://pypi.org/pypi/compare50/json").json()["releases"], key=pkg_resources.parse_version)
+        if latest > __version__:
+            print("A newer version is available. Run `pip3 install --upgrade compare50` to upgrade.")
 
     excepthook.verbose = args.verbose
 
