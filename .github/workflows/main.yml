@@ -28,6 +28,7 @@ jobs:
         echo ::set-output name=version::$(compare50 --version | cut --delimiter ' ' --fields 2)
 
     - name: Create Release
+      if: ${{ github.ref == 'refs/heads/main' }}
       uses: actions/github-script@v6
       with:
         github-token: ${{ github.token }}
