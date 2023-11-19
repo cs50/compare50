@@ -1,4 +1,4 @@
-from pkg_resources import resource_filename
+from importlib.resources import files
 
 from . import comparators, preprocessors
 from ._data import Pass
@@ -44,5 +44,4 @@ class misspellings(Pass):
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,
                      preprocessors.words]
-    comparator = comparators.Misspellings(resource_filename("compare50.comparators",
-                                                            "english_dictionary.txt"))
+    comparator = comparators.Misspellings(files("compare50.comparators").joinpath("english_dictionary.txt"))

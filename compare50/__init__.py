@@ -1,21 +1,18 @@
 def _set_version():
-    """Set check50 __version__"""
+    """Set compare50 __version__"""
     global __version__
-    from pkg_resources import get_distribution, DistributionNotFound
-    import os
-    # https://stackoverflow.com/questions/17583443/what-is-the-correct-way-to-share-package-version-with-setup-py-and-the-package
+    import sys
+    from importlib.metadata import PackageNotFoundError, version
+
+    # Require Python 3.8+
+    if sys.version_info < (3, 8):
+        sys.exit("You have an old version of python. Install version 3.8 or higher.")
+
+    # Get version
     try:
-        dist = get_distribution("compare50")
-        # Normalize path for cross-OS compatibility.
-        dist_loc = os.path.normcase(dist.location)
-        here = os.path.normcase(__file__)
-        if not here.startswith(os.path.join(dist_loc, "compare50")):
-            # This version is not installed, but another version is.
-            raise DistributionNotFound
-    except DistributionNotFound:
-        __version__ = "locally installed, no version information available"
-    else:
-        __version__ = dist.version
+        __version__ = version("compare50")
+    except PackageNotFoundError:
+        __version__ = "UNKNOWN"
 
 
 # Encapsulated inside a function so their local variables/imports aren't seen by autocompleters

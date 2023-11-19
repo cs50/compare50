@@ -2,7 +2,6 @@ import collections
 import glob
 import os
 import pathlib
-import pkg_resources
 import shutil
 
 import attr
@@ -10,11 +9,12 @@ import jinja2
 import pygments
 from pygments.formatters import HtmlFormatter
 
+from importlib.resources import files
 from .. import _api
 from .._data import IdStore
 
-STATIC = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "static"))
-TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "templates"))
+STATIC = pathlib.Path(files("compare50._renderer").joinpath("static"))
+TEMPLATES = pathlib.Path(files("compare50._renderer").joinpath("templates"))
 
 @attr.s(slots=True)
 class Fragment:
