@@ -14,7 +14,7 @@ setup(
     long_description="This is compare50, with which you can compare files for similarities.",
     install_requires=["attrs>=18,<21", "intervaltree>=3,<4", "lib50>=2,<4", "numpy>=1.15,<2", "pygments>=2.2,<3", "jinja2>=3,<4", "termcolor>=1.1.0,<2", "tqdm>=4.32,<5"],
     extras_require = {
-        "develop": ["sphinx", "sphinx_rtd_theme", "sphinx-autobuild", "line_profiler"]
+        "develop": ["packaging", "sphinx", "sphinx_rtd_theme", "sphinx-autobuild", "line_profiler"]
     },
     keywords=["compare", "compare50"],
     name="compare50",
