@@ -84,7 +84,7 @@ class TestSubmissionFactory(TestCase):
         self.factory.exclude("*")
         subs = self.factory.get_all(["foo"], preprocessor)
         subs = {sub for sub in subs if sub.files}
-        self.assertEquals(subs, set())
+        self.assertEqual(subs, set())
 
     def test_include_pattern(self):
         preprocessor = lambda tokens : tokens
