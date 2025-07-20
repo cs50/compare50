@@ -1,4 +1,6 @@
-from pkg_resources import resource_filename
+import importlib
+import atexit
+from contextlib import ExitStack
 
 from . import comparators, preprocessors
 from ._data import Pass
@@ -44,5 +46,11 @@ class misspellings(Pass):
     preprocessors = [preprocessors.comments,
                      preprocessors.normalize_case,
                      preprocessors.words]
-    comparator = comparators.Misspellings(resource_filename("compare50.comparators",
-                                                            "english_dictionary.txt"))
+
+    file_manager = ExitStack()
+    atexit.register(file_manager.close)
+    ref = importlib.resources.files('compare50.comparators') / 'english_dictionary.txt'
+    path = file_manager.enter_context(
+        importlib.resources.as_file(ref))
+
+    comparator = comparators.Misspellings(path)

@@ -2,8 +2,10 @@ import collections
 import glob
 import os
 import pathlib
-import pkg_resources
 import shutil
+import importlib
+import atexit
+from contextlib import ExitStack
 
 import attr
 import jinja2
@@ -13,8 +15,19 @@ from pygments.formatters import HtmlFormatter
 from .. import _api
 from .._data import IdStore
 
-STATIC = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "static"))
-TEMPLATES = pathlib.Path(pkg_resources.resource_filename("compare50._renderer", "templates"))
+file_manager = ExitStack()
+atexit.register(file_manager.close)
+
+_static = importlib.resources.files('compare50._renderer') / 'static'
+_templates = importlib.resources.files('compare50._renderer') / 'templates'
+
+path_static = file_manager.enter_context(
+        importlib.resources.as_file(_static))
+path_templates = file_manager.enter_context(
+        importlib.resources.as_file(_templates))
+
+STATIC = pathlib.Path(path_static)
+TEMPLATES = pathlib.Path(path_templates)
 
 @attr.s(slots=True)
 class Fragment:
