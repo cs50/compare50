@@ -62,7 +62,7 @@ class Comparator(metaclass=abc.ABCMeta):
     """
     @abc.abstractmethod
     def score(self, submissions, archive_submissions, ignored_files):
-        """
+        r"""
         Given a list of submissions, a list of archive submissions, and a set of distro
         files, return a list of :class:`compare50.Score`\ s for each submission pair.
         """
@@ -70,7 +70,7 @@ class Comparator(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def compare(self, scores, ignored_files):
-        """
+        r"""
         Given a list of scores and a list of distro files, perform an in-depth
         comparison of each submission pair and return a corresponding list of
         :class:`compare50.Comparison`\ s
@@ -261,7 +261,7 @@ class Span:
 
 @attr.s(slots=True)
 class Comparison:
-    """
+    r"""
     :ivar sub_a: the first submission
     :ivar sub_b: the second submission
     :ivar span_matches: a list of pairs of matching :class:`compare50.Span`\ s, wherein \

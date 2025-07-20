@@ -53,7 +53,7 @@ def rank(submissions, archive_submissions, ignored_files, pass_, n=50):
 
 
 def compare(scores, ignored_files, pass_):
-    """
+    r"""
     :param scores: Scored submission pairs to be compared more granularly
     :type scores: [:class:`compare50.Score`]
     :param ignored_files: files containing distro code
@@ -155,7 +155,7 @@ def expand(span_matches, tokens_a, tokens_b):
     :param tokens_b: :param tokens_a: the tokens of the file corresponding to the first \
             element of each ``span_match``
     :type tokens_b: [:class:`compare50.Token`]
-    :returns: A new list of maximially expanded span pairs
+    :returns: A new list of maximally expanded span pairs
     :rtype: [(:class:`compare50.Span`, :class:`compare50.Span`)]
 
     Expand all span matches. This is useful when e.g. two spans in two different files
