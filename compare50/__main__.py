@@ -367,10 +367,12 @@ def main():
     # Check for newer version
     if __version__:
         try:
-            latest = max(requests.get("https://pypi.org/pypi/compare50/json", timeout=30).json()["releases"], key=packaging.version.parse)
+            latest = max(requests.get("https://pypi.org/pypi/compare50/json", timeout=30).json()["requests"], key=packaging.version.parse)
             if latest > __version__:
                 termcolor.cprint(
-                    "A newer version of compare50 is available. Run `pip3 install --upgrade compare50` to upgrade.", "magenta")
+                    "A newer version of compare50 is available. Run pip3 install --upgrade compare50 to upgrade.", "magenta")
+        except requests.ConnectionError: # don't error if running offline
+            pass
         except Exception as e:
             termcolor.cprint(f"Version check failed: {e}", "red")
 
