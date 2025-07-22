@@ -245,10 +245,11 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     n_archives = len(get_non_empty_subs(archives))
     n_distro = len(distro_files)
 
-    if n_subs + n_archives <= 0:
+    if n_subs + n_archives == 0:
         termcolor.cprint(
             "Error: No files left to compare after filtration", "red", file=sys.stderr)
-        
+        # return
+
     avg = round(sum(len(s.files) for s in itertools.chain(subs, archives)) / (n_subs + n_archives), 2)
     data = PluralDict(subs=n_subs, archives=n_archives, distro=n_distro, avg=avg)
     fmt = "Found {subs} submission{subs(s)}, {archives} archive submission{archives(s)}, and " \
