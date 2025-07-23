@@ -22,6 +22,6 @@ setup(
     packages=find_packages(exclude=["tests"]),
     scripts=["bin/compare50"],
     url="https://github.com/cs50/compare50",
-    version="1.2.11",
+    version="1.2.12",
     include_package_data=True,
 )

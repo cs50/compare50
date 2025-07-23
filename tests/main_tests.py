@@ -1,7 +1,8 @@
 import unittest
 import tempfile
-import zipfile
 import os
+import io
+from unittest.mock import patch
 import compare50.__main__ as main
 import compare50._api as api
 
@@ -109,6 +110,26 @@ class TestSubmissionFactory(TestCase):
         subs = self.factory.get_all(["foo"], preprocessor)
         subs = {sub for sub in subs if sub.files}
         self.assertEqual(subs, set())
+
+    def test_permission_error(self):
+        os.mkdir("foo")
+        file_path = "foo/bar.py"
+        with open(file_path, "w") as f:
+            f.write("test content")
+        os.chmod(file_path, 0o000)
+        with self.assertRaises(PermissionError):
+            main.SubmissionFactory._is_valid_utf8(file_path)
+        os.chmod(file_path, 0o644)
+    
+    def test_excepthook_permission_error(self):
+        error = PermissionError("Permission denied")
+        error.filename = "/path/to/restricted/file.py"
+        with patch('sys.stderr', new_callable=io.StringIO) as mock_stderr:
+            with patch('sys.exit') as mock_exit:
+                main.excepthook(PermissionError, error, None)
+                error_output = mock_stderr.getvalue()
+                self.assertIn("Permission denied: /path/to/restricted/file.py", error_output)
+                mock_exit.assert_called_once_with(1)
 
 
 if __name__ == "__main__":
