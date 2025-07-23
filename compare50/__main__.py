@@ -296,7 +296,7 @@ def expand_patterns(patterns):
     return list(itertools.chain.from_iterable(map(lambda x: glob.glob(x, recursive=True) or [x], patterns)))
 
 
-def check_version(package_name=__package__, timeout=1):
+def check_version(package_name=__package__, timeout=5):
     """Check for newer version of the package on PyPI"""    
     if not __version__:
         return
