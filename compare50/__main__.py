@@ -27,6 +27,8 @@ def excepthook(cls, exc, tb):
         termcolor.cprint(str(exc), "red", file=sys.stderr)
     elif cls is FileNotFoundError:
         termcolor.cprint("{} not found".format(exc.filename), "red", file=sys.stderr)
+    elif cls is PermissionError:
+        termcolor.cprint("Permission denied: {}".format(exc.filename), "red", file=sys.stderr)
     elif not issubclass(cls, Exception) and not isinstance(exc, KeyboardInterrupt):
         # Class is some other BaseException, better just let it go
         return
