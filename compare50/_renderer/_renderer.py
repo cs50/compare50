@@ -81,7 +81,7 @@ class HTMLSubmission:
             return 0
 
 
-def render(pass_to_results, dest):
+def render(pass_to_results, dest, sub_to_name):
     bar = _api.get_progress_bar()
     dest = pathlib.Path(dest)
 
@@ -102,7 +102,7 @@ def render(pass_to_results, dest):
     with _api.Executor() as executor:
         # Load static files
         max_id = len(results_per_sub_pair)
-        for id, html in executor.map(_RenderTask(dest, max_id, match_js, match_css), enumerate(results_per_sub_pair, 1)):
+        for id, html in executor.map(_RenderTask(dest, max_id, match_js, match_css, sub_to_name), enumerate(results_per_sub_pair, 1)):
             with open(dest / f"match_{id}.html", "w") as f:
                 f.write(html)
             bar.update()
@@ -125,13 +125,13 @@ def render(pass_to_results, dest):
     subs = set()
     graph_info = {"nodes": [], "links": [], "data": {}}
     for i, result in enumerate(ranking_results):
-        graph_info["links"].append({"index":i, "source": str(result.sub_a.path), "target": str(result.sub_b.path), "value": 10 * result.score.score/max_score})
+        graph_info["links"].append({"index":i, "source": sub_to_name[result.sub_a], "target": sub_to_name[result.sub_b], "value": 10 * result.score.score/max_score})
         subs.add(result.sub_a)
         subs.add(result.sub_b)
 
     for sub in subs:
-        graph_info["nodes"].append({"id": str(sub.path)})
-        graph_info["data"][str(sub.path)] = {"is_archive": sub.is_archive}
+        graph_info["nodes"].append({"id": sub_to_name[sub]})
+        graph_info["data"][sub_to_name[sub]] = {"is_archive": sub.is_archive}
 
     index_css = common_css + [read_file(STATIC / "index.css")]
     index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
@@ -160,12 +160,13 @@ def read_file(fname):
 
 
 class _RenderTask:
-    def __init__(self, dest, max_id, js, css):
+    def __init__(self, dest, max_id, js, css, sub_to_name):
         dest.mkdir(exist_ok=True)
         self.dest = dest
         self.max_id = max_id
         self.js = js
         self.css = css
+        self.sub_to_name = sub_to_name
 
     def __call__(self, arg):
         id, results = arg
@@ -173,7 +174,7 @@ class _RenderTask:
         match_htmls = []
 
         for result in results:
-            renderer = _Renderer(result.name)
+            renderer = _Renderer(result.name, self.sub_to_name)
             score = result.score
             groups = result.groups
             ignored_spans = result.ignored_spans
@@ -236,8 +237,9 @@ class _RenderTask:
 
 
 class _Renderer:
-    def __init__(self, name):
+    def __init__(self, name, sub_to_name):
         self.name = name
+        self.sub_to_name = sub_to_name
         self._frag_id_counter = -1
         self._span_id_store = IdStore()
         self._group_id_store = IdStore()
@@ -285,7 +287,7 @@ class _Renderer:
         html_files = self.html_files(submission, file_to_spans, ignored_spans)
         num_chars_matched = sum(f.num_chars_matched for f in html_files)
         num_chars = sum(f.num_chars for f in html_files)
-        return HTMLSubmission(submission.path, html_files, num_chars_matched, num_chars)
+        return HTMLSubmission(self.sub_to_name[submission], html_files, num_chars_matched, num_chars)
 
     def data(self, result, html_fragments, ignored_spans):
         fragment_to_spans = {}
