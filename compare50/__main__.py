@@ -481,11 +481,11 @@ def main():
                 used_names.add(name)
 
         # Map each Submission to a fictional name
-        sub_to_name = {sub: name for sub, name in zip(all_subs, fictional_names)}
+        sub_to_machine_name = {sub: name for sub, name in zip(all_subs, fictional_names)}
 
         # Render results
         with _api.progress_bar("Rendering", disable=args.debug):
-            index = _renderer.render(pass_to_results, dest=args.output, sub_to_name=sub_to_name)
+            index = _renderer.render(pass_to_results, dest=args.output, sub_to_machine_name=sub_to_machine_name)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
