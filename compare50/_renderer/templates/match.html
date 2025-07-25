@@ -4,7 +4,7 @@
     <div class="row sticky-top bg-dark text-light" id="{{name}}sub_names">
         {% for sub in sub_a, sub_b %}
             <div class="col-sm-6 col-2 sub_name">
-                <h5>{{sub.name}} ({{sub.percentage}}%)</h5>
+                <h5 title="{{sub.path}}">{{sub.name}} ({{sub.percentage}}%)</h5>
             </div>
         {% endfor %}
     </div>

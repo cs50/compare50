@@ -68,6 +68,7 @@ class HTMLFile:
 
 @attr.s(slots=True)
 class HTMLSubmission:
+    path = attr.ib(converter=str)
     name = attr.ib(converter=str)
     files = attr.ib()
     num_chars_matched = attr.ib()
@@ -131,7 +132,7 @@ def render(pass_to_results, dest, sub_to_name):
 
     for sub in subs:
         graph_info["nodes"].append({"id": sub_to_name[sub]})
-        graph_info["data"][sub_to_name[sub]] = {"is_archive": sub.is_archive}
+        graph_info["data"][sub_to_name[sub]] = {"is_archive": sub.is_archive, "path": str(sub.path)}
 
     index_css = common_css + [read_file(STATIC / "index.css")]
     index_js = [read_file(STATIC / f) for f in ("d3.v4.min.js", "d3-scale-chromatic.v1.min.js", "d3-simple-slider.js", "index.js")]
@@ -287,7 +288,7 @@ class _Renderer:
         html_files = self.html_files(submission, file_to_spans, ignored_spans)
         num_chars_matched = sum(f.num_chars_matched for f in html_files)
         num_chars = sum(f.num_chars for f in html_files)
-        return HTMLSubmission(self.sub_to_name[submission], html_files, num_chars_matched, num_chars)
+        return HTMLSubmission(submission.path, self.sub_to_name[submission], html_files, num_chars_matched, num_chars)
 
     def data(self, result, html_fragments, ignored_spans):
         fragment_to_spans = {}

@@ -361,7 +361,11 @@ function update_index() {
         new_trs.append("td")
             .attr("class", "sub_name")
             .datum(d => d[field])
-            .html(d => GRAPH.data[d.id].is_archive ? `${ARCHIVE_IMG} ${d.id}` : d.id);
+            .html(d => {
+                const fic_name = GRAPH.data[d.id].is_archive ? `${ARCHIVE_IMG} ${d.id}` : d.id;
+                const path = GRAPH.data[d.id].path || '';
+                return `<span title="${path}">${fic_name}</span>`;
+            });
     }
 
     new_trs.append("td")
