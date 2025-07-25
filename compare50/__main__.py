@@ -14,6 +14,7 @@ import time
 import tempfile
 import requests
 import packaging.version
+import names
 
 import attr
 import lib50
@@ -299,10 +300,10 @@ def expand_patterns(patterns):
 
 
 def check_version(package_name=__package__, timeout=5):
-    """Check for newer version of the package on PyPI"""    
+    """Check for newer version of the package on PyPI"""
     if not __version__:
         return
-    
+
     try:
         current = packaging.version.parse(__version__)
         latest = max(requests.get(f"https://pypi.org/pypi/{package_name}/json", timeout=timeout).json()["releases"], key=packaging.version.parse)
@@ -468,9 +469,23 @@ def main():
                     object.__setattr__(sub, "preprocessor", preprocessor)
                 pass_to_results[pass_] = _api.compare(scores, ignored_files, pass_)
 
+        all_subs = list(subs) + list(archive_subs) + list(ignored_subs)
+
+        # Generate a unique first name for each submission
+        fictional_names = []
+        used_names = set()
+        while len(fictional_names) < len(all_subs):
+            name = names.get_first_name()
+            if name not in used_names:
+                fictional_names.append(name)
+                used_names.add(name)
+
+        # Map each Submission to a fictional name
+        sub_to_machine_name = {sub: name for sub, name in zip(all_subs, fictional_names)}
+
         # Render results
         with _api.progress_bar("Rendering", disable=args.debug):
-            index = _renderer.render(pass_to_results, dest=args.output)
+            index = _renderer.render(pass_to_results, dest=args.output, sub_to_machine_name=sub_to_machine_name)
 
     termcolor.cprint(
         f"Done! Visit file://{index.absolute()} in a web browser to see the results.", "green")
