@@ -183,11 +183,21 @@ class File:
 
     def lexer(self):
         """Determine which Pygments lexer should be used."""
+        def read_and_guess_lexer():
+            try:
+                return pygments.lexers.guess_lexer(self.read())
+            except pygments.util.ClassNotFound:
+                return pygments.lexers.special.TextLexer()
+
         ext = self.name.suffix
         try:
             return self._lexer_cache[ext]
         except KeyError:
             pass
+
+        # if this is a txt file, assume its some kind of code and infer its lexer
+        if ext == '.txt':
+            return read_and_guess_lexer()
 
         # get lexer for this file type
         try:
@@ -195,10 +205,7 @@ class File:
             self._lexer_cache[ext] = lexer
             return lexer
         except pygments.util.ClassNotFound:
-            try:
-                return pygments.lexers.guess_lexer(self.read())
-            except pygments.util.ClassNotFound:
-                return pygments.lexers.special.TextLexer()
+            return read_and_guess_lexer()
 
     @classmethod
     def get(cls, id):
@@ -207,8 +214,13 @@ class File:
 
     def unprocessed_tokens(self):
         """Get the raw tokens of the file."""
-        text = self.read()
-        lexer_tokens = self.lexer().get_tokens_unprocessed(text)
+        text  = self.read()
+        lexer = self.lexer()
+        if lexer is None:
+            import termcolor
+            termcolor.cprint(f"{self.name.name} appears to be a plaintext file. Skipping.")
+            return []
+        lexer_tokens = lexer.get_tokens_unprocessed(text)
         tokens = []
         prevToken = None
         for token in lexer_tokens:
