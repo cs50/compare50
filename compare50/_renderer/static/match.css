@@ -178,6 +178,12 @@ a.index-link:hover {
     left: 110%;
 }
 
+.sub_name {
+    display: inline-block;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
 .score_tooltip:hover .tooltiptext {
     visibility: visible;
 }
