@@ -262,7 +262,7 @@ function init_group_button(groups, view_name) {
     document.addEventListener("keyup", (event) =>  {
         if (event.key === ' ' || event.key == "]") {
             event.preventDefault();
-            go_to_adjacent_group(event, 1); 
+            go_to_adjacent_group(event, 1);
         }
     });
 
@@ -425,21 +425,24 @@ function select_view(name) {
     select_view._cache[CURRENT_VIEW] = true;
 }
 
-
 function make_split(name) {
-    return Split([`#${name}left`,`#${name}right`], {
+    return Split([`#${name}left`, `#${name}right`], {
         elementStyle: function (dimension, size, gutterSize) {
-            window.dispatchEvent(new Event('resize'));
-            return {'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)'}
+            requestAnimationFrame(() => {
+                document.getElementById(`${name}left_header`).style.width =
+                    document.getElementById(`${name}left`).offsetWidth + 'px';
+                document.getElementById(`${name}right_header`).style.width =
+                    document.getElementById(`${name}right`).offsetWidth + 'px';
+            });
+            return { 'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)' };
         },
-        gutterStyle: function (dimension, gutterSize) { return {'flex-basis':  gutterSize + 'px'} },
+        gutterStyle: function (dimension, gutterSize) { return { 'flex-basis': gutterSize + 'px' } },
         sizes: [50, 50],
         minSize: 100,
         gutterSize: 6,
         cursor: 'col-resize'
     });
 }
-
 
 document.addEventListener("DOMContentLoaded", event => {
     let id = parseInt(document.getElementsByClassName("id")[0].id);
