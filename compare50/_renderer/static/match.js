@@ -426,7 +426,7 @@ function select_view(name) {
 }
 
 function make_split(name) {
-    return Split([`#${name}left`, `#${name}right`], {
+    return Split([`#${name}left`,`#${name}right`], {
         elementStyle: function (dimension, size, gutterSize) {
             requestAnimationFrame(() => {
                 document.getElementById(`${name}left_header`).style.width =
@@ -436,7 +436,7 @@ function make_split(name) {
             });
             return { 'flex-basis': 'calc(' + size + '% - ' + gutterSize + 'px)' };
         },
-        gutterStyle: function (dimension, gutterSize) { return { 'flex-basis': gutterSize + 'px' } },
+        gutterStyle: function (dimension, gutterSize) { return {'flex-basis':  gutterSize + 'px'} },
         sizes: [50, 50],
         minSize: 100,
         gutterSize: 6,
