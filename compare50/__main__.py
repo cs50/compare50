@@ -19,6 +19,7 @@ import names
 import attr
 import lib50
 import termcolor
+import pygments
 
 from . import comparators, _api, _data, _renderer, __version__
 
@@ -245,6 +246,26 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     def get_undecodable_files(subs):
         return [sub.path / file for sub in subs for file in sub.undecodable_files]
 
+    def warn_txt_files(subs):
+        """Warn about plaintext or code in file when the user submits a .txt file"""
+        for sub in subs:
+            for file in sub.files:
+                if file.name.suffix == ".txt":
+                    try:
+                        lexer = pygments.lexers.guess_lexer(file.read())
+                    except pygments.util.ClassNotFound:
+                        lexer = pygments.lexers.special.TextLexer()
+
+                    # If the file is interpreted as a plaintext file
+                    if isinstance(lexer, pygments.lexers.special.TextLexer):
+                        termcolor.cprint(
+                        f"{file.name.name} appears to be plaintext. Scoring using `structure` could produce unexpected results.",
+                        "yellow", attrs=["bold"])
+                    else:
+                        termcolor.cprint(
+                        f"{file.name.name} is a .txt file that appears to contain code. Interpreting as: {lexer.name}",
+                        "yellow", attrs=["bold"])
+
     # Print the number of subs, archives, distro files, and the average number of files per sub
     n_subs = len(get_non_empty_subs(subs))
     n_archives = len(get_non_empty_subs(archives))
@@ -284,6 +305,11 @@ def print_stats(subs, archives, distro_subs, distro_files, verbose=False):
     if undecodable or undecodable_archive or undecodable_distro:
         print_warning(undecodable, undecodable_archive, undecodable_distro, "non utf-8")
         did_print_warning = True
+
+    # Warn about txt files
+    warn_txt_files(subs)
+    warn_txt_files(archives)
+    warn_txt_files(distro_subs)
 
     # Print suggestion to run with --verbose if any files are excluded
     if not verbose and did_print_warning:
