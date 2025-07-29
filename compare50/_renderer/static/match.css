@@ -57,7 +57,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 3em);
+    height: 90vh;
 }
 
 .right {
@@ -68,7 +68,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 3em);
+    height: 90vh;
 }
 
 .fragment:before {
