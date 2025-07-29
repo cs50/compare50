@@ -22,7 +22,7 @@ body {
 
 #page {
     overflow-y: hidden;
-    height: 100vh;
+    height: 100%;
 }
 
 #content {
@@ -46,7 +46,7 @@ pre {
 
 .diff {
     width: 100%;
-    height: calc(100vh - 5em);
+    height: 100%;
 }
 
 
@@ -57,7 +57,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 5em);
+    height: calc(100vh - 4em);
 }
 
 .right {
@@ -68,7 +68,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 5em);
+    height: calc(100vh - 4em);
 }
 
 .fragment:before {
