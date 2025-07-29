@@ -12,7 +12,7 @@ body {
 }
 
 .wrapper {
-    margin-top: 3em;
+    margin-bottom: 3em;
 }
 
 .view {
@@ -31,7 +31,7 @@ body {
 
 .sub_name {
     margin-top: 0.33em;
-    padding-right: 0px;
+    padding-left: 10px;
 }
 
 .row {
@@ -121,16 +121,20 @@ pre {
 }
 
 #sidebar {
-    padding: 10px 15px;
-    top: 0;
-    width: 100%;
     position: fixed;
-    height: auto;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em 1em;
     z-index: 1000;
+}
+
+.sidebar-right {
     display: flex;
     align-items: center;
     gap: 0.5em;
-    justify-content: normal;
 }
 
 #next_prev_match {
