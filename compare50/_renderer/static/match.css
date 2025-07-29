@@ -8,10 +8,11 @@ body, h1, h4, h5 {
 
 body {
     font-family: Proxima-Nova, sans-serif;
+    overflow: hidden;
 }
 
 .wrapper {
-    margin-left: 10em;
+    margin-bottom: 3em;
 }
 
 .view {
@@ -30,7 +31,7 @@ body {
 
 .sub_name {
     margin-top: 0.33em;
-    padding-right: 0px;
+    padding-left: 10px;
 }
 
 .row {
@@ -56,7 +57,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: 100%;
+    height: 90vh;
 }
 
 .right {
@@ -67,7 +68,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: 100%;
+    height: 90vh;
 }
 
 .fragment:before {
@@ -115,40 +116,40 @@ pre {
 }
 
 .line {
-    line-height: 1em;
+    line-height: 1.15em;
     font-family: Consolas, monospace;
 }
 
-#sidebar {
-    padding-left: 5px;
-    padding-right: 5px;
-    margin-left: -10em;
-    left: 10em;
-    width: 10em;
+#botbar {
     position: fixed;
-    height: 100%;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5em 1em;
     z-index: 1000;
 }
 
+.botbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+}
+
 #next_prev_match {
-    margin-top: .4em;
+    margin: 0;
 }
 
 #passes {
-    margin-top: 10%;
-    margin-bottom: 10%;
-}
-
-.matches_group {
-    margin-bottom: .4em;
+    margin: 0;
 }
 
 .brand {
     text-align: center;
     vertical-align: middle;
-    width: 100%;
     height: 2.20em;
-    margin-top: 0.13em;
+    margin: 0;
 }
 
 a.index-link {
@@ -176,6 +177,12 @@ a.index-link:hover {
     z-index: 1;
     top: -5px;
     left: 110%;
+}
+
+.sub_name {
+    display: inline-block;
+    vertical-align: top;
+    white-space: nowrap;
 }
 
 .score_tooltip:hover .tooltiptext {
