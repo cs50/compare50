@@ -12,7 +12,7 @@ body {
 }
 
 .wrapper {
-    margin-top: 4em;
+    margin-top: 3em;
 }
 
 .view {
@@ -57,7 +57,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 4em);
+    height: calc(100vh - 3em);
 }
 
 .right {
@@ -68,7 +68,7 @@ pre {
     border-top: 0;
     max-width:100%;
     width: 100%;
-    height: calc(100vh - 4em);
+    height: calc(100vh - 3em);
 }
 
 .fragment:before {
@@ -129,7 +129,8 @@ pre {
     z-index: 1000;
     display: flex;
     align-items: center;
-    justify-content: space-evenly;
+    gap: 0.5em;
+    justify-content: normal;
 }
 
 #next_prev_match {
@@ -140,15 +141,12 @@ pre {
     margin: 0;
 }
 
-.matches_group {
-    margin-bottom: .4em;
-}
-
 .brand {
     text-align: center;
     vertical-align: middle;
     height: 2.20em;
     margin: 0;
+    padding-right: 25%;
 }
 
 a.index-link {
