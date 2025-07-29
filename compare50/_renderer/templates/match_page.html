@@ -11,28 +11,27 @@
     </head>
     <body>
         <div class="wrapper" id="page">
-            <nav class="bg-dark text-center" id="sidebar">
-                <div class="brand text-light">
+            <!-- <div class="bg-dark text-center brand text-light">
                     <h4><a href="index.html" class="index-link"><b>compare50</b></a></h4>
-                </div>
-                <br/>
+            </div> -->
+            <nav class="bg-dark text-center" id="sidebar">
                 <div class="text-light id" id="{{id}}">{{id}} / {{max_id}}</div>
                 <div class="btn-group" role="group" aria-label="NextPrev" id="next_prev_match">
                     <button type="button" class="btn btn-outline-light prev_match" id="prev_match" {{'disabled' if id <= 1 else ''}}><<</button>
                     <button type="button" class="btn btn-outline-light next_match" id="next_match" {{'disabled' if id >= max_id else ''}}>>></button>
                 </div>
-                <div class="btn-group-vertical" role="group" aria-label="Views" id="passes">
+                <div class="btn-group" role="group" aria-label="Views" id="passes">
                 {% for pass_ in passes %}
                     <button type="button" class="btn btn-outline-light view_selector" id="{{pass_.__name__}}selector" title="{{pass_.__doc__}}">{{pass_.__name__}}</button>
                 {% endfor %}
                 </div>
-                <div id="group_nav">
+                <div id="btn-group">
                     <div class="btn-group" role="group" aria-label="NextPrevGroup">
                         <button type="button" class="btn btn-outline-light matches_group" id="previous_group">&lt;</button>
                         <button type="button" class="btn btn-outline-light matches_group" id="next_group">&gt;</button>
                     </div>
-                    <div class="text-light" id="group_counter"></div>
                 </div>
+                <div class="text-light" id="group_counter"></div>
             </nav>
             <div id="content">
                 {% for match in matches %}
