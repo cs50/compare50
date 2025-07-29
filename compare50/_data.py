@@ -217,8 +217,7 @@ class File:
     def unprocessed_tokens(self):
         """Get the raw tokens of the file."""
         text  = self.read()
-        lexer = self.lexer()
-        lexer_tokens = lexer.get_tokens_unprocessed(text)
+        lexer_tokens = lexer.lexer().get_tokens_unprocessed(text)
         tokens = []
         prevToken = None
         for token in lexer_tokens:
