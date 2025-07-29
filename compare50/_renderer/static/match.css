@@ -120,7 +120,7 @@ pre {
     font-family: Consolas, monospace;
 }
 
-#sidebar {
+#botbar {
     position: fixed;
     bottom: 0;
     width: 100%;
@@ -131,7 +131,7 @@ pre {
     z-index: 1000;
 }
 
-.sidebar-right {
+.botbar-right {
     display: flex;
     align-items: center;
     gap: 0.5em;
@@ -150,7 +150,6 @@ pre {
     vertical-align: middle;
     height: 2.20em;
     margin: 0;
-    padding-right: 25%;
 }
 
 a.index-link {
