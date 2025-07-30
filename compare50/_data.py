@@ -1,12 +1,12 @@
 import abc
 from collections.abc import Mapping, Sequence
-import os
 import pathlib
 import numbers
 
 import attr
 import pygments
 import pygments.lexers
+from .lexers import WordLexer
 
 
 __all__ = ["Pass", "Comparator", "File", "Submission",
@@ -191,14 +191,18 @@ class File:
 
         # get lexer for this file type
         try:
-            lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
+            if ext == ".txt":
+                lexer = WordLexer()
+            else:
+                lexer = pygments.lexers.get_lexer_for_filename(self.name.name)
+    
             self._lexer_cache[ext] = lexer
             return lexer
         except pygments.util.ClassNotFound:
             try:
                 return pygments.lexers.guess_lexer(self.read())
             except pygments.util.ClassNotFound:
-                return pygments.lexers.special.TextLexer()
+                return WordLexer()
 
     @classmethod
     def get(cls, id):
