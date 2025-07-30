@@ -1,13 +1,11 @@
 import abc
 from collections.abc import Mapping, Sequence
-import os
 import pathlib
 import numbers
 
 import attr
 import pygments
 import pygments.lexers
-
 from .lexers import WordLexer
 
 
