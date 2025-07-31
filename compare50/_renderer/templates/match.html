@@ -3,7 +3,7 @@
         {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
             <div class="sub_name" id="{{name}}{{side}}_header">
                 {% for file in sub.files %}
-                    <h5 title="{{sub.path}}">{{sub.name}} - {{file.name}} ({{sub.percentage}}%)</h5>
+                    <h5 title="{{sub.path}}">{{sub.name}} - {{file.name}} ({{file.percentage}}%)</h5>
                 {%- endfor -%}
             </div>
         {% endfor %}
