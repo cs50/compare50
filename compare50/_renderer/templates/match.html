@@ -2,7 +2,9 @@
     <div class="row sticky-top bg-dark text-light">
         {% for sub, side in (sub_a, "left"), (sub_b, "right") %}
             <div class="sub_name" id="{{name}}{{side}}_header">
-                <h5 title="{{sub.path}}">{{sub.name}} ({{sub.percentage}}%)</h5>
+                {% for file in sub.files %}
+                    <h5 title="{{sub.path}}">{{sub.name}} - {{file.name}} ({{sub.percentage}}%)</h5>
+                {%- endfor -%}
             </div>
         {% endfor %}
     </div>
@@ -11,7 +13,6 @@
             <div class="col-sm-6 col-2 side {{side}}" id="{{name}}{{side}}">
                 {% for file in sub.files %}
                     <div class="submission-file">
-                        <h4 class="file_name">{{file.name}} <span class="text-secondary small">({{file.percentage}}%)</span></h4>
                             <pre>
                                 {%- set ns = namespace(is_newline=true) -%}
                                 {%- for frag in file.fragments -%}
