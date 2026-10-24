@@ -3,7 +3,7 @@ import glob
 import os
 import pathlib
 import shutil
-import importlib
+import importlib.resources
 import atexit
 from contextlib import ExitStack
 
